@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>The AI Minute</title>
+  <meta property="og:title" content="The AI Minute" />
+  <meta property="og:description" content="For leaders who need to know where value is moving — and how to position ahead of it." />
+  <meta property="og:image" content="https://yourdomain.com/og-image.jpg" />
+  <meta property="og:url" content="https://yourdomain.com" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --teal:      rgb(25,60,63);
+      --teal-mid:  rgb(35,80,84);
+      --cream:     rgb(244,240,233);
+      --gold:      rgb(190,123,80);
+      --gold-dark: rgb(152,98,64);
+      --ink:       rgba(244,240,233,0.85);
+      --muted:     rgba(244,240,233,0.45);
+      --border:    rgba(244,240,233,0.12);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--teal);color:var(--cream);font-family:'DM Sans',sans-serif;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4;}
+
+    /* ── HEADER ── */
+    header{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:2rem 2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+    .logo-area{display:flex;align-items:center;gap:1rem;}
+    .logo-img{width:160px;height:160px;object-fit:contain;}
+    .logo-text{display:flex;flex-direction:column;line-height:1.15;}
+    .logo-eyebrow{font-family:'DM Sans',sans-serif;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
+    .logo-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;letter-spacing:.01em;color:var(--cream);}
+    .logo-pill{display:inline-block;background:var(--gold);color:var(--teal);font-family:'DM Sans',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.15rem .6rem;border-radius:40px;margin-top:.25rem;width:fit-content;}
+
+    /* Authors in header */
+    .header-authors{display:flex;align-items:center;gap:.5rem;}
+    .header-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(190,123,80,.4);}
+    .header-avatar:nth-child(2){margin-left:-10px;}
+    .header-authors-label{font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-left:.4rem;}
+
+    nav{display:flex;gap:1.5rem;align-items:center;}
+    nav a{font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;font-family:'DM Sans',sans-serif;}
+    nav a:hover{color:var(--gold);}
+
+    /* ── HERO ── */
+    .hero{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:3rem 2rem 2.5rem;border-bottom:1px solid var(--border);}
+    .hero-eyebrow{font-family:'Playfair Display',serif;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem;}
+    .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:600;line-height:1.15;color:var(--cream);max-width:640px;}
+    .hero h1 em{font-style:italic;color:var(--gold);}
+    .hero-sub{margin-top:.9rem;font-size:.92rem;color:var(--muted);max-width:520px;line-height:1.65;}
+
+    /* Authors strip below hero */
+    .authors-strip{display:flex;gap:2rem;margin-top:1.75rem;flex-wrap:wrap;}
+    .author-chip{display:flex;align-items:center;gap:.75rem;}
+    .author-chip-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(190,123,80,.35);}
+    .author-chip-info{display:flex;flex-direction:column;line-height:1.2;}
+    .author-chip-name{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;letter-spacing:.01em;color:var(--cream);}
+    .author-chip-role{font-size:.72rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
+
+    /* ── MAIN ── */
+    main{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:2.5rem 2rem 4rem;}
+    .section-label{font-family:'DM Sans',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem;}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* Loading */
+    .loading{text-align:center;padding:3rem;color:var(--muted);font-size:.85rem;}
+    .loading-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin:0 3px;animation:pulse 1.2s ease-in-out infinite;}
+    .loading-dot:nth-child(2){animation-delay:.2s;}
+    .loading-dot:nth-child(3){animation-delay:.4s;}
+    @keyframes pulse{0%,80%,100%{opacity:.2;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+
+    /* ── POST CARD ── */
+    .post-card{background:rgba(244,240,233,.04);border:1px solid var(--border);border-radius:16px;padding:1.75rem;margin-bottom:1.5rem;transition:background .25s,border-color .25s;animation:fadeUp .45s ease both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+    .post-card:hover{background:rgba(244,240,233,.07);border-color:rgba(190,123,80,.28);}
+
+    .post-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap;}
+    .badge{font-family:'DM Sans',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.18rem .6rem;border-radius:40px;border:1px solid;}
+    .badge-video{color:var(--gold);border-color:rgba(190,123,80,.5);background:rgba(190,123,80,.1);}
+    .badge-insight{color:var(--cream);border-color:var(--border);background:rgba(244,240,233,.06);}
+    .post-date{font-size:.73rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
+
+    /* Author byline in card */
+    .post-byline{display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;}
+    .byline-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.3);}
+    .byline-avatar-joint{display:flex;}
+    .byline-avatar-joint .byline-avatar:nth-child(2){margin-left:-8px;}
+    .byline-name{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;letter-spacing:.01em;color:var(--gold);}
+
+    .post-card h2{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;line-height:1.25;color:var(--cream);margin-bottom:.65rem;}
+    .post-card p.body{font-size:.88rem;color:var(--ink);line-height:1.68;margin-bottom:1.2rem;}
+
+    /* Video */
+    .video-wrap{display:flex;justify-content:flex-start;margin:1.2rem 0;}
+    .video-phone{background:#000;border-radius:20px;overflow:hidden;width:180px;box-shadow:0 12px 30px rgba(0,0,0,.4),0 0 0 1px rgba(244,240,233,.08);}
+    .video-phone iframe{width:100%;aspect-ratio:9/16;display:block;border:none;}
+
+    /* Hashtags */
+    .hashtags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.2rem;}
+    .hashtag{font-size:.73rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
+
+    /* Actions */
+    .post-actions{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;padding-top:1rem;border-top:1px solid var(--border);}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.48rem 1rem;border-radius:40px;cursor:pointer;text-decoration:none;transition:all .2s;border:none;}
+    .btn-primary{background:var(--gold);color:var(--teal);}
+    .btn-primary:hover{background:var(--gold-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(190,123,80,.28);}
+    .btn-ghost{background:transparent;color:var(--cream);border:1px solid var(--border);}
+    .btn-ghost:hover{border-color:rgba(190,123,80,.4);color:var(--gold);background:rgba(190,123,80,.06);}
+    .li-icon{width:13px;height:13px;fill:currentColor;}
+
+    /* Newsletter */
+    .newsletter{background:rgba(190,123,80,.07);border:1px solid rgba(190,123,80,.22);border-radius:16px;padding:1.75rem;margin-top:2.5rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;}
+    .newsletter-text h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--cream);margin-bottom:.2rem;}
+    .newsletter-text p{font-size:.8rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
+    .newsletter-form{display:flex;gap:.5rem;flex:1;min-width:240px;}
+    .newsletter-form input{flex:1;background:rgba(244,240,233,.07);border:1px solid var(--border);border-radius:40px;padding:.5rem 1rem;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s;}
+    .newsletter-form input::placeholder{color:var(--muted);}
+    .newsletter-form input:focus{border-color:rgba(190,123,80,.5);}
+
+    /* Footer */
+    footer{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:1.5rem 2rem 2.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+    footer p{font-size:.73rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
+    footer a{color:var(--muted);text-decoration:none;transition:color .2s;}
+    footer a:hover{color:var(--gold);}
+
+    /* Toast */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--teal-mid);border:1px solid rgba(190,123,80,.4);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.83rem;padding:.6rem 1.4rem;border-radius:40px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s ease;pointer-events:none;z-index:9999;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    @media(max-width:620px){
+      header{flex-direction:column;align-items:flex-start;gap:1rem;}
+      .logo-img{width:120px;height:120px;}
+      .hero h1{font-size:1.75rem;}
+      .video-phone{width:140px;}
+      .newsletter{flex-direction:column;}
+      .newsletter-form{min-width:unset;width:100%;}
+      nav{gap:1rem;}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <img src="logo.png" alt="The AI Minute" class="logo-img">
+    <div class="logo-text">
+      <span class="logo-eyebrow">A co-publication</span>
+      <span class="logo-name">The AI Minute</span>
+      <span class="logo-pill">Strategy · AI · Data</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+    <div class="header-authors">
+      <img src="Stephane.jpeg" alt="Stéphane Guerraz" class="header-avatar">
+      <img src="Hanne.jpeg" alt="Hanne Breddam" class="header-avatar">
+      <span class="header-authors-label">Guerraz · Breddam</span>
+    </div>
+    <nav>
+      <a href="#posts">Posts</a>
+      <a href="#newsletter">Newsletter</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>For leaders who need to know<br><em>where value is moving —</em><br>and how to position ahead of it.</h1>
+  <p class="hero-sub">Sharp, independent thinking on AI strategy and the decisions that separate positioning from reaction.</p>
+
+  <div class="authors-strip">
+    <div class="author-chip">
+      <img src="Hanne.jpeg" alt="Hanne Breddam" class="author-chip-avatar">
+      <div class="author-chip-info">
+        <span class="author-chip-name">Hanne Breddam</span>
+        <span class="author-chip-role">Board Member · Entrepreneur · 30+ years across 10+ industries</span>
+      </div>
+    </div>
+    <div class="author-chip">
+      <img src="Stephane.jpeg" alt="Stéphane Guerraz" class="author-chip-avatar">
+      <div class="author-chip-info">
+        <span class="author-chip-name">Stéphane Guerraz</span>
+        <span class="author-chip-role">Executive Educator · Consultant · Berkeley MBA, CFA, MSc AI</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main id="posts">
+  <div class="section-label">Latest</div>
+  <div id="posts-container">
+    <div class="loading">
+      <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+    </div>
+  </div>
+
+  <div class="newsletter" id="newsletter">
+    <div class="newsletter-text">
+      <h3>One signal. Every week.</h3>
+      <p>No noise. No groupthink. Just where value is moving next.</p>
+    </div>
+    <div class="newsletter-form">
+      <input type="email" placeholder="your@email.com" id="email-input">
+      <button class="btn btn-primary" onclick="subscribeEmail()">Subscribe</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 Stéphane Guerraz & Hanne Breddam · The AI Minute</p>
+  <p>
+    <a href="https://www.linkedin.com/in/stephane-guerraz-cfa/" target="_blank" rel="noopener">Stéphane on LinkedIn</a>
+    &nbsp;·&nbsp;
+    <a href="https://www.linkedin.com/in/hanne-breddam-06767a/" target="_blank" rel="noopener">Hanne on LinkedIn</a>
+  </p>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL   = 'https://kcobpakjfluuyfzswtoq.supabase.co';
+  const SUPABASE_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjb2JwYWtqZmx1dXlmenN3dG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MTEyMTgsImV4cCI6MjA5Mjk4NzIxOH0.qSlZOSGMtfBWfNlrJrO-SWLRumLFZb0qVkZPWh1dRWM';
+  const SITE_URL       = 'https://www.theaiminute.blog';
+  const CK_FORM_ACTION = 'https://app.kit.com/forms/9384415/subscriptions';
+
+  const AUTHORS = {
+    stephane: { name: 'Stéphane Guerraz', photo: 'Stephane.jpeg', li: 'STEPHANE_HANDLE' },
+    hanne:    { name: 'Hanne Breddam',    photo: 'Hanne.jpeg',    li: 'HANNE_HANDLE'    },
+    joint:    { name: 'Guerraz & Breddam', photo: null,           li: null              }
+  };
+
+  async function loadPosts() {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/posts?status=eq.published&order=published_at.desc`,
+        { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+      );
+      renderPosts(await res.json());
+    } catch(e) {
+      document.getElementById('posts-container').innerHTML =
+        '<p style="color:var(--muted);font-size:.85rem;padding:2rem 0">Could not load posts.</p>';
+    }
+  }
+
+  function bylineHtml(author) {
+    if (author === 'joint') {
+      return `<div class="post-byline">
+        <div class="byline-avatar-joint">
+          <img src="Stephane.jpeg" class="byline-avatar" alt="Stéphane">
+          <img src="Hanne.jpeg" class="byline-avatar" alt="Hanne">
+        </div>
+        <span class="byline-name">Guerraz &amp; Breddam</span>
+      </div>`;
+    }
+    const a = AUTHORS[author] || AUTHORS.stephane;
+    return `<div class="post-byline">
+      <img src="${a.photo}" class="byline-avatar" alt="${a.name}">
+      <span class="byline-name">${a.name}</span>
+    </div>`;
+  }
+
+  function renderPosts(posts) {
+    const c = document.getElementById('posts-container');
+    if (!posts.length) {
+      c.innerHTML = '<p style="color:var(--muted);font-size:.85rem;padding:2rem 0">No posts yet — check back soon.</p>';
+      return;
+    }
+    c.innerHTML = posts.map((p, i) => {
+      const date = new Date(p.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      const tags = (p.hashtags||[]).map(h=>`<span class="hashtag">${h.startsWith('#')?h:'#'+h}</span>`).join('');
+      const shareUrl   = encodeURIComponent(`${SITE_URL}/#post-${p.id}`);
+      const shareTitle = encodeURIComponent(p.title);
+      const liUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}&title=${shareTitle}`;
+      const videoHtml = p.vimeo_id ? `
+        <div class="video-wrap"><div class="video-phone">
+          <iframe src="https://player.vimeo.com/video/${p.vimeo_id}?autoplay=0&title=0&byline=0&portrait=0"
+                  allowfullscreen loading="lazy"></iframe>
+        </div></div>` : '';
+
+      // For joint posts, show both drafts if available
+      const isJoint = p.author === 'joint';
+      const draftBtnS = isJoint
+        ? `<button class="btn btn-ghost" onclick="copyDraft(${JSON.stringify(p.linkedin_draft_stephane||p.linkedin_draft||'')},${JSON.stringify(`${SITE_URL}/#post-${p.id}`)})">Copy Draft (Stéphane)</button>`
+        : '';
+      const draftBtnH = isJoint
+        ? `<button class="btn btn-ghost" onclick="copyDraft(${JSON.stringify(p.linkedin_draft_hanne||p.linkedin_draft||'')},${JSON.stringify(`${SITE_URL}/#post-${p.id}`)})">Copy Draft (Hanne)</button>`
+        : `<button class="btn btn-ghost" onclick="copyDraft(${JSON.stringify(p.linkedin_draft||'')},${JSON.stringify(`${SITE_URL}/#post-${p.id}`)})">Copy Draft</button>`;
+
+      return `
+        <article class="post-card" id="post-${p.id}" style="animation-delay:${i*.07}s">
+          <div class="post-meta">
+            <span class="badge ${p.vimeo_id?'badge-video':'badge-insight'}">${p.vimeo_id?'▶ Video':'Insight'}</span>
+            <span class="post-date">${date}</span>
+          </div>
+          ${bylineHtml(p.author||'stephane')}
+          <h2>${p.title}</h2>
+          <p class="body">${p.body}</p>
+          ${videoHtml}
+          <div class="hashtags">${tags}</div>
+          <div class="post-actions">
+            <a class="btn btn-primary" href="${liUrl}" target="_blank" rel="noopener">
+              <svg class="li-icon" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              Share on LinkedIn
+            </a>
+            ${isJoint ? draftBtnS : ''}
+            ${draftBtnH}
+            <button class="btn btn-ghost" onclick="copyLink('${SITE_URL}/#post-${p.id}')">Copy Link</button>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+  function copyLink(url){navigator.clipboard.writeText(url).then(()=>showToast('Link copied ✓'));}
+  function copyDraft(draft,url){navigator.clipboard.writeText((draft||'')+'\n\n'+url).then(()=>showToast('Draft copied — paste into LinkedIn ✓'));}
+  function subscribeEmail(){
+    const email=document.getElementById('email-input').value.trim();
+    if(!email||!email.includes('@')){showToast('Please enter a valid email');return;}
+    fetch(CK_FORM_ACTION,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`email_address=${encodeURIComponent(email)}`})
+      .then(()=>{showToast('Subscribed ✓');document.getElementById('email-input').value='';})
+      .catch(()=>showToast('Check your ConvertKit form ID'));
+  }
+
+  loadPosts();
+</script>
+</body>
+</html>
