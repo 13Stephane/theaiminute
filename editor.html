@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor — The AI Minute</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --teal:rgb(25,60,63);--teal-mid:rgb(35,80,84);--teal-light:rgb(45,100,105);
+      --cream:rgb(244,240,233);--gold:rgb(190,123,80);--gold-dark:rgb(152,98,64);
+      --ink:rgba(244,240,233,0.85);--muted:rgba(244,240,233,0.45);--border:rgba(244,240,233,0.14);
+      --red:rgba(220,80,80,0.85);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--teal);color:var(--cream);font-family:'Barlow',sans-serif;line-height:1.6;min-height:100vh;}
+
+    /* ── LOCK ── */
+    #lock-screen{position:fixed;inset:0;background:var(--teal);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:1.25rem;}
+    #lock-screen img{width:72px;height:72px;object-fit:contain;margin-bottom:.25rem;}
+    #lock-screen h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;}
+    #lock-screen p{font-size:.8rem;color:var(--muted);letter-spacing:.06em;}
+    .lock-form{display:flex;flex-direction:column;gap:.75rem;width:280px;}
+    .lock-form input{background:rgba(244,240,233,.07);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--cream);font-family:'Barlow',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;}
+    .lock-form input:focus{border-color:rgba(190,123,80,.5);}
+    .lock-form input::placeholder{color:var(--muted);}
+    #lock-error{color:var(--red);font-size:.78rem;text-align:center;min-height:1rem;}
+
+    /* ── APP ── */
+    #app{display:none;}
+
+    /* ── TOPBAR ── */
+    .topbar{background:var(--teal-mid);border-bottom:1px solid var(--border);padding:.85rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:.75rem;}
+    .topbar-logo{width:38px;height:38px;object-fit:contain;}
+    .topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.06em;}
+    .topbar-badge{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.15rem .55rem;border-radius:40px;background:var(--gold);color:var(--teal);}
+    .author-indicator{display:flex;align-items:center;gap:.5rem;background:rgba(244,240,233,.06);border:1px solid var(--border);border-radius:40px;padding:.25rem .75rem .25rem .35rem;}
+    .author-indicator img{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.4);}
+    .author-indicator span{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--cream);}
+    .topbar-right{display:flex;gap:.65rem;align-items:center;}
+
+    /* ── LAYOUT ── */
+    .layout{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 57px);}
+    .panel{padding:1.75rem 2rem;}
+    .panel-left{border-right:1px solid var(--border);}
+    .panel-right{background:rgba(244,240,233,.02);}
+
+    .section-label{font-family:'Barlow Condensed',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;display:flex;align-items:center;gap:.75rem;}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* ── FORM ── */
+    .field{margin-bottom:1.1rem;}
+    label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem;}
+    input[type=text],input[type=datetime-local],textarea,select{width:100%;background:rgba(244,240,233,.06);border:1px solid var(--border);border-radius:10px;padding:.58rem .85rem;color:var(--cream);font-family:'Barlow',sans-serif;font-size:.87rem;outline:none;transition:border-color .2s;resize:vertical;}
+    input[type=text]:focus,input[type=datetime-local]:focus,textarea:focus,select:focus{border-color:rgba(190,123,80,.5);}
+    input::placeholder,textarea::placeholder{color:var(--muted);}
+    select option{background:var(--teal-mid);color:var(--cream);}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+    .field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;}
+
+    /* Joint toggle */
+    .joint-toggle{display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;padding:.65rem .9rem;background:rgba(190,123,80,.06);border:1px solid rgba(190,123,80,.2);border-radius:10px;cursor:pointer;}
+    .joint-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
+    .joint-toggle-label{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+    .joint-toggle-sub{font-size:.72rem;color:var(--muted);margin-left:auto;}
+
+    /* Hashtag */
+    .hashtag-area{display:flex;flex-wrap:wrap;gap:.4rem;padding:.45rem .6rem;background:rgba(244,240,233,.06);border:1px solid var(--border);border-radius:10px;min-height:40px;cursor:text;}
+    .hashtag-area:focus-within{border-color:rgba(190,123,80,.5);}
+    .htag{display:inline-flex;align-items:center;gap:.3rem;background:rgba(190,123,80,.15);border:1px solid rgba(190,123,80,.3);color:var(--gold);font-size:.7rem;padding:.12rem .45rem;border-radius:20px;}
+    .htag button{background:none;border:none;color:var(--gold);cursor:pointer;font-size:.8rem;line-height:1;padding:0;opacity:.7;}
+    .htag button:hover{opacity:1;}
+    #hashtag-input{background:none;border:none;outline:none;color:var(--cream);font-size:.82rem;font-family:'Barlow',sans-serif;min-width:80px;flex:1;}
+
+    /* ── COMPOSER ── */
+    .composer-box{background:rgba(190,123,80,.06);border:1px solid rgba(190,123,80,.2);border-radius:14px;padding:1.2rem;margin-bottom:1.5rem;}
+    .composer-box label{color:var(--gold);}
+    .composer-hint{font-size:.77rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5;}
+    .composer-result{background:rgba(244,240,233,.05);border:1px solid var(--border);border-radius:10px;padding:.8rem;font-size:.82rem;color:var(--ink);line-height:1.65;white-space:pre-wrap;min-height:56px;position:relative;}
+    .composer-result.empty{color:var(--muted);font-style:italic;}
+    .composer-result.loading-text::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);animation:blink .8s ease-in-out infinite;margin-left:4px;vertical-align:middle;}
+    @keyframes blink{0%,100%{opacity:.2;}50%{opacity:1;}}
+    .composer-actions{display:flex;gap:.55rem;margin-top:.7rem;flex-wrap:wrap;}
+
+    /* Draft tabs (for joint posts) */
+    .draft-tabs{display:flex;gap:.4rem;margin-bottom:.5rem;}
+    .draft-tab{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .7rem;border-radius:40px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;}
+    .draft-tab.active{background:rgba(190,123,80,.15);border-color:rgba(190,123,80,.4);color:var(--gold);}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:.4rem;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.46rem 1rem;border-radius:40px;cursor:pointer;text-decoration:none;transition:all .2s;border:none;}
+    .btn-primary{background:var(--gold);color:var(--teal);}
+    .btn-primary:hover{background:var(--gold-dark);transform:translateY(-1px);}
+    .btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    .btn-ghost{background:transparent;color:var(--cream);border:1px solid var(--border);}
+    .btn-ghost:hover{border-color:rgba(190,123,80,.4);color:var(--gold);}
+    .btn-danger{background:transparent;color:var(--red);border:1px solid rgba(220,80,80,.3);}
+    .btn-danger:hover{background:rgba(220,80,80,.1);}
+    .btn-sm{padding:.28rem .7rem;font-size:.6rem;}
+
+    /* ── POST LIST ── */
+    .post-list{display:flex;flex-direction:column;gap:.65rem;}
+    .post-item{background:rgba(244,240,233,.04);border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;transition:border-color .2s;}
+    .post-item:hover{border-color:rgba(190,123,80,.22);}
+    .post-item-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;}
+    .post-item-title{font-family:'Cormorant Garamond',serif;font-size:.98rem;font-weight:600;color:var(--cream);line-height:1.2;}
+    .post-item-actions{display:flex;gap:.35rem;flex-shrink:0;}
+    .post-item-meta{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.4rem;}
+    .post-byline-mini{display:flex;align-items:center;gap:.3rem;}
+    .post-byline-mini img{width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25);}
+    .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+    .status-dot.published{background:var(--gold);}
+    .status-dot.draft{background:var(--muted);}
+    .status-dot.scheduled{background:rgb(100,180,200);}
+    .status-label{font-size:.65rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--teal-mid);border:1px solid rgba(190,123,80,.4);color:var(--cream);font-family:'Barlow',sans-serif;font-size:.83rem;padding:.6rem 1.4rem;border-radius:40px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s ease;pointer-events:none;z-index:9999;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    @media(max-width:900px){
+      .layout{grid-template-columns:1fr;}
+      .panel-left{border-right:none;border-bottom:1px solid var(--border);}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOCK ── -->
+<div id="lock-screen">
+  <img src="logo.png" alt="logo" onerror="this.style.display='none'">
+  <h2>Editor Access</h2>
+  <p>The AI Minute</p>
+  <div class="lock-form">
+    <input type="password" id="password-input" placeholder="Password" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="btn btn-primary" onclick="unlock()">Enter</button>
+    <div id="lock-error"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <img src="logo.png" alt="logo" class="topbar-logo" onerror="this.style.display='none'">
+      <span class="topbar-title">The AI Minute</span>
+      <span class="topbar-badge">Editor</span>
+    </div>
+    <div class="topbar-right">
+      <div class="author-indicator" id="author-indicator">
+        <img id="author-indicator-img" src="Stephane.jpeg" alt="">
+        <span id="author-indicator-name">Stéphane</span>
+      </div>
+      <a href="index.html" target="_blank" class="btn btn-ghost btn-sm">View Site ↗</a>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ── LEFT: COMPOSE ── -->
+    <div class="panel panel-left">
+      <div class="section-label">Compose</div>
+
+      <!-- Joint toggle -->
+      <label class="joint-toggle" id="joint-toggle-wrap">
+        <input type="checkbox" id="joint-toggle" onchange="toggleJoint()">
+        <span class="joint-toggle-label">Joint post — Guerraz &amp; Breddam</span>
+        <span class="joint-toggle-sub">Two LinkedIn drafts</span>
+      </label>
+
+      <!-- Claude Composer -->
+      <div class="composer-box">
+        <label>✦ Claude Composer</label>
+        <p class="composer-hint">Describe your idea. Claude writes in your voice — title, body, hashtags, and LinkedIn draft.</p>
+        <div class="field">
+          <textarea id="idea-input" rows="3" placeholder="e.g. Why most boards are asking the wrong AI question — they're optimising for cost when the value is in positioning..."></textarea>
+        </div>
+        <div class="field">
+          <label>Post type</label>
+          <select id="idea-type">
+            <option value="insight">Text Insight</option>
+            <option value="video">Video Post</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="compose-btn" onclick="composeWithClaude()">✦ Generate</button>
+        <div style="margin-top:.85rem">
+          <div class="composer-result empty" id="composer-result">Claude's output will appear here…</div>
+          <div class="composer-actions" id="composer-actions" style="display:none">
+            <button class="btn btn-primary btn-sm" onclick="applyComposerResult()">Use This →</button>
+            <button class="btn btn-ghost btn-sm" onclick="composeWithClaude()">Regenerate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post fields -->
+      <div class="section-label">Post Details</div>
+
+      <div class="field">
+        <label>Title</label>
+        <input type="text" id="f-title" placeholder="What's the insight?">
+      </div>
+
+      <div class="field">
+        <label>Body</label>
+        <textarea id="f-body" rows="4" placeholder="2–4 sentences. Clear, direct, no hedging."></textarea>
+      </div>
+
+      <!-- LinkedIn drafts — single or dual -->
+      <div id="draft-single">
+        <div class="field">
+          <label>LinkedIn Draft <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(what visitors copy)</span></label>
+          <textarea id="f-draft" rows="6" placeholder="Full LinkedIn post — hook, insight, CTA, hashtags."></textarea>
+        </div>
+      </div>
+
+      <div id="draft-joint" style="display:none">
+        <div class="field">
+          <div class="draft-tabs">
+            <button class="draft-tab active" onclick="switchDraftTab('stephane',this)">Stéphane's Draft</button>
+            <button class="draft-tab" onclick="switchDraftTab('hanne',this)">Hanne's Draft</button>
+          </div>
+          <textarea id="f-draft-stephane" rows="6" placeholder="LinkedIn draft in Stéphane's voice…"></textarea>
+          <textarea id="f-draft-hanne" rows="6" placeholder="LinkedIn draft in Hanne's voice…" style="display:none;margin-top:.5rem"></textarea>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Hashtags <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(Enter or comma to add)</span></label>
+        <div class="hashtag-area" id="hashtag-area" onclick="document.getElementById('hashtag-input').focus()">
+          <input type="text" id="hashtag-input" placeholder="#AIStrategy" onkeydown="handleHashtagKey(event)">
+        </div>
+      </div>
+
+      <div class="field-row-3">
+        <div class="field">
+          <label>Vimeo ID</label>
+          <input type="text" id="f-vimeo" placeholder="e.g. 927364821">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="f-status" onchange="toggleSchedule()">
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="scheduled">Scheduled</option>
+          </select>
+        </div>
+        <div class="field" id="schedule-field" style="display:none">
+          <label>Publish at</label>
+          <input type="datetime-local" id="f-scheduled-at">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.65rem;margin-top:.75rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="savePost()">Save Post</button>
+        <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: POST LIST ── -->
+    <div class="panel panel-right">
+      <div class="section-label">All Posts</div>
+      <div class="post-list" id="post-list">
+        <p style="color:var(--muted);font-size:.83rem">Loading…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ══ CONFIG ══ */
+  const PASSWORDS = {
+    stephane: 'changeme-stephane',   // ← set before deploying
+    hanne:    'changeme-hanne'
+  };
+  const SUPABASE_URL     = 'https://YOUR_PROJECT.supabase.co';
+  const SUPABASE_SERVICE = 'YOUR_SERVICE_ROLE_KEY';
+  const SITE_URL         = 'https://yourdomain.com';
+
+  const AUTHOR_META = {
+    stephane: {
+      name: 'Stéphane Guerraz', photo: 'Stephane.jpeg',
+      voice: `Stéphane Guerraz — AI strategist, executive educator, MBA Berkeley Haas, CFA, MSc AI, ex-BNP Paribas/KPMG, faculty at DTU.
+Voice: conceptual, framework-driven, precise. Uses Teece, Porter, Blue Ocean. Helps leaders read where value is migrating. Empowers humans with heart and courage, not groupthink.
+Tone: authoritative but not arrogant. No em-dashes. Direct sentences. Ends posts with a sharp question that provokes strategic reflection.`
+    },
+    hanne: {
+      name: 'Hanne Breddam', photo: 'Hanne.jpeg',
+      voice: `Hanne Breddam — board member, entrepreneur, D&A strategist, 30+ years across banking, insurance, telco, airline, retail and more. Founded BusinessMinds (sold to PwC), partner at QVARTZ/Bain.
+Voice: entrepreneurial, operational, board-level. Focuses on how organisations actually build data and analytics capability at scale. Cuts through strategy to execution reality.
+Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends posts with a question that challenges boards and leadership teams.`
+    }
+  };
+
+  let currentAuthor = null;
+  let editingId = null;
+  let currentHashtags = [];
+  let composerData = null;
+  let activeDraftTab = 'stephane';
+
+  /* ══ LOCK ══ */
+  function unlock() {
+    const val = document.getElementById('password-input').value;
+    if (val === PASSWORDS.stephane) { login('stephane'); }
+    else if (val === PASSWORDS.hanne) { login('hanne'); }
+    else {
+      document.getElementById('lock-error').textContent = 'Incorrect password';
+      document.getElementById('password-input').value = '';
+    }
+  }
+
+  function login(author) {
+    currentAuthor = author;
+    const m = AUTHOR_META[author];
+    document.getElementById('author-indicator-img').src = m.photo;
+    document.getElementById('author-indicator-name').textContent = m.name.split(' ')[0];
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadPosts();
+  }
+
+  function logout() {
+    currentAuthor = null;
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('lock-screen').style.display = 'flex';
+    document.getElementById('password-input').value = '';
+    document.getElementById('lock-error').textContent = '';
+  }
+
+  /* ══ JOINT TOGGLE ══ */
+  function toggleJoint() {
+    const isJoint = document.getElementById('joint-toggle').checked;
+    document.getElementById('draft-single').style.display = isJoint ? 'none' : 'block';
+    document.getElementById('draft-joint').style.display  = isJoint ? 'block' : 'none';
+  }
+
+  function switchDraftTab(author, btn) {
+    activeDraftTab = author;
+    document.querySelectorAll('.draft-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('f-draft-stephane').style.display = author==='stephane' ? 'block' : 'none';
+    document.getElementById('f-draft-hanne').style.display    = author==='hanne'    ? 'block' : 'none';
+  }
+
+  /* ══ SCHEDULED PUBLISH TOGGLE ══ */
+  function toggleSchedule() {
+    const val = document.getElementById('f-status').value;
+    document.getElementById('schedule-field').style.display = val === 'scheduled' ? 'block' : 'none';
+  }
+
+  /* ══ CLAUDE COMPOSER ══ */
+  async function composeWithClaude() {
+    const idea   = document.getElementById('idea-input').value.trim();
+    const type   = document.getElementById('idea-type').value;
+    const isJoint = document.getElementById('joint-toggle').checked;
+    if (!idea) { showToast('Describe your idea first'); return; }
+
+    const btn = document.getElementById('compose-btn');
+    btn.disabled = true; btn.textContent = '✦ Thinking…';
+    const result = document.getElementById('composer-result');
+    result.classList.remove('empty'); result.classList.add('loading-text');
+    result.textContent = '';
+    document.getElementById('composer-actions').style.display = 'none';
+
+    const systemPrompt = isJoint
+      ? `You are writing a joint post for two authors publishing on "The AI Minute".
+${AUTHOR_META.stephane.voice}
+
+${AUTHOR_META.hanne.voice}
+
+The post is jointly authored. Generate ONE title, ONE body, ONE hashtag set, and TWO separate LinkedIn drafts — one in Stéphane's voice, one in Hanne's voice. Both authentic to each person.
+Respond ONLY with JSON, no markdown:
+{
+  "title": "...",
+  "body": "2-4 sentences",
+  "hashtags": ["#Tag1","#Tag2","#Tag3","#Tag4","#Tag5"],
+  "linkedin_draft_stephane": "Full post in Stéphane's voice, 150-250 words, ends with strategic question",
+  "linkedin_draft_hanne": "Full post in Hanne's voice, 150-250 words, ends with board/leadership question"
+}`
+      : `You are writing a post for "The AI Minute" — a publication for senior leaders on AI strategy and value migration.
+${AUTHOR_META[currentAuthor].voice}
+
+Respond ONLY with JSON, no markdown:
+{
+  "title": "...",
+  "body": "2-4 sentences, direct and punchy",
+  "hashtags": ["#Tag1","#Tag2","#Tag3","#Tag4","#Tag5"],
+  "linkedin_draft": "Full LinkedIn post, 150-250 words. Hook line, insight, CTA, hashtags. Ends with a question."
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: `Post type: ${type}\nIdea: ${idea}` }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+      composerData = JSON.parse(text.replace(/```json|```/g,'').trim());
+      result.classList.remove('loading-text');
+      if (isJoint) {
+        result.textContent =
+          `TITLE: ${composerData.title}\n\nBODY: ${composerData.body}\n\nHASHTAGS: ${(composerData.hashtags||[]).join(' ')}\n\nSTÉPHANE'S DRAFT:\n${composerData.linkedin_draft_stephane}\n\nHANNE'S DRAFT:\n${composerData.linkedin_draft_hanne}`;
+      } else {
+        result.textContent =
+          `TITLE: ${composerData.title}\n\nBODY: ${composerData.body}\n\nHASHTAGS: ${(composerData.hashtags||[]).join(' ')}\n\nDRAFT:\n${composerData.linkedin_draft}`;
+      }
+      document.getElementById('composer-actions').style.display = 'flex';
+    } catch(e) {
+      result.classList.remove('loading-text');
+      result.classList.add('empty');
+      result.textContent = 'Error — check API connection.';
+    }
+    btn.disabled = false; btn.textContent = '✦ Generate';
+  }
+
+  function applyComposerResult() {
+    if (!composerData) return;
+    const isJoint = document.getElementById('joint-toggle').checked;
+    document.getElementById('f-title').value = composerData.title || '';
+    document.getElementById('f-body').value  = composerData.body  || '';
+    currentHashtags = [];
+    document.querySelectorAll('.htag').forEach(el=>el.remove());
+    (composerData.hashtags||[]).forEach(addHashtag);
+    if (isJoint) {
+      document.getElementById('f-draft-stephane').value = composerData.linkedin_draft_stephane || '';
+      document.getElementById('f-draft-hanne').value    = composerData.linkedin_draft_hanne    || '';
+    } else {
+      document.getElementById('f-draft').value = composerData.linkedin_draft || '';
+    }
+    showToast('Applied ✓ — review and save');
+  }
+
+  /* ══ HASHTAGS ══ */
+  function handleHashtagKey(e) {
+    if (e.key==='Enter'||e.key===',') {
+      e.preventDefault();
+      const val = e.target.value.trim().replace(/,/g,'');
+      if (val) addHashtag(val);
+      e.target.value='';
+    } else if (e.key==='Backspace'&&!e.target.value&&currentHashtags.length) {
+      removeHashtag(currentHashtags[currentHashtags.length-1]);
+    }
+  }
+  function addHashtag(tag) {
+    const t = tag.startsWith('#') ? tag : '#'+tag;
+    if (currentHashtags.includes(t)) return;
+    currentHashtags.push(t);
+    const area = document.getElementById('hashtag-area');
+    const input = document.getElementById('hashtag-input');
+    const span = document.createElement('span');
+    span.className='htag'; span.dataset.tag=t;
+    span.innerHTML=`${t}<button onclick="removeHashtag('${t}')" type="button">×</button>`;
+    area.insertBefore(span, input);
+  }
+  function removeHashtag(tag) {
+    currentHashtags = currentHashtags.filter(t=>t!==tag);
+    const el = document.querySelector(`.htag[data-tag="${tag}"]`);
+    if (el) el.remove();
+  }
+
+  /* ══ SUPABASE ══ */
+  async function sbFetch(path, method='GET', body=null) {
+    const opts = {
+      method,
+      headers: {
+        apikey: SUPABASE_SERVICE,
+        Authorization: `Bearer ${SUPABASE_SERVICE}`,
+        'Content-Type': 'application/json',
+        Prefer: method==='POST' ? 'return=representation' : ''
+      }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+    if (!res.ok) throw new Error(await res.text());
+    return res.status===204 ? null : res.json();
+  }
+
+  /* ══ SAVE ══ */
+  async function savePost() {
+    const title  = document.getElementById('f-title').value.trim();
+    const body   = document.getElementById('f-body').value.trim();
+    const vimeo  = document.getElementById('f-vimeo').value.trim();
+    const status = document.getElementById('f-status').value;
+    const scheduledAt = document.getElementById('f-scheduled-at').value;
+    const isJoint = document.getElementById('joint-toggle').checked;
+
+    if (!title||!body) { showToast('Title and body required'); return; }
+    if (status==='scheduled'&&!scheduledAt) { showToast('Set a publish date/time'); return; }
+
+    const author = isJoint ? 'joint' : currentAuthor;
+
+    const payload = {
+      title, body,
+      hashtags: currentHashtags,
+      vimeo_id: vimeo||null,
+      status,
+      author,
+      published_at: status==='published' ? new Date().toISOString() : (status==='scheduled' ? new Date(scheduledAt).toISOString() : null)
+    };
+
+    if (isJoint) {
+      payload.linkedin_draft_stephane = document.getElementById('f-draft-stephane').value.trim();
+      payload.linkedin_draft_hanne    = document.getElementById('f-draft-hanne').value.trim();
+      payload.linkedin_draft = payload.linkedin_draft_stephane; // fallback
+    } else {
+      payload.linkedin_draft = document.getElementById('f-draft').value.trim();
+    }
+
+    try {
+      if (editingId) {
+        await sbFetch(`posts?id=eq.${editingId}`, 'PATCH', payload);
+        showToast('Updated ✓'); editingId=null;
+      } else {
+        await sbFetch('posts', 'POST', payload);
+        showToast(status==='scheduled' ? 'Scheduled ✓' : 'Saved ✓');
+      }
+      clearForm(); loadPosts();
+    } catch(e) { showToast('Save failed — check Supabase config'); console.error(e); }
+  }
+
+  /* ══ EDIT / DELETE / TOGGLE ══ */
+  function editPost(post) {
+    editingId = post.id;
+    document.getElementById('f-title').value  = post.title||'';
+    document.getElementById('f-body').value   = post.body||'';
+    document.getElementById('f-vimeo').value  = post.vimeo_id||'';
+    document.getElementById('f-status').value = post.status||'draft';
+    toggleSchedule();
+    if (post.status==='scheduled'&&post.published_at) {
+      const d = new Date(post.published_at);
+      document.getElementById('f-scheduled-at').value = d.toISOString().slice(0,16);
+    }
+    const isJoint = post.author==='joint';
+    document.getElementById('joint-toggle').checked = isJoint;
+    toggleJoint();
+    if (isJoint) {
+      document.getElementById('f-draft-stephane').value = post.linkedin_draft_stephane||'';
+      document.getElementById('f-draft-hanne').value    = post.linkedin_draft_hanne||'';
+    } else {
+      document.getElementById('f-draft').value = post.linkedin_draft||'';
+    }
+    currentHashtags=[];
+    document.querySelectorAll('.htag').forEach(el=>el.remove());
+    (post.hashtags||[]).forEach(addHashtag);
+    window.scrollTo({top:0,behavior:'smooth'});
+    showToast('Editing — make changes and save');
+  }
+
+  async function deletePost(id) {
+    if (!confirm('Delete this post? Cannot be undone.')) return;
+    try { await sbFetch(`posts?id=eq.${id}`,'DELETE'); showToast('Deleted'); loadPosts(); }
+    catch(e) { showToast('Delete failed'); }
+  }
+
+  async function toggleStatus(post) {
+    const map = { draft:'published', published:'draft', scheduled:'draft' };
+    const newStatus = map[post.status]||'draft';
+    const patch = { status: newStatus };
+    if (newStatus==='published'&&!post.published_at) patch.published_at = new Date().toISOString();
+    try { await sbFetch(`posts?id=eq.${post.id}`,'PATCH',patch); showToast(newStatus==='published'?'Published ✓':'Set to draft'); loadPosts(); }
+    catch(e) { showToast('Update failed'); }
+  }
+
+  function clearForm() {
+    editingId=null;
+    ['f-title','f-body','f-draft','f-draft-stephane','f-draft-hanne','f-vimeo'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-status').value='draft';
+    document.getElementById('f-scheduled-at').value='';
+    document.getElementById('schedule-field').style.display='none';
+    document.getElementById('joint-toggle').checked=false;
+    toggleJoint();
+    document.getElementById('hashtag-input').value='';
+    currentHashtags=[]; document.querySelectorAll('.htag').forEach(el=>el.remove());
+    document.getElementById('composer-result').textContent='Claude\'s output will appear here…';
+    document.getElementById('composer-result').classList.add('empty');
+    document.getElementById('composer-actions').style.display='none';
+    document.getElementById('idea-input').value='';
+    composerData=null;
+  }
+
+  /* ══ LOAD POSTS ══ */
+  async function loadPosts() {
+    try {
+      const posts = await sbFetch('posts?order=created_at.desc');
+      renderPostList(posts);
+    } catch(e) {
+      document.getElementById('post-list').innerHTML='<p style="color:var(--muted);font-size:.83rem">Could not load — check Supabase config.</p>';
+    }
+  }
+
+  function renderPostList(posts) {
+    const el = document.getElementById('post-list');
+    if (!posts.length) { el.innerHTML='<p style="color:var(--muted);font-size:.83rem">No posts yet.</p>'; return; }
+
+    const authorPhotos = { stephane:'Stephane.jpeg', hanne:'Hanne.jpeg' };
+
+    el.innerHTML = posts.map(p => {
+      const date = p.published_at
+        ? new Date(p.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+        : '—';
+      const photoHtml = p.author==='joint'
+        ? `<div style="display:flex"><img src="Stephane.jpeg" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25)"><img src="Hanne.jpeg" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25);margin-left:-5px"></div>`
+        : `<img src="${authorPhotos[p.author]||'Stephane.jpeg'}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25)">`;
+
+      return `
+        <div class="post-item">
+          <div class="post-item-header">
+            <span class="post-item-title">${p.title}</span>
+            <div class="post-item-actions">
+              <button class="btn btn-ghost btn-sm" onclick='editPost(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deletePost('${p.id}')">Del</button>
+            </div>
+          </div>
+          <div class="post-item-meta">
+            ${photoHtml}
+            <span class="status-dot ${p.status}"></span>
+            <span class="status-label">${p.status}</span>
+            ${p.vimeo_id?'<span class="status-label">· ▶</span>':''}
+            <span class="status-label">· ${date}</span>
+          </div>
+          <div style="margin-top:.5rem">
+            <button class="btn btn-ghost btn-sm" onclick='toggleStatus(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+              ${p.status==='published'?'Unpublish':'Publish now'}
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /* ══ TOAST ══ */
+  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+</script>
+</body>
+</html>
