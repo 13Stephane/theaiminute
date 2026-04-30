@@ -328,7 +328,12 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
 
   const QUILL_OPTS = {
     theme: 'snow',
-    modules: { toolbar: [['bold','italic','underline'],['link'],['clean']] },
+    modules: {
+      toolbar: [['bold','italic','underline'],['link'],['clean']],
+      // Disable color/background formats so Quill never injects color styles
+      clipboard: { matchVisual: false }
+    },
+    formats: ['bold','italic','underline','link','strike'], // whitelist — no color/background
     placeholder: 'Write your post here — or use Claude Composer above and click Use This →'
   };
 
@@ -340,13 +345,14 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
 
   /* ══ HELPERS: get/set Quill content as HTML ══ */
   function stripColors(html) {
-    // Remove inline color/background styles Quill adds in dark mode
+    if (!html) return '';
+    // Remove all style attributes entirely — safest approach
     return html
-      .replace(/\s*color\s*:\s*[^;"']+;?/gi, '')
-      .replace(/\s*background-color\s*:\s*[^;"']+;?/gi, '')
-      .replace(/\s*background\s*:\s*[^;"']+;?/gi, '')
-      .replace(/style="\s*"/gi, '')   // remove empty style attrs
-      .replace(/style="\s*;\s*"/gi, '');
+      .replace(/\s*style="[^"]*"/gi, '')
+      .replace(/\s*style='[^']*'/gi, '')
+      // Unwrap empty spans Quill adds
+      .replace(/<span>(.*?)<\/span>/gi, '$1')
+      .replace(/<span\s*>(.*?)<\/span>/gi, '$1');
   }
   function getQ(q) {
     const html = q.root.innerHTML;
