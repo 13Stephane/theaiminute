@@ -90,18 +90,23 @@
     .draft-tab{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .7rem;border-radius:40px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;}
     .draft-tab.active{background:rgba(190,123,80,.15);border-color:rgba(190,123,80,.4);color:var(--gold);}
 
-    /* ── QUILL overrides ── */
-    .quill-wrap{border-radius:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
+    /* ── QUILL dark theme ── */
+    .quill-wrap{border-radius:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;background:rgba(244,240,233,.06);}
     .quill-wrap:focus-within{border-color:rgba(190,123,80,.5);}
-    .ql-toolbar{background:rgba(244,240,233,.06);border:none!important;border-bottom:1px solid var(--border)!important;padding:.4rem .6rem;}
-    .ql-toolbar .ql-stroke{stroke:var(--muted);}
-    .ql-toolbar .ql-fill{fill:var(--muted);}
+    .ql-toolbar.ql-snow{background:rgba(25,60,63,.9)!important;border:none!important;border-bottom:1px solid var(--border)!important;padding:.4rem .6rem;}
+    .ql-toolbar .ql-stroke{stroke:rgba(244,240,233,.5)!important;}
+    .ql-toolbar .ql-fill{fill:rgba(244,240,233,.5)!important;}
+    .ql-toolbar .ql-picker-label{color:rgba(244,240,233,.5)!important;}
     .ql-toolbar button:hover .ql-stroke,.ql-toolbar button.ql-active .ql-stroke{stroke:var(--gold)!important;}
     .ql-toolbar button:hover .ql-fill,.ql-toolbar button.ql-active .ql-fill{fill:var(--gold)!important;}
-    .ql-container{background:rgba(244,240,233,.06);border:none!important;font-family:'Barlow',sans-serif;font-size:.87rem;}
-    .ql-editor{color:var(--cream);min-height:120px;padding:.6rem .85rem;}
-    .ql-editor.ql-blank::before{color:var(--muted);font-style:italic;}
-    .ql-editor p{margin-bottom:.5em;}
+    .ql-container.ql-snow{background:rgb(25,60,63)!important;border:none!important;font-family:'Barlow',sans-serif;font-size:.87rem;}
+    .ql-editor{color:var(--cream)!important;min-height:140px;padding:.7rem .85rem;background:rgb(25,60,63)!important;}
+    .ql-editor.ql-blank::before{color:var(--muted);font-style:italic;left:.85rem;}
+    .ql-editor p,.ql-editor strong,.ql-editor em,.ql-editor li{color:var(--cream)!important;}
+    .ql-editor a{color:var(--gold)!important;}
+    .ql-tooltip{background:var(--teal-mid)!important;border:1px solid var(--border)!important;color:var(--cream)!important;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+    .ql-tooltip input[type=text]{background:rgba(244,240,233,.1)!important;border:1px solid var(--border)!important;color:var(--cream)!important;border-radius:6px;}
+    .ql-tooltip a{color:var(--gold)!important;}
 
     /* Joint quill panels */
     #quill-joint-stephane-wrap,#quill-joint-hanne-wrap{display:none;}
