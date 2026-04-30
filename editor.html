@@ -7,6 +7,8 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Quill rich text editor -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
   <style>
     :root{
       --teal:rgb(25,60,63);--teal-mid:rgb(35,80,84);--teal-light:rgb(45,100,105);
@@ -28,7 +30,6 @@
     .lock-form input::placeholder{color:var(--muted);}
     #lock-error{color:var(--red);font-size:.78rem;text-align:center;min-height:1rem;}
 
-    /* ── APP ── */
     #app{display:none;}
 
     /* ── TOPBAR ── */
@@ -54,11 +55,10 @@
     /* ── FORM ── */
     .field{margin-bottom:1.1rem;}
     label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem;}
-    input[type=text],input[type=datetime-local],textarea,select{width:100%;background:rgba(244,240,233,.06);border:1px solid var(--border);border-radius:10px;padding:.58rem .85rem;color:var(--cream);font-family:'Barlow',sans-serif;font-size:.87rem;outline:none;transition:border-color .2s;resize:vertical;}
-    input[type=text]:focus,input[type=datetime-local]:focus,textarea:focus,select:focus{border-color:rgba(190,123,80,.5);}
+    input[type=text],input[type=url],input[type=datetime-local],textarea,select{width:100%;background:rgba(244,240,233,.06);border:1px solid var(--border);border-radius:10px;padding:.58rem .85rem;color:var(--cream);font-family:'Barlow',sans-serif;font-size:.87rem;outline:none;transition:border-color .2s;resize:vertical;}
+    input[type=text]:focus,input[type=url]:focus,input[type=datetime-local]:focus,textarea:focus,select:focus{border-color:rgba(190,123,80,.5);}
     input::placeholder,textarea::placeholder{color:var(--muted);}
     select option{background:var(--teal-mid);color:var(--cream);}
-    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
     .field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;}
 
     /* Joint toggle */
@@ -79,16 +79,32 @@
     .composer-box{background:rgba(190,123,80,.06);border:1px solid rgba(190,123,80,.2);border-radius:14px;padding:1.2rem;margin-bottom:1.5rem;}
     .composer-box label{color:var(--gold);}
     .composer-hint{font-size:.77rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5;}
-    .composer-result{background:rgba(244,240,233,.05);border:1px solid var(--border);border-radius:10px;padding:.8rem;font-size:.82rem;color:var(--ink);line-height:1.65;white-space:pre-wrap;min-height:56px;position:relative;}
+    .composer-result{background:rgba(244,240,233,.05);border:1px solid var(--border);border-radius:10px;padding:.8rem;font-size:.82rem;color:var(--ink);line-height:1.65;white-space:pre-wrap;min-height:56px;}
     .composer-result.empty{color:var(--muted);font-style:italic;}
     .composer-result.loading-text::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);animation:blink .8s ease-in-out infinite;margin-left:4px;vertical-align:middle;}
     @keyframes blink{0%,100%{opacity:.2;}50%{opacity:1;}}
     .composer-actions{display:flex;gap:.55rem;margin-top:.7rem;flex-wrap:wrap;}
 
-    /* Draft tabs (for joint posts) */
+    /* Draft tabs */
     .draft-tabs{display:flex;gap:.4rem;margin-bottom:.5rem;}
     .draft-tab{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .7rem;border-radius:40px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;}
     .draft-tab.active{background:rgba(190,123,80,.15);border-color:rgba(190,123,80,.4);color:var(--gold);}
+
+    /* ── QUILL overrides ── */
+    .quill-wrap{border-radius:10px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;}
+    .quill-wrap:focus-within{border-color:rgba(190,123,80,.5);}
+    .ql-toolbar{background:rgba(244,240,233,.06);border:none!important;border-bottom:1px solid var(--border)!important;padding:.4rem .6rem;}
+    .ql-toolbar .ql-stroke{stroke:var(--muted);}
+    .ql-toolbar .ql-fill{fill:var(--muted);}
+    .ql-toolbar button:hover .ql-stroke,.ql-toolbar button.ql-active .ql-stroke{stroke:var(--gold)!important;}
+    .ql-toolbar button:hover .ql-fill,.ql-toolbar button.ql-active .ql-fill{fill:var(--gold)!important;}
+    .ql-container{background:rgba(244,240,233,.06);border:none!important;font-family:'Barlow',sans-serif;font-size:.87rem;}
+    .ql-editor{color:var(--cream);min-height:120px;padding:.6rem .85rem;}
+    .ql-editor.ql-blank::before{color:var(--muted);font-style:italic;}
+    .ql-editor p{margin-bottom:.5em;}
+
+    /* Joint quill panels */
+    #quill-joint-stephane-wrap,#quill-joint-hanne-wrap{display:none;}
 
     /* ── BUTTONS ── */
     .btn{display:inline-flex;align-items:center;gap:.4rem;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.46rem 1rem;border-radius:40px;cursor:pointer;text-decoration:none;transition:all .2s;border:none;}
@@ -109,15 +125,12 @@
     .post-item-title{font-family:'Cormorant Garamond',serif;font-size:.98rem;font-weight:600;color:var(--cream);line-height:1.2;}
     .post-item-actions{display:flex;gap:.35rem;flex-shrink:0;}
     .post-item-meta{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.4rem;}
-    .post-byline-mini{display:flex;align-items:center;gap:.3rem;}
-    .post-byline-mini img{width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25);}
     .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
     .status-dot.published{background:var(--gold);}
     .status-dot.draft{background:var(--muted);}
     .status-dot.scheduled{background:rgb(100,180,200);}
     .status-label{font-size:.65rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;}
 
-    /* Toast */
     .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--teal-mid);border:1px solid rgba(190,123,80,.4);color:var(--cream);font-family:'Barlow',sans-serif;font-size:.83rem;padding:.6rem 1.4rem;border-radius:40px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s ease;pointer-events:none;z-index:9999;white-space:nowrap;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -129,7 +142,6 @@
 </head>
 <body>
 
-<!-- ── LOCK ── -->
 <div id="lock-screen">
   <img src="logo.png" alt="logo" onerror="this.style.display='none'">
   <h2>Editor Access</h2>
@@ -141,7 +153,6 @@
   </div>
 </div>
 
-<!-- ── APP ── -->
 <div id="app">
   <div class="topbar">
     <div class="topbar-left">
@@ -160,12 +171,9 @@
   </div>
 
   <div class="layout">
-
-    <!-- ── LEFT: COMPOSE ── -->
     <div class="panel panel-left">
       <div class="section-label">Compose</div>
 
-      <!-- Joint toggle -->
       <label class="joint-toggle" id="joint-toggle-wrap">
         <input type="checkbox" id="joint-toggle" onchange="toggleJoint()">
         <span class="joint-toggle-label">Joint post — Guerraz &amp; Breddam</span>
@@ -175,7 +183,7 @@
       <!-- Claude Composer -->
       <div class="composer-box">
         <label>✦ Claude Composer</label>
-        <p class="composer-hint">Describe your idea. Claude writes in your voice — title, body, hashtags, and LinkedIn draft.</p>
+        <p class="composer-hint">Describe your idea. Claude writes in your voice — title, post content, hashtags, and LinkedIn draft.</p>
         <div class="field">
           <textarea id="idea-input" rows="3" placeholder="e.g. Why most boards are asking the wrong AI question — they're optimising for cost when the value is in positioning..."></textarea>
         </div>
@@ -204,27 +212,29 @@
         <input type="text" id="f-title" placeholder="What's the insight?">
       </div>
 
-      <div class="field">
-        <label>Body</label>
-        <textarea id="f-body" rows="4" placeholder="2–4 sentences. Clear, direct, no hedging."></textarea>
-      </div>
-
-      <!-- LinkedIn drafts — single or dual -->
+      <!-- MERGED: single rich text field for single-author posts -->
       <div id="draft-single">
         <div class="field">
-          <label>LinkedIn Draft <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(what visitors copy)</span></label>
-          <textarea id="f-draft" rows="6" placeholder="Full LinkedIn post — hook, insight, CTA, hashtags."></textarea>
+          <label>Post Content &amp; LinkedIn Draft <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(appears on site + visitors copy to LinkedIn)</span></label>
+          <div class="quill-wrap" id="quill-single-wrap">
+            <div id="quill-single"></div>
+          </div>
         </div>
       </div>
 
+      <!-- JOINT: two separate rich text fields -->
       <div id="draft-joint" style="display:none">
         <div class="field">
           <div class="draft-tabs">
             <button class="draft-tab active" onclick="switchDraftTab('stephane',this)">Stéphane's Draft</button>
             <button class="draft-tab" onclick="switchDraftTab('hanne',this)">Hanne's Draft</button>
           </div>
-          <textarea id="f-draft-stephane" rows="6" placeholder="LinkedIn draft in Stéphane's voice…"></textarea>
-          <textarea id="f-draft-hanne" rows="6" placeholder="LinkedIn draft in Hanne's voice…" style="display:none;margin-top:.5rem"></textarea>
+          <div id="quill-joint-stephane-wrap" class="quill-wrap" style="display:block">
+            <div id="quill-joint-stephane"></div>
+          </div>
+          <div id="quill-joint-hanne-wrap" class="quill-wrap" style="display:none;margin-top:.5rem">
+            <div id="quill-joint-hanne"></div>
+          </div>
         </div>
       </div>
 
@@ -265,7 +275,6 @@
       </div>
     </div>
 
-    <!-- ── RIGHT: POST LIST ── -->
     <div class="panel panel-right">
       <div class="section-label">All Posts</div>
       <div class="post-list" id="post-list">
@@ -277,10 +286,11 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script>
   /* ══ CONFIG ══ */
   const PASSWORDS = {
-    stephane: 'changeme-stephane',   // ← set before deploying
+    stephane: 'changeme-stephane',
     hanne:    'changeme-hanne'
   };
   const SUPABASE_URL     = 'https://kcobpakjfluuyfzswtoq.supabase.co';
@@ -307,6 +317,34 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
   let currentHashtags = [];
   let composerData = null;
   let activeDraftTab = 'stephane';
+
+  /* ══ QUILL INSTANCES — initialised after DOM ready ══ */
+  let qSingle, qStephane, qHanne;
+
+  const QUILL_OPTS = {
+    theme: 'snow',
+    modules: { toolbar: [['bold','italic','underline'],['link'],['clean']] },
+    placeholder: 'Write your post here — or use Claude Composer above and click Use This →'
+  };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    qSingle   = new Quill('#quill-single',          QUILL_OPTS);
+    qStephane = new Quill('#quill-joint-stephane',  { ...QUILL_OPTS, placeholder: "Stéphane's draft…" });
+    qHanne    = new Quill('#quill-joint-hanne',     { ...QUILL_OPTS, placeholder: "Hanne's draft…" });
+  });
+
+  /* ══ HELPERS: get/set Quill content as HTML ══ */
+  function getQ(q)       { return q.root.innerHTML === '<p><br></p>' ? '' : q.root.innerHTML; }
+  function setQ(q, html) { q.root.innerHTML = html || ''; }
+
+  /* Quill HTML → plain text for LinkedIn copy (strips tags, preserves newlines) */
+  function htmlToPlain(html) {
+    return html
+      .replace(/<\/p>/gi, '\n').replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '').replace(/&nbsp;/g,' ')
+      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+      .replace(/\n{3,}/g,'\n\n').trim();
+  }
 
   /* ══ LOCK ══ */
   function unlock() {
@@ -348,11 +386,11 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
     activeDraftTab = author;
     document.querySelectorAll('.draft-tab').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('f-draft-stephane').style.display = author==='stephane' ? 'block' : 'none';
-    document.getElementById('f-draft-hanne').style.display    = author==='hanne'    ? 'block' : 'none';
+    document.getElementById('quill-joint-stephane-wrap').style.display = author==='stephane' ? 'block' : 'none';
+    document.getElementById('quill-joint-hanne-wrap').style.display    = author==='hanne'    ? 'block' : 'none';
   }
 
-  /* ══ SCHEDULED PUBLISH TOGGLE ══ */
+  /* ══ SCHEDULE TOGGLE ══ */
   function toggleSchedule() {
     const val = document.getElementById('f-status').value;
     document.getElementById('schedule-field').style.display = val === 'scheduled' ? 'block' : 'none';
@@ -360,8 +398,8 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
 
   /* ══ CLAUDE COMPOSER ══ */
   async function composeWithClaude() {
-    const idea   = document.getElementById('idea-input').value.trim();
-    const type   = document.getElementById('idea-type').value;
+    const idea    = document.getElementById('idea-input').value.trim();
+    const type    = document.getElementById('idea-type').value;
     const isJoint = document.getElementById('joint-toggle').checked;
     if (!idea) { showToast('Describe your idea first'); return; }
 
@@ -378,11 +416,12 @@ ${AUTHOR_META.stephane.voice}
 
 ${AUTHOR_META.hanne.voice}
 
-The post is jointly authored. Generate ONE title, ONE body, ONE hashtag set, and TWO separate LinkedIn drafts — one in Stéphane's voice, one in Hanne's voice. Both authentic to each person.
+The post is jointly authored. Generate ONE title, ONE body (2-4 sentences for the website), ONE hashtag set, and TWO separate LinkedIn drafts — one in each author's voice.
+The body field is used both as the website post AND as the LinkedIn draft for single-author posts — write it as flowing paragraphs with line breaks between them.
 Respond ONLY with JSON, no markdown:
 {
   "title": "...",
-  "body": "2-4 sentences",
+  "body": "2-4 sentences as paragraphs separated by \\n\\n",
   "hashtags": ["#Tag1","#Tag2","#Tag3","#Tag4","#Tag5"],
   "linkedin_draft_stephane": "Full post in Stéphane's voice, 150-250 words, ends with strategic question",
   "linkedin_draft_hanne": "Full post in Hanne's voice, 150-250 words, ends with board/leadership question"
@@ -390,18 +429,23 @@ Respond ONLY with JSON, no markdown:
       : `You are writing a post for "The AI Minute" — a publication for senior leaders on AI strategy and value migration.
 ${AUTHOR_META[currentAuthor].voice}
 
+The "body" field is used BOTH as the website post text AND as what visitors copy to share on LinkedIn. Write it as a complete, standalone LinkedIn post: hook line, insight, call to action, hashtags, ends with a question. Use paragraph breaks (\\n\\n) between sections. 150-250 words.
 Respond ONLY with JSON, no markdown:
 {
   "title": "...",
-  "body": "2-4 sentences, direct and punchy",
-  "hashtags": ["#Tag1","#Tag2","#Tag3","#Tag4","#Tag5"],
-  "linkedin_draft": "Full LinkedIn post, 150-250 words. Hook line, insight, CTA, hashtags. Ends with a question."
+  "body": "Full post with paragraphs separated by \\n\\n. Hook. Insight. CTA. Hashtags. Question.",
+  "hashtags": ["#Tag1","#Tag2","#Tag3","#Tag4","#Tag5"]
 }`;
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': 'YOUR_ANTHROPIC_API_KEY',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
@@ -414,17 +458,16 @@ Respond ONLY with JSON, no markdown:
       composerData = JSON.parse(text.replace(/```json|```/g,'').trim());
       result.classList.remove('loading-text');
       if (isJoint) {
-        result.textContent =
-          `TITLE: ${composerData.title}\n\nBODY: ${composerData.body}\n\nHASHTAGS: ${(composerData.hashtags||[]).join(' ')}\n\nSTÉPHANE'S DRAFT:\n${composerData.linkedin_draft_stephane}\n\nHANNE'S DRAFT:\n${composerData.linkedin_draft_hanne}`;
+        result.textContent = `TITLE: ${composerData.title}\n\nBODY: ${composerData.body}\n\nHASHTAGS: ${(composerData.hashtags||[]).join(' ')}\n\nSTÉPHANE'S DRAFT:\n${composerData.linkedin_draft_stephane}\n\nHANNE'S DRAFT:\n${composerData.linkedin_draft_hanne}`;
       } else {
-        result.textContent =
-          `TITLE: ${composerData.title}\n\nBODY: ${composerData.body}\n\nHASHTAGS: ${(composerData.hashtags||[]).join(' ')}\n\nDRAFT:\n${composerData.linkedin_draft}`;
+        result.textContent = `TITLE: ${composerData.title}\n\nPOST:\n${composerData.body}\n\nHASHTAGS: ${(composerData.hashtags||[]).join(' ')}`;
       }
       document.getElementById('composer-actions').style.display = 'flex';
     } catch(e) {
       result.classList.remove('loading-text');
       result.classList.add('empty');
       result.textContent = 'Error — check API connection.';
+      console.error(e);
     }
     btn.disabled = false; btn.textContent = '✦ Generate';
   }
@@ -433,17 +476,22 @@ Respond ONLY with JSON, no markdown:
     if (!composerData) return;
     const isJoint = document.getElementById('joint-toggle').checked;
     document.getElementById('f-title').value = composerData.title || '';
-    document.getElementById('f-body').value  = composerData.body  || '';
     currentHashtags = [];
     document.querySelectorAll('.htag').forEach(el=>el.remove());
     (composerData.hashtags||[]).forEach(addHashtag);
+
     if (isJoint) {
-      document.getElementById('f-draft-stephane').value = composerData.linkedin_draft_stephane || '';
-      document.getElementById('f-draft-hanne').value    = composerData.linkedin_draft_hanne    || '';
+      // Convert plain text with \n\n to HTML paragraphs for Quill
+      setQ(qStephane, plainToHtml(composerData.linkedin_draft_stephane || ''));
+      setQ(qHanne,    plainToHtml(composerData.linkedin_draft_hanne    || ''));
     } else {
-      document.getElementById('f-draft').value = composerData.linkedin_draft || '';
+      setQ(qSingle, plainToHtml(composerData.body || ''));
     }
     showToast('Applied ✓ — review and save');
+  }
+
+  function plainToHtml(text) {
+    return text.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
   }
 
   /* ══ HASHTAGS ══ */
@@ -493,35 +541,43 @@ Respond ONLY with JSON, no markdown:
 
   /* ══ SAVE ══ */
   async function savePost() {
-    const title  = document.getElementById('f-title').value.trim();
-    const body   = document.getElementById('f-body').value.trim();
-    const vimeo  = document.getElementById('f-vimeo').value.trim();
-    const status = document.getElementById('f-status').value;
+    const title     = document.getElementById('f-title').value.trim();
+    const vimeo     = document.getElementById('f-vimeo').value.trim();
+    const status    = document.getElementById('f-status').value;
     const scheduledAt = document.getElementById('f-scheduled-at').value;
-    const isJoint = document.getElementById('joint-toggle').checked;
+    const isJoint   = document.getElementById('joint-toggle').checked;
+    const liPostUrl = document.getElementById('f-li-url').value.trim();
 
-    if (!title||!body) { showToast('Title and body required'); return; }
+    // Get content from Quill
+    const bodyHtml = isJoint ? '' : getQ(qSingle);
+    const bodyPlain = htmlToPlain(bodyHtml);
+
+    if (!title || (!isJoint && !bodyPlain)) { showToast('Title and content required'); return; }
     if (status==='scheduled'&&!scheduledAt) { showToast('Set a publish date/time'); return; }
 
     const author = isJoint ? 'joint' : currentAuthor;
 
-    const liPostUrl = document.getElementById('f-li-url').value.trim();
     const payload = {
-      title, body,
+      title,
+      body: bodyHtml,          // store HTML for rich rendering on site
+      linkedin_draft: bodyPlain, // plain text for copy-to-clipboard
       hashtags: currentHashtags,
       vimeo_id: vimeo||null,
       linkedin_post_url: liPostUrl||null,
       status,
       author,
-      published_at: status==='published' ? new Date().toISOString() : (status==='scheduled' ? new Date(scheduledAt).toISOString() : null)
+      published_at: status==='published' ? new Date().toISOString()
+                  : status==='scheduled' ? new Date(scheduledAt).toISOString()
+                  : null
     };
 
     if (isJoint) {
-      payload.linkedin_draft_stephane = document.getElementById('f-draft-stephane').value.trim();
-      payload.linkedin_draft_hanne    = document.getElementById('f-draft-hanne').value.trim();
-      payload.linkedin_draft = payload.linkedin_draft_stephane; // fallback
-    } else {
-      payload.linkedin_draft = document.getElementById('f-draft').value.trim();
+      const sHtml = getQ(qStephane);
+      const hHtml = getQ(qHanne);
+      payload.body = sHtml; // use Stéphane's as default body
+      payload.linkedin_draft_stephane = htmlToPlain(sHtml);
+      payload.linkedin_draft_hanne    = htmlToPlain(hHtml);
+      payload.linkedin_draft          = payload.linkedin_draft_stephane;
     }
 
     try {
@@ -536,27 +592,26 @@ Respond ONLY with JSON, no markdown:
     } catch(e) { showToast('Save failed — check Supabase config'); console.error(e); }
   }
 
-  /* ══ EDIT / DELETE / TOGGLE ══ */
+  /* ══ EDIT ══ */
   function editPost(post) {
     editingId = post.id;
-    document.getElementById('f-title').value  = post.title||'';
-    document.getElementById('f-body').value   = post.body||'';
-    document.getElementById('f-vimeo').value  = post.vimeo_id||'';
+    document.getElementById('f-title').value   = post.title||'';
+    document.getElementById('f-vimeo').value   = post.vimeo_id||'';
     document.getElementById('f-li-url').value  = post.linkedin_post_url||'';
-    document.getElementById('f-status').value = post.status||'draft';
+    document.getElementById('f-status').value  = post.status||'draft';
     toggleSchedule();
     if (post.status==='scheduled'&&post.published_at) {
-      const d = new Date(post.published_at);
-      document.getElementById('f-scheduled-at').value = d.toISOString().slice(0,16);
+      document.getElementById('f-scheduled-at').value = new Date(post.published_at).toISOString().slice(0,16);
     }
     const isJoint = post.author==='joint';
     document.getElementById('joint-toggle').checked = isJoint;
     toggleJoint();
     if (isJoint) {
-      document.getElementById('f-draft-stephane').value = post.linkedin_draft_stephane||'';
-      document.getElementById('f-draft-hanne').value    = post.linkedin_draft_hanne||'';
+      setQ(qStephane, plainToHtml(post.linkedin_draft_stephane||post.linkedin_draft||''));
+      setQ(qHanne,    plainToHtml(post.linkedin_draft_hanne||''));
     } else {
-      document.getElementById('f-draft').value = post.linkedin_draft||'';
+      // Prefer stored HTML body; fall back to plain draft
+      setQ(qSingle, post.body && post.body.includes('<') ? post.body : plainToHtml(post.body||post.linkedin_draft||''));
     }
     currentHashtags=[];
     document.querySelectorAll('.htag').forEach(el=>el.remove());
@@ -582,12 +637,17 @@ Respond ONLY with JSON, no markdown:
 
   function clearForm() {
     editingId=null;
-    ['f-title','f-body','f-draft','f-draft-stephane','f-draft-hanne','f-vimeo','f-li-url'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-title').value='';
+    document.getElementById('f-vimeo').value='';
+    document.getElementById('f-li-url').value='';
     document.getElementById('f-status').value='draft';
     document.getElementById('f-scheduled-at').value='';
     document.getElementById('schedule-field').style.display='none';
     document.getElementById('joint-toggle').checked=false;
     toggleJoint();
+    if (qSingle)   setQ(qSingle,'');
+    if (qStephane) setQ(qStephane,'');
+    if (qHanne)    setQ(qHanne,'');
     document.getElementById('hashtag-input').value='';
     currentHashtags=[]; document.querySelectorAll('.htag').forEach(el=>el.remove());
     document.getElementById('composer-result').textContent='Claude\'s output will appear here…';
@@ -610,9 +670,7 @@ Respond ONLY with JSON, no markdown:
   function renderPostList(posts) {
     const el = document.getElementById('post-list');
     if (!posts.length) { el.innerHTML='<p style="color:var(--muted);font-size:.83rem">No posts yet.</p>'; return; }
-
     const authorPhotos = { stephane:'Stephane.jpeg', hanne:'Hanne.jpeg' };
-
     el.innerHTML = posts.map(p => {
       const date = p.published_at
         ? new Date(p.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
@@ -620,7 +678,6 @@ Respond ONLY with JSON, no markdown:
       const photoHtml = p.author==='joint'
         ? `<div style="display:flex"><img src="Stephane.jpeg" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25)"><img src="Hanne.jpeg" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25);margin-left:-5px"></div>`
         : `<img src="${authorPhotos[p.author]||'Stephane.jpeg'}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25)">`;
-
       return `
         <div class="post-item">
           <div class="post-item-header">
@@ -647,7 +704,6 @@ Respond ONLY with JSON, no markdown:
     }).join('');
   }
 
-  /* ══ TOAST ══ */
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
 </body>
