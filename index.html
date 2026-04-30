@@ -265,7 +265,8 @@
     return html
       .replace(/\s*style="[^"]*"/gi, '')
       .replace(/\s*style='[^']*'/gi, '')
-      .replace(/<span>(.*?)<\/span>/gi, '$1');
+      .replace(/<span>(.*?)<\/span>/gi, '$1')
+      .replace(/<a /gi, '<a style="color:rgb(190,123,80);text-decoration:underline;" ');
   }
 
   function renderPosts(posts) {
