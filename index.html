@@ -92,9 +92,9 @@
     .byline-name{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;letter-spacing:.01em;color:var(--gold);}
 
     .post-card h2{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;line-height:1.25;color:var(--cream);margin-bottom:.65rem;}
-    .post-card p.body{font-size:.88rem;color:var(--ink);line-height:1.68;margin-bottom:1.2rem;}
+    .post-card .body{font-size:.88rem;color:var(--ink);line-height:1.68;margin-bottom:1.2rem;}
     .post-card a{color:var(--gold)!important;}
-    .post-card p.body a{color:var(--gold)!important;text-decoration:underline;text-decoration-color:rgba(190,123,80,.4);}
+    .post-card .body a{color:var(--gold)!important;text-decoration:underline;text-decoration-color:rgba(190,123,80,.4);}
 
     /* Video */
     .video-wrap{display:flex;justify-content:flex-start;margin:1.2rem 0;}
@@ -308,7 +308,7 @@
           </div>
           ${bylineHtml(p.author||'stephane')}
           <h2>${p.title}</h2>
-          <p class="body">${stripStyles(p.body)}</p>
+          <div class="body">${stripStyles(p.body)}</div>
           ${videoHtml}
           <div class="hashtags">${tags}</div>
           <div class="post-actions">
