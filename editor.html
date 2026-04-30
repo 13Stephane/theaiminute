@@ -235,6 +235,11 @@
         </div>
       </div>
 
+      <div class="field">
+        <label>LinkedIn Post URL <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(paste after publishing on LinkedIn)</span></label>
+        <input type="url" id="f-li-url" placeholder="https://www.linkedin.com/posts/...">
+      </div>
+
       <div class="field-row-3">
         <div class="field">
           <label>Vimeo ID</label>
@@ -278,9 +283,9 @@
     stephane: 'changeme-stephane',   // ← set before deploying
     hanne:    'changeme-hanne'
   };
-  const SUPABASE_URL     = 'https://kcobpakjfluuyfzswtoq.supabase.co';
-  const SUPABASE_SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjb2JwYWtqZmx1dXlmenN3dG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MTEyMTgsImV4cCI6MjA5Mjk4NzIxOH0.qSlZOSGMtfBWfNlrJrO-SWLRumLFZb0qVkZPWh1dRWM';
-  const SITE_URL         = 'https://www.theaiminute.blog';
+  const SUPABASE_URL     = 'https://YOUR_PROJECT.supabase.co';
+  const SUPABASE_SERVICE = 'YOUR_SERVICE_ROLE_KEY';
+  const SITE_URL         = 'https://yourdomain.com';
 
   const AUTHOR_META = {
     stephane: {
@@ -500,10 +505,12 @@ Respond ONLY with JSON, no markdown:
 
     const author = isJoint ? 'joint' : currentAuthor;
 
+    const liPostUrl = document.getElementById('f-li-url').value.trim();
     const payload = {
       title, body,
       hashtags: currentHashtags,
       vimeo_id: vimeo||null,
+      linkedin_post_url: liPostUrl||null,
       status,
       author,
       published_at: status==='published' ? new Date().toISOString() : (status==='scheduled' ? new Date(scheduledAt).toISOString() : null)
@@ -535,6 +542,7 @@ Respond ONLY with JSON, no markdown:
     document.getElementById('f-title').value  = post.title||'';
     document.getElementById('f-body').value   = post.body||'';
     document.getElementById('f-vimeo').value  = post.vimeo_id||'';
+    document.getElementById('f-li-url').value  = post.linkedin_post_url||'';
     document.getElementById('f-status').value = post.status||'draft';
     toggleSchedule();
     if (post.status==='scheduled'&&post.published_at) {
@@ -574,7 +582,7 @@ Respond ONLY with JSON, no markdown:
 
   function clearForm() {
     editingId=null;
-    ['f-title','f-body','f-draft','f-draft-stephane','f-draft-hanne','f-vimeo'].forEach(id=>document.getElementById(id).value='');
+    ['f-title','f-body','f-draft','f-draft-stephane','f-draft-hanne','f-vimeo','f-li-url'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f-status').value='draft';
     document.getElementById('f-scheduled-at').value='';
     document.getElementById('schedule-field').style.display='none';
@@ -627,6 +635,7 @@ Respond ONLY with JSON, no markdown:
             <span class="status-dot ${p.status}"></span>
             <span class="status-label">${p.status}</span>
             ${p.vimeo_id?'<span class="status-label">· ▶</span>':''}
+            ${p.linkedin_post_url?'<span class="status-label">· LI</span>':''}
             <span class="status-label">· ${date}</span>
           </div>
           <div style="margin-top:.5rem">
