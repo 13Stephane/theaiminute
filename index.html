@@ -95,6 +95,8 @@
     .post-card .body{font-size:.88rem;color:var(--ink);line-height:1.68;margin-bottom:1.2rem;}
     .post-card a{color:var(--gold)!important;}
     .post-card .body a{color:var(--gold)!important;text-decoration:underline;text-decoration-color:rgba(190,123,80,.4);}
+    .post-card .body a:visited{color:var(--gold)!important;}
+    .post-card .body a:hover{color:var(--gold-dark)!important;}
 
     /* Video */
     .video-wrap{display:flex;justify-content:flex-start;margin:1.2rem 0;}
@@ -266,7 +268,7 @@
       .replace(/\s*style="[^"]*"/gi, '')
       .replace(/\s*style='[^']*'/gi, '')
       .replace(/<span>(.*?)<\/span>/gi, '$1')
-      .replace(/<a /gi, '<a style="color:rgb(190,123,80);text-decoration:underline;" ');
+      .replace(/<a /gi, '<a style="color:rgb(190,123,80)!important;text-decoration:underline;" ');
   }
 
   function renderPosts(posts) {
