@@ -258,6 +258,14 @@
     </div>`;
   }
 
+  function stripStyles(html) {
+    if (!html) return '';
+    return html
+      .replace(/\s*style="[^"]*"/gi, '')
+      .replace(/\s*style='[^']*'/gi, '')
+      .replace(/<span>(.*?)<\/span>/gi, '$1');
+  }
+
   function renderPosts(posts) {
     const c = document.getElementById('posts-container');
     if (!posts.length) {
@@ -298,7 +306,7 @@
           </div>
           ${bylineHtml(p.author||'stephane')}
           <h2>${p.title}</h2>
-          <p class="body">${p.body}</p>
+          <p class="body">${stripStyles(p.body)}</p>
           ${videoHtml}
           <div class="hashtags">${tags}</div>
           <div class="post-actions">
