@@ -201,10 +201,12 @@
       <h3>One signal. Every week.</h3>
       <p>No noise. No groupthink. Just where value is moving next.</p>
     </div>
-    <div class="newsletter-form">
-      <input type="email" placeholder="your@email.com" id="email-input">
-      <button class="btn btn-primary" onclick="subscribeEmail()">Subscribe</button>
-    </div>
+    <!-- Use a real form element with the ConvertKit action URL -->
+  <form action="https://app.kit.com/forms/9384415/subscriptions" method="POST" class="newsletter-form" id="ck-form">
+  <!-- The 'name' attribute MUST be 'email_address' for Kit to recognize it -->
+    <input type="email" name="email_address" placeholder="your@email.com" id="email-input" required>
+    <button type="submit" class="btn btn-primary">Subscribe</button>
+  </form>
   </div>
 </main>
 
@@ -315,13 +317,20 @@
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
   function copyLink(url){navigator.clipboard.writeText(url).then(()=>showToast('Link copied ✓'));}
   function copyDraft(draft,url){navigator.clipboard.writeText((draft||'')+'\n\n'+url).then(()=>showToast('Draft copied — paste into LinkedIn ✓'));}
-  function subscribeEmail(){
-    const email=document.getElementById('email-input').value.trim();
-    if(!email||!email.includes('@')){showToast('Please enter a valid email');return;}
-    fetch(CK_FORM_ACTION,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`email_address=${encodeURIComponent(email)}`})
-      .then(()=>{showToast('Subscribed ✓');document.getElementById('email-input').value='';})
-      .catch(()=>showToast('Check your ConvertKit form ID'));
-  }
+  //function subscribeEmail(){
+ //   const email=document.getElementById('email-input').value.trim();
+  //  if(!email||!email.includes('@')){showToast('Please enter a valid email');return;}
+  //  fetch(CK_FORM_ACTION,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`email_address=${encodeURIComponent(email)}`})
+  //    .then(()=>{showToast('Subscribed ✓');document.getElementById('email-input').value='';})
+  //    .catch(()=>showToast('Check your ConvertKit form ID'));
+ // }
+  // REPLACE the old subscribeEmail function with this:
+document.getElementById('ck-form').addEventListener('submit', function(e) {
+  // This shows the toast message immediately when they click submit
+  showToast('Subscribing... ✓');
+  
+  // The browser will now handle the actual data transfer to Kit.com
+});
 
   loadPosts();
 </script>
