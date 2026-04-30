@@ -339,8 +339,20 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
   });
 
   /* ══ HELPERS: get/set Quill content as HTML ══ */
-  function getQ(q)       { return q.root.innerHTML === '<p><br></p>' ? '' : q.root.innerHTML; }
-  function setQ(q, html) { q.root.innerHTML = html || ''; }
+  function stripColors(html) {
+    // Remove inline color/background styles Quill adds in dark mode
+    return html
+      .replace(/\s*color\s*:\s*[^;"']+;?/gi, '')
+      .replace(/\s*background-color\s*:\s*[^;"']+;?/gi, '')
+      .replace(/\s*background\s*:\s*[^;"']+;?/gi, '')
+      .replace(/style="\s*"/gi, '')   // remove empty style attrs
+      .replace(/style="\s*;\s*"/gi, '');
+  }
+  function getQ(q) {
+    const html = q.root.innerHTML;
+    return html === '<p><br></p>' ? '' : stripColors(html);
+  }
+  function setQ(q, html) { q.root.innerHTML = html ? stripColors(html) : ''; }
 
   /* Quill HTML → plain text for LinkedIn copy (strips tags, preserves newlines) */
   function htmlToPlain(html) {
