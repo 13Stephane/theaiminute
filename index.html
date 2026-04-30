@@ -108,7 +108,9 @@
     /* Actions */
     .post-actions{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;padding-top:1rem;border-top:1px solid var(--border);}
     .btn{display:inline-flex;align-items:center;gap:.4rem;font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.48rem 1rem;border-radius:40px;cursor:pointer;text-decoration:none;transition:all .2s;border:none;}
-    .btn-primary{background:var(--gold);color:var(--teal);}
+    .btn-primary{background:var(--gold);color:var(--teal)!important;}
+    .btn-primary,.btn-primary:link,.btn-primary:visited,.btn-primary:hover,.btn-primary:active{color:var(--teal)!important;}
+    .btn-primary{background:var(--gold);}
     .btn-primary:hover{background:var(--gold-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(190,123,80,.28);}
     .btn-ghost{background:transparent;color:var(--cream);border:1px solid var(--border);}
     .btn-ghost:hover{border-color:rgba(190,123,80,.4);color:var(--gold);background:rgba(190,123,80,.06);}
