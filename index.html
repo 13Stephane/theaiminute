@@ -266,9 +266,7 @@
       .replace(/\s*style="[^"]*"/gi, '')
       .replace(/\s*style='[^']*'/gi, '')
       .replace(/<span>(.*?)<\/span>/gi, '$1')
-      // Convert <a href="..."> to styled spans that open links onclick
-      .replace(/<a\s+(?:[^>]*\s+)?href="([^"]*)"[^>]*>(.*?)<\/a>/gi,
-        '<span onclick="window.open('$1','_blank')" style="color:rgb(190,123,80);text-decoration:underline;cursor:pointer;">$2</span>');
+;
   }
 
   function renderPosts(posts) {
@@ -325,6 +323,12 @@
           </div>
         </article>`;
     }).join('');
+
+    // Recolor all links in post bodies after render
+    c.querySelectorAll('.body a').forEach(a => {
+      a.style.setProperty('color', 'rgb(190,123,80)', 'important');
+      a.style.textDecoration = 'underline';
+    });
   }
 
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
