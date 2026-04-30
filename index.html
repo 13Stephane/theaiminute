@@ -116,10 +116,10 @@
     .newsletter{background:rgba(190,123,80,.07);border:1px solid rgba(190,123,80,.22);border-radius:16px;padding:1.75rem;margin-top:2.5rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;}
     .newsletter-text h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--cream);margin-bottom:.2rem;}
     .newsletter-text p{font-size:.8rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
-    .newsletter-form{display:flex;gap:.5rem;flex:1;min-width:240px;}
-    .newsletter-form input{flex:1;background:rgba(244,240,233,.07);border:1px solid var(--border);border-radius:40px;padding:.5rem 1rem;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s;}
-    .newsletter-form input::placeholder{color:var(--muted);}
-    .newsletter-form input:focus{border-color:rgba(190,123,80,.5);}
+    .beehiiv-wrap{flex:1;min-width:240px;}
+    /* Override Beehiiv widget background to match our dark theme */
+    .beehiiv-wrap iframe{background:transparent!important;}
+    #beehiiv-embed-form,#beehiiv-form{background:transparent!important;}
 
     /* Footer */
     footer{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:1.5rem 2rem 2.5rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
@@ -201,11 +201,9 @@
       <h3>One signal. Every week.</h3>
       <p>No noise. No groupthink. Just where value is moving next.</p>
     </div>
-    <!-- name="email_address" is required for Kit to recognise the field -->
-    <form action="https://app.kit.com/forms/9384415/subscriptions" method="POST" class="newsletter-form" id="ck-form">
-      <input type="email" name="email_address" placeholder="your@email.com" id="email-input" required>
-      <button type="submit" class="btn btn-primary">Subscribe</button>
-    </form>
+    <div class="beehiiv-wrap">
+      <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="904d6357-0234-4d87-a834-cc13a23957f5"></script>
+    </div>
   </div>
 </main>
 
@@ -224,8 +222,6 @@
   const SUPABASE_URL   = 'https://kcobpakjfluuyfzswtoq.supabase.co';
   const SUPABASE_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjb2JwYWtqZmx1dXlmenN3dG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MTEyMTgsImV4cCI6MjA5Mjk4NzIxOH0.qSlZOSGMtfBWfNlrJrO-SWLRumLFZb0qVkZPWh1dRWM';
   const SITE_URL       = 'https://www.theaiminute.blog';
-  const CK_FORM_ACTION = 'https://app.kit.com/forms/9384415/subscriptions';
-
   const AUTHORS = {
     stephane: { name: 'Stéphane Guerraz', photo: 'Stephane.jpeg', li: 'STEPHANE_HANDLE' },
     hanne:    { name: 'Hanne Breddam',    photo: 'Hanne.jpeg',    li: 'HANNE_HANDLE'    },
@@ -321,11 +317,6 @@
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
   function copyLink(url){navigator.clipboard.writeText(url).then(()=>showToast('Link copied ✓'));}
   function copyDraft(draft,url){navigator.clipboard.writeText((draft||'')+'\n\n'+url).then(()=>showToast('Draft copied — paste into LinkedIn ✓'));}
-  document.getElementById('ck-form').addEventListener('submit', function() {
-    showToast('Subscribing… ✓');
-    // Browser handles the POST to Kit.com natively
-  });
-
   loadPosts();
 </script>
 </body>
