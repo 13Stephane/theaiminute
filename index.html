@@ -326,10 +326,12 @@
         </article>`;
     }).join('');
 
-    // Recolor all links in post bodies after render
+    // Recolor links in post bodies — exclude buttons
     c.querySelectorAll('.body a').forEach(a => {
-      a.style.setProperty('color', 'rgb(190,123,80)', 'important');
-      a.style.textDecoration = 'underline';
+      if (!a.classList.contains('btn')) {
+        a.style.setProperty('color', 'rgb(190,123,80)', 'important');
+        a.style.textDecoration = 'underline';
+      }
     });
   }
 
