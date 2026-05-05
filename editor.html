@@ -265,11 +265,24 @@
         <input type="text" id="f-artifact-caption" placeholder="e.g. Interactive framework: map your AI value capture position">
       </div>
 
+      <div class="field">
+        <label>Image URL <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(upload to /images/ in your repo, or paste any public URL)</span></label>
+        <input type="url" id="f-image-url" placeholder="https://theaiminute.blog/images/your-image.jpg">
+      </div>
+
+      <div class="field" id="image-caption-field" style="display:none">
+        <label>Image Caption <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(shown below image)</span></label>
+        <input type="text" id="f-image-caption" placeholder="e.g. Value migration across the software stack, 2020–2025">
+      </div>
+
       <script>
         // Show caption field when artifact URL is filled
         document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('f-artifact-url').addEventListener('input', function() {
             document.getElementById('artifact-caption-field').style.display = this.value.trim() ? 'block' : 'none';
+          });
+          document.getElementById('f-image-url').addEventListener('input', function() {
+            document.getElementById('image-caption-field').style.display = this.value.trim() ? 'block' : 'none';
           });
         });
       </script>
@@ -608,6 +621,8 @@ Respond ONLY with JSON, no markdown:
       linkedin_post_url: liPostUrl||null,
       artifact_url: document.getElementById('f-artifact-url').value.trim()||null,
       artifact_caption: document.getElementById('f-artifact-caption').value.trim()||null,
+      image_url: document.getElementById('f-image-url').value.trim()||null,
+      image_caption: document.getElementById('f-image-caption').value.trim()||null,
       status,
       author,
       published_at: status==='published' ? new Date().toISOString()
@@ -645,6 +660,9 @@ Respond ONLY with JSON, no markdown:
     document.getElementById('f-artifact-url').value     = post.artifact_url||'';
     document.getElementById('f-artifact-caption').value = post.artifact_caption||'';
     document.getElementById('artifact-caption-field').style.display = post.artifact_url ? 'block' : 'none';
+    document.getElementById('f-image-url').value         = post.image_url||'';
+    document.getElementById('f-image-caption').value     = post.image_caption||'';
+    document.getElementById('image-caption-field').style.display = post.image_url ? 'block' : 'none';
     document.getElementById('f-status').value  = post.status||'draft';
     toggleSchedule();
     if (post.status==='scheduled'&&post.published_at) {
@@ -741,6 +759,7 @@ Respond ONLY with JSON, no markdown:
             ${p.vimeo_id?'<span class="status-label">· ▶</span>':''}
             ${p.linkedin_post_url?'<span class="status-label">· LI</span>':''}
             ${p.artifact_url?'<span class="status-label">· ✦ Artifact</span>':''}
+            ${p.image_url?'<span class="status-label">· 🖼 Image</span>':''}
             <span class="status-label">· ${date}</span>
           </div>
           <div style="margin-top:.5rem">
