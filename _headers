@@ -1,0 +1,3 @@
+/artifacts/*
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self' https://theaiminute.blog
