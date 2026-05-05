@@ -255,6 +255,25 @@
         <input type="url" id="f-li-url" placeholder="https://www.linkedin.com/posts/...">
       </div>
 
+      <div class="field">
+        <label>Claude Artifact URL <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(public artifact from claude.ai)</span></label>
+        <input type="url" id="f-artifact-url" placeholder="https://claude.ai/public/artifacts/...">
+      </div>
+
+      <div class="field" id="artifact-caption-field" style="display:none">
+        <label>Artifact Caption <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(shown below artifact — use as LinkedIn image description)</span></label>
+        <input type="text" id="f-artifact-caption" placeholder="e.g. Interactive framework: map your AI value capture position">
+      </div>
+
+      <script>
+        // Show caption field when artifact URL is filled
+        document.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('f-artifact-url').addEventListener('input', function() {
+            document.getElementById('artifact-caption-field').style.display = this.value.trim() ? 'block' : 'none';
+          });
+        });
+      </script>
+
       <div class="field-row-3">
         <div class="field">
           <label>Vimeo ID</label>
@@ -587,6 +606,8 @@ Respond ONLY with JSON, no markdown:
       hashtags: currentHashtags,
       vimeo_id: vimeo||null,
       linkedin_post_url: liPostUrl||null,
+      artifact_url: document.getElementById('f-artifact-url').value.trim()||null,
+      artifact_caption: document.getElementById('f-artifact-caption').value.trim()||null,
       status,
       author,
       published_at: status==='published' ? new Date().toISOString()
@@ -620,7 +641,10 @@ Respond ONLY with JSON, no markdown:
     editingId = post.id;
     document.getElementById('f-title').value   = post.title||'';
     document.getElementById('f-vimeo').value   = post.vimeo_id||'';
-    document.getElementById('f-li-url').value  = post.linkedin_post_url||'';
+    document.getElementById('f-li-url').value        = post.linkedin_post_url||'';
+    document.getElementById('f-artifact-url').value     = post.artifact_url||'';
+    document.getElementById('f-artifact-caption').value = post.artifact_caption||'';
+    document.getElementById('artifact-caption-field').style.display = post.artifact_url ? 'block' : 'none';
     document.getElementById('f-status').value  = post.status||'draft';
     toggleSchedule();
     if (post.status==='scheduled'&&post.published_at) {
@@ -716,6 +740,7 @@ Respond ONLY with JSON, no markdown:
             <span class="status-label">${p.status}</span>
             ${p.vimeo_id?'<span class="status-label">· ▶</span>':''}
             ${p.linkedin_post_url?'<span class="status-label">· LI</span>':''}
+            ${p.artifact_url?'<span class="status-label">· ✦ Artifact</span>':''}
             <span class="status-label">· ${date}</span>
           </div>
           <div style="margin-top:.5rem">

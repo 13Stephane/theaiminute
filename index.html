@@ -98,6 +98,11 @@
 
     /* Video */
     .video-wrap{display:flex;justify-content:flex-start;margin:1.2rem 0;}
+
+    /* ── ARTIFACT ── */
+    .artifact-wrap{margin:1.25rem 0;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:rgba(244,240,233,.03);}
+    .artifact-wrap iframe{width:100%;height:500px;border:none;display:block;}
+    .artifact-caption{font-size:.78rem;color:var(--muted);font-family:'DM Sans',sans-serif;padding:.65rem .85rem;border-top:1px solid var(--border);line-height:1.5;font-style:italic;}
     .video-phone{background:#000;border-radius:20px;overflow:hidden;width:180px;box-shadow:0 12px 30px rgba(0,0,0,.4),0 0 0 1px rgba(244,240,233,.08);}
     .video-phone iframe{width:100%;aspect-ratio:9/16;display:block;border:none;}
 
@@ -288,6 +293,14 @@
                   allowfullscreen loading="lazy"></iframe>
         </div></div>` : '';
 
+      const artifactHtml = p.artifact_url ? `
+        <div class="artifact-wrap">
+          <iframe src="${p.artifact_url}"
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  loading="lazy" title="${p.artifact_caption||'Interactive artifact'}"></iframe>
+          ${p.artifact_caption ? `<div class="artifact-caption">✦ ${p.artifact_caption}</div>` : ''}
+        </div>` : '';
+
       // LinkedIn reshare: use native post URL if available, else fallback to generic share
       const isJoint = p.author === 'joint';
       const liPostUrl = p.linkedin_post_url || null;
@@ -313,6 +326,7 @@
           <h2>${p.title}</h2>
           <div class="body">${stripStyles(p.body)}</div>
           ${videoHtml}
+          ${artifactHtml}
           <div class="hashtags">${tags}</div>
           <div class="post-actions">
             <a class="btn btn-primary" href="${reshareUrl}" target="_blank" rel="noopener">
