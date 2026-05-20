@@ -123,7 +123,12 @@
     .btn-sm{padding:.28rem .7rem;font-size:.6rem;}
 
     /* ── POST LIST ── */
+    .list-filter{display:flex;gap:.4rem;margin-bottom:1rem;}
+    .list-filter button{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;border-radius:40px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;gap:.35rem;}
+    .list-filter button.active{background:rgba(190,123,80,.15);border-color:rgba(190,123,80,.4);color:var(--gold);}
+    .list-filter .count{font-size:.6rem;opacity:.7;}
     .post-list{display:flex;flex-direction:column;gap:.65rem;}
+    .post-item.is-archived{opacity:.72;}
     .post-item{background:rgba(244,240,233,.04);border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;transition:border-color .2s;}
     .post-item:hover{border-color:rgba(190,123,80,.22);}
     .post-item-header{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;}
@@ -314,6 +319,10 @@
 
     <div class="panel panel-right">
       <div class="section-label">All Posts</div>
+      <div class="list-filter">
+        <button id="filter-active" class="active" onclick="setListFilter('active')">Active <span class="count" id="count-active"></span></button>
+        <button id="filter-archived" onclick="setListFilter('archived')">Archived <span class="count" id="count-archived"></span></button>
+      </div>
       <div class="post-list" id="post-list">
         <p style="color:var(--muted);font-size:.83rem">Loading…</p>
       </div>
@@ -354,6 +363,8 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
   let currentHashtags = [];
   let composerData = null;
   let activeDraftTab = 'stephane';
+  let allPosts = [];
+  let currentFilter = 'active';
 
   /* ══ QUILL INSTANCES — initialised after DOM ready ══ */
   let qSingle, qStephane, qHanne;
@@ -726,15 +737,35 @@ Respond ONLY with JSON, no markdown:
   async function loadPosts() {
     try {
       const posts = await sbFetch('posts?order=created_at.desc');
-      renderPostList(posts);
+      allPosts = posts;
+      renderPostList();
     } catch(e) {
       document.getElementById('post-list').innerHTML='<p style="color:var(--muted);font-size:.83rem">Could not load — check Supabase config.</p>';
     }
   }
 
-  function renderPostList(posts) {
+  function setListFilter(filter) {
+    currentFilter = filter;
+    document.getElementById('filter-active').classList.toggle('active', filter==='active');
+    document.getElementById('filter-archived').classList.toggle('active', filter==='archived');
+    renderPostList();
+  }
+
+  function renderPostList() {
     const el = document.getElementById('post-list');
-    if (!posts.length) { el.innerHTML='<p style="color:var(--muted);font-size:.83rem">No posts yet.</p>'; return; }
+    const activeCount   = allPosts.filter(p => !p.archived).length;
+    const archivedCount = allPosts.filter(p =>  p.archived).length;
+    const aCountEl = document.getElementById('count-active');
+    const arCountEl = document.getElementById('count-archived');
+    if (aCountEl)  aCountEl.textContent  = activeCount   ? `(${activeCount})`   : '';
+    if (arCountEl) arCountEl.textContent = archivedCount ? `(${archivedCount})` : '';
+
+    const posts = allPosts.filter(p => currentFilter==='archived' ? p.archived : !p.archived);
+    if (!posts.length) {
+      const msg = currentFilter==='archived' ? 'No archived posts.' : 'No posts yet.';
+      el.innerHTML = `<p style="color:var(--muted);font-size:.83rem">${msg}</p>`;
+      return;
+    }
     const authorPhotos = { stephane:'Stephane.jpeg', hanne:'Hanne.jpeg' };
     el.innerHTML = posts.map(p => {
       const date = p.published_at
@@ -743,8 +774,9 @@ Respond ONLY with JSON, no markdown:
       const photoHtml = p.author==='joint'
         ? `<div style="display:flex"><img src="Stephane.jpeg" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25)"><img src="Hanne.jpeg" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25);margin-left:-5px"></div>`
         : `<img src="${authorPhotos[p.author]||'Stephane.jpeg'}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(190,123,80,.25)">`;
+      const archiveLabel = p.archived ? 'Unarchive' : 'Archive';
       return `
-        <div class="post-item">
+        <div class="post-item ${p.archived?'is-archived':''}">
           <div class="post-item-header">
             <span class="post-item-title">${p.title}</span>
             <div class="post-item-actions">
@@ -756,19 +788,29 @@ Respond ONLY with JSON, no markdown:
             ${photoHtml}
             <span class="status-dot ${p.status}"></span>
             <span class="status-label">${p.status}</span>
+            ${p.archived?'<span class="status-label">· archived</span>':''}
             ${p.vimeo_id?'<span class="status-label">· ▶</span>':''}
             ${p.linkedin_post_url?'<span class="status-label">· LI</span>':''}
             ${p.artifact_url?'<span class="status-label">· ✦ Artifact</span>':''}
             ${p.image_url?'<span class="status-label">· 🖼 Image</span>':''}
             <span class="status-label">· ${date}</span>
           </div>
-          <div style="margin-top:.5rem">
+          <div style="margin-top:.5rem;display:flex;gap:.4rem;flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" onclick='toggleStatus(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
               ${p.status==='published'?'Unpublish':'Publish now'}
             </button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleArchive('${p.id}', ${p.archived?'true':'false'})">${archiveLabel}</button>
           </div>
         </div>`;
     }).join('');
+  }
+
+  async function toggleArchive(id, isArchived) {
+    try {
+      await sbFetch(`posts?id=eq.${id}`, 'PATCH', { archived: !isArchived });
+      showToast(isArchived ? 'Unarchived' : 'Archived');
+      loadPosts();
+    } catch(e) { showToast('Update failed'); console.error(e); }
   }
 
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
