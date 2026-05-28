@@ -141,6 +141,20 @@
     .status-dot.scheduled{background:rgb(100,180,200);}
     .status-label{font-size:.65rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;}
 
+    /* ── CAROUSEL BUILDER ── */
+    .carousel-builder{border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+    .carousel-builder-header{background:rgba(244,240,233,.04);border-bottom:1px solid var(--border);padding:.6rem .9rem;display:flex;align-items:center;justify-content:space-between;}
+    .carousel-builder-header span{font-family:'Barlow Condensed',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+    .carousel-slide-list{padding:.75rem;}
+    .carousel-slide-item{background:rgba(244,240,233,.04);border:1px solid var(--border);border-radius:10px;padding:.7rem .85rem;margin-bottom:.55rem;display:flex;gap:.75rem;align-items:flex-start;}
+    .carousel-slide-item:last-child{margin-bottom:0;}
+    .carousel-slide-num{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--gold);min-width:18px;padding-top:.2rem;}
+    .carousel-slide-fields{flex:1;display:flex;flex-direction:column;gap:.45rem;}
+    .carousel-slide-fields input{padding:.4rem .65rem;font-size:.8rem;}
+    .carousel-slide-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:.1rem .25rem;transition:color .2s;flex-shrink:0;}
+    .carousel-slide-remove:hover{color:var(--red);}
+    .carousel-empty{color:var(--muted);font-size:.78rem;font-style:italic;padding:.5rem .85rem .75rem;}
+
     .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--teal-mid);border:1px solid rgba(190,123,80,.4);color:var(--cream);font-family:'Barlow',sans-serif;font-size:.83rem;padding:.6rem 1.4rem;border-radius:40px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s ease;pointer-events:none;z-index:9999;white-space:nowrap;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -278,6 +292,19 @@
       <div class="field" id="image-caption-field" style="display:none">
         <label>Image Caption <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(shown below image)</span></label>
         <input type="text" id="f-image-caption" placeholder="e.g. Value migration across the software stack, 2020–2025">
+      </div>
+
+      <div class="field">
+        <label>Carousel Slides <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(optional — multiple image+text slides)</span></label>
+        <div class="carousel-builder">
+          <div class="carousel-builder-header">
+            <span id="carousel-slide-count">0 slides</span>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="addCarouselSlide()">+ Add Slide</button>
+          </div>
+          <div id="carousel-slide-list" class="carousel-slide-list">
+            <div class="carousel-empty" id="carousel-empty-msg">No slides yet — click Add Slide to start.</div>
+          </div>
+        </div>
       </div>
 
       <script>
@@ -605,6 +632,47 @@ Respond ONLY with JSON, no markdown:
     return res.status===204 ? null : res.json();
   }
 
+  let carouselSlides = []; // [{image_url, caption, body}]
+
+  function renderCarouselSlides() {
+    const list = document.getElementById('carousel-slide-list');
+    const emptyMsg = document.getElementById('carousel-empty-msg');
+    const countEl = document.getElementById('carousel-slide-count');
+    countEl.textContent = carouselSlides.length === 1 ? '1 slide' : `${carouselSlides.length} slides`;
+    if (!carouselSlides.length) {
+      list.innerHTML = '<div class="carousel-empty" id="carousel-empty-msg">No slides yet — click Add Slide to start.</div>';
+      return;
+    }
+    list.innerHTML = carouselSlides.map((s, i) => `
+      <div class="carousel-slide-item" id="carousel-item-${i}">
+        <span class="carousel-slide-num">${i+1}</span>
+        <div class="carousel-slide-fields">
+          <input type="url" placeholder="Image URL (https://...)" value="${s.image_url||''}"
+            oninput="carouselSlides[${i}].image_url=this.value">
+          <input type="text" placeholder="Caption (shown below slide)" value="${s.caption||''}"
+            oninput="carouselSlides[${i}].caption=this.value">
+          <input type="text" placeholder="Body text (optional)" value="${s.body||''}"
+            oninput="carouselSlides[${i}].body=this.value">
+        </div>
+        <button class="carousel-slide-remove" type="button" onclick="removeCarouselSlide(${i})" title="Remove slide">×</button>
+      </div>`).join('');
+  }
+
+  function addCarouselSlide() {
+    carouselSlides.push({ image_url: '', caption: '', body: '' });
+    renderCarouselSlides();
+    // Focus first empty image url input of new slide
+    setTimeout(() => {
+      const items = document.querySelectorAll('.carousel-slide-item');
+      if (items.length) items[items.length-1].querySelector('input').focus();
+    }, 50);
+  }
+
+  function removeCarouselSlide(idx) {
+    carouselSlides.splice(idx, 1);
+    renderCarouselSlides();
+  }
+
   /* ══ SAVE ══ */
   async function savePost() {
     const title     = document.getElementById('f-title').value.trim();
@@ -634,6 +702,9 @@ Respond ONLY with JSON, no markdown:
       artifact_caption: document.getElementById('f-artifact-caption').value.trim()||null,
       image_url: document.getElementById('f-image-url').value.trim()||null,
       image_caption: document.getElementById('f-image-caption').value.trim()||null,
+      carousel_slides: carouselSlides.filter(s => s.image_url || s.body).length
+        ? carouselSlides.filter(s => s.image_url || s.body)
+        : null,
       status,
       author,
       published_at: status==='published' ? new Date().toISOString()
@@ -674,6 +745,11 @@ Respond ONLY with JSON, no markdown:
     document.getElementById('f-image-url').value         = post.image_url||'';
     document.getElementById('f-image-caption').value     = post.image_caption||'';
     document.getElementById('image-caption-field').style.display = post.image_url ? 'block' : 'none';
+    // Carousel
+    carouselSlides = (post.carousel_slides && Array.isArray(post.carousel_slides))
+      ? post.carousel_slides.map(s => ({ image_url: s.image_url||'', caption: s.caption||'', body: s.body||'' }))
+      : [];
+    renderCarouselSlides();
     document.getElementById('f-status').value  = post.status||'draft';
     toggleSchedule();
     if (post.status==='scheduled'&&post.published_at) {
@@ -731,6 +807,8 @@ Respond ONLY with JSON, no markdown:
     document.getElementById('composer-actions').style.display='none';
     document.getElementById('idea-input').value='';
     composerData=null;
+    carouselSlides=[];
+    renderCarouselSlides();
   }
 
   /* ══ LOAD POSTS ══ */
@@ -793,6 +871,7 @@ Respond ONLY with JSON, no markdown:
             ${p.linkedin_post_url?'<span class="status-label">· LI</span>':''}
             ${p.artifact_url?'<span class="status-label">· ✦ Artifact</span>':''}
             ${p.image_url?'<span class="status-label">· 🖼 Image</span>':''}
+            ${(p.carousel_slides&&p.carousel_slides.length)?`<span class="status-label">· ◈ ${p.carousel_slides.length}-slide carousel</span>`:''}
             <span class="status-label">· ${date}</span>
           </div>
           <div style="margin-top:.5rem;display:flex;gap:.4rem;flex-wrap:wrap">

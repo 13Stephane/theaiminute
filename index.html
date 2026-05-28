@@ -81,7 +81,7 @@
     .post-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;flex-wrap:wrap;}
     .badge{font-family:'DM Sans',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.18rem .6rem;border-radius:40px;border:1px solid;}
     .badge-video{color:var(--gold);border-color:rgba(190,123,80,.5);background:rgba(190,123,80,.1);}
-    .badge-insight{color:var(--cream);border-color:var(--border);background:rgba(244,240,233,.06);}
+    .badge-carousel{color:rgb(198,165,83);border-color:rgba(198,165,83,.5);background:rgba(198,165,83,.1);}
     .post-date{font-size:.73rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
 
     /* Author byline in card */
@@ -110,6 +110,23 @@
     .image-caption{font-size:.78rem;color:var(--muted);font-family:'DM Sans',sans-serif;margin-top:.5rem;line-height:1.5;font-style:italic;}
     .video-phone{background:#000;border-radius:20px;overflow:hidden;width:180px;box-shadow:0 12px 30px rgba(0,0,0,.4),0 0 0 1px rgba(244,240,233,.08);}
     .video-phone iframe{width:100%;aspect-ratio:9/16;display:block;border:none;}
+
+    /* ── CAROUSEL ── */
+    .carousel-wrap{margin:1.25rem 0;position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:rgba(244,240,233,.03);}
+    .carousel-track-outer{overflow:hidden;}
+    .carousel-track{display:flex;transition:transform .38s cubic-bezier(.4,0,.2,1);will-change:transform;}
+    .carousel-slide{flex:0 0 100%;position:relative;}
+    .carousel-slide img{width:100%;display:block;object-fit:cover;max-height:460px;}
+    .carousel-slide-body{padding:.75rem 1rem;font-size:.83rem;color:var(--ink);line-height:1.6;font-family:'DM Sans',sans-serif;}
+    .carousel-slide-caption{font-size:.75rem;color:var(--muted);padding:.45rem 1rem .65rem;border-top:1px solid var(--border);font-style:italic;line-height:1.45;}
+    .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(25,60,63,.72);border:1px solid rgba(244,240,233,.18);color:var(--cream);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;backdrop-filter:blur(6px);transition:background .2s,border-color .2s;z-index:5;padding:0;line-height:1;}
+    .carousel-btn:hover{background:rgba(198,165,83,.25);border-color:rgba(198,165,83,.5);}
+    .carousel-btn-prev{left:.65rem;}
+    .carousel-btn-next{right:.65rem;}
+    .carousel-dots{display:flex;justify-content:center;gap:.4rem;padding:.55rem 0 .65rem;}
+    .carousel-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:background .2s,transform .2s;}
+    .carousel-dot.active{background:var(--gold);transform:scale(1.3);}
+    .carousel-count{position:absolute;top:.6rem;right:.75rem;background:rgba(25,60,63,.7);border:1px solid rgba(244,240,233,.14);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.63rem;letter-spacing:.08em;padding:.18rem .55rem;border-radius:40px;backdrop-filter:blur(4px);z-index:5;}
 
     /* Hashtags */
     .hashtags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.2rem;}
@@ -281,6 +298,53 @@
 ;
   }
 
+  let carouselInstances = {};
+
+  function buildCarousel(slides, postId) {
+    if (!slides || !slides.length) return '';
+    const id = `carousel-${postId}`;
+    const dotsHtml = slides.length > 1
+      ? `<div class="carousel-dots">${slides.map((_,i)=>`<button class="carousel-dot${i===0?' active':''}" onclick="goSlide('${id}',${i})" aria-label="Slide ${i+1}"></button>`).join('')}</div>`
+      : '';
+    const btns = slides.length > 1
+      ? `<button class="carousel-btn carousel-btn-prev" onclick="stepSlide('${id}',-1)" aria-label="Previous">&#8592;</button>
+         <button class="carousel-btn carousel-btn-next" onclick="stepSlide('${id}', 1)" aria-label="Next">&#8594;</button>`
+      : '';
+    const countBadge = slides.length > 1
+      ? `<div class="carousel-count"><span class="carousel-current-${id}">1</span> / ${slides.length}</div>` : '';
+    const slidesHtml = slides.map(s => {
+      const img = s.image_url ? `<img src="${s.image_url}" alt="${s.caption||''}" loading="lazy">` : '';
+      const body = s.body ? `<div class="carousel-slide-body">${s.body}</div>` : '';
+      const cap = s.caption ? `<div class="carousel-slide-caption">✦ ${s.caption}</div>` : '';
+      return `<div class="carousel-slide">${img}${body}${cap}</div>`;
+    }).join('');
+    carouselInstances[id] = { current: 0, total: slides.length };
+    return `<div class="carousel-wrap" id="${id}">
+      ${countBadge}
+      <div class="carousel-track-outer">
+        <div class="carousel-track" id="${id}-track">${slidesHtml}</div>
+      </div>
+      ${btns}
+      ${dotsHtml}
+    </div>`;
+  }
+
+  function goSlide(id, idx) {
+    const inst = carouselInstances[id];
+    if (!inst) return;
+    inst.current = (idx + inst.total) % inst.total;
+    document.getElementById(`${id}-track`).style.transform = `translateX(-${inst.current * 100}%)`;
+    document.querySelectorAll(`#${id} .carousel-dot`).forEach((d,i) => d.classList.toggle('active', i === inst.current));
+    const countEl = document.querySelector(`.carousel-current-${id}`);
+    if (countEl) countEl.textContent = inst.current + 1;
+  }
+
+  function stepSlide(id, dir) {
+    const inst = carouselInstances[id];
+    if (!inst) return;
+    goSlide(id, inst.current + dir);
+  }
+
   function renderPosts(posts) {
     const c = document.getElementById('posts-container');
     if (!posts.length) {
@@ -311,6 +375,9 @@
           <img src="${p.image_url}" alt="${p.image_caption||''}" loading="lazy">
           ${p.image_caption ? `<div class="image-caption">${p.image_caption}</div>` : ''}
         </div>` : '';
+
+      const carouselHtml = (p.carousel_slides && p.carousel_slides.length)
+        ? buildCarousel(p.carousel_slides, p.id) : '';
 
       // LinkedIn reshare: use native post URL if available, else fallback to generic share
       const isJoint = p.author === 'joint';
@@ -345,7 +412,7 @@
       return `
         <article class="post-card" id="post-${p.id}" style="animation-delay:${i*.07}s">
           <div class="post-meta">
-            <span class="badge ${p.vimeo_id?'badge-video':'badge-insight'}">${p.vimeo_id?'▶ Video':'Insight'}</span>
+            <span class="badge ${p.vimeo_id?'badge-video':(p.carousel_slides&&p.carousel_slides.length?'badge-carousel':'badge-insight')}">${p.vimeo_id?'▶ Video':(p.carousel_slides&&p.carousel_slides.length?'◈ Carousel':'Insight')}</span>
             <span class="post-date">${date}</span>
           </div>
           ${bylineHtml(p.author||'stephane')}
@@ -354,6 +421,7 @@
           ${videoHtml}
           ${artifactHtml}
           ${imageHtml}
+          ${carouselHtml}
           <div class="hashtags">${tags}</div>
           <div class="post-actions">
             <a class="btn btn-primary" href="${reshareUrl}" target="_blank" rel="noopener">
