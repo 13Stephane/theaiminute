@@ -99,7 +99,12 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 </head>
 <body>
 <div class="app">
-<div class="eyebrow">Course · Model Map · Plenary 1</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+  <circle cx="14" cy="14" r="13" stroke="rgba(198,165,83,0.22)" stroke-width="1"/>
+  <circle cx="14" cy="14" r="9"  stroke="rgba(198,165,83,0.35)" stroke-width="1"/>
+  <circle cx="14" cy="14" r="5.5" stroke="rgb(198,165,83)" stroke-width="1.2"/>
+  <circle cx="14" cy="14" r="3.2" fill="rgba(198,165,83,0.72)"/>
+</svg><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)">Course · Model Map · Plenary 1</div></div>
 <h1>The room's <em>map</em> of where new value will be created</h1>
 <p class="sub" id="mapSubtitle">9 teams · 4 models · click a cluster to load its teams into the table</p>
 <button onclick="loadFromDB()" id="loadBtn" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;margin-bottom:16px">Load live teams from DB</button>
@@ -240,6 +245,49 @@ function dotOffsets(n) {
   });
 }
 
+// ── Six lens anchors — reference positions on the fixed axes ──────────────
+var LENS_ANCHORS_MAP = [
+  { name:"Orchestrator",  x:-0.45, y: 0.48 },
+  { name:"Vertical SaaS", x: 0.50, y: 0.55 },
+  { name:"In-house",      x: 0.45, y: 0.00 },
+  { name:"LLM labs",      x:-0.40, y:-0.40 },
+  { name:"Chipmaker",     x: 0.55, y:-0.55 },
+  { name:"Hyperscaler",   x: 0.10, y:-0.60 },
+];
+
+// Convert axis coords (-1..+1) to grid %: x left 5–95%, y top 5–95% (y flipped)
+function axisToLeft(x){ return ((x+1)/2*90+5).toFixed(2)+"%"; }
+function axisToTop(y) { return ((-y+1)/2*90+5).toFixed(2)+"%"; }
+
+function renderLensAnchors(){
+  var grid = document.getElementById("grid");
+  [].slice.call(grid.querySelectorAll(".lens-anchor-lbl,.lens-anchor-dot")).forEach(function(n){n.remove();});
+  LENS_ANCHORS_MAP.forEach(function(a){
+    // faint cross-hair dot
+    var dot = document.createElement("div");
+    dot.className = "lens-anchor-dot";
+    dot.style.cssText = (
+      "position:absolute;width:5px;height:5px;border-radius:50%;" +
+      "border:1px solid rgba(198,165,83,0.3);background:transparent;" +
+      "left:"+axisToLeft(a.x)+";top:"+axisToTop(a.y)+";" +
+      "transform:translate(-50%,-50%);pointer-events:none;z-index:4;"
+    );
+    grid.appendChild(dot);
+    // label
+    var lbl = document.createElement("div");
+    lbl.className = "lens-anchor-lbl";
+    lbl.textContent = a.name;
+    lbl.style.cssText = (
+      "position:absolute;left:"+axisToLeft(a.x)+";top:"+axisToTop(a.y)+";" +
+      "transform:translate(-50%,8px);" +
+      "font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;" +
+      "text-transform:uppercase;color:rgba(198,165,83,0.30);" +
+      "pointer-events:none;z-index:4;white-space:nowrap;text-align:center;"
+    );
+    grid.appendChild(lbl);
+  });
+}
+
 function renderMap() {
   var grid = document.getElementById("grid");
   [].slice.call(grid.querySelectorAll(".blob,.ccard,.tdot,.dlbl")).forEach(function(n){ n.remove(); });
@@ -272,6 +320,7 @@ function renderMap() {
     card.addEventListener("click", function(e){ e.stopPropagation(); selectModel(m.id); });
     grid.appendChild(card);
   });
+  renderLensAnchors();
 }
 
 function renderLegend() {
