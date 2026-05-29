@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Facilitator Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--line:rgba(244,240,233,0.14);
+  --ok:rgb(127,191,127);--warn:rgb(224,184,111);--err:rgb(224,128,128);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:760px;margin:0 auto;padding:32px 28px 80px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:34px;letter-spacing:-.02em;margin-bottom:6px}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:14px;color:var(--inkd);margin-bottom:28px}
+.panel{background:var(--bge);border:1px solid var(--line);border-radius:8px;padding:22px 24px;margin-bottom:20px}
+.panel-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:10px 18px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;border-radius:4px;transition:all .15s}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.gold{border-color:var(--gold);color:var(--gold)}
+.btn.danger{border-color:var(--err);color:var(--err)}
+.btn.danger:hover{background:var(--err);color:var(--bg)}
+
+/* PHASE CONTROL */
+.phase-now{display:flex;align-items:baseline;gap:14px;margin-bottom:18px}
+.phase-num{font-family:'Fraunces',serif;font-size:48px;line-height:1;color:var(--gold)}
+.phase-name{font-size:18px;color:var(--ink)}
+.phase-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.phase-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;padding:14px 8px;border:1px solid var(--line);background:transparent;color:var(--inkd);cursor:pointer;border-radius:5px;text-align:center;line-height:1.4;transition:all .15s}
+.phase-btn:hover{border-color:var(--gold);color:var(--gold)}
+.phase-btn.active{border-color:var(--gold);background:rgba(198,165,83,0.14);color:var(--gold)}
+.phase-btn .pn{display:block;font-size:18px;font-family:'Fraunces',serif;margin-bottom:3px}
+
+/* HEALTH */
+.check-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.check-row:last-child{border-bottom:none}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--inkf)}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.err{background:var(--err)}
+.check-label{flex:1}
+.check-detail{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--inkd)}
+
+/* DATA COUNTS */
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+.count-card{text-align:center;padding:16px 8px;border:1px solid var(--line);border-radius:6px}
+.count-num{font-family:'Fraunces',serif;font-size:36px;color:var(--gold);line-height:1}
+.count-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd);margin-top:6px}
+.count-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkf);margin-top:3px}
+
+.danger-zone{border-color:rgba(224,128,128,0.4)}
+.confirm-input{font-family:'IBM Plex Mono',monospace;font-size:13px;padding:9px 12px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:4px;width:160px;margin-right:10px}
+.note{font-size:13px;color:var(--inkd);line-height:1.5;margin-top:12px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--bg);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:11px 20px;border-radius:5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:100}
+.toast.show{opacity:1}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--inkf)}
+
+/* ROLE PAGES */
+.role-row{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:9px 0;align-items:baseline}
+.role-who{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.role-what{font-size:14px;color:var(--ink);line-height:1.5}
+.role-what .pg{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);background:rgba(244,240,233,0.06);padding:1px 7px;border-radius:3px;margin-right:6px}
+.role-what .none{color:var(--inkf);font-style:italic}
+.role-what a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(198,165,83,0.4)}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+
+<div class="eyebrow">Course · Facilitator Control · pre-flight & live control</div>
+<h1>Session <em>control</em></h1>
+<p class="sub">Everything you need on the day in one place — phase control, a full health check, live counts, and a guarded reset. Keep this open on your laptop; never project it.</p>
+
+<!-- PHASE CONTROL -->
+<div class="panel">
+  <div class="panel-label">Phase control · <span id="sessLabel">session</span></div>
+  <div class="phase-now">
+    <span class="phase-num" id="phaseNum">—</span>
+    <span class="phase-name" id="phaseName">checking…</span>
+  </div>
+  <div class="phase-btns">
+    <button class="phase-btn" id="ph0" onclick="setPhase(0)"><span class="pn">0</span>Lobby</button>
+    <button class="phase-btn" id="ph1" onclick="setPhase(1)"><span class="pn">1</span>Prior</button>
+    <button class="phase-btn" id="ph2" onclick="setPhase(2)"><span class="pn">2</span>Hypothesis</button>
+    <button class="phase-btn" id="ph3" onclick="setPhase(3)"><span class="pn">3</span>Paths</button>
+  </div>
+
+  <div id="rolePages" style="margin-top:20px;border-top:1px solid var(--line);padding-top:18px"></div>
+</div>
+
+<!-- HEALTH CHECK -->
+<div class="panel">
+  <div class="panel-label">Health check</div>
+  <div id="checks">
+    <div class="check-row"><span class="dot" id="d-config"></span><span class="check-label">Config loaded (URL, keys, session)</span><span class="check-detail" id="x-config">—</span></div>
+    <div class="check-row"><span class="dot" id="d-db"></span><span class="check-label">Supabase reachable</span><span class="check-detail" id="x-db">—</span></div>
+    <div class="check-row"><span class="dot" id="d-session"></span><span class="check-label">Session row exists</span><span class="check-detail" id="x-session">—</span></div>
+    <div class="check-row"><span class="dot" id="d-edge"></span><span class="check-label">Edge Function + Mistral (server-side placement)</span><span class="check-detail" id="x-edge">—</span></div>
+    <div class="check-row"><span class="dot" id="d-mistral"></span><span class="check-label">Mistral key (browser-side probes)</span><span class="check-detail" id="x-mistral">—</span></div>
+  </div>
+  <div style="margin-top:16px"><button class="btn gold" id="runChecks" onclick="runHealthCheck()">Run health check</button></div>
+</div>
+
+<!-- LIVE DATA -->
+<div class="panel">
+  <div class="panel-label">Live data</div>
+  <div class="counts">
+    <div class="count-card"><div class="count-num" id="cPriors">—</div><div class="count-lbl">Priors</div><div class="count-sub" id="cPriorsP">placed —</div></div>
+    <div class="count-card"><div class="count-num" id="cTeams">—</div><div class="count-lbl">Teams</div><div class="count-sub" id="cTeamsP">placed —</div></div>
+    <div class="count-card"><div class="count-num" id="cAssign">—</div><div class="count-lbl">Assignments</div><div class="count-sub">&nbsp;</div></div>
+  </div>
+  <div class="row-actions" style="margin-top:14px">
+    <button class="btn" onclick="loadCounts()">Refresh counts</button>
+    <span class="muted" id="lastRefresh"></span>
+  </div>
+</div>
+
+<!-- RESET -->
+<div class="panel danger-zone">
+  <div class="panel-label" style="color:var(--err)">Reset session · destructive</div>
+  <p class="note" style="margin-top:0">Deletes all priors, teams, and assignments for this session, and sets the phase back to 0 (lobby). Use before the session starts, or to clear a rehearsal. <strong style="color:var(--err)">Cannot be undone.</strong></p>
+  <div class="row-actions" style="margin-top:16px">
+    <input class="confirm-input" id="confirmReset" placeholder="type RESET">
+    <button class="btn danger" id="resetBtn" onclick="resetSession()">Wipe session</button>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var PHASE_NAMES = ["Lobby — nothing open","Prior — Phase 1 open","Hypothesis — Phase 2 open","Paths — Phase 3 open"];
+
+// What each role should have open, per phase.
+// who: Participants (phone) · You-in-room (projected) · You-on-laptop (control/admin)
+var ROLE_PAGES = {
+  0: [
+    { who:"Participants",   pages:[], note:"nothing yet — hold the title slide" },
+    { who:"You · projected", pages:["show-cloud.html"], note:"ready, will fill as priors arrive" },
+    { who:"You · laptop",   pages:["control.html"], note:"set phase to 1 when ready to open priors" },
+  ],
+  1: [
+    { who:"Participants",   pages:["1-prior.html"], note:"submit their gut read" },
+    { who:"You · projected", pages:["show-cloud.html"], note:"the room's priors landing live" },
+    { who:"You · laptop",   pages:["make-teams.html","control.html"], note:"form teams when priors are in; commit advances to phase 2" },
+  ],
+  2: [
+    { who:"Participants",   pages:["2-team.html"], note:"team hypothesis, then LLM consult, then submit" },
+    { who:"You · projected", pages:["show-map.html"], note:"click Load when cards are in; contradiction engine" },
+    { who:"You · laptop",   pages:["control.html"], note:"watch team count; set phase to 3 for the debrief" },
+  ],
+  3: [
+    { who:"Participants",   pages:["3-path.html"], note:"their own prior → team movement" },
+    { who:"You · projected", pages:["show-paths.html"], note:"room-wide movement arrows" },
+    { who:"You · laptop",   pages:["control.html"], note:"close" },
+  ],
+};
+
+function renderRolePages(phase){
+  var el=document.getElementById("rolePages");
+  if(phase===null){ el.innerHTML='<span class="muted">session not found</span>'; return; }
+  var rows=ROLE_PAGES[phase]||[];
+  el.innerHTML='<div class="panel-label" style="margin-bottom:12px">Who opens what · phase '+phase+'</div>'+
+    rows.map(function(r){
+      var pages = r.pages.length
+        ? r.pages.map(function(p){ return '<span class="pg">'+p+'</span>'; }).join("")
+        : '<span class="none">— nothing —</span>';
+      return '<div class="role-row"><div class="role-who">'+r.who+'</div>'+
+             '<div class="role-what">'+pages+'<span class="muted">'+r.note+'</span></div></div>';
+    }).join("");
+}
+
+function hdr(){ return { "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON }; }
+function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");},2200); }
+function setDot(id,cls,detail){ var d=document.getElementById("d-"+id); d.className="dot "+cls; if(detail!==undefined) document.getElementById("x-"+id).textContent=detail; }
+
+// ── PHASE ──
+async function loadPhase(){
+  try{
+    var r=await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID+"&select=phase",{headers:hdr()});
+    var rows=await r.json();
+    var phase=rows.length?rows[0].phase:null;
+    document.getElementById("phaseNum").textContent=phase===null?"—":phase;
+    document.getElementById("phaseName").textContent=phase===null?"session not found":PHASE_NAMES[phase];
+    [0,1,2,3].forEach(function(n){ document.getElementById("ph"+n).classList.toggle("active",n===phase); });
+    renderRolePages(phase);
+  }catch(e){ document.getElementById("phaseName").textContent="can't reach Supabase"; }
+}
+async function setPhase(n){
+  try{
+    var r=await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID,{
+      method:"PATCH",
+      headers:Object.assign({"Content-Type":"application/json","Prefer":"return=minimal"},hdr()),
+      body:JSON.stringify({phase:n})
+    });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    toast("Phase → "+n+" ("+PHASE_NAMES[n].split(" — ")[0]+")");
+    loadPhase();
+  }catch(e){ toast("Phase change failed: "+e.message); }
+}
+
+// ── COUNTS ──
+async function countTable(table,extra){
+  var url=SUPABASE_URL+"/rest/v1/"+table+"?session_id=eq."+SESSION_ID+"&select="+(extra||"id");
+  var r=await fetch(url,{headers:Object.assign({"Prefer":"count=exact"},hdr())});
+  var rows=await r.json();
+  return rows;
+}
+async function loadCounts(){
+  try{
+    var priors=await countTable("course_priors","id,x");
+    var teams=await countTable("course_teams","id,x");
+    var assign=await countTable("course_assignments","id");
+    document.getElementById("cPriors").textContent=priors.length;
+    document.getElementById("cPriorsP").textContent="placed "+priors.filter(function(p){return p.x!==null;}).length;
+    document.getElementById("cTeams").textContent=teams.length;
+    document.getElementById("cTeamsP").textContent="placed "+teams.filter(function(p){return p.x!==null;}).length;
+    document.getElementById("cAssign").textContent=assign.length;
+    document.getElementById("lastRefresh").textContent="updated "+new Date().toLocaleTimeString();
+  }catch(e){ toast("Count failed: "+e.message); }
+}
+
+// ── HEALTH CHECK ──
+async function runHealthCheck(){
+  var btn=document.getElementById("runChecks"); btn.disabled=true; btn.textContent="Checking…";
+  ["config","db","session","edge","mistral"].forEach(function(k){ setDot(k,"","testing…"); });
+
+  // 1. Config
+  var cfgOk = (typeof SUPABASE_URL==="string" && SUPABASE_URL.indexOf("supabase.co")>-1
+    && typeof SUPABASE_ANON==="string" && SUPABASE_ANON.length>40
+    && typeof SESSION_ID==="string" && SESSION_ID.length>0);
+  setDot("config", cfgOk?"ok":"err", cfgOk?SESSION_ID:"missing or placeholder values");
+  var mistralCfg = (typeof MISTRAL_KEY==="string" && MISTRAL_KEY.length>10 && MISTRAL_KEY.indexOf("YOUR_")===-1);
+
+  // 2. Supabase reachable + 3. session exists
+  try{
+    var r=await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID+"&select=id,phase",{headers:hdr()});
+    if(r.ok){
+      setDot("db","ok","HTTP 200");
+      var rows=await r.json();
+      if(rows.length){ setDot("session","ok","phase "+rows[0].phase); }
+      else{ setDot("session","err","no row for '"+SESSION_ID+"' — run schema seed"); }
+    }else{ setDot("db","err","HTTP "+r.status); setDot("session","err","skipped"); }
+  }catch(e){ setDot("db","err",e.message); setDot("session","err","skipped"); }
+
+  // 4. Edge Function + server-side Mistral
+  try{
+    var r=await fetch(SUPABASE_URL+"/functions/v1/course_place",{
+      method:"POST",
+      headers:Object.assign({"Content-Type":"application/json"},hdr()),
+      body:JSON.stringify({text:"Hyperscalers win on enterprise distribution and compute scale.",lens:"hyperscaler",kind:"healthcheck"})
+    });
+    if(r.ok){
+      var d=await r.json();
+      if(d.placed_by==="ai"){ setDot("edge","ok","AI placement ("+d.x+", "+d.y+")"); }
+      else if(d.placed_by==="fallback"){ setDot("edge","warn","function OK, Mistral key NOT read server-side"); }
+      else{ setDot("edge","warn","unexpected response"); }
+    }else{ setDot("edge","err","HTTP "+r.status); }
+  }catch(e){ setDot("edge","err",e.message); }
+
+  // 5. Browser-side Mistral key (used by probes)
+  if(!mistralCfg){ setDot("mistral","err","key missing or placeholder in config.js"); }
+  else{
+    try{
+      var r=await fetch("https://api.mistral.ai/v1/chat/completions",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+MISTRAL_KEY},
+        body:JSON.stringify({model:"mistral-small-latest",max_tokens:5,messages:[{role:"user",content:"ping"}]})
+      });
+      if(r.ok){ setDot("mistral","ok","key valid"); }
+      else if(r.status===401){ setDot("mistral","err","401 — invalid key"); }
+      else{ setDot("mistral","warn","HTTP "+r.status); }
+    }catch(e){ setDot("mistral","err",e.message); }
+  }
+
+  btn.disabled=false; btn.textContent="Run health check again";
+  loadCounts();
+}
+
+// ── RESET ──
+async function resetSession(){
+  var conf=document.getElementById("confirmReset").value.trim();
+  if(conf!=="RESET"){ toast("Type RESET to confirm"); return; }
+  var btn=document.getElementById("resetBtn"); btn.disabled=true; btn.textContent="Wiping…";
+  try{
+    // order matters: assignments reference priors
+    await fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID,{method:"DELETE",headers:hdr()});
+    await fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID,{method:"DELETE",headers:hdr()});
+    await fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID,{method:"DELETE",headers:hdr()});
+    await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID,{
+      method:"PATCH",headers:Object.assign({"Content-Type":"application/json","Prefer":"return=minimal"},hdr()),
+      body:JSON.stringify({phase:0})
+    });
+    document.getElementById("confirmReset").value="";
+    toast("Session wiped — phase reset to 0");
+    loadPhase(); loadCounts();
+  }catch(e){ toast("Reset failed: "+e.message); }
+  btn.disabled=false; btn.textContent="Wipe session";
+}
+
+// ── INIT ──
+window.addEventListener("load",function(){
+  document.getElementById("sessLabel").textContent=(typeof SESSION_ID==="string")?SESSION_ID:"session";
+  loadPhase();
+  loadCounts();
+});
+</script>
+</body>
+</html>
