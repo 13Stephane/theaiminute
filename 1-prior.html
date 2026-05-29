@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Phase 1 Prior · Where is the value going?</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);
+  --line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);--warn:rgb(220,130,80);--ok:rgb(127,191,127);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:580px;margin:0 auto;padding:26px 22px 60px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-.02em;margin-bottom:6px;line-height:1.12}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:14px;color:var(--inkd);margin-bottom:28px}
+
+.field{margin-bottom:24px}
+.field-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.field-help{font-size:12.5px;color:var(--inkf);font-style:italic;margin-bottom:12px;line-height:1.45}
+
+textarea{width:100%;background:var(--bge2);border:1px solid var(--lines);color:var(--ink);font-family:'Fraunces',serif;font-size:15px;padding:14px 15px;resize:vertical;min-height:110px;line-height:1.5}
+textarea:focus{outline:none;border-color:var(--gold)}
+textarea::placeholder{color:var(--inkf);font-style:italic}
+.charcount{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--inkf);text-align:right;margin-top:4px;letter-spacing:.04em}
+
+/* tags now SUPPORT the box — sit beneath it, muted, optional */
+.tag-prompt{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--inkf);margin-top:14px;margin-bottom:8px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{padding:5px 11px;border:1px solid var(--line);background:transparent;cursor:pointer;transition:all .14s;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.03em;color:var(--inkd)}
+.tag:hover{border-color:var(--gold);color:var(--gold)}
+.tag.sel{border-color:var(--gold);background:var(--golds);color:var(--ink)}
+
+.name-row input{width:100%;background:var(--bge2);border:1px solid var(--lines);color:var(--ink);font-family:'Fraunces',serif;font-size:15px;padding:11px 14px}
+.name-row input:focus{outline:none;border-color:var(--gold)}
+.name-row input::placeholder{color:var(--inkf);font-style:italic}
+
+.submit-btn{width:100%;padding:15px;background:var(--gold);color:var(--bg);border:none;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:all .15s;margin-top:8px}
+.submit-btn:hover:not(:disabled){background:rgb(214,184,103)}
+.submit-btn:disabled{opacity:.35;cursor:not-allowed}
+
+.locked{display:none;text-align:center;padding:10px 0}
+.locked.show{display:block}
+.locked-check{font-size:40px;color:var(--gold);margin-bottom:10px}
+.locked h2{font-family:'Fraunces',serif;font-weight:400;font-size:24px;margin-bottom:8px}
+.locked p{font-size:14px;color:var(--inkd);font-style:italic;margin-bottom:6px}
+.placing{margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--gold);display:flex;align-items:center;justify-content:center;gap:8px}
+.spinner{width:13px;height:13px;border:2px solid var(--golds);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.locked-recap{margin-top:20px;padding:18px;border:1px solid var(--line);background:var(--bge);text-align:left}
+.locked-recap .rk{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;margin-top:14px}
+.locked-recap .rk:first-child{margin-top:0}
+.locked-recap .rv{font-size:14px;color:var(--ink);line-height:1.5}
+.locked-recap .rv.just{color:var(--inkd);font-style:italic;font-size:13px}
+.placed-coords{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.04em}
+.locked-note{margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkf);letter-spacing:.05em;line-height:1.6}
+.again{margin-top:16px;background:none;border:1px solid var(--line);color:var(--inkd);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:8px 16px;cursor:pointer}
+.again:hover{border-color:var(--gold);color:var(--gold)}
+
+.err{margin-top:12px;padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:rgba(220,130,80,0.1);border:1px solid rgba(220,130,80,0.4);color:var(--warn);display:none;line-height:1.5}
+.err.show{display:block}
+
+/* tiny config note for the trial */
+.cfg{margin-top:30px;padding:12px 14px;border:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkf);line-height:1.6}
+.cfg input{width:100%;margin-top:6px;background:var(--bge2);border:1px solid var(--lines);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 9px}
+.cfg b{color:var(--inkd)}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+
+<div id="phaseBanner" style="display:none;background:rgba(224,184,111,0.12);border:1px solid var(--gold);border-radius:6px;padding:14px 18px;margin-bottom:20px;font-size:14px;line-height:1.5"></div>
+
+<!-- FORM -->
+<div id="formState">
+  <div class="eyebrow">Course · Phase 1 · Your prior · 90 seconds</div>
+  <h1>Where will the <em>new</em> value go?</h1>
+  <p class="sub">Over the next 3–5 years, which position in the software stack captures the most <em>new</em> value created by cheap AI? Your individual gut read — before the lecture, before your table.</p>
+
+  <div class="field">
+    <div class="field-label">Your read</div>
+    <div class="field-help">Where does the value go, and what makes that position scarce? One or two sentences in your own words — be specific. "OVH on EU data-sovereignty" is a different answer from "AWS on raw scale."</div>
+    <textarea id="thesis" maxlength="280" placeholder="e.g. Sovereign European clouds like OVH capture mid-market regulated workloads, because data-residency law makes the jurisdiction of compute a moat that hyperscalers can't easily match."></textarea>
+    <div class="charcount"><span id="cc">0</span> / 280</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:8px">
+      <div class="tag-prompt" style="margin:0">Stuck? The usual suspects — tap one to drop it in:</div>
+      <button id="clearTagBtn" onclick="clearTag()" style="display:none;background:none;border:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--inkd);cursor:pointer;padding:3px 0">× clear</button>
+    </div>
+    <div class="tags" id="tags"></div>
+  </div>
+
+  <div class="field">
+    <div class="field-label">Your name or initials</div>
+    <div class="field-help">So your prior can be compared to your table's later — not shown to the room.</div>
+    <div class="name-row"><input type="text" id="name" maxlength="40" placeholder="Name or initials"></div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" disabled onclick="submitPrior()">Lock my prior</button>
+  <div class="err" id="err"></div>
+
+  <div class="cfg">
+    <b>SETUP:</b> replace <code>SUPABASE_URL</code> and <code>SUPABASE_ANON</code> at the top of the script with your project values. Find them in your Supabase dashboard → Settings → API.
+  </div>
+</div>
+
+<!-- LOCKED -->
+<div class="locked" id="lockedState">
+  <div class="locked-check">✓</div>
+  <h2>Prior locked</h2>
+  <p>Your opening read is recorded.</p>
+  <div class="placing" id="placing"><span class="spinner"></span>PLACING YOU ON THE MAP…</div>
+  <div class="locked-recap" id="recap" style="display:none">
+    <div class="rk">Your read</div><div class="rv" id="rThesis"></div>
+    <div class="rk">Placed at</div><div class="rv placed-coords" id="rCoords"></div>
+    <div class="rk">Why there</div><div class="rv just" id="rJust"></div>
+  </div>
+  <div class="locked-note">Placement comes from your reasoning, not a label.<br>You'll see how far your table later moves you.</div>
+  <button class="again" onclick="resetForm()">Try another read</button>
+</div>
+
+</div>
+
+<script>
+// ── Phase guard — this page is for Phase 1 ──
+window.addEventListener("load", async function(){
+  try {
+    var r = await fetch(
+      SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + SESSION_ID + "&select=phase",
+      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } }
+    );
+    if (r.ok) {
+      var rows = await r.json();
+      var phase = rows.length ? rows[0].phase : null;
+      var banner = document.getElementById("phaseBanner");
+      if (phase !== null && phase === 0) {
+        banner.style.display = "block";
+        banner.innerHTML = "<strong>The session hasn\u2019t opened yet.</strong> Your facilitator will tell you when to submit your read.";
+      } else if (phase !== null && phase > 1) {
+        banner.style.display = "block";
+        banner.innerHTML = "<strong>The prior phase has closed.</strong> If you haven\u2019t submitted yet, you can still do so \u2014 but the room has moved on.";
+      }
+    }
+  } catch(e){ console.warn("phase check:", e.message); }
+});
+
+// ── Tag suggestions: only seed the textarea, never fix the position ──
+var TAGS = [
+  { key:"hyperscaler",  label:"Hyperscaler",            seed:"Hyperscalers (AWS / Azure / GCP) capture the value because " },
+  { key:"chipmaker",    label:"Chip maker",             seed:"The chip layer (NVIDIA / TSMC) captures the value because " },
+  { key:"llm",          label:"LLM supplier",           seed:"Frontier LLM labs capture the value because " },
+  { key:"saas",         label:"Vertical SaaS",          seed:"Vertical SaaS incumbents capture the value because " },
+  { key:"orchestrator", label:"Orchestrator / integrator", seed:"The orchestration / integration layer captures the value because " },
+  { key:"inhouse",      label:"In-house build",         seed:"Enterprises building in-house capture the value because " },
+];
+
+var state = { tag:null, thesis:"", name:"", lastSeed:null };
+
+var tagsEl = document.getElementById("tags");
+TAGS.forEach(function(t){
+  var el = document.createElement("div");
+  el.className = "tag"; el.id = "tag-"+t.key; el.textContent = t.label;
+  el.addEventListener("click", function(){
+    var ta = document.getElementById("thesis");
+    [].slice.call(document.querySelectorAll(".tag")).forEach(function(c){ c.classList.remove("sel"); });
+    el.classList.add("sel");
+    state.tag = t.key;
+    document.getElementById("clearTagBtn").style.display = "inline";
+    // Swap the seed if the box is empty OR still holds a prior chip's untouched seed.
+    // Anything the user actually typed is preserved.
+    var cur = ta.value;
+    if (cur.trim() === "" || cur === state.lastSeed) {
+      ta.value = t.seed;
+      state.lastSeed = t.seed;            // remember this seed so the next chip can replace it
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      state.thesis = ta.value.trim();
+      document.getElementById("cc").textContent = ta.value.length;
+    } else {
+      ta.focus();                          // user has written real text — leave it alone
+    }
+    validate();
+  });
+  tagsEl.appendChild(el);
+});
+
+var thesisEl = document.getElementById("thesis");
+thesisEl.addEventListener("input", function(){
+  state.thesis = thesisEl.value.trim();
+  // once the text diverges from the seed, it counts as the user's own — protect it
+  if (thesisEl.value !== state.lastSeed) state.lastSeed = null;
+  document.getElementById("cc").textContent = thesisEl.value.length;
+  validate();
+});
+var nameEl = document.getElementById("name");
+nameEl.addEventListener("input", function(){ state.name = nameEl.value.trim(); validate(); });
+
+function validate(){
+  // Required: a real sentence (≥30 chars) + a name. Tag is optional — it never gates submission.
+  var ok = state.thesis.length >= 30 && state.name.length >= 1;
+  document.getElementById("submitBtn").disabled = !ok;
+}
+
+function clearTag(){
+  // Deselect whichever tag is selected; if the box still holds the seed, clear it too
+  if (state.tag && state.lastSeed !== null) {
+    var ta = document.getElementById("thesis");
+    if (ta.value === state.lastSeed) { ta.value = ""; state.thesis = ""; document.getElementById("cc").textContent = "0"; }
+  }
+  state.tag = null;
+  state.lastSeed = null;
+  [].slice.call(document.querySelectorAll(".tag")).forEach(function(c){ c.classList.remove("sel"); });
+  document.getElementById("clearTagBtn").style.display = "none";
+  validate();
+}
+
+// ====================================================================
+//  SHARED PLACEMENT ENGINE (inlined so this file is self-contained)
+//  Same function Phase 2 uses — scores ONE claim on the TWO FIXED axes.
+// ====================================================================
+var AXIS_RUBRIC =
+"AXIS X — PLAYER TYPE:\n" +
+"  -1.0 = value captured by NEW ENTRANTS or OPEN / distributed ecosystems (challengers, open weights, startups)\n" +
+"  +1.0 = value captured by INCUMBENTS or a CONCENTRATED few (established platforms, the dominant 2-3 players)\n\n" +
+"AXIS Y — CAPTURE MECHANISM:\n" +
+"  -1.0 = moat is INFRASTRUCTURE / SCALE ECONOMICS (compute, chips, energy, capital intensity)\n" +
+"  +1.0 = moat is DATA / DISTRIBUTION / WORKFLOW LOCK-IN (proprietary data, system-of-record, channel ownership, switching costs, regulatory entrenchment)";
+
+var LENS_ANCHORS = {
+  hyperscaler:{x:0.1,y:-0.6}, chipmaker:{x:0.55,y:-0.55}, llm:{x:-0.4,y:-0.4},
+  saas:{x:0.5,y:0.55}, orchestrator:{x:-0.45,y:0.48}, inhouse:{x:0.45,y:0.0},
+};
+
+function clamp(n){ return Math.max(-1, Math.min(1, n)); }
+
+function buildPrompt(text, tagHint){
+  return "You position a strategic claim about AI / software value capture onto two FIXED axes. " +
+    "Do NOT invent axes. Score the claim on each axis from -1.0 to +1.0.\n" + AXIS_RUBRIC + "\n\n" +
+    "Read the SUBSTANCE, not surface keywords. A 'hyperscaler' claim stressing sovereignty / data-residency leans +Y; " +
+    "one stressing raw compute scale leans -Y. A claim that incumbents win by ACQUIRING challengers is +X.\n\n" +
+    (tagHint ? ("The author tapped the lens '"+tagHint+"' as a hint — use it only if the text is genuinely ambiguous; the text overrides it.\n\n") : "") +
+    "CLAIM:\n\"" + text + "\"\n\n" +
+    'Return ONLY valid JSON, no markdown:\n{"x": <number -1..1>, "y": <number -1..1>, "justification": "<one sentence, max 22 words, naming which axis end and why>"}';
+}
+
+// ── EDGE FUNCTION call — key stays server-side ──────────────────────
+// SUPABASE_URL and SUPABASE_ANON_KEY are the only values needed in the browser.
+// Set them here for your project (or inject via your deployment process).
+                           // Settings → API → anon key
+                                  // change per session
+
+async function placeOnAxes(text, tagHint, recordId){
+  var res = await fetch(SUPABASE_URL + "/functions/v1/course_place", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey": SUPABASE_ANON },
+    body: JSON.stringify({ text:text, lens:tagHint, kind:"prior", record_id:recordId, table:"course_priors" })
+  });
+  if(!res.ok) throw new Error("Edge Function "+res.status);
+  var data = await res.json();
+  if(typeof data.x !== "number" || typeof data.y !== "number") throw new Error("bad response shape");
+  return { x:data.x, y:data.y, justification:data.justification, placed_by:data.placed_by };
+}
+
+function placeFallback(tagHint){
+  var a = tagHint && LENS_ANCHORS[tagHint] ? LENS_ANCHORS[tagHint] : {x:0,y:0};
+  return { x:a.x, y:a.y, placed_by:"fallback",
+    justification: tagHint ? ("Placed at the "+tagHint+" anchor — AI placement unavailable, lens used as fallback.")
+                           : "Placed at centre — AI placement unavailable, no lens chosen." };
+}
+
+// ── SUBMIT ──
+async function submitPrior(){
+  document.getElementById("submitBtn").disabled = true;
+  var payload = { tag:state.tag, thesis:state.thesis, name:state.name,
+                  submitted_at:new Date().toISOString(), x:null, y:null,
+                  justification:null, placed_by:null };
+
+  // 1. Show locked screen immediately — don't make them wait
+  document.getElementById("formState").style.display = "none";
+  document.getElementById("lockedState").classList.add("show");
+  document.getElementById("placing").style.display = "flex";
+  document.getElementById("recap").style.display = "none";
+  document.getElementById("rThesis").textContent = payload.thesis;
+
+  // 2. Write to Supabase (phase-gated by RLS — rejected if phase !== 1).
+  //    Ask for the inserted row back so we can pass its id to the placement fn.
+  var recordId = null;
+  try {
+    var insertRes = await fetch(SUPABASE_URL + "/rest/v1/course_priors", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON, "Prefer":"return=representation" },
+      body: JSON.stringify({
+        session_id: SESSION_ID,
+        name: payload.name,
+        thesis: payload.thesis,
+        lens: payload.tag || null,
+      })
+    });
+    if(insertRes.ok){
+      var rows = await insertRes.json();
+      if(rows && rows[0]) recordId = rows[0].id;
+    }
+  } catch(e){ console.warn("Supabase write failed (no backend? using local only):", e.message); }
+
+  // 3. Call the Edge Function for placement. Passing record_id + table lets the
+  //    function write x/y back to the row (service role bypasses RLS).
+  var placed;
+  try {
+    placed = await placeOnAxes(state.thesis, state.tag, recordId);
+  } catch(e){
+    placed = placeFallback(state.tag);
+  }
+  payload.x = placed.x; payload.y = placed.y;
+  payload.justification = placed.justification;
+  payload.placed_by = placed.placed_by;
+
+  // 3b. Write placement coords back from the browser directly.
+  if(recordId){
+    try {
+      await fetch(SUPABASE_URL + "/rest/v1/course_priors?id=eq." + recordId, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON,
+          "Authorization": "Bearer " + SUPABASE_ANON,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          x: placed.x, y: placed.y,
+          justification: placed.justification,
+          placed_by: placed.placed_by
+        })
+      });
+      console.log("COORDS WRITTEN BACK for", recordId);
+    } catch(e){ console.warn("coord write-back failed:", e.message); }
+  }
+
+  // 4. Show placement result
+  document.getElementById("placing").style.display = "none";
+  document.getElementById("recap").style.display = "block";
+  document.getElementById("rCoords").textContent = coordWords(payload.x, payload.y);
+  document.getElementById("rJust").textContent = payload.justification;
+  window.__prior = payload;
+  console.log("PRIOR LOCKED:", JSON.stringify(payload, null, 2));
+}
+
+function coordWords(x,y){
+  var xs = x > 0.15 ? "incumbent-leaning" : x < -0.15 ? "new-entrant / open" : "mixed player-type";
+  var ys = y > 0.15 ? "data · distribution · workflow moat" : y < -0.15 ? "infrastructure · scale moat" : "mixed mechanism";
+  return xs + "  ·  " + ys;
+}
+
+function resetForm(){
+  state = { tag:null, thesis:"", name:"", lastSeed:null };
+  document.getElementById("thesis").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("cc").textContent = "0";
+  document.getElementById("clearTagBtn").style.display = "none";
+  [].slice.call(document.querySelectorAll(".tag")).forEach(function(c){ c.classList.remove("sel"); });
+  document.getElementById("lockedState").classList.remove("show");
+  document.getElementById("formState").style.display = "block";
+  document.getElementById("submitBtn").disabled = true;
+}
+</script>
+</body>
+</html>

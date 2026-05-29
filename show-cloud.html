@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Prior Cloud · Facilitator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--line:rgba(244,240,233,0.12);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:960px;margin:0 auto;padding:24px 24px 50px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:32px;letter-spacing:-.02em;margin-bottom:4px}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:6px}
+.meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--inkf);margin-bottom:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold)}
+.refresh-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border:1px solid rgba(244,240,233,0.28);color:var(--inkd);background:transparent;cursor:pointer}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* MAP */
+.map-block{display:grid;grid-template-columns:22px 1fr;grid-template-rows:1fr 26px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:8px 0}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.3}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.grid{grid-column:2;grid-row:1;position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4)}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd)}
+
+/* QUADRANT SHADING */
+.quad-bg{position:absolute;pointer-events:none}
+
+/* GRID LINES */
+.gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.22);z-index:2}
+.gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.22);z-index:2}
+
+/* QUADRANT LABELS */
+.qlabel{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;pointer-events:none;z-index:3;line-height:1.4;text-align:center}
+
+/* DOTS */
+.pdot{position:absolute;width:11px;height:11px;border-radius:50%;background:rgba(198,165,83,0.75);border:1.5px solid var(--gold);transform:translate(-50%,-50%);z-index:10;transition:all .3s;cursor:default}
+.pdot:hover{transform:translate(-50%,-50%) scale(1.7);z-index:20;background:var(--gold)}
+
+/* LEGEND */
+.legend{margin-top:14px;padding:10px 14px;border:1px solid var(--line);background:var(--bge);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkd);line-height:1.8}
+.legend strong{color:var(--ink);font-weight:500}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+
+<div class="eyebrow">Course · Prior Cloud · Facilitator view</div>
+<h1>Where the room starts — <em>before</em> the lecture</h1>
+<p class="sub">Each dot is one person's gut read. No names. The cloud shows the room's collective starting point.</p>
+
+<div class="meta">
+  <div class="badge" id="countBadge">— submitted</div>
+  <div class="badge" id="placedBadge">— placed</div>
+  <button class="refresh-btn" onclick="loadAndRender()">↺ Refresh</button>
+  <span style="font-style:italic;color:var(--inkf)" id="lastUpdate"></span>
+</div>
+
+<div class="map-block">
+  <div class="yaxis">
+    <span class="yaxis-end">Data · distribution · workflow</span>
+    <span class="yaxis-title">↑ Capture mechanism</span>
+    <span class="yaxis-end">Infrastructure · scale</span>
+  </div>
+  <div class="grid" id="grid">
+    <div class="gl-h"></div>
+    <div class="gl-v"></div>
+  </div>
+  <div class="xaxis">
+    <span>New entrant / open</span>
+    <span style="color:var(--gold)">Player type →</span>
+    <span>Incumbent</span>
+  </div>
+</div>
+
+<div class="legend">
+  <strong>Reading the cloud.</strong>
+  Each dot is one person's gut read before the lecture.
+  Top half = data / workflow moat · Bottom half = infrastructure / scale moat ·
+  Left half = new entrant / open · Right half = incumbent / concentrated.
+  <br>Keep this up during the lecture — watch whether the room's instinct holds or shifts.
+  In Plenary 1 the team positions land on top of these dots, and the distance each table
+  travelled from its members' starting points becomes the teaching point.
+</div>
+
+</div>
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+
+// ── DEMO fallback ─────────────────────────────────────────────────────────────
+var DEMO = [
+  {x:-0.80,y:0.70},{x:0.70,y:0.60},{x:0.50,y:-0.70},{x:-0.40,y:-0.50},
+  {x:0.60,y:0.50},{x:-0.60,y:0.60},{x:0.80,y:-0.60},{x:-0.30,y:-0.40},
+  {x:0.40,y:0.70},{x:-0.70,y:0.40},{x:0.70,y:-0.50},{x:0.50,y:0.60},
+];
+
+// Convert axis coords (-1..+1) to grid % (5%–95%)
+function toLeft(x){ return ((x+1)/2*90+5).toFixed(2)+"%"; }
+function toTop(y) { return ((-y+1)/2*90+5).toFixed(2)+"%"; }  // y flipped: +y = top
+
+// Six lens anchor positions on the fixed axes
+var LENS_ANCHORS = [
+  { name:"Orchestrator",  x:-0.45, y: 0.48 },
+  { name:"Vertical SaaS", x: 0.50, y: 0.55 },
+  { name:"In-house",      x: 0.45, y: 0.00 },
+  { name:"LLM labs",      x:-0.40, y:-0.40 },
+  { name:"Chipmaker",     x: 0.55, y:-0.55 },
+  { name:"Hyperscaler",   x: 0.10, y:-0.60 },
+];
+
+function renderQuadrants(){
+  var grid = document.getElementById("grid");
+  [].slice.call(grid.querySelectorAll(".quad-bg,.qlabel,.anchor-lbl")).forEach(function(n){n.remove();});
+
+  var quads = [
+    {left:"0%",  top:"0%",  w:"50%", h:"50%", bg:"rgba(127,191,127,0.05)", label:"New entrant\ndata / workflow",    lx:"25%", ly:"12%", col:"rgba(127,191,127,0.45)"},
+    {left:"50%", top:"0%",  w:"50%", h:"50%", bg:"rgba(224,184,111,0.05)", label:"Incumbent\ndata / workflow",      lx:"75%", ly:"12%", col:"rgba(224,184,111,0.45)"},
+    {left:"0%",  top:"50%", w:"50%", h:"50%", bg:"rgba(111,168,220,0.05)", label:"New entrant\ninfrastructure",     lx:"25%", ly:"62%", col:"rgba(111,168,220,0.45)"},
+    {left:"50%", top:"50%", w:"50%", h:"50%", bg:"rgba(224,128,128,0.05)", label:"Incumbent\ninfrastructure",       lx:"75%", ly:"62%", col:"rgba(224,128,128,0.45)"},
+  ];
+
+  quads.forEach(function(q){
+    var bg = document.createElement("div");
+    bg.className = "quad-bg";
+    bg.style.cssText = "left:"+q.left+";top:"+q.top+";width:"+q.w+";height:"+q.h+
+      ";background:"+q.bg+";border:1px solid "+q.bg.replace("0.05","0.15")+";z-index:1";
+    grid.insertBefore(bg, grid.firstChild);
+
+    var lbl = document.createElement("div");
+    lbl.className = "qlabel";
+    lbl.style.cssText = "left:"+q.lx+";top:"+q.ly+";transform:translate(-50%,-50%);color:"+q.col;
+    lbl.textContent = q.label;
+    grid.appendChild(lbl);
+  });
+
+  // Lens anchor names — faint background labels, not dots
+  LENS_ANCHORS.forEach(function(a){
+    var lbl = document.createElement("div");
+    lbl.className = "anchor-lbl";
+    lbl.style.cssText = (
+      "position:absolute;" +
+      "left:" + toLeft(a.x) + ";" +
+      "top:" + toTop(a.y) + ";" +
+      "transform:translate(-50%,-50%);" +
+      "font-family:'IBM Plex Mono',monospace;" +
+      "font-size:9px;" +
+      "letter-spacing:.06em;" +
+      "text-transform:uppercase;" +
+      "color:rgba(244,240,233,0.22);" +
+      "pointer-events:none;" +
+      "z-index:3;" +
+      "white-space:nowrap;" +
+      "text-align:center;"
+    );
+    lbl.textContent = a.name;
+    grid.appendChild(lbl);
+  });
+}
+
+function render(priors){
+  var grid = document.getElementById("grid");
+  [].slice.call(grid.querySelectorAll(".pdot")).forEach(function(n){n.remove();});
+
+  var placed = priors.filter(function(p){ return p.x !== null && p.y !== null; });
+
+  placed.forEach(function(p){
+    var dot = document.createElement("div");
+    dot.className = "pdot";
+    dot.style.left = toLeft(p.x);
+    dot.style.top  = toTop(p.y);
+    if(p.thesis) dot.title = p.thesis.slice(0,100);
+    grid.appendChild(dot);
+  });
+
+  document.getElementById("countBadge").textContent  = priors.length + " submitted";
+  document.getElementById("placedBadge").textContent = placed.length + " placed";
+  document.getElementById("lastUpdate").textContent  =
+    "Last update: " + new Date().toLocaleTimeString();
+
+  // Summary per quadrant
+  var counts = {"new-data":0,"incumb-data":0,"new-infra":0,"incumb-infra":0};
+  placed.forEach(function(p){
+    var qx = p.x >= 0 ? "incumb" : "new";
+    var qy = p.y >= 0 ? "data"   : "infra";
+    counts[qx+"-"+qy]++;
+  });
+}
+
+async function loadAndRender(){
+  renderQuadrants();
+  try {
+    var res = await fetch(
+      SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + SESSION_ID +
+      "&select=x,y,thesis&order=created_at.asc",
+      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } }
+    );
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    var data = await res.json();
+    render(data.length ? data : DEMO);
+  } catch(e){
+    console.warn("using demo:", e.message);
+    render(DEMO);
+  }
+  setTimeout(loadAndRender, 8000);
+}
+
+window.addEventListener("load", loadAndRender);
+</script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Path Projection · Facilitator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);
+  --line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:22px 24px 50px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-.02em;margin-bottom:3px;line-height:1.1}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:18px}
+
+.axis-note{padding:9px 14px;border-left:2px solid var(--gold);background:var(--golds);margin-bottom:16px;font-size:12.5px;color:var(--inkd);font-style:italic}
+.axis-note strong{font-style:normal;color:var(--ink);font-weight:500}
+
+/* CONTROLS */
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 13px;border:1px solid;cursor:pointer;transition:all .15s;background:transparent}
+.btn-gold{border-color:var(--gold);color:var(--gold)}.btn-gold:hover{background:var(--gold);color:var(--bg)}
+.btn-ink{border-color:var(--lines);color:var(--inkd)}.btn-ink:hover{border-color:var(--gold);color:var(--gold)}
+.btn.on{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.sep{width:1px;height:20px;background:var(--line);flex-shrink:0}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;padding:5px 11px;border:1px solid var(--line);color:var(--inkd)}
+
+/* MAP */
+.map-wrap{position:relative}
+.map-block{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 24px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;overflow:hidden}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.grid{grid-column:2;grid-row:1;position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd)}
+.gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
+.gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
+
+/* SVG layer */
+.map-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;overflow:visible}
+
+/* Prior ghosts */
+.prior-ghost{position:absolute;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(198,165,83,0.5);background:rgba(198,165,83,0.18);transform:translate(-50%,-50%);z-index:6}
+
+/* Team dots */
+.team-endpoint{position:absolute;border-radius:50%;border:2px solid;transform:translate(-50%,-50%);z-index:10;cursor:pointer;transition:transform .14s}
+.team-endpoint:hover{transform:translate(-50%,-50%) scale(1.5);z-index:20}
+
+/* Team card label on map */
+.team-lbl{position:absolute;font-family:'Fraunces',serif;font-weight:500;font-size:13px;transform:translate(-50%, -280%);z-index:11;pointer-events:none;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+
+/* LEGEND */
+.legend{margin-top:14px;padding:10px 14px;border:1px solid var(--line);background:var(--bge);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.li{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkd)}
+.li-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.li-ghost{width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(198,165,83,0.5);background:rgba(198,165,83,0.18);flex-shrink:0}
+.li-arr{font-size:14px;color:rgba(198,165,83,0.6);margin-right:2px}
+
+/* STATS BELOW */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px}
+.stat-card{padding:14px 16px;border:1px solid var(--line);background:var(--bge)}
+.stat-val{font-family:'Fraunces',serif;font-size:28px;font-weight:400;color:var(--gold);line-height:1}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd);margin-top:4px}
+.stat-note{font-size:12px;color:var(--inkf);font-style:italic;margin-top:4px;line-height:1.4}
+
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--golds);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+
+<div class="eyebrow">Course · Paths · Projection view · Facilitator</div>
+<h1>Where everyone <em>started</em>, where each table <em>landed</em></h1>
+<p class="sub">Gold ghosts = individual priors · coloured dots = team hypotheses · arrows = movement · all anonymous</p>
+
+<div class="axis-note"><strong>Reading this map.</strong> Each gold ghost is one person's opening read. Each coloured dot is a team's hypothesis. The arrow shows how far the table moved from where its members started. Long arrows mean the discussion changed people; short arrows mean the table converged on the dominant prior.</div>
+
+<div class="controls">
+  <button class="btn btn-gold" onclick="loadData()">↺ Load / refresh</button>
+  <div class="sep"></div>
+  <button class="btn btn-ink on" id="btnArrows" onclick="toggleArrows()">Arrows</button>
+  <button class="btn btn-ink on" id="btnGhosts" onclick="toggleGhosts()">Prior ghosts</button>
+  <button class="btn btn-ink on" id="btnLabels" onclick="toggleLabels()">Team labels</button>
+  <div class="sep"></div>
+  <div class="badge" id="statBadge">— priors · — teams</div>
+</div>
+
+<div class="map-block">
+  <div class="yaxis">
+    <span class="yaxis-end">Data · distribution · workflow</span>
+    <span class="yaxis-title">↑ Capture mechanism</span>
+    <span class="yaxis-end">Infrastructure · scale</span>
+  </div>
+  <div class="grid" id="grid">
+    <div class="gl-h"></div><div class="gl-v"></div>
+    <svg class="map-svg" id="mapSvg"></svg>
+  </div>
+  <div class="xaxis">
+    <span>New entrant / open</span>
+    <span style="color:var(--gold)">Player type →</span>
+    <span>Incumbent</span>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="li"><div class="li-ghost"></div><span>Individual prior (anonymous)</span></div>
+  <div class="li"><span class="li-arr">→</span><span>Movement to team position</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px" id="legendTeams"></div>
+</div>
+
+<div class="stats" id="statsRow"></div>
+
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────
+var TEAM_COLORS   = ["#7fbf7f","#6fa8dc","#e0b86f","#e08080","#8a6b9e","#5e9e8a","#c4a0e0","#9e6b6b"];
+
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  if(p.get("url"))     SUPABASE_URL  = p.get("url");
+  if(p.get("key"))     SUPABASE_ANON = p.get("key");
+  if(p.get("session")) SESSION_ID    = p.get("session");
+})();
+
+// ── DEMO DATA ──────────────────────────────────────────────────────────
+var DEMO_PRIORS = [
+  {id:"p1",x:-0.80,y:0.70,team_id:"t1"},{id:"p2",x:0.70,y:0.60,team_id:"t2"},
+  {id:"p3",x:0.50,y:-0.70,team_id:"t3"},{id:"p4",x:-0.40,y:-0.50,team_id:"t4"},
+  {id:"p5",x:0.60,y:0.50,team_id:"t2"},{id:"p6",x:-0.60,y:0.60,team_id:"t1"},
+  {id:"p7",x:0.80,y:-0.60,team_id:"t3"},{id:"p8",x:-0.30,y:-0.40,team_id:"t4"},
+  {id:"p9",x:0.40,y:0.70,team_id:"t2"},{id:"p10",x:-0.70,y:0.40,team_id:"t1"},
+  {id:"p11",x:0.70,y:-0.50,team_id:"t3"},{id:"p12",x:0.50,y:0.60,team_id:"t5"},
+];
+var DEMO_TEAMS = [
+  {id:"t1",name:"Table 1",x:-0.35,y:0.60,color:"#7fbf7f"},
+  {id:"t2",name:"Table 2",x:0.60,y:0.55,color:"#6fa8dc"},
+  {id:"t3",name:"Table 3",x:0.65,y:-0.55,color:"#e0b86f"},
+  {id:"t4",name:"Table 4",x:-0.40,y:-0.45,color:"#e08080"},
+  {id:"t5",name:"Table 5",x:0.50,y:0.65,color:"#8a6b9e"},
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────
+var priors = [], teams = [];
+var showArrows = true, showGhosts = true, showLabels = true;
+
+function toX(v){ return (v+1)/2*82+9; }  // returns %
+function toY(v){ return (1-v)/2*82+9; }
+
+// ── LOAD ───────────────────────────────────────────────────────────────
+async function loadData(){
+  if(SUPABASE_URL && SUPABASE_ANON){
+    try {
+      var [r1, r2, r3] = await Promise.all([
+        fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+"&select=id,x,y", {headers:{"apikey":SUPABASE_ANON}}),
+        fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&select=prior_id,team_id,team_name", {headers:{"apikey":SUPABASE_ANON}}),
+        fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&select=team_name,x,y", {headers:{"apikey":SUPABASE_ANON}}),
+      ]);
+      var priorData = await r1.json();
+      var assignData = await r2.json();
+      var teamData = await r3.json();
+
+      // Build a team_id lookup from assignments
+      var assignMap = {};
+      assignData.forEach(function(a){ assignMap[a.prior_id] = a.team_id; });
+      priors = priorData.map(function(p){ return Object.assign({},p,{team_id:assignMap[p.id]||null}); });
+
+      // Assign colours by team index
+      var teamNames = [...new Set(assignData.map(function(a){return a.team_name;}))];
+      teams = teamData.map(function(t,i){
+        return { id:"t"+(i+1), name:t.team_name, x:t.x, y:t.y, color:TEAM_COLORS[i%TEAM_COLORS.length] };
+      });
+    } catch(e){
+      console.warn("Supabase unavailable — using demo data:", e.message);
+      priors = DEMO_PRIORS; teams = DEMO_TEAMS;
+    }
+  } else {
+    priors = DEMO_PRIORS; teams = DEMO_TEAMS;
+  }
+  render();
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────
+function render(){
+  var grid = document.getElementById("grid");
+  // Clear dynamic elements
+  [].slice.call(grid.querySelectorAll(".prior-ghost,.team-endpoint,.team-lbl")).forEach(function(n){n.remove();});
+  document.getElementById("mapSvg").innerHTML = "";
+  document.getElementById("legendTeams").innerHTML = "";
+
+  // Build team colour map
+  var teamColorMap = {};
+  teams.forEach(function(t){ teamColorMap[t.id] = t.color; });
+
+  // Compute centroid of priors per team
+  var teamCentroids = {};
+  teams.forEach(function(t){
+    var ps = priors.filter(function(p){ return p.team_id===t.id; });
+    if(!ps.length) return;
+    var cx = ps.reduce(function(s,p){return s+p.x;},0)/ps.length;
+    var cy = ps.reduce(function(s,p){return s+p.y;},0)/ps.length;
+    teamCentroids[t.id] = {x:cx, y:cy};
+  });
+
+  // ARROWS: from each prior to its team position
+  if(showArrows){
+    var svg = document.getElementById("mapSvg");
+    priors.forEach(function(p){
+      if(!p.team_id) return;
+      var team = teams.find(function(t){return t.id===p.team_id;});
+      if(!team || team.x===undefined || team.y===undefined) return;
+      var col = teamColorMap[p.team_id] || "rgba(198,165,83,0.5)";
+
+      var line = document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute("x1",toX(p.x)+"%"); line.setAttribute("y1",toY(p.y)+"%");
+      line.setAttribute("x2",toX(team.x)+"%"); line.setAttribute("y2",toY(team.y)+"%");
+      line.setAttribute("stroke",col.replace(")",",0.45)").replace("rgb","rgba"));
+      line.setAttribute("stroke-width","1.2");
+      line.setAttribute("stroke-dasharray","5,3");
+      svg.appendChild(line);
+
+      // Tiny arrowhead
+      var dx=toX(team.x)-toX(p.x), dy=toY(team.y)-toY(p.y), len=Math.sqrt(dx*dx+dy*dy);
+      if(len>3){
+        var angle=Math.atan2(dy,dx), al=6, aw=3.5;
+        var ax=toX(team.x)-al*Math.cos(angle), ay=toY(team.y)-al*Math.sin(angle);
+        var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+        poly.setAttribute("points",
+          toX(team.x)+"%,"+toY(team.y)+"% "+
+          (ax-aw*Math.sin(angle))+"%,"+(ay+aw*Math.cos(angle))+"% "+
+          (ax+aw*Math.sin(angle))+"%,"+(ay-aw*Math.cos(angle))+"%"
+        );
+        poly.setAttribute("fill",col.replace(")",",0.7)").replace("rgb","rgba"));
+        svg.appendChild(poly);
+      }
+    });
+  }
+
+  // PRIOR GHOSTS
+  if(showGhosts){
+    priors.forEach(function(p){
+      var ghost = document.createElement("div");
+      ghost.className = "prior-ghost";
+      ghost.style.left=toX(p.x)+"%"; ghost.style.top=toY(p.y)+"%";
+      grid.appendChild(ghost);
+    });
+  }
+
+  // TEAM DOTS
+  teams.forEach(function(t){
+    if(t.x===undefined || t.y===undefined) return;
+    var dot = document.createElement("div");
+    dot.className = "team-endpoint";
+    dot.style.cssText = "left:"+toX(t.x)+"%;top:"+toY(t.y)+"%;width:16px;height:16px;background:"+t.color+";border-color:"+t.color;
+    dot.title = t.name;
+    grid.appendChild(dot);
+
+    if(showLabels){
+      var lbl = document.createElement("div");
+      lbl.className = "team-lbl";
+      lbl.style.cssText = "left:"+toX(t.x)+"%;top:"+toY(t.y)+"%;color:"+t.color;
+      lbl.textContent = t.name;
+      grid.appendChild(lbl);
+    }
+
+    // Legend
+    var li = document.createElement("div");
+    li.className = "li";
+    li.innerHTML = '<div class="li-dot" style="background:'+t.color+'"></div><span>'+t.name+'</span>';
+    document.getElementById("legendTeams").appendChild(li);
+  });
+
+  // Badge
+  document.getElementById("statBadge").textContent = priors.length+" priors · "+teams.length+" teams";
+
+  // Stats
+  renderStats(teamCentroids);
+}
+
+function renderStats(centroids){
+  var statsRow = document.getElementById("statsRow");
+  statsRow.innerHTML = "";
+
+  // Average distance per team
+  var teamDistances = [];
+  teams.forEach(function(t){
+    var ps = priors.filter(function(p){return p.team_id===t.id;});
+    if(!ps.length || t.x===undefined) return;
+    var dists = ps.map(function(p){ return Math.sqrt(Math.pow(p.x-t.x,2)+Math.pow(p.y-t.y,2)); });
+    var avg = dists.reduce(function(s,d){return s+d;},0)/dists.length;
+    teamDistances.push({name:t.name, color:t.color, avg:avg, n:ps.length});
+  });
+  teamDistances.sort(function(a,b){return b.avg-a.avg;});
+
+  // Most-moved team
+  if(teamDistances.length){
+    var most = teamDistances[0];
+    addStat(statsRow, most.avg.toFixed(2), "Largest table movement", most.name+" moved its members the furthest from their priors.", most.color);
+  }
+
+  // Room centroid shift
+  var pCx = priors.reduce(function(s,p){return s+p.x;},0)/priors.length;
+  var pCy = priors.reduce(function(s,p){return s+p.y;},0)/priors.length;
+  var teamX = teams.filter(function(t){return t.x!==undefined;});
+  var tCx = teamX.reduce(function(s,t){return s+t.x;},0)/teamX.length;
+  var tCy = teamX.reduce(function(s,t){return s+t.y;},0)/teamX.length;
+  var roomDist = Math.sqrt(Math.pow(tCx-pCx,2)+Math.pow(tCy-pCy,2));
+  addStat(statsRow, roomDist.toFixed(2), "Room-level shift", 
+    "The collective centre of gravity moved from "+coordWords(pCx,pCy)+" to "+coordWords(tCx,tCy)+".", "var(--gold)");
+
+  // Convergence (std dev of team positions)
+  if(teamX.length>1){
+    var varX = teamX.reduce(function(s,t){return s+Math.pow(t.x-tCx,2);},0)/teamX.length;
+    var varY = teamX.reduce(function(s,t){return s+Math.pow(t.y-tCy,2);},0)/teamX.length;
+    var spread = Math.sqrt(varX+varY).toFixed(2);
+    addStat(statsRow, spread, "Team spread on map", 
+      "How dispersed the team hypotheses are. High = genuine disagreement. Low = the room converged.", "var(--inkd)");
+  }
+}
+
+function addStat(container, val, label, note, color){
+  var c = document.createElement("div");
+  c.className = "stat-card";
+  c.innerHTML = '<div class="stat-val" style="color:'+color+'">'+val+'</div>'+
+    '<div class="stat-label">'+label+'</div>'+
+    '<div class="stat-note">'+note+'</div>';
+  container.appendChild(c);
+}
+
+function coordWords(x,y){
+  var xs = x>0.15?"incumbent-leaning":x<-0.15?"new-entrant / open":"mixed";
+  var ys = y>0.15?"data / workflow":y<-0.15?"infra / scale":"mixed";
+  return xs+" · "+ys;
+}
+
+// ── TOGGLES ────────────────────────────────────────────────────────────
+function toggleArrows(){ showArrows=!showArrows; document.getElementById("btnArrows").classList.toggle("on",showArrows); render(); }
+function toggleGhosts(){ showGhosts=!showGhosts; document.getElementById("btnGhosts").classList.toggle("on",showGhosts); render(); }
+function toggleLabels(){ showLabels=!showLabels; document.getElementById("btnLabels").classList.toggle("on",showLabels); render(); }
+
+// ── INIT ───────────────────────────────────────────────────────────────
+window.addEventListener("load", loadData);
+</script>
+</body>
+</html>

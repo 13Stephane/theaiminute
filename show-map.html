@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Model Map · Workshop Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);
+  --line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);--warn:rgb(220,130,80);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:1180px;margin:0 auto;padding:22px 22px 60px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-.02em;margin-bottom:3px;line-height:1.1}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:16px}
+.axis-why{padding:9px 14px;border-left:2px solid var(--gold);background:var(--golds);margin-bottom:18px;font-size:12.5px;color:var(--inkd);font-style:italic;line-height:1.5}
+.axis-why strong{font-style:normal;color:var(--ink);font-weight:500}
+
+/* Two-column on wide screens, single column when narrow */
+.layout{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;align-items:start}
+@media(max-width:880px){.layout{grid-template-columns:1fr;gap:18px}}
+
+.map-block{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 22px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;overflow:hidden}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2;overflow:hidden}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.grid{grid-column:2;grid-row:1;position:relative;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd)}
+.xaxis .mid{color:var(--gold);letter-spacing:.12em}
+.gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
+.gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
+
+.blob{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);transition:opacity .2s;z-index:3}
+.ccard{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;text-align:center}
+.ccard-inner{padding:6px 10px;border:2px solid;border-radius:2px;background:var(--bg);transition:all .18s;white-space:nowrap}
+.ccard:hover .ccard-inner,.ccard.sel .ccard-inner{transform:scale(1.07);box-shadow:0 3px 14px rgba(0,0,0,.4)}
+.ccard-name{font-family:'Fraunces',serif;font-weight:500;font-size:12px;line-height:1.15}
+.ccard-count{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--inkd);margin-top:1px}
+
+.tdot{position:absolute;border-radius:50%;border:2px solid;cursor:pointer;transition:transform .14s,opacity .18s;z-index:12;transform:translate(-50%,-50%);width:12px;height:12px}
+.tdot:hover{transform:translate(-50%,-50%) scale(1.7);z-index:30}
+.tdot.dimmed{opacity:.15}
+.dlbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.02em;color:var(--ink);white-space:nowrap;pointer-events:none;transform:translate(9px,-50%);z-index:11;transition:opacity .18s}
+.dlbl.dimmed{opacity:.15}
+
+.detail{border:1px solid var(--lines);background:var(--bge);min-height:200px}
+.detail-hd{padding:14px 16px;border-bottom:1px solid var(--line)}
+.detail-model{font-family:'Fraunces',serif;font-weight:500;font-size:19px;line-height:1.2}
+.detail-desc{font-style:italic;font-size:12px;color:var(--inkd);margin-top:4px;line-height:1.45}
+.detail-teams{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--inkf);margin-top:8px}
+.detail-empty{padding:36px 22px;text-align:center;font-style:italic;color:var(--inkf);font-size:13px;line-height:1.6}
+.detail-tabs{display:flex;border-bottom:1px solid var(--line)}
+.dtab{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;padding:9px 5px;cursor:pointer;border:none;background:transparent;color:var(--inkd);border-bottom:2px solid transparent;transition:all .14s;flex:1}
+.dtab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.dtab:hover:not(.on){color:var(--ink)}
+.detail-body{padding:2px 0;max-height:440px;overflow-y:auto}
+.team-block{padding:13px 16px;border-bottom:1px solid var(--line)}
+.team-block:last-child{border-bottom:none}
+.tb-name{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.tb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tb-text{font-size:13px;line-height:1.55;color:var(--inkd)}
+.tb-text.warn{color:var(--warn);font-style:italic}
+.tb-flag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--warn);margin-top:4px}
+.detail-body::-webkit-scrollbar{width:8px}
+.detail-body::-webkit-scrollbar-track{background:var(--bge2)}
+.detail-body::-webkit-scrollbar-thumb{background:var(--lines);border-radius:4px}
+
+/* CONTRADICTION ENGINE */
+.contra-panel{margin:0;border-bottom:1px solid var(--line);background:var(--bge2)}
+.contra-hd{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.contra-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.contra-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;padding:3px 8px;border:1px solid rgba(198,165,83,0.4);color:var(--inkd)}
+.contra-body{padding:0 16px 14px;display:none}
+.contra-body.open{display:block}
+.contra-loading{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--inkd);padding:8px 0;display:flex;align-items:center;gap:7px}
+.signal{padding:10px 0;border-bottom:1px solid var(--line)}
+.signal:last-child{border-bottom:none}
+.signal-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.signal-icon{font-size:13px}
+.signal-text{font-size:13px;color:var(--inkd);line-height:1.5;font-style:italic}
+.signal-err{font-size:12px;color:var(--warn);font-style:italic;padding:8px 0}
+.contra-toggle-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--inkd);letter-spacing:.06em}
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--golds);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+.legend{margin-top:14px;padding:10px 14px;border:1px solid var(--line);background:var(--bge);display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.li{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 7px;border:1px solid transparent;transition:all .15s;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--inkd)}
+.li:hover,.li.sel{border-color:var(--gold);color:var(--ink)}
+.li-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+<div class="eyebrow">Course · Model Map · Plenary 1</div>
+<h1>The room's <em>map</em> of where new value will be created</h1>
+<p class="sub" id="mapSubtitle">9 teams · 4 models · click a cluster to load its teams into the table</p>
+<button onclick="loadFromDB()" id="loadBtn" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;margin-bottom:16px">Load live teams from DB</button>
+<div class="axis-why"><strong>Why these axes?</strong> The hypotheses separate most cleanly on <em>who</em> captures the new value (new entrant vs. incumbent) and <em>what</em> the moat is built on (infrastructure &amp; scale vs. data, distribution &amp; workflow lock-in).</div>
+
+<div class="layout">
+  <div>
+    <div class="map-block">
+      <div class="yaxis">
+        <span class="yaxis-end">Data · distribution</span>
+        <span class="yaxis-title">↑ Capture mechanism</span>
+        <span class="yaxis-end">Infrastructure · scale</span>
+      </div>
+      <div class="grid" id="grid"><div class="gl-h"></div><div class="gl-v"></div></div>
+      <div class="xaxis">
+        <span>New entrant / open</span>
+        <span class="mid">Player type →</span>
+        <span>Incumbent</span>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div class="detail">
+    <div class="detail-hd" id="detailHd"><div class="detail-empty">Click a cluster on the map to see the hypotheses, bottlenecks, falsifiers, and dissent of every team in that model.</div></div>
+    <div class="detail-tabs" id="detailTabs" style="display:none"></div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── Edge Function config — replace before deploying ──────────────────
+
+// ── LOAD LIVE TEAMS FROM DATABASE ─────────────────────────────────────────────
+async function loadFromDB(){
+  try {
+    var res = await fetch(
+      SUPABASE_URL + "/rest/v1/course_teams?session_id=eq." + SESSION_ID +
+      "&select=id,team_name,hypothesis,bottleneck,falsifier,dissent,x,y&order=created_at.asc",
+      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } }
+    );
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    var rows = await res.json();
+    if(!rows.length) throw new Error("no teams yet");
+
+    // Build TEAMS array from live data
+    TEAMS = rows.map(function(r, i){
+      return {
+        id: i,
+        team: r.team_name || ("Team "+(i+1)),
+        hypothesis: r.hypothesis || "",
+        bottleneck: r.bottleneck || "",
+        falsifier: r.falsifier || "",
+        dissent: r.dissent || "",
+        x: r.x !== null ? r.x : 0,
+        y: r.y !== null ? r.y : 0,
+        weak: false,
+      };
+    });
+
+    // Auto-cluster into 4 quadrant models
+    var quadrant = function(t){
+      var qx = t.x >= 0 ? "incumb" : "new";
+      var qy = t.y >= 0 ? "data"   : "infra";
+      return qx + "-" + qy;
+    };
+    var QUAD_DEFS = [
+      { key:"new-data",    name:"New entrant / data moat",      col:"#7fbf7f", cx:0.27, cy:0.27, cardCy:0.45 },
+      { key:"incumb-data", name:"Incumbent / data moat",        col:"#e0b86f", cx:0.73, cy:0.27, cardCy:0.45 },
+      { key:"new-infra",   name:"New entrant / infrastructure",  col:"#6fa8dc", cx:0.27, cy:0.72, cardCy:0.90 },
+      { key:"incumb-infra",name:"Incumbent / infrastructure",    col:"#e08080", cx:0.73, cy:0.72, cardCy:0.90 },
+    ];
+    MODELS = [];
+    QUAD_DEFS.forEach(function(qd, qi){
+      var members = TEAMS.filter(function(t){ return quadrant(t) === qd.key; });
+      if(!members.length) return;
+      MODELS.push({
+        id: qi,
+        name: qd.name,
+        desc: members.map(function(t){ return t.team; }).join(", "),
+        tids: members.map(function(t){ return t.id; }),
+        col:  qd.col, cx: qd.cx, cy: qd.cy, cardCy: qd.cardCy,
+      });
+    });
+
+    document.getElementById("mapSubtitle").textContent =
+      TEAMS.length + " teams · " + MODELS.length + " clusters · click a cluster to load its teams into the table";
+    selModel = null;
+    activeTab = "hypothesis";
+    renderMap();
+    renderLegend();
+    document.getElementById("detailPanel").style.display = "none";
+    document.getElementById("loadBtn").textContent = "↺ Refresh";
+    document.getElementById("loadBtn").style.borderColor = "var(--ok,rgb(127,191,127))";
+    document.getElementById("loadBtn").style.color = "rgb(127,191,127)";
+  } catch(e){
+    console.warn("DB load failed, keeping demo data:", e.message);
+    document.getElementById("loadBtn").textContent = "Load failed — using demo";
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+var TEAMS = [
+  { id:0, team:"Falcon", hypothesis:"The most new value is created at the agentic orchestration layer that composes vertical AI on demand — neither hyperscalers nor SaaS incumbents own it.", bottleneck:"Cross-system trust and reliability in multi-step agent composition; whoever holds the orchestration graph holds the rents.", falsifier:"If GPT-6 or Claude 5 ship reliable multi-step composition out of the box by mid-2027, the layer commoditizes.", dissent:"Two members held vertical SaaS still captures more — orchestration is fragile in regulated domains.", weak:false },
+  { id:1, team:"Vega", hypothesis:"AI-native challengers attacking regulated verticals (clinical trials, legal discovery) create the most new value where incumbents carry 15 years of technical debt.", bottleneck:"Speed of clean-slate rebuild with foundation models; incumbents can't rewrite without breaking existing customers.", falsifier:"If no AI-native challenger in healthcare or legal-tech raises a Series C above $200M by end of 2027, the wedge isn't real.", dissent:"One member argued incumbents will simply acquire the strongest challengers before scale.", weak:false },
+  { id:2, team:"Atlas", hypothesis:"Vertical SaaS incumbents embedding AI into existing workflows capture the most value — proprietary regulated data plus 15 years of trust beats any challenger.", bottleneck:"Domain data and regulatory permission to operate; generic models and entrants can't earn either fast enough.", falsifier:"If two-plus top-3 category leaders in regulated verticals are displaced by AI-native challengers within 24 months.", dissent:"Two members held the orchestration layer captures more — regulated data ages quickly.", weak:false },
+  { id:3, team:"Juno", hypothesis:"Whoever owns distribution — incumbent SaaS, the mobile OS duopoly, productivity suites — captures the most value by adding AI to their install base.", bottleneck:"Distribution lock-in and switching costs, not AI capability; the best model in the lowest-friction channel wins.", falsifier:"If any AI-native challenger reaches 10M enterprise seats without an incumbent distribution partner by end of 2026.", dissent:"One member argued this just describes Microsoft and Google — a description of who already won, not a model.", weak:false },
+  { id:4, team:"Orion", hypothesis:"Open-source ecosystems around frontier-parity open weights create the most value — a Cambrian explosion without rent-extraction by any single player.", bottleneck:"Coordination of distributed contribution and trust without a central authority.", falsifier:"If frontier closed models stay 18+ months ahead of best open weights through 2028, value compresses to the labs.", dissent:"One member thought hyperscalers capture the open flow through compute lock-in anyway.", weak:true },
+  { id:5, team:"Sable", hypothesis:"Value migrates to open protocol layers — the AI equivalent of HTTP — no single player owns. Capture shifts to adjacent tooling, evaluation, compliance.", bottleneck:"Adoption of a common protocol by enough production systems to create the network effect.", falsifier:"If no cross-company AI protocol achieves production adoption across 5+ major vendors by end of 2027.", dissent:"The table split evenly — half held hyperscalers prevent standardisation; half held it's the only stable equilibrium.", weak:true },
+  { id:6, team:"Kite", hypothesis:"Most new value compresses upward to three hyperscalers — inference cost at frontier scale is the binding bottleneck and only they have capital, energy, chips.", bottleneck:"Capital intensity and energy access for frontier inference at scale.", falsifier:"If inference cost falls 100× and runs locally on consumer hardware by 2028, the moat dissolves.", dissent:"One member argued LLM labs capture more through model IP and licensing.", weak:false },
+  { id:7, team:"Pike", hypothesis:"The real capture point is the foundation model layer — the best labs extract rents through API pricing and licensing regardless of who builds on top.", bottleneck:"Sustained technical lead at the frontier; architectural innovations that compound and resist replication for 18+ months.", falsifier:"If three-plus open-weight models match frontier closed performance on enterprise benchmarks before end of 2026.", dissent:"Two members argued model commoditization is inevitable — labs forced into infra or services.", weak:false },
+  { id:8, team:"Wren", hypothesis:"Large enterprises building proprietary AI in-house — custom models on their own data — capture the most durable value, not external SaaS or APIs.", bottleneck:"Talent and data infrastructure; the bottleneck is organizational capacity to fine-tune and redeploy, not model capability.", falsifier:"If fewer than 10 Fortune 500 firms report material revenue from proprietary AI within 3 years.", dissent:"Most of the table held this is a 2028+ story; near-term value goes to application-layer vendors.", weak:true },
+];
+
+var MODELS = [
+  { id:0, name:"AI-native disruption", desc:"New entrants attack the application layer — orchestration and regulated verticals — where incumbents can't rebuild fast enough.", tids:[0,1], col:"#7fbf7f", cx:0.27, cy:0.27, cardCy:0.45 },
+  { id:1, name:"Open ecosystem", desc:"Open weights and protocols fragment value; capture shifts to adjacent coordination layers rather than any single owner.", tids:[4,5], col:"#6fa8dc", cx:0.27, cy:0.72, cardCy:0.90 },
+  { id:2, name:"Incumbent moat", desc:"Vertical SaaS incumbents and distribution owners embed AI into existing workflows; proprietary data and lock-in beat speed.", tids:[2,3,8], col:"#e0b86f", cx:0.73, cy:0.24, cardCy:0.45 },
+  { id:3, name:"Infrastructure capture", desc:"Compute scarcity and frontier model lead compress value upward to hyperscalers and the leading labs.", tids:[6,7], col:"#e08080", cx:0.73, cy:0.72, cardCy:0.90 },
+];
+
+var selModel = null;
+var activeTab = "hypothesis";
+var TABS = [
+  { key:"hypothesis", label:"Hypothesis" },
+  { key:"bottleneck", label:"Bottleneck" },
+  { key:"falsifier",  label:"Falsifier" },
+  { key:"dissent",    label:"Dissent" },
+];
+
+function dotOffsets(n) {
+  if (n === 1) return [{dx:0,dy:0}];
+  if (n === 2) return [{dx:-0.08,dy:-0.02},{dx:0.08,dy:0.02}];
+  if (n === 3) return [{dx:0,dy:-0.08},{dx:-0.085,dy:0.06},{dx:0.085,dy:0.06}];
+  return Array.from({length:n}, function(_, i){
+    var a = 2*Math.PI*i/n - Math.PI/2;
+    return { dx: Math.cos(a)*0.09, dy: Math.sin(a)*0.08 };
+  });
+}
+
+function renderMap() {
+  var grid = document.getElementById("grid");
+  [].slice.call(grid.querySelectorAll(".blob,.ccard,.tdot,.dlbl")).forEach(function(n){ n.remove(); });
+  MODELS.forEach(function(m){
+    var teams = TEAMS.filter(function(t){ return m.tids.indexOf(t.id) !== -1; });
+    var bsz = Math.max(80, 50 + teams.length*16);
+    var blob = document.createElement("div");
+    blob.className = "blob"; blob.id = "blob"+m.id;
+    blob.style.cssText = "left:"+(m.cx*100)+"%;top:"+(m.cy*100)+"%;width:"+bsz+"px;height:"+bsz+"px;background:"+m.col+"1f;border:2px dashed "+m.col+"66";
+    grid.appendChild(blob);
+    var offs = dotOffsets(teams.length);
+    teams.forEach(function(t, ti){
+      var o = offs[ti];
+      var x = (m.cx + o.dx) * 100, y = (m.cy + o.dy) * 100;
+      var dot = document.createElement("div");
+      dot.className = "tdot"; dot.id = "dot"+t.id;
+      dot.style.cssText = "left:"+x+"%;top:"+y+"%;background:"+m.col+";border-color:"+m.col;
+      dot.addEventListener("click", function(e){ e.stopPropagation(); selectModel(m.id); });
+      grid.appendChild(dot);
+      var lbl = document.createElement("div");
+      lbl.className = "dlbl"; lbl.id = "lbl"+t.id;
+      lbl.style.cssText = "left:"+x+"%;top:"+y+"%";
+      lbl.textContent = t.team;
+      grid.appendChild(lbl);
+    });
+    var card = document.createElement("div");
+    card.className = "ccard"; card.id = "card"+m.id;
+    card.style.cssText = "left:"+(m.cx*100)+"%;top:"+(m.cardCy*100)+"%";
+    card.innerHTML = '<div class="ccard-inner" style="border-color:'+m.col+';box-shadow:0 0 0 1px '+m.col+'33"><div class="ccard-name" style="color:'+m.col+'">'+m.name+'</div><div class="ccard-count">'+teams.length+' teams</div></div>';
+    card.addEventListener("click", function(e){ e.stopPropagation(); selectModel(m.id); });
+    grid.appendChild(card);
+  });
+}
+
+function renderLegend() {
+  var leg = document.getElementById("legend");
+  var hdr = document.createElement("span");
+  hdr.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd);margin-right:4px";
+  hdr.textContent = "Models:";
+  leg.innerHTML = "";
+  leg.appendChild(hdr);
+  MODELS.forEach(function(m){
+    var teams = TEAMS.filter(function(t){ return m.tids.indexOf(t.id) !== -1; });
+    var el = document.createElement("div");
+    el.className = "li" + (selModel===m.id?" sel":"");
+    el.id = "li"+m.id;
+    el.innerHTML = '<div class="li-dot" style="background:'+m.col+'"></div><span><strong style="color:'+m.col+'">'+m.name+'</strong> · '+teams.map(function(t){return t.team;}).join(", ")+'</span>';
+    el.addEventListener("click", function(){ selectModel(m.id); });
+    leg.appendChild(el);
+  });
+}
+
+function selectModel(mid) {
+  selModel = mid;
+  var m = null;
+  MODELS.forEach(function(x){ if(x.id===mid) m = x; });
+  var teams = TEAMS.filter(function(t){ return m.tids.indexOf(t.id) !== -1; });
+
+  TEAMS.forEach(function(t){
+    var inModel = m.tids.indexOf(t.id) !== -1;
+    var d = document.getElementById("dot"+t.id), l = document.getElementById("lbl"+t.id);
+    if(d) d.classList.toggle("dimmed", !inModel);
+    if(l) l.classList.toggle("dimmed", !inModel);
+  });
+  MODELS.forEach(function(mm){
+    var c = document.getElementById("card"+mm.id);
+    if(c) c.classList.toggle("sel", mm.id===mid);
+    var b = document.getElementById("blob"+mm.id);
+    if (b) b.style.opacity = mm.id===mid ? "1" : "0.3";
+  });
+  [].slice.call(document.querySelectorAll(".li")).forEach(function(el){ el.classList.remove("sel"); });
+  var li = document.getElementById("li"+mid); if(li) li.classList.add("sel");
+
+  document.getElementById("detailHd").innerHTML =
+    '<div class="detail-model" style="color:'+m.col+'">'+m.name+'</div>'+
+    '<div class="detail-desc">'+m.desc+'</div>'+
+    '<div class="detail-teams">'+teams.length+' teams · '+teams.map(function(t){return t.team;}).join(" · ")+'</div>';
+
+  var tabsEl = document.getElementById("detailTabs");
+  tabsEl.style.display = "flex"; tabsEl.innerHTML = "";
+  TABS.forEach(function(tb){
+    var b = document.createElement("button");
+    b.className = "dtab" + (activeTab===tb.key?" on":"");
+    b.textContent = tb.label;
+    b.addEventListener("click", function(){ activeTab=tb.key; renderTabs(); renderBody(mid); });
+    tabsEl.appendChild(b);
+  });
+  renderBody(mid);
+}
+
+function renderTabs() {
+  [].slice.call(document.querySelectorAll(".dtab")).forEach(function(b,i){ b.classList.toggle("on", TABS[i].key===activeTab); });
+}
+
+function renderBody(mid) {
+  var m = null;
+  MODELS.forEach(function(x){ if(x.id===mid) m = x; });
+  var teams = TEAMS.filter(function(t){ return m.tids.indexOf(t.id) !== -1; });
+  var body = document.getElementById("detailBody");
+  var isWarn = activeTab==="dissent";
+
+  // Clear any panels from a previously selected cluster
+  // (keep the panel for THIS cluster if it already exists — preserves generated signals)
+  var contraId = "contra-"+mid;
+  [].slice.call(body.querySelectorAll(".contra-panel")).forEach(function(el){
+    if(el.id !== contraId) el.remove();
+  });
+  [].slice.call(body.querySelectorAll("[id^='rows-']")).forEach(function(el){
+    if(el.id !== "rows-"+mid) el.remove();
+  });
+
+  var existing = document.getElementById(contraId);
+  if (!existing) {
+    var panel = document.createElement("div");
+    panel.className = "contra-panel";
+    panel.id = contraId;
+        // Build panel with DOM methods to avoid quote escaping
+    var panelHd = document.createElement("div");
+    panelHd.className = "contra-hd";
+    panelHd.dataset.panel = contraId;
+    panelHd.addEventListener("click", function(){ toggleContra(this.dataset.panel); });
+    var t1 = document.createElement("span"); t1.className="contra-title"; t1.textContent="⚡ What’s remarkable about this cluster"; panelHd.appendChild(t1);
+    var t2 = document.createElement("span"); t2.className="contra-badge"; t2.id=contraId+"-badge"; t2.textContent="Tap to analyse"; panelHd.appendChild(t2);
+
+    var panelBd = document.createElement("div");
+    panelBd.className = "contra-body";
+    panelBd.id = contraId+"-body";
+    panelBd.innerHTML = '<div class="contra-loading" id="'+contraId+'-loading" style="display:none"><span class="spinner"></span>Reading the cluster…</div><div id="'+contraId+'-signals"></div>';
+
+    panel.appendChild(panelHd);
+    panel.appendChild(panelBd);
+    body.insertBefore(panel, body.firstChild);
+  }
+
+  // Team rows
+  var rowsHtml = teams.map(function(t){
+    var val = t[activeTab];
+    var flag = (activeTab==="falsifier" && t.weak) ? '<div class="tb-flag">⚠ observability unclear — names a direction, not a clear trigger</div>' : "";
+    return '<div class="team-block"><div class="tb-name"><span class="tb-dot" style="background:'+m.col+'"></span>'+t.team+'</div><div class="tb-text '+(isWarn?'warn':'')+'">'+val+'</div>'+flag+'</div>';
+  }).join("");
+
+  // Re-render rows below the contra panel
+  var rows = document.getElementById("rows-"+mid);
+  if (!rows) {
+    rows = document.createElement("div");
+    rows.id = "rows-"+mid;
+    body.appendChild(rows);
+  }
+  rows.innerHTML = rowsHtml;
+}
+
+function toggleContra(panelId) {
+  var bodyEl = document.getElementById(panelId+"-body");
+  var badge  = document.getElementById(panelId+"-badge");
+  var isOpen = bodyEl.classList.toggle("open");
+  if (isOpen && badge.textContent === "Tap to analyse") {
+    badge.textContent = "Analysing…";
+    runContra(panelId);
+  } else if (!isOpen) {
+    badge.textContent = bodyEl.querySelector("[data-done]") ? "Signals ready" : "Tap to analyse";
+  }
+}
+
+// cache so we don't re-call for the same cluster
+var contraCache = {};
+
+async function runContra(panelId) {
+  var mid = parseInt(panelId.replace("contra-",""));
+  var m = MODELS.find(function(x){ return x.id===mid; });
+  var teams = TEAMS.filter(function(t){ return m.tids.indexOf(t.id) !== -1; });
+  var loading = document.getElementById(panelId+"-loading");
+  var sigBox  = document.getElementById(panelId+"-signals");
+  var badge   = document.getElementById(panelId+"-badge");
+  if (contraCache[mid]) { renderSignals(sigBox, badge, contraCache[mid]); return; }
+  loading.style.display = "flex";
+
+  var clusterLines = teams.map(function(t){
+    return "[" + t.team + "] Hypothesis: " + t.hypothesis +
+           " | Bottleneck: " + t.bottleneck +
+           " | Falsifier: " + t.falsifier +
+           " | Dissent: " + t.dissent;
+  }).join("\n");
+
+  var systemMsg = "You analyse strategy hypothesis clusters. Return ONLY valid JSON.";
+  var userMsg = [
+    "Cluster name: " + m.name,
+    "All teams landed in the same quadrant (agree on WHERE value goes).",
+    "Find 2-4 signals that are REMARKABLE about this cluster:",
+    "convergences, tensions, contradictions, dissent patterns, falsifier gaps.",
+    "",
+    "TEAMS:",
+    clusterLines,
+    "",
+    'Return JSON: {"signals":[{"label":"SHORT_LABEL","icon":"emoji","observation":"one sentence max 25 words","color":"gold|warn|ok"}]}'
+  ].join("\n");
+
+  try {
+    var res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 500,
+        system: systemMsg,
+        messages: [{ role: "user", content: userMsg }]
+      })
+    });
+    if (!res.ok) throw new Error("api " + res.status);
+    var d = await res.json();
+    var raw = d.content.filter(function(b){ return b.type === "text"; }).map(function(b){ return b.text; }).join("").trim();
+    var clean = raw.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
+    var parsed = JSON.parse(clean);
+    contraCache[mid] = parsed.signals || [];
+  } catch(e) {
+    contraCache[mid] = ruleBasedSignals(teams);
+  }
+
+  loading.style.display = "none";
+  renderSignals(sigBox, badge, contraCache[mid]);
+}
+
+function renderSignals(sigBox, badge, signals) {
+  if (!signals.length) { sigBox.innerHTML = '<div class="signal-err">No signals generated.</div>'; return; }
+  var colorMap = { gold:"var(--gold)", warn:"var(--warn)", ok:"rgb(127,191,127)" };
+  sigBox.innerHTML = signals.map(function(s){
+    var col = colorMap[s.color] || "var(--gold)";
+    return '<div class="signal">'+
+      '<div class="signal-label" style="color:'+col+'"><span class="signal-icon">'+s.icon+'</span>'+s.label+'</div>'+
+      '<div class="signal-text">'+s.observation+'</div>'+
+    '</div>';
+  }).join("");
+  sigBox.setAttribute("data-done","1");
+  badge.textContent = signals.length+" signal"+(signals.length!==1?"s":"");
+}
+
+// Rule-based fallback — reads the actual data without an API
+function ruleBasedSignals(teams) {
+  var signals = [];
+  if (teams.length < 2) return signals;
+
+  // Check dissent intensity
+  var highDissent = teams.filter(function(t){ return t.dissent && t.dissent.length > 60; });
+  var noDissent   = teams.filter(function(t){ return !t.dissent || t.dissent.length < 20; });
+  if (highDissent.length > 0 && noDissent.length > 0) {
+    signals.push({icon:"⚡",label:"DISSENT ASYMMETRY",color:"warn",
+      observation: highDissent.map(function(t){return t.team;}).join(" and ")+" recorded strong dissent; "+noDissent.map(function(t){return t.team;}).join(" and ")+" recorded none. Same model, different table dynamics."});
+  } else if (highDissent.length === teams.length) {
+    signals.push({icon:"🔥",label:"SHARED INTERNAL TENSION",color:"warn",
+      observation:"Every team in this cluster recorded significant dissent — the model is contested within tables, not just between them."});
+  }
+
+  // Check weak falsifiers
+  var weak = teams.filter(function(t){ return t.weak; });
+  if (weak.length > 0) {
+    signals.push({icon:"⚠",label:"FALSIFIER GAP",color:"warn",
+      observation:weak.map(function(t){return t.team;}).join(", ")+(weak.length===1?" has a falsifier":" have falsifiers")+" that name a direction but no observable event or threshold."});
+  }
+
+  // Check bottleneck convergence — same key words
+  var btWords = teams.map(function(t){ return (t.bottleneck||"").toLowerCase(); });
+  var sharedTerms = ["data","regulation","distribution","capital","network","switching"].filter(function(w){
+    return btWords.filter(function(b){ return b.includes(w); }).length === teams.length;
+  });
+  if (sharedTerms.length > 0 && teams.length > 1) {
+    signals.push({icon:"🎯",label:"BOTTLENECK CONVERGENCE",color:"gold",
+      observation:"All teams in this cluster name '"+sharedTerms[0]+"' as the binding constraint — tight agreement on the mechanism, worth testing whether it's a shared blindspot."});
+  } else if (teams.length > 1) {
+    signals.push({icon:"🔀",label:"BOTTLENECK SPLIT",color:"gold",
+      observation:"Teams in this cluster agree on the quadrant but name different binding constraints — the disagreement on mechanism is the most productive question for discussion."});
+  }
+
+  // Check if any dissent points toward the OTHER cluster
+  var crossDissent = teams.filter(function(t){
+    var d = (t.dissent||"").toLowerCase();
+    return d.includes("orchestrat") || d.includes("hyperscal") || d.includes("open") || d.includes("lab");
+  });
+  if (crossDissent.length > 0) {
+    signals.push({icon:"↔",label:"CROSS-CLUSTER DISSENT",color:"gold",
+      observation:crossDissent.map(function(t){return t.team;}).join(", ")+" recorded dissent that points toward a different model — the minority view may deserve airtime."});
+  }
+
+  return signals.slice(0, 4);
+}
+
+window.addEventListener("load", function(){ renderMap(); renderLegend(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Team Formation · Facilitator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);
+  --line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);--warn:rgb(220,130,80);
+  --ok:rgb(127,191,127);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:960px;margin:0 auto;padding:24px 24px 60px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:28px;letter-spacing:-.02em;margin-bottom:3px;line-height:1.1}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:22px}
+
+/* CONFIG */
+.cfg{padding:14px 18px;background:var(--bge);border:1px solid var(--line);margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.cfg label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd)}
+.cfg input{background:var(--bge2);border:1px solid var(--lines);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:7px 10px}
+.cfg input:focus{outline:none;border-color:var(--gold)}
+.btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:8px 16px;border:1px solid;cursor:pointer;transition:all .15s;background:transparent}
+.btn-gold{border-color:var(--gold);color:var(--gold)}.btn-gold:hover{background:var(--gold);color:var(--bg)}
+.btn-commit{border-color:var(--gold);color:var(--bg);background:var(--gold);font-size:11px;padding:10px 22px}
+.btn-commit:hover{background:rgb(214,184,103);border-color:rgb(214,184,103)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* STATUS BAR */
+.status-bar{padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;border:1px solid;margin-bottom:18px;display:none;align-items:center;gap:8px}
+.status-bar.show{display:flex}
+.status-bar.loading{border-color:rgba(198,165,83,.3);background:var(--golds);color:var(--gold)}
+.status-bar.ok{border-color:rgba(127,191,127,.35);background:rgba(127,191,127,.08);color:var(--ok)}
+.status-bar.info{border-color:var(--line);background:var(--bge);color:var(--inkd)}
+.spinner{width:11px;height:11px;border:2px solid var(--golds);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* DIVERSITY NOTE */
+.diversity-note{font-size:12.5px;color:var(--inkd);font-style:italic;margin-bottom:18px;padding:10px 14px;border-left:2px solid var(--gold);background:var(--golds)}
+.diversity-note strong{font-style:normal;color:var(--ink);font-weight:500}
+
+/* TEAM GRID */
+.teams-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:18px}
+
+/* TEAM CARD */
+.tcard{background:var(--bge);border:1px solid var(--line);padding:14px 16px;min-height:120px}
+.tcard.drag-over{border-color:var(--gold);background:rgba(198,165,83,0.06)}
+.tcard-hd{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.tcard-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tcard-name{background:transparent;border:none;color:var(--ink);font-family:'Fraunces',serif;font-size:16px;font-weight:500;flex:1;padding:0;min-width:0}
+.tcard-name:focus{outline:none;color:var(--gold)}
+.tcard-count{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--inkf);flex-shrink:0}
+.tcard-members{display:flex;flex-wrap:wrap;gap:6px;min-height:32px}
+.tcard-empty{font-style:italic;font-size:12px;color:var(--inkf);width:100%;padding:4px 0}
+
+/* MEMBER CHIP — draggable */
+.mchip{padding:5px 10px 5px 8px;border:1px solid;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;cursor:grab;user-select:none;transition:opacity .15s,transform .15s;background:var(--bge2)}
+.mchip:active{cursor:grabbing;opacity:.7;transform:scale(0.97)}
+.mchip.dragging{opacity:.3}
+.mchip .qdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mchip .rm{color:var(--inkf);cursor:pointer;font-size:13px;line-height:1;margin-left:2px}
+.mchip .rm:hover{color:var(--warn)}
+
+/* COMMIT */
+.commit-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 18px;background:var(--golds);border:1px solid rgba(198,165,83,.3)}
+.commit-note{font-size:13px;color:var(--inkd);font-style:italic}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="eyebrow">Course · Team Formation · Facilitator</div>
+<h1>Form the <em>teams</em></h1>
+<p class="sub">Set the number of teams, load participants — teams are assigned automatically for diversity. Drag chips between cards to adjust, then commit.</p>
+
+<div class="cfg">
+  <label>Supabase URL</label>
+  <input id="cfgUrl" type="text" value="" style="width:230px">
+  <label>Anon key</label>
+  <input id="cfgKey" type="password" value="" style="width:170px">
+  <label>Session</label>
+  <input id="cfgSession" type="text" value="june11" style="width:78px">
+  <label>Teams</label>
+  <input id="cfgN" type="number" value="5" min="2" max="12" style="width:54px">
+  <button class="btn btn-gold" onclick="load()">Load &amp; assign</button>
+</div>
+
+<div class="status-bar" id="statusBar"></div>
+
+<div class="diversity-note" id="diversityNote" style="display:none">
+  <strong>How teams were composed.</strong> Participants were sorted by their prior quadrant (player type × capture mechanism), then distributed round-robin so each table has the broadest spread of starting positions. Drag chips between cards to adjust — diversity score updates live.
+</div>
+
+<div class="teams-wrap" id="teamsWrap"></div>
+
+<!-- Unassigned pool — appears when someone is removed from a team -->
+<div id="unassignedPool" style="display:none;margin-bottom:16px;padding:12px 14px;border:1px dashed rgba(244,240,233,0.28);background:rgb(20,50,53)">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-bottom:8px">Unassigned — drag to a team card</div>
+  <div id="unassignedChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+</div>
+
+<div class="commit-row" id="commitRow" style="display:none">
+  <div class="commit-note" id="commitNote">When assignments look right, commit.</div>
+  <button class="btn btn-commit" id="commitBtn" onclick="commit()">Commit teams → open phase 2</button>
+</div>
+
+</div>
+<script>
+// ── COLOURS ────────────────────────────────────────────────────────────
+// ── CONFIG loaded from config.js ─────────────────────────────────────────
+// Pre-fill the on-screen fields from the shared config
+window.addEventListener("load", function(){
+  var urlField = document.getElementById("cfgUrl");
+  var keyField = document.getElementById("cfgKey");
+  var sessField = document.getElementById("cfgSession");
+  if(urlField)  urlField.value  = SUPABASE_URL;
+  if(keyField)  keyField.value  = SUPABASE_ANON;
+  if(sessField) sessField.value = SESSION_ID;
+});
+
+var TEAM_COLORS = ["#7fbf7f","#6fa8dc","#e0b86f","#e08080","#8a6b9e","#5e9e8a","#c4a0e0","#9e6b6b","#a0c4ff","#ffd6a5"];
+var TEAM_NAMES  = ["Falcon","Vega","Atlas","Juno","Orion","Sable","Kite","Pike","Wren","Nova"];
+var Q_COLORS    = {"new-data":"#7fbf7f","incumb-data":"#e0b86f","new-infra":"#6fa8dc","incumb-infra":"#e08080"};
+function qColor(x,y){ return Q_COLORS[(x>=0?"incumb":"new")+"-"+(y>=0?"data":"infra")]||"rgba(198,165,83,.6)"; }
+function qLabel(x,y){ return (x>=0?"Incumb":"New")+"/"+(y>=0?"data":"infra"); }
+
+// ── STATE ──────────────────────────────────────────────────────────────
+var priors = [];
+var teams  = [];
+var dragPid = null;   // prior id being dragged
+
+// ── DEMO ───────────────────────────────────────────────────────────────
+var DEMO = [
+  {id:"p1",  name:"Alex",   x:-0.80, y: 0.70},{id:"p2",  name:"Béa",    x: 0.70, y: 0.60},
+  {id:"p3",  name:"Carlos", x: 0.50, y:-0.70},{id:"p4",  name:"Diana",  x:-0.40, y:-0.50},
+  {id:"p5",  name:"Erik",   x: 0.60, y: 0.50},{id:"p6",  name:"Fatima", x:-0.60, y: 0.60},
+  {id:"p7",  name:"Giulia", x: 0.80, y:-0.60},{id:"p8",  name:"Hamid",  x:-0.30, y:-0.40},
+  {id:"p9",  name:"Ingrid", x: 0.40, y: 0.70},{id:"p10", name:"Jonas",  x:-0.70, y: 0.40},
+  {id:"p11", name:"Karin",  x: 0.70, y:-0.50},{id:"p12", name:"Lior",   x: 0.50, y: 0.60},
+];
+
+// ── LOAD & AUTO-ASSIGN ─────────────────────────────────────────────────
+async function load(){
+  var url  = document.getElementById("cfgUrl").value.trim();
+  var key  = document.getElementById("cfgKey").value.trim();
+  var sess = document.getElementById("cfgSession").value.trim();
+  var n    = parseInt(document.getElementById("cfgN").value)||5;
+
+  showStatus("loading","Loading participants…");
+
+  if(url && key){
+    try{
+      var r = await fetch(url+"/rest/v1/course_priors?session_id=eq."+sess+"&select=id,name,x,y,thesis,lens&order=created_at.asc",
+        {headers:{"apikey":key,"Authorization":"Bearer "+key}});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      var data = await r.json();
+      if(!data.length) throw new Error("no priors found for session '"+sess+"'");
+      priors = data;
+    } catch(e){
+      console.warn("Supabase unavailable — demo mode:", e.message);
+      priors = DEMO;
+    }
+  } else {
+    priors = DEMO;
+  }
+
+  // Build teams
+  teams = [];
+  for(var i=0;i<n;i++){
+    teams.push({id:"t"+(i+1), name:TEAM_NAMES[i]||("Team "+(i+1)), color:TEAM_COLORS[i%TEAM_COLORS.length], members:[]});
+  }
+
+  // Auto-assign for diversity (quadrant sort + round-robin)
+  autoAssign();
+
+  showStatus("ok","Loaded "+priors.length+" participants · assigned to "+n+" teams for diversity");
+  document.getElementById("diversityNote").style.display = "block";
+  document.getElementById("commitRow").style.display = "flex";
+  render();
+}
+
+// Sort into quadrants (interleaved), then round-robin into teams
+function autoAssign(){
+  teams.forEach(function(t){ t.members=[]; });
+  var sorted = priors.slice().sort(function(a,b){
+    var qa = (a.x>=0?2:0)+(a.y>=0?1:0);
+    var qb = (b.x>=0?2:0)+(b.y>=0?1:0);
+    if(qa!==qb) return qa-qb;
+    return (Math.abs(b.x)+Math.abs(b.y))-(Math.abs(a.x)+Math.abs(a.y));
+  });
+  sorted.forEach(function(p,i){ teams[i%teams.length].members.push(p.id); });
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────
+function render(){
+  var wrap = document.getElementById("teamsWrap");
+  wrap.innerHTML = "";
+
+  teams.forEach(function(t){
+    var card = document.createElement("div");
+    card.className = "tcard";
+    card.dataset.tid = t.id;
+
+    // Drag-over target
+    card.addEventListener("dragover", function(e){ e.preventDefault(); card.classList.add("drag-over"); });
+    card.addEventListener("dragleave", function(){ card.classList.remove("drag-over"); });
+    card.addEventListener("drop", function(e){
+      e.preventDefault();
+      card.classList.remove("drag-over");
+      if(dragPid) moveTo(dragPid, t.id);
+    });
+
+    // Header
+    var hd = document.createElement("div");
+    hd.className = "tcard-hd";
+    var sw = document.createElement("div");
+    sw.className = "tcard-swatch"; sw.style.background = t.color;
+    var inp = document.createElement("input");
+    inp.className = "tcard-name"; inp.value = t.name;
+    inp.addEventListener("change", function(){ t.name = inp.value.trim()||t.name; updateCommitNote(); });
+    var cnt = document.createElement("span");
+    cnt.className = "tcard-count"; cnt.textContent = t.members.length+" members";
+    hd.appendChild(sw); hd.appendChild(inp); hd.appendChild(cnt);
+    card.appendChild(hd);
+
+    // Members
+    var membersEl = document.createElement("div");
+    membersEl.className = "tcard-members";
+
+    if(!t.members.length){
+      var em = document.createElement("span");
+      em.className = "tcard-empty"; em.textContent = "Drop members here";
+      membersEl.appendChild(em);
+    } else {
+      t.members.forEach(function(pid){
+        var p = priors.find(function(x){return x.id===pid;});
+        if(!p) return;
+        var chip = makeChip(p, t);
+        membersEl.appendChild(chip);
+      });
+    }
+    card.appendChild(membersEl);
+    wrap.appendChild(card);
+  });
+
+  updateCommitNote();
+}
+
+function makeChip(p, t){
+  var chip = document.createElement("div");
+  chip.className = "mchip";
+  chip.draggable = true;
+  chip.dataset.pid = p.id;
+  chip.style.borderColor = t.color+"88";
+  chip.style.color = "var(--ink)";
+
+  var qdot = document.createElement("span");
+  qdot.className = "qdot"; qdot.style.background = qColor(p.x||0, p.y||0);
+  chip.appendChild(qdot);
+  chip.appendChild(document.createTextNode(p.name));
+
+  var rm = document.createElement("span");
+  rm.className = "rm"; rm.textContent = "×"; rm.title = "Remove from team";
+  rm.addEventListener("click", function(e){
+    e.stopPropagation();
+    removeFromTeam(p.id);
+  });
+  chip.appendChild(rm);
+
+  chip.addEventListener("dragstart", function(e){
+    dragPid = p.id;
+    chip.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+  });
+  chip.addEventListener("dragend", function(){
+    dragPid = null;
+    chip.classList.remove("dragging");
+  });
+
+  return chip;
+}
+
+function moveTo(pid, toTeamId){
+  teams.forEach(function(t){ t.members = t.members.filter(function(m){return m!==pid;}); });
+  var t = teams.find(function(t){return t.id===toTeamId;});
+  if(t) t.members.push(pid);
+  render();
+}
+
+function removeFromTeam(pid){
+  // Remove from team — person goes back to unassigned pool, visible in commit note
+  teams.forEach(function(t){ t.members = t.members.filter(function(m){return m!==pid;}); });
+  render();
+  showUnassigned();
+}
+
+// Unassigned participants — shown as a warning if any exist
+function showUnassigned(){
+  var unassigned = priors.filter(function(p){
+    return !teams.some(function(t){ return t.members.indexOf(p.id)!==-1; });
+  });
+  var pool = document.getElementById("unassignedPool");
+  var chips = document.getElementById("unassignedChips");
+  var note  = document.getElementById("commitNote");
+
+  if(unassigned.length){
+    pool.style.display = "block";
+    chips.innerHTML = "";
+    unassigned.forEach(function(p){
+      var chip = document.createElement("div");
+      chip.className = "mchip";
+      chip.draggable = true;
+      chip.dataset.pid = p.id;
+      chip.style.cssText = "border-color:rgba(220,130,80,0.6);color:var(--ink);padding:5px 10px;cursor:grab";
+      var qd = document.createElement("span");
+      qd.className = "qdot"; qd.style.background = qColor(p.x||0, p.y||0);
+      chip.appendChild(qd);
+      chip.appendChild(document.createTextNode(p.name));
+      chip.addEventListener("dragstart", function(e){
+        dragPid = p.id; chip.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+      });
+      chip.addEventListener("dragend", function(){
+        dragPid = null; chip.classList.remove("dragging");
+      });
+      chips.appendChild(chip);
+    });
+    note.textContent = "⚠ "+unassigned.length+" unassigned — drag them to a team.";
+    note.style.color = "var(--warn)";
+    document.getElementById("commitBtn").disabled = true;
+  } else {
+    pool.style.display = "none";
+    chips.innerHTML = "";
+    updateCommitNote();
+    document.getElementById("commitBtn").disabled = false;
+  }
+}
+
+function updateCommitNote(){
+  var note = document.getElementById("commitNote");
+  var unassigned = priors.filter(function(p){
+    return !teams.some(function(t){ return t.members.indexOf(p.id)!==-1; });
+  });
+  if(!unassigned.length){
+    note.textContent = "All "+priors.length+" participants assigned across "+teams.length+" teams. Commit to open Phase 2.";
+    note.style.color = "";
+    document.getElementById("commitBtn").disabled = !priors.length;
+  } else {
+    note.textContent = "⚠ "+unassigned.length+" unassigned. Drag them to a team.";
+    note.style.color = "var(--warn)";
+    document.getElementById("commitBtn").disabled = true;
+  }
+}
+
+// ── COMMIT ─────────────────────────────────────────────────────────────
+async function commit(){
+  var url  = document.getElementById("cfgUrl").value.trim();
+  var key  = document.getElementById("cfgKey").value.trim();
+  var sess = document.getElementById("cfgSession").value.trim();
+
+  showStatus("loading","Saving teams…");
+
+  var writes = [];
+  teams.forEach(function(t){
+    t.members.forEach(function(pid){
+      writes.push({session_id:sess, prior_id:pid, team_id:t.id, team_name:t.name});
+    });
+  });
+
+  if(url && key){
+    try{
+      await fetch(url+"/rest/v1/course_assignments",{
+        method:"POST",
+        headers:{"apikey":key,"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify(writes)
+      });
+      await fetch(url+"/rest/v1/course_sessions?id=eq."+sess,{
+        method:"PATCH",
+        headers:{"apikey":key,"Content-Type":"application/json"},
+        body:JSON.stringify({phase:2})
+      });
+      showStatus("ok","Teams committed · Phase 2 now open ✓");
+    } catch(e){
+      showStatus("info","Local only — Supabase write failed: "+e.message);
+    }
+  } else {
+    showStatus("ok","Teams recorded (demo mode — no Supabase config).");
+  }
+
+  window.__teams = teams;
+  console.log("TEAMS:", JSON.stringify(teams.map(function(t){
+    return {name:t.name, members:t.members.map(function(pid){
+      var p = priors.find(function(x){return x.id===pid;});
+      return p ? p.name+" ("+qLabel(p.x||0,p.y||0)+")" : pid;
+    })};
+  }), null, 2));
+}
+
+function showStatus(type, msg){
+  var el = document.getElementById("statusBar");
+  el.className = "status-bar show "+type;
+  el.innerHTML = (type==="loading"?'<span class="spinner"></span>':'')+msg;
+}
+</script>
+</body>
+</html>
