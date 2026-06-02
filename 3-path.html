@@ -35,12 +35,12 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .path.show{display:block}
 
 /* MAP */
-.map-block{display:grid;grid-template-columns:16px 1fr;grid-template-rows:1fr 20px;gap:5px;margin-bottom:22px}
-.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:4px 0;overflow:hidden}
-.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2}
-.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
-.grid{grid-column:2;grid-row:1;position:relative;height:320px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
-.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd)}
+.map-block{display:block;margin-bottom:22px}
+.ylabel{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:center;padding:4px 0}
+.map-row{display:flex;align-items:center;gap:7px}
+.xlabel{flex:0 0 58px;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.35}
+.xlabel .xsub{display:block;color:var(--inkf);font-size:7.5px;margin-top:2px}
+.grid{position:relative;flex:1;height:320px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
 
@@ -105,16 +105,16 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 <div class="path" id="pathView">
 
   <div class="map-block">
-    <div class="yaxis">
-      <span class="yaxis-end">Data · distrib</span>
-      <span class="yaxis-title">↑ Capture</span>
-      <span class="yaxis-end">Infra · scale</span>
+    <div class="ylabel">↑ Up for grabs</div>
+    <div class="map-row">
+      <div class="xlabel">← Incumbents<span class="xsub">few</span></div>
+      <div class="grid" id="pathGrid">
+        <div class="gl-h"></div><div class="gl-v"></div>
+        <svg class="path-svg" id="pathSvg"></svg>
+      </div>
+      <div class="xlabel">New →<span class="xsub">open</span></div>
     </div>
-    <div class="grid" id="pathGrid">
-      <div class="gl-h"></div><div class="gl-v"></div>
-      <svg class="path-svg" id="pathSvg"></svg>
-    </div>
-    <div class="xaxis"><span>New entrant</span><span style="color:var(--gold)">Player type →</span><span>Incumbent</span></div>
+    <div class="ylabel">↓ Locked in</div>
   </div>
 
   <div class="dist-card">
@@ -156,8 +156,8 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 // ── DEMO DATA ──────────────────────────────────────────────────────────
 var DEMO = {
-  prior: { name:"Alex", x:-0.8, y:0.7, thesis:"Orchestrators win because they compose the stack on demand and sit above both hyperscalers and SaaS incumbents." },
-  team:  { name:"Table 1", x:0.55, y:0.55, hypothesis:"Vertical SaaS incumbents capture the most new value because 15 years of proprietary regulated data and workflow embedding beats any AI-native challenger on speed to value.", bottleneck:"Domain data and regulatory permission to operate.", color:"#7fbf7f" }
+  prior: { name:"Alex", x:0.55, y:0.55, thesis:"Orchestrators win because they compose the stack on demand and sit above both hyperscalers and SaaS incumbents." },
+  team:  { name:"Table 1", x:-0.45, y:-0.05, hypothesis:"Vertical SaaS incumbents capture the most new value because 15 years of proprietary regulated data and workflow embedding beats any AI-native challenger on speed to value.", bottleneck:"Domain data and regulatory permission to operate.", color:"#7fbf7f" }
 };
 
 // ── LOOKUP ─────────────────────────────────────────────────────────────
@@ -284,8 +284,8 @@ function renderPath(prior, team){
 }
 
 function coordWords(x,y){
-  var xs = x>0.15?"incumbent-leaning":x<-0.15?"new-entrant / open":"mixed player-type";
-  var ys = y>0.15?"data · distribution · workflow":y<-0.15?"infrastructure · scale":"mixed mechanism";
+  var xs = x<-0.15?"incumbent-leaning":x>0.15?"new-entrant / open":"mixed player-type";
+  var ys = y>0.15?"up for grabs":y<-0.15?"locked in":"partly settled";
   return xs+" · "+ys;
 }
 
@@ -298,13 +298,13 @@ function movementProse(prior, team){
 
   if(Math.abs(dx) > 0.2){
     xDir = dx>0
-      ? "Your table moved you toward <strong>incumbent / concentrated</strong> players"
-      : "Your table moved you toward <strong>new-entrant / open</strong> models";
+      ? "Your table moved you toward <strong>new-entrant / open</strong> players"
+      : "Your table moved you toward <strong>incumbent / concentrated</strong> players";
   }
   if(Math.abs(dy) > 0.2){
     yDir = dy>0
-      ? (xDir ? ", and toward a <strong>data / workflow</strong> capture story" : "Your table moved you toward a <strong>data / workflow lock-in</strong> capture story")
-      : (xDir ? ", and toward an <strong>infrastructure / scale</strong> moat" : "Your table moved you toward an <strong>infrastructure / scale</strong> moat");
+      ? (xDir ? ", and toward <strong>up for grabs</strong> — the outcome more contestable" : "Your table moved you toward <strong>up for grabs</strong> — the outcome more contestable")
+      : (xDir ? ", and toward <strong>locked in</strong> — the outcome more settled" : "Your table moved you toward <strong>locked in</strong> — the outcome more settled");
   }
 
   if(!xDir && !yDir){
