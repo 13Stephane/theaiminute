@@ -28,8 +28,10 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 .map-block{display:block}
 .ylabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center;padding:5px 0}
-.grid{position:relative;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
-.xaxis{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd);padding-top:6px}
+.map-row{display:flex;align-items:center;gap:8px}
+.xlabel{flex:0 0 74px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.4}
+.xlabel .xsub{display:block;color:var(--inkf);font-size:8px;letter-spacing:.04em;margin-top:2px}
+.grid{position:relative;flex:1;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
 .xaxis .mid{color:var(--gold);letter-spacing:.12em}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
@@ -112,13 +114,12 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <div>
     <div class="map-block">
       <div class="ylabel">↑ Up for grabs · still contestable</div>
-      <div class="grid" id="grid"><div class="gl-h"></div><div class="gl-v"></div></div>
-      <div class="ylabel">↓ Locked in · already decided</div>
-      <div class="xaxis">
-        <span>← Incumbents / concentrated</span>
-        <span class="mid">Who captures the value</span>
-        <span>New entrants / open →</span>
+      <div class="map-row">
+        <div class="xlabel">← Incumbents<span class="xsub">concentrated few</span></div>
+        <div class="grid" id="grid"><div class="gl-h"></div><div class="gl-v"></div></div>
+        <div class="xlabel">New entrants →<span class="xsub">open &amp; distributed</span></div>
       </div>
+      <div class="ylabel">↓ Locked in · already decided</div>
     </div>
     <div class="legend" id="legend"></div>
   </div>

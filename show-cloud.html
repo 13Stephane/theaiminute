@@ -26,8 +26,10 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 /* MAP */
 .map-block{display:block}
 .ylabel{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);text-align:center;padding:7px 0}
-.grid{position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4)}
-.xaxis{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--inkd);padding-top:8px}
+.map-row{display:flex;align-items:center;gap:12px}
+.xlabel{flex:0 0 104px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.4}
+.xlabel .xsub{display:block;color:var(--inkf);font-size:9px;letter-spacing:.05em;margin-top:3px}
+.grid{position:relative;flex:1;height:520px;border:1.5px solid rgba(244,240,233,0.4)}
 
 /* QUADRANT SHADING */
 .quad-bg{position:absolute;pointer-events:none}
@@ -70,16 +72,15 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 <div class="map-block">
   <div class="ylabel">↑ Up for grabs · still contestable</div>
-  <div class="grid" id="grid">
-    <div class="gl-h"></div>
-    <div class="gl-v"></div>
+  <div class="map-row">
+    <div class="xlabel">← Incumbents<span class="xsub">concentrated few</span></div>
+    <div class="grid" id="grid">
+      <div class="gl-h"></div>
+      <div class="gl-v"></div>
+    </div>
+    <div class="xlabel">New entrants →<span class="xsub">open &amp; distributed</span></div>
   </div>
   <div class="ylabel">↓ Locked in · already decided</div>
-  <div class="xaxis">
-    <span>← Incumbents / concentrated</span>
-    <span style="color:var(--gold)">Who captures the value</span>
-    <span>New entrants / open →</span>
-  </div>
 </div>
 
 <div class="legend">

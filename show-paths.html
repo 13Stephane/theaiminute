@@ -36,8 +36,10 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .map-wrap{position:relative}
 .map-block{display:block}
 .ylabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center;padding:5px 0}
-.grid{position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
-.xaxis{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd);padding-top:6px}
+.map-row{display:flex;align-items:center;gap:12px}
+.xlabel{flex:0 0 100px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.4}
+.xlabel .xsub{display:block;color:var(--inkf);font-size:9px;letter-spacing:.05em;margin-top:3px}
+.grid{position:relative;flex:1;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
 
@@ -99,16 +101,15 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 <div class="map-block">
   <div class="ylabel">↑ Up for grabs · still contestable</div>
-  <div class="grid" id="grid">
-    <div class="gl-h"></div><div class="gl-v"></div>
-    <svg class="map-svg" id="mapSvg"></svg>
+  <div class="map-row">
+    <div class="xlabel">← Incumbents<span class="xsub">concentrated few</span></div>
+    <div class="grid" id="grid">
+      <div class="gl-h"></div><div class="gl-v"></div>
+      <svg class="map-svg" id="mapSvg"></svg>
+    </div>
+    <div class="xlabel">New entrants →<span class="xsub">open &amp; distributed</span></div>
   </div>
   <div class="ylabel">↓ Locked in · already decided</div>
-  <div class="xaxis">
-    <span>← Incumbents / concentrated</span>
-    <span style="color:var(--gold)">Who captures the value</span>
-    <span>New entrants / open →</span>
-  </div>
 </div>
 
 <div class="legend">
