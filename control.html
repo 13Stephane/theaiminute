@@ -69,6 +69,18 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .role-what .none{color:var(--inkf);font-style:italic}
 .role-what a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(198,165,83,0.4)}
 </style>
+<script>
+// Control-panel gate — obfuscation, not security (password is in source).
+// Stops a participant who finds the URL from changing phase or wiping data.
+(function(){
+  try{ if(sessionStorage.getItem("ctrlok")==="1") return; }catch(e){}
+  if(prompt("Control panel password")==="1980"){ try{sessionStorage.setItem("ctrlok","1");}catch(e){} return; }
+  window.__CTRL_LOCKED = true;
+  document.addEventListener("DOMContentLoaded", function(){
+    document.body.innerHTML = "<div style='color:rgba(244,240,233,.6);font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;letter-spacing:.1em'>LOCKED</div>";
+  });
+})();
+</script>
 <script src="config.js"></script>
 </head>
 <body>
@@ -312,6 +324,7 @@ async function resetSession(){
 
 // ── INIT ──
 window.addEventListener("load",function(){
+  if(window.__CTRL_LOCKED) return;
   document.getElementById("sessLabel").textContent=(typeof SESSION_ID==="string")?SESSION_ID:"session";
   loadPhase();
   loadCounts();

@@ -230,28 +230,34 @@ function clearTag(){
 //  Same function Phase 2 uses — scores ONE claim on the TWO FIXED axes.
 // ====================================================================
 var AXIS_RUBRIC =
-"AXIS X — PLAYER TYPE:\n" +
-"  -1.0 = value captured by NEW ENTRANTS or OPEN / distributed ecosystems (challengers, open weights, startups)\n" +
-"  +1.0 = value captured by INCUMBENTS or a CONCENTRATED few (established platforms, the dominant 2-3 players)\n\n" +
-"AXIS Y — CAPTURE MECHANISM:\n" +
-"  -1.0 = moat is INFRASTRUCTURE / SCALE ECONOMICS (compute, chips, energy, capital intensity)\n" +
-"  +1.0 = moat is DATA / DISTRIBUTION / WORKFLOW LOCK-IN (proprietary data, system-of-record, channel ownership, switching costs, regulatory entrenchment)";
+"AXIS X — WHO CAPTURES THE NEW VALUE (over 3–5 years):\n" +
+"  -1.0 = INCUMBENTS or a CONCENTRATED FEW (established platforms, the dominant 2-3 players, in-house at scale, or an incumbent that wins by ACQUIRING the challenger)\n" +
+"  +1.0 = NEW ENTRANTS or OPEN / DISTRIBUTED ecosystems (challengers, startups, open weights, no single owner)\n\n" +
+"AXIS Y — IS THE 3–5 YEAR OUTCOME ALREADY SETTLED (read the author's FRAMING, not which player they name):\n" +
+"  -1.0 = LOCKED IN — author treats the winner as structurally inevitable (\"distribution decides it\", \"already over\"), stated as fact\n" +
+"  +1.0 = UP FOR GRABS — author treats it as genuinely open (\"could go either way\", \"early innings\", conditional or hedged)\n" +
+"  USE THE FULL RANGE. Two authors naming the SAME player can sit at OPPOSITE Y ends. Reserve the middle (-0.2..0.2) ONLY for claims that explicitly balance both. About the WORLD's settledness as framed, NOT your view, NOT the speaker's confidence.\n\n" +
+"MOAT — single dominant mechanism (colour only; does NOT move x/y): scale | data | workflow | reg\n" +
+"  scale = compute/chips/energy/capital/network effects · data = proprietary data corpus · workflow = system-of-record / switching-cost / channel lock-in · reg = regulatory / jurisdictional\n" +
+"CONFIDENCE — how assertively stated (speaker, not world): hedged ~0.2 · categorical ~0.9 · default 0.5";
 
 var LENS_ANCHORS = {
-  hyperscaler:{x:0.1,y:-0.6}, chipmaker:{x:0.55,y:-0.55}, llm:{x:-0.4,y:-0.4},
-  saas:{x:0.5,y:0.55}, orchestrator:{x:-0.45,y:0.48}, inhouse:{x:0.45,y:0.0},
+  hyperscaler:{x:-0.62,y:-0.50,m:"scale"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
+  saas:{x:-0.40,y:0.42,m:"workflow"}, orchestrator:{x:0.62,y:0.48,m:"workflow"}, inhouse:{x:-0.10,y:-0.30,m:"workflow"},
 };
+var MOATS = ["scale","data","workflow","reg"];
+function clamp01(n){ return Math.max(0, Math.min(1, n)); }
 
 function clamp(n){ return Math.max(-1, Math.min(1, n)); }
 
 function buildPrompt(text, tagHint){
-  return "You position a strategic claim about AI / software value capture onto two FIXED axes. " +
-    "Do NOT invent axes. Score the claim on each axis from -1.0 to +1.0.\n" + AXIS_RUBRIC + "\n\n" +
-    "Read the SUBSTANCE, not surface keywords. A 'hyperscaler' claim stressing sovereignty / data-residency leans +Y; " +
-    "one stressing raw compute scale leans -Y. A claim that incumbents win by ACQUIRING challengers is +X.\n\n" +
+  return "You position a strategic claim about AI / software value capture onto two FIXED axes, " +
+    "and classify its dominant moat. Do NOT invent axes. Score each axis from -1.0 to +1.0.\n" + AXIS_RUBRIC + "\n\n" +
+    "Read the SUBSTANCE, not surface keywords. A claim that an incumbent wins by ACQUIRING a challenger is -X (the incumbent captures).\n" +
+    "Y examples (same player, opposite ends): 'Hyperscalers have already won — distribution settles it' -> y≈-0.8; 'Hyperscalers lead, but open weights could still flip the app layer' -> y≈+0.6.\n\n" +
     (tagHint ? ("The author tapped the lens '"+tagHint+"' as a hint — use it only if the text is genuinely ambiguous; the text overrides it.\n\n") : "") +
     "CLAIM:\n\"" + text + "\"\n\n" +
-    'Return ONLY valid JSON, no markdown:\n{"x": <number -1..1>, "y": <number -1..1>, "justification": "<one sentence, max 22 words, naming which axis end and why>"}';
+    'Return ONLY valid JSON, no markdown:\n{"x": <-1..1>, "y": <-1..1>, "moat": "scale|data|workflow|reg", "confidence": <0..1>, "justification": "<one sentence, max 22 words, naming the X end, the Y end, and the moat>"}';
 }
 
 // ── EDGE FUNCTION call — key stays server-side ──────────────────────
@@ -269,12 +275,12 @@ async function placeOnAxes(text, tagHint, recordId){
   if(!res.ok) throw new Error("Edge Function "+res.status);
   var data = await res.json();
   if(typeof data.x !== "number" || typeof data.y !== "number") throw new Error("bad response shape");
-  return { x:data.x, y:data.y, justification:data.justification, placed_by:data.placed_by };
+  return { x:data.x, y:data.y, moat:data.moat||null, confidence:(typeof data.confidence==="number"?data.confidence:null), justification:data.justification, placed_by:data.placed_by };
 }
 
 function placeFallback(tagHint){
-  var a = tagHint && LENS_ANCHORS[tagHint] ? LENS_ANCHORS[tagHint] : {x:0,y:0};
-  return { x:a.x, y:a.y, placed_by:"fallback",
+  var a = tagHint && LENS_ANCHORS[tagHint] ? LENS_ANCHORS[tagHint] : {x:0,y:0,m:null};
+  return { x:a.x, y:a.y, moat:a.m||null, confidence:null, placed_by:"fallback",
     justification: tagHint ? ("Placed at the "+tagHint+" anchor — AI placement unavailable, lens used as fallback.")
                            : "Placed at centre — AI placement unavailable, no lens chosen." };
 }
@@ -284,7 +290,7 @@ async function submitPrior(){
   document.getElementById("submitBtn").disabled = true;
   var payload = { tag:state.tag, thesis:state.thesis, name:state.name,
                   submitted_at:new Date().toISOString(), x:null, y:null,
-                  justification:null, placed_by:null };
+                  moat:null, confidence:null, justification:null, placed_by:null };
 
   // 1. Show locked screen immediately — don't make them wait
   document.getElementById("formState").style.display = "none";
@@ -322,6 +328,7 @@ async function submitPrior(){
     placed = placeFallback(state.tag);
   }
   payload.x = placed.x; payload.y = placed.y;
+  payload.moat = placed.moat; payload.confidence = placed.confidence;
   payload.justification = placed.justification;
   payload.placed_by = placed.placed_by;
 
@@ -338,6 +345,7 @@ async function submitPrior(){
         },
         body: JSON.stringify({
           x: placed.x, y: placed.y,
+          moat_type: placed.moat, confidence: placed.confidence,
           justification: placed.justification,
           placed_by: placed.placed_by
         })
@@ -349,16 +357,18 @@ async function submitPrior(){
   // 4. Show placement result
   document.getElementById("placing").style.display = "none";
   document.getElementById("recap").style.display = "block";
-  document.getElementById("rCoords").textContent = coordWords(payload.x, payload.y);
+  document.getElementById("rCoords").textContent = coordWords(payload.x, payload.y, payload.moat);
   document.getElementById("rJust").textContent = payload.justification;
   window.__prior = payload;
   console.log("PRIOR LOCKED:", JSON.stringify(payload, null, 2));
 }
 
-function coordWords(x,y){
-  var xs = x > 0.15 ? "incumbent-leaning" : x < -0.15 ? "new-entrant / open" : "mixed player-type";
-  var ys = y > 0.15 ? "data · distribution · workflow moat" : y < -0.15 ? "infrastructure · scale moat" : "mixed mechanism";
-  return xs + "  ·  " + ys;
+function coordWords(x,y,moat){
+  var xs = x < -0.15 ? "incumbent-leaning" : x > 0.15 ? "new-entrant / open" : "mixed player-type";
+  var ys = y < -0.15 ? "looks locked in" : y > 0.15 ? "still up for grabs" : "partly settled";
+  var ms = { scale:"scale / network moat", data:"proprietary-data moat", workflow:"workflow / lock-in moat", reg:"regulatory moat" };
+  var mm = moat && ms[moat] ? "  ·  " + ms[moat] : "";
+  return xs + "  ·  " + ys + mm;
 }
 
 function resetForm(){

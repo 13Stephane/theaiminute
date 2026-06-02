@@ -34,12 +34,10 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 /* MAP */
 .map-wrap{position:relative}
-.map-block{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 24px;gap:6px}
-.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;overflow:hidden}
-.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2}
-.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
-.grid{grid-column:2;grid-row:1;position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
-.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd)}
+.map-block{display:block}
+.ylabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center;padding:5px 0}
+.grid{position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
+.xaxis{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd);padding-top:6px}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
 
@@ -100,19 +98,16 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 </div>
 
 <div class="map-block">
-  <div class="yaxis">
-    <span class="yaxis-end">Data · distribution · workflow</span>
-    <span class="yaxis-title">↑ Capture mechanism</span>
-    <span class="yaxis-end">Infrastructure · scale</span>
-  </div>
+  <div class="ylabel">↑ Up for grabs · still contestable</div>
   <div class="grid" id="grid">
     <div class="gl-h"></div><div class="gl-v"></div>
     <svg class="map-svg" id="mapSvg"></svg>
   </div>
+  <div class="ylabel">↓ Locked in · already decided</div>
   <div class="xaxis">
-    <span>New entrant / open</span>
-    <span style="color:var(--gold)">Player type →</span>
-    <span>Incumbent</span>
+    <span>← Incumbents / concentrated</span>
+    <span style="color:var(--gold)">Who captures the value</span>
+    <span>New entrants / open →</span>
   </div>
 </div>
 
@@ -161,6 +156,29 @@ var showArrows = true, showGhosts = true, showLabels = true;
 function toX(v){ return (v+1)/2*82+9; }  // returns %
 function toY(v){ return (1-v)/2*82+9; }
 
+var LENS_ANCHORS = [
+  { name:"Hyperscaler",    x:-0.62, y:-0.50 },
+  { name:"Chipmaker",      x:-0.52, y:-0.42 },
+  { name:"Incumbent SaaS", x:-0.40, y: 0.42 },
+  { name:"LLM labs",       x: 0.10, y: 0.50 },
+  { name:"Orchestrator",   x: 0.62, y: 0.48 },
+  { name:"In-house",       x:-0.10, y:-0.30 },
+];
+function renderAnchors(grid){
+  LENS_ANCHORS.forEach(function(a){
+    var Lx=toX(a.x)+"%", Ty=toY(a.y)+"%";
+    var ring=document.createElement("div"); ring.className="lens-anchor-dot";
+    ring.style.cssText="position:absolute;width:34px;height:34px;border:1px dashed rgba(198,165,83,0.5);border-radius:50%;left:"+Lx+";top:"+Ty+";transform:translate(-50%,-50%);pointer-events:none;z-index:3;";
+    grid.appendChild(ring);
+    var tick=document.createElement("div"); tick.className="lens-anchor-dot";
+    tick.style.cssText="position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(198,165,83,0.65);left:"+Lx+";top:"+Ty+";transform:translate(-50%,-50%);pointer-events:none;z-index:3;";
+    grid.appendChild(tick);
+    var lbl=document.createElement("div"); lbl.className="lens-anchor-lbl"; lbl.textContent=a.name;
+    lbl.style.cssText="position:absolute;left:"+Lx+";top:"+Ty+";transform:translate(-50%,22px);font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(198,165,83,0.68);pointer-events:none;z-index:3;white-space:nowrap;text-align:center;";
+    grid.appendChild(lbl);
+  });
+}
+
 // ── LOAD ───────────────────────────────────────────────────────────────
 async function loadData(){
   if(SUPABASE_URL && SUPABASE_ANON){
@@ -198,13 +216,15 @@ async function loadData(){
 function render(){
   var grid = document.getElementById("grid");
   // Clear dynamic elements
-  [].slice.call(grid.querySelectorAll(".prior-ghost,.team-endpoint,.team-lbl")).forEach(function(n){n.remove();});
+  [].slice.call(grid.querySelectorAll(".prior-ghost,.team-endpoint,.team-lbl,.lens-anchor-lbl,.lens-anchor-dot")).forEach(function(n){n.remove();});
   document.getElementById("mapSvg").innerHTML = "";
   document.getElementById("legendTeams").innerHTML = "";
 
   // Build team colour map
   var teamColorMap = {};
   teams.forEach(function(t){ teamColorMap[t.id] = t.color; });
+
+  renderAnchors(grid);
 
   // Compute centroid of priors per team
   var teamCentroids = {};
@@ -342,8 +362,8 @@ function addStat(container, val, label, note, color){
 }
 
 function coordWords(x,y){
-  var xs = x>0.15?"incumbent-leaning":x<-0.15?"new-entrant / open":"mixed";
-  var ys = y>0.15?"data / workflow":y<-0.15?"infra / scale":"mixed";
+  var xs = x<-0.15?"incumbent-leaning":x>0.15?"new-entrant / open":"mixed";
+  var ys = y>0.15?"up for grabs":y<-0.15?"locked in":"partly settled";
   return xs+" · "+ys;
 }
 

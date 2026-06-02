@@ -26,12 +26,10 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .layout{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;align-items:start}
 @media(max-width:880px){.layout{grid-template-columns:1fr;gap:18px}}
 
-.map-block{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 22px;gap:6px}
-.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;overflow:hidden}
-.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2;overflow:hidden}
-.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
-.grid{grid-column:2;grid-row:1;position:relative;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
-.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd)}
+.map-block{display:block}
+.ylabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center;padding:5px 0}
+.grid{position:relative;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
+.xaxis{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd);padding-top:6px}
 .xaxis .mid{color:var(--gold);letter-spacing:.12em}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
@@ -108,21 +106,18 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 <h1>The room's <em>map</em> of where new value will be created</h1>
 <p class="sub" id="mapSubtitle">9 teams · 4 models · click a cluster to load its teams into the table</p>
 <button onclick="loadFromDB()" id="loadBtn" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;margin-bottom:16px">Load live teams from DB</button>
-<div class="axis-why"><strong>Why these axes?</strong> The hypotheses separate most cleanly on <em>who</em> captures the new value (new entrant vs. incumbent) and <em>what</em> the moat is built on (infrastructure &amp; scale vs. data, distribution &amp; workflow lock-in).</div>
+<div class="axis-why"><strong>Why these axes?</strong> The hypotheses separate most cleanly on <em>who</em> captures the new value (incumbents vs. new entrants) and <em>whether the 3–5 year outcome is already settled</em> (locked in vs. up for grabs).</div>
 
 <div class="layout">
   <div>
     <div class="map-block">
-      <div class="yaxis">
-        <span class="yaxis-end">Data · distribution</span>
-        <span class="yaxis-title">↑ Capture mechanism</span>
-        <span class="yaxis-end">Infrastructure · scale</span>
-      </div>
+      <div class="ylabel">↑ Up for grabs · still contestable</div>
       <div class="grid" id="grid"><div class="gl-h"></div><div class="gl-v"></div></div>
+      <div class="ylabel">↓ Locked in · already decided</div>
       <div class="xaxis">
-        <span>New entrant / open</span>
-        <span class="mid">Player type →</span>
-        <span>Incumbent</span>
+        <span>← Incumbents / concentrated</span>
+        <span class="mid">Who captures the value</span>
+        <span>New entrants / open →</span>
       </div>
     </div>
     <div class="legend" id="legend"></div>
@@ -167,15 +162,15 @@ async function loadFromDB(){
 
     // Auto-cluster into 4 quadrant models
     var quadrant = function(t){
-      var qx = t.x >= 0 ? "incumb" : "new";
-      var qy = t.y >= 0 ? "data"   : "infra";
+      var qx = t.x >= 0 ? "new"  : "incumb";
+      var qy = t.y >= 0 ? "open" : "locked";
       return qx + "-" + qy;
     };
     var QUAD_DEFS = [
-      { key:"new-data",    name:"New entrant / data moat",      col:"#7fbf7f", cx:0.27, cy:0.27, cardCy:0.45 },
-      { key:"incumb-data", name:"Incumbent / data moat",        col:"#e0b86f", cx:0.73, cy:0.27, cardCy:0.45 },
-      { key:"new-infra",   name:"New entrant / infrastructure",  col:"#6fa8dc", cx:0.27, cy:0.72, cardCy:0.90 },
-      { key:"incumb-infra",name:"Incumbent / infrastructure",    col:"#e08080", cx:0.73, cy:0.72, cardCy:0.90 },
+      { key:"incumb-open",   name:"Incumbent · contestable",       col:"#e0b86f", cx:0.27, cy:0.27, cardCy:0.45 },
+      { key:"new-open",      name:"New entrant · open bet",        col:"#7fbf7f", cx:0.73, cy:0.27, cardCy:0.45 },
+      { key:"incumb-locked", name:"Incumbent · locked in",         col:"#e08080", cx:0.27, cy:0.72, cardCy:0.90 },
+      { key:"new-locked",    name:"New entrant · already decided", col:"#6fa8dc", cx:0.73, cy:0.72, cardCy:0.90 },
     ];
     MODELS = [];
     QUAD_DEFS.forEach(function(qd, qi){
@@ -196,7 +191,6 @@ async function loadFromDB(){
     activeTab = "hypothesis";
     renderMap();
     renderLegend();
-    document.getElementById("detailPanel").style.display = "none";
     document.getElementById("loadBtn").textContent = "↺ Refresh";
     document.getElementById("loadBtn").style.borderColor = "var(--ok,rgb(127,191,127))";
     document.getElementById("loadBtn").style.color = "rgb(127,191,127)";
@@ -247,12 +241,12 @@ function dotOffsets(n) {
 
 // ── Six lens anchors — reference positions on the fixed axes ──────────────
 var LENS_ANCHORS_MAP = [
-  { name:"Orchestrator",  x:-0.45, y: 0.48 },
-  { name:"Vertical SaaS", x: 0.50, y: 0.55 },
-  { name:"In-house",      x: 0.45, y: 0.00 },
-  { name:"LLM labs",      x:-0.40, y:-0.40 },
-  { name:"Chipmaker",     x: 0.55, y:-0.55 },
-  { name:"Hyperscaler",   x: 0.10, y:-0.60 },
+  { name:"Hyperscaler",    x:-0.62, y:-0.50 },
+  { name:"Chipmaker",      x:-0.52, y:-0.42 },
+  { name:"Incumbent SaaS", x:-0.40, y: 0.42 },
+  { name:"LLM labs",       x: 0.10, y: 0.50 },
+  { name:"Orchestrator",   x: 0.62, y: 0.48 },
+  { name:"In-house",       x:-0.10, y:-0.30 },
 ];
 
 // Convert axis coords (-1..+1) to grid %: x left 5–95%, y top 5–95% (y flipped)
@@ -263,27 +257,20 @@ function renderLensAnchors(){
   var grid = document.getElementById("grid");
   [].slice.call(grid.querySelectorAll(".lens-anchor-lbl,.lens-anchor-dot")).forEach(function(n){n.remove();});
   LENS_ANCHORS_MAP.forEach(function(a){
-    // faint cross-hair dot
-    var dot = document.createElement("div");
-    dot.className = "lens-anchor-dot";
-    dot.style.cssText = (
-      "position:absolute;width:5px;height:5px;border-radius:50%;" +
-      "border:1px solid rgba(198,165,83,0.3);background:transparent;" +
-      "left:"+axisToLeft(a.x)+";top:"+axisToTop(a.y)+";" +
-      "transform:translate(-50%,-50%);pointer-events:none;z-index:4;"
-    );
-    grid.appendChild(dot);
-    // label
+    var Lx = axisToLeft(a.x), Ty = axisToTop(a.y);
+    // dashed reference ring
+    var ring = document.createElement("div");
+    ring.className = "lens-anchor-dot";
+    ring.style.cssText = "position:absolute;width:34px;height:34px;border:1px dashed rgba(198,165,83,0.55);border-radius:50%;left:"+Lx+";top:"+Ty+";transform:translate(-50%,-50%);pointer-events:none;z-index:4;";
+    grid.appendChild(ring);
+    var tick = document.createElement("div");
+    tick.className = "lens-anchor-dot";
+    tick.style.cssText = "position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(198,165,83,0.7);left:"+Lx+";top:"+Ty+";transform:translate(-50%,-50%);pointer-events:none;z-index:4;";
+    grid.appendChild(tick);
     var lbl = document.createElement("div");
     lbl.className = "lens-anchor-lbl";
     lbl.textContent = a.name;
-    lbl.style.cssText = (
-      "position:absolute;left:"+axisToLeft(a.x)+";top:"+axisToTop(a.y)+";" +
-      "transform:translate(-50%,8px);" +
-      "font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;" +
-      "text-transform:uppercase;color:rgba(198,165,83,0.30);" +
-      "pointer-events:none;z-index:4;white-space:nowrap;text-align:center;"
-    );
+    lbl.style.cssText = "position:absolute;left:"+Lx+";top:"+Ty+";transform:translate(-50%,24px);font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(198,165,83,0.7);pointer-events:none;z-index:4;white-space:nowrap;text-align:center;";
     grid.appendChild(lbl);
   });
 }
