@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course · Prior Cloud · Auto-select · Facilitator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:rgb(25,60,63);--bge:rgb(30,68,71);
+  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);--line:rgba(244,240,233,0.12);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:980px;margin:0 auto;padding:24px 24px 50px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-.02em;margin-bottom:4px}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:10px}
+
+.controls{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:11px}
+.badge{font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold)}
+.scorebox{color:var(--inkd);font-size:10px;letter-spacing:.04em}
+.scorebox b{color:var(--ink)}
+.seg{display:flex;border:1px solid rgba(244,240,233,0.28)}
+.seg button{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;background:transparent;color:var(--inkd);border:none;border-right:1px solid rgba(244,240,233,0.18);cursor:pointer}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--gold);color:var(--bg)}
+.refresh-btn{font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border:1px solid rgba(244,240,233,0.28);color:var(--inkd);background:transparent;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+.map-block{display:grid;grid-template-columns:172px 1fr;grid-template-rows:1fr 26px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding:8px 8px 8px 0;text-align:right}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd);line-height:1.3}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);max-width:160px}
+.grid{grid-column:2;grid-row:1;position:relative;height:560px;border:1.5px solid rgba(244,240,233,0.4)}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd)}
+
+.gl{position:absolute;background:rgba(244,240,233,0.18);z-index:2}
+.gl-h{top:50%;left:0;right:0;height:1px}
+.gl-v{left:50%;top:0;bottom:0;width:1px}
+
+.lane{position:absolute;left:0;right:0;z-index:1}
+.lane.empty{background:rgba(244,240,233,0.015)}
+.lane-lbl{position:absolute;left:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;z-index:3;transform:translateY(-50%)}
+.lane-lbl .ct{color:var(--inkf);margin-left:6px}
+
+.qlabel{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;pointer-events:none;z-index:3;line-height:1.4;text-align:center;color:rgba(244,240,233,0.30)}
+
+.pdot{position:absolute;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);z-index:10;transition:all .3s;cursor:default;border:1.5px solid rgba(244,240,233,0.55)}
+.pdot:hover{transform:translate(-50%,-50%) scale(1.7);z-index:20}
+
+.legend{margin-top:14px;padding:10px 14px;border:1px solid var(--line);background:var(--bge);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkd);line-height:1.9}
+.legend strong{color:var(--ink);font-weight:500}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px -1px 12px;border:1px solid rgba(244,240,233,0.4)}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="app">
+
+<div class="eyebrow">Course · Prior Cloud · Auto-select · Facilitator</div>
+<h1>Where the room <em>splits</em></h1>
+<p class="sub">Player type is fixed left&harr;right. The vertical dimension is whichever one divides the room more &mdash; settledness or moat. The cloud chooses.</p>
+
+<div class="controls">
+  <span class="badge" id="countBadge">&mdash; placed</span>
+  <span class="scorebox" id="scoreBox">&mdash;</span>
+  <div class="seg" id="seg">
+    <button data-m="auto" class="on">Auto</button>
+    <button data-m="settle">Settledness</button>
+    <button data-m="moat">Moat</button>
+  </div>
+  <button class="refresh-btn" onclick="loadAndRender()">&#8635; Refresh</button>
+</div>
+
+<div class="map-block">
+  <div class="yaxis" id="yaxis"></div>
+  <div class="grid" id="grid"></div>
+  <div class="xaxis">
+    <span>&larr; Incumbents<br>concentrated few</span>
+    <span style="color:var(--gold)">Player type</span>
+    <span style="text-align:right">New entrants &rarr;<br>open &amp; distributed</span>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+</div>
+<script>
+// classifier key -> display lane (workflow_embed + sor share one lane)
+var KEY2LANE = {
+  scale:"scale", data:"data",
+  workflow_embed:"workflow_sor", sor:"workflow_sor",
+  switching:"switching", distribution:"distribution",
+  reg:"reg", reputation:"reputation"
+};
+// lanes rendered top -> bottom : furthest from silicon (trust) at top, compute at bottom
+var LANE_ORDER = ["reputation","reg","distribution","switching","workflow_sor","data","scale"];
+var LANE_META = {
+  reputation:   {label:"Reputational capital",        colour:"rgb(130,200,195)"},
+  reg:          {label:"Regulatory entrenchment",     colour:"rgb(190,135,205)"},
+  distribution: {label:"Distribution leverage",       colour:"rgb(224,128,128)"},
+  switching:    {label:"Switching costs",             colour:"rgb(206,150,110)"},
+  workflow_sor: {label:"Workflow & system-of-record", colour:"rgb(224,168,96)"},
+  data:         {label:"Data network effects",        colour:"rgb(111,168,220)"},
+  scale:        {label:"Infrastructure / scale",      colour:"rgb(127,191,127)"}
+};
+var ENUM_K = 7;       // 7 lanes -> entropy normalised over 7
+var MARGIN = 0.04;    // hysteresis so the mode doesn't flip-flop on refresh
+
+var override = "auto";
+var mode = null;
+
+var DEMO = [
+  {x:-0.62,y:-0.55,moat_type:"distribution",thesis:"Big tech wins on distribution"},
+  {x:-0.50,y:-0.50,moat_type:"distribution",thesis:"Copilot stapled to seats"},
+  {x:-0.58,y:-0.58,moat_type:"scale",thesis:"Whoever owns the compute"},
+  {x:-0.18,y:-0.30,moat_type:"scale",thesis:"The labs keep the profits"},
+  {x: 0.50,y: 0.45,moat_type:"workflow_embed",thesis:"Owns the customer's workflow"},
+  {x: 0.50,y: 0.50,moat_type:"sor",thesis:"Orchestration layer owns the record"},
+  {x: 0.42,y: 0.35,moat_type:"data",thesis:"Proprietary data corpus"},
+  {x: 0.55,y: 0.50,moat_type:"data",thesis:"Defensible niche data asset"},
+  {x: 0.20,y: 0.35,moat_type:"switching",thesis:"Enterprises build in-house"},
+  {x: 0.52,y: 0.60,moat_type:"scale",thesis:"Open weights undercut the clouds"}
+];
+
+function toLeft(x){ return ((x+1)/2*90+5).toFixed(2)+"%"; }   // x=-1 left (incumbent)
+function toTop(y){ return ((-y+1)/2*90+5).toFixed(2)+"%"; }   // y=+1 top (up for grabs)
+function laneOf(m){ return KEY2LANE[m]||null; }
+function colour(m){ var l=laneOf(m); return (l&&LANE_META[l].colour)||"rgba(198,165,83,0.75)"; }
+
+function std(a){ if(a.length<2)return 0; var m=a.reduce(function(s,v){return s+v;},0)/a.length;
+  var v=a.reduce(function(s,x){return s+(x-m)*(x-m);},0)/a.length; return Math.sqrt(v); }
+function settleScore(ps){ return Math.min(1, std(ps.filter(function(p){return p.y!=null;}).map(function(p){return p.y;}))); }
+function moatScore(ps){
+  var ls=ps.map(function(p){return laneOf(p.moat_type);}).filter(Boolean);
+  if(!ls.length) return 0;
+  var c={}; ls.forEach(function(l){c[l]=(c[l]||0)+1;});
+  var n=ls.length,H=0;
+  Object.keys(c).forEach(function(k){var p=c[k]/n;H-=p*Math.log(p);});
+  return H/Math.log(ENUM_K);   // 0 = one lane · 1 = even across all 7 lanes
+}
+function chooseMode(ps){
+  var s=settleScore(ps), m=moatScore(ps);
+  if(override!=="auto"){ mode=override; }
+  else if(mode===null){ mode=(m>=s)?"moat":"settle"; }
+  else if(mode==="settle" && m>s+MARGIN){ mode="moat"; }
+  else if(mode==="moat"  && s>m+MARGIN){ mode="settle"; }
+  return {s:s,m:m};
+}
+
+function renderSettle(grid,ps){
+  document.getElementById("yaxis").innerHTML =
+    '<span class="yaxis-end">&uarr; Up for grabs<br>still contestable</span>'+
+    '<span class="yaxis-title">Is the outcome settled?</span>'+
+    '<span class="yaxis-end">&darr; Locked in<br>already decided</span>';
+  grid.innerHTML='<div class="gl gl-h"></div><div class="gl gl-v"></div>';
+  ps.forEach(function(p){
+    if(p.x==null) return;
+    var d=document.createElement("div"); d.className="pdot";
+    d.style.left=toLeft(p.x); d.style.top=toTop(p.y==null?0:p.y);
+    d.style.background=colour(p.moat_type);
+    if(p.thesis) d.title=p.thesis.slice(0,110);
+    grid.appendChild(d);
+  });
+}
+
+function renderMoat(grid,ps){
+  document.getElementById("yaxis").innerHTML =
+    '<span class="yaxis-end">&uarr; furthest from silicon<br>human trust</span>'+
+    '<span class="yaxis-title">The moat stack</span>'+
+    '<span class="yaxis-end">&darr; closest to silicon<br>compute</span>';
+  grid.innerHTML='<div class="gl gl-v"></div>';
+
+  var counts={}; ps.forEach(function(p){var l=laneOf(p.moat_type); if(l)counts[l]=(counts[l]||0)+1;});
+
+  var laneH=100/LANE_ORDER.length;
+  LANE_ORDER.forEach(function(lane,i){
+    var top=i*laneH, n=counts[lane]||0;
+    var band=document.createElement("div");
+    band.className="lane"+(n===0?" empty":"");
+    band.style.top=top+"%"; band.style.height=laneH+"%";
+    band.style.borderTop = (i>0)?"1px solid rgba(244,240,233,0.10)":"none";
+    grid.appendChild(band);
+    var lbl=document.createElement("div"); lbl.className="lane-lbl";
+    lbl.style.top=(top+laneH/2)+"%"; lbl.style.color=LANE_META[lane].colour;
+    if(n===0) lbl.style.opacity="0.5";
+    lbl.innerHTML=LANE_META[lane].label+'<span class="ct">'+(n||"&middot;")+'</span>';
+    grid.appendChild(lbl);
+  });
+
+  ps.forEach(function(p){
+    if(p.x==null) return;
+    var lane=laneOf(p.moat_type); if(!lane) return;
+    var i=LANE_ORDER.indexOf(lane); if(i<0) return;
+    var laneTop=i*laneH;
+    var within=(p.y==null)?0.5:(1-(p.y+1)/2);     // y=+1 -> near lane top
+    var topPct=laneTop+(0.18+within*0.64)*laneH;
+    var d=document.createElement("div"); d.className="pdot";
+    d.style.left=toLeft(p.x); d.style.top=topPct+"%";
+    d.style.background=LANE_META[lane].colour;
+    if(p.thesis) d.title=p.thesis.slice(0,110);
+    grid.appendChild(d);
+  });
+}
+
+function renderLegend(picked){
+  var keys=LANE_ORDER.slice().reverse().map(function(k){   // legend bottom->top
+    return '<span class="swatch" style="background:'+LANE_META[k].colour+'"></span>'+LANE_META[k].label;
+  }).join("");
+  var why = picked==="moat"
+    ? "Lanes = moat, ordered silicon (bottom) to trust (top). Height within a lane = settledness (secondary). Empty lanes are open ground."
+    : "Vertical = settledness (the room's sharpest split). Colour = moat (secondary).";
+  document.getElementById("legend").innerHTML=
+    "<strong>Organizing split: "+picked.toUpperCase()+"</strong> &nbsp; "+why+"<br>Moats:"+keys;
+}
+
+function render(ps){
+  var grid=document.getElementById("grid");
+  var placed=ps.filter(function(p){return p.x!=null;});
+  var sc=chooseMode(placed);
+  document.getElementById("countBadge").textContent=placed.length+" placed";
+  document.getElementById("scoreBox").innerHTML=
+    "moat <b>"+sc.m.toFixed(2)+"</b> &middot; settledness <b>"+sc.s.toFixed(2)+"</b>";
+  if(mode==="moat") renderMoat(grid,placed); else renderSettle(grid,placed);
+  renderLegend(mode);
+}
+
+document.getElementById("seg").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  override=b.getAttribute("data-m");
+  [].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});
+  if(override!=="auto") mode=override;
+  loadAndRender(true);
+});
+
+async function loadAndRender(noLoop){
+  try{
+    var res=await fetch(
+      SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+
+      "&select=x,y,moat_type,thesis&order=created_at.asc",
+      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    var data=await res.json();
+    render(data.length?data:DEMO);
+  }catch(e){ console.warn("using demo:",e.message); render(DEMO); }
+  if(!noLoop) setTimeout(function(){loadAndRender();},8000);
+}
+window.addEventListener("load",function(){loadAndRender();});
+</script>
+</body>
+</html>
