@@ -34,12 +34,12 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 /* MAP */
 .map-wrap{position:relative}
-.map-block{display:block}
-.ylabel{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center;padding:5px 0}
-.map-row{display:flex;align-items:center;gap:12px}
-.xlabel{flex:0 0 100px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.4}
-.xlabel .xsub{display:block;color:var(--inkf);font-size:9px;letter-spacing:.05em;margin-top:3px}
-.grid{position:relative;flex:1;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
+.map-block{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 24px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;overflow:hidden}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.grid{grid-column:2;grid-row:1;position:relative;height:520px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:visible}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--inkd)}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
 
@@ -96,20 +96,25 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <button class="btn btn-ink on" id="btnGhosts" onclick="toggleGhosts()">Prior ghosts</button>
   <button class="btn btn-ink on" id="btnLabels" onclick="toggleLabels()">Team labels</button>
   <div class="sep"></div>
+  <div id="axisControls" style="display:inline-flex;gap:14px;align-items:center"></div>
+  <div class="sep"></div>
   <div class="badge" id="statBadge">— priors · — teams</div>
 </div>
 
 <div class="map-block">
-  <div class="ylabel">↑ Up for grabs · still contestable</div>
-  <div class="map-row">
-    <div class="xlabel">← Incumbents<span class="xsub">concentrated few</span></div>
-    <div class="grid" id="grid">
-      <div class="gl-h"></div><div class="gl-v"></div>
-      <svg class="map-svg" id="mapSvg"></svg>
-    </div>
-    <div class="xlabel">New entrants →<span class="xsub">open &amp; distributed</span></div>
+  <div class="yaxis">
+    <span class="yaxis-end">Data · distribution · workflow</span>
+    <span class="yaxis-title">↑ Capture mechanism</span>
+    <span class="yaxis-end">Infrastructure · scale</span>
   </div>
-  <div class="ylabel">↓ Locked in · already decided</div>
+  <div class="grid" id="grid">
+    <svg class="map-svg" id="mapSvg"></svg>
+  </div>
+  <div class="xaxis">
+    <span>Incumbent</span>
+    <span style="color:var(--gold)">Player type</span>
+    <span>New entrant / open</span>
+  </div>
 </div>
 
 <div class="legend">
@@ -122,6 +127,7 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 </div>
 
+<script src="course_axis.js"></script>
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────
 var TEAM_COLORS   = ["#7fbf7f","#6fa8dc","#e0b86f","#e08080","#8a6b9e","#5e9e8a","#c4a0e0","#9e6b6b"];
@@ -135,245 +141,150 @@ var TEAM_COLORS   = ["#7fbf7f","#6fa8dc","#e0b86f","#e08080","#8a6b9e","#5e9e8a"
 
 // ── DEMO DATA ──────────────────────────────────────────────────────────
 var DEMO_PRIORS = [
-  {id:"p1",x:-0.80,y:0.70,team_id:"t1"},{id:"p2",x:0.70,y:0.60,team_id:"t2"},
-  {id:"p3",x:0.50,y:-0.70,team_id:"t3"},{id:"p4",x:-0.40,y:-0.50,team_id:"t4"},
-  {id:"p5",x:0.60,y:0.50,team_id:"t2"},{id:"p6",x:-0.60,y:0.60,team_id:"t1"},
-  {id:"p7",x:0.80,y:-0.60,team_id:"t3"},{id:"p8",x:-0.30,y:-0.40,team_id:"t4"},
-  {id:"p9",x:0.40,y:0.70,team_id:"t2"},{id:"p10",x:-0.70,y:0.40,team_id:"t1"},
-  {id:"p11",x:0.70,y:-0.50,team_id:"t3"},{id:"p12",x:0.50,y:0.60,team_id:"t5"},
+  {id:"p1",x:-0.80,y:0.70,team:"Table 1",moat_type:"workflow_embed"},
+  {id:"p2",x:0.70,y:0.60,team:"Table 2",moat_type:"data"},
+  {id:"p3",x:0.50,y:-0.70,team:"Table 3",moat_type:"scale"},
+  {id:"p4",x:-0.40,y:-0.50,team:"Table 4",moat_type:"distribution"},
+  {id:"p5",x:0.60,y:0.50,team:"Table 2",moat_type:"data"},
+  {id:"p6",x:-0.60,y:0.60,team:"Table 1",moat_type:"sor"},
+  {id:"p7",x:0.80,y:-0.60,team:"Table 3",moat_type:"scale"},
+  {id:"p8",x:-0.30,y:-0.40,team:"Table 4",moat_type:"distribution"},
+  {id:"p9",x:0.40,y:0.70,team:"Table 2",moat_type:"data"},
+  {id:"p10",x:-0.70,y:0.40,team:"Table 1",moat_type:"workflow_embed"},
+  {id:"p11",x:0.70,y:-0.50,team:"Table 3",moat_type:"scale"},
+  {id:"p12",x:0.50,y:0.60,team:"Table 5",moat_type:"switching"}
 ];
 var DEMO_TEAMS = [
-  {id:"t1",name:"Table 1",x:-0.35,y:0.60,color:"#7fbf7f"},
-  {id:"t2",name:"Table 2",x:0.60,y:0.55,color:"#6fa8dc"},
-  {id:"t3",name:"Table 3",x:0.65,y:-0.55,color:"#e0b86f"},
-  {id:"t4",name:"Table 4",x:-0.40,y:-0.45,color:"#e08080"},
-  {id:"t5",name:"Table 5",x:0.50,y:0.65,color:"#8a6b9e"},
+  {name:"Table 1",x:-0.35,y:0.60,moat_type:"workflow_embed"},
+  {name:"Table 2",x:0.60,y:0.55,moat_type:"data"},
+  {name:"Table 3",x:0.65,y:-0.55,moat_type:"scale"},
+  {name:"Table 4",x:-0.40,y:-0.45,moat_type:"distribution"},
+  {name:"Table 5",x:0.50,y:0.65,moat_type:"switching"}
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────
-var priors = [], teams = [];
-var showArrows = true, showGhosts = true, showLabels = true;
-
-function toX(v){ return (v+1)/2*82+9; }  // returns %
-function toY(v){ return (1-v)/2*82+9; }
-
-var LENS_ANCHORS = [
-  { name:"Hyperscaler",    x:-0.62, y:-0.50 },
-  { name:"Chipmaker",      x:-0.52, y:-0.42 },
-  { name:"Incumbent SaaS", x:-0.40, y: 0.42 },
-  { name:"LLM labs",       x: 0.10, y: 0.50 },
-  { name:"Orchestrator",   x: 0.62, y: 0.48 },
-  { name:"In-house",       x:-0.10, y:-0.30 },
-];
-function renderAnchors(grid){
-  LENS_ANCHORS.forEach(function(a){
-    var Lx=toX(a.x)+"%", Ty=toY(a.y)+"%";
-    var ring=document.createElement("div"); ring.className="lens-anchor-dot";
-    ring.style.cssText="position:absolute;width:34px;height:34px;border:1px dashed rgba(198,165,83,0.5);border-radius:50%;left:"+Lx+";top:"+Ty+";transform:translate(-50%,-50%);pointer-events:none;z-index:3;";
-    grid.appendChild(ring);
-    var tick=document.createElement("div"); tick.className="lens-anchor-dot";
-    tick.style.cssText="position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(198,165,83,0.65);left:"+Lx+";top:"+Ty+";transform:translate(-50%,-50%);pointer-events:none;z-index:3;";
-    grid.appendChild(tick);
-    var lbl=document.createElement("div"); lbl.className="lens-anchor-lbl"; lbl.textContent=a.name;
-    lbl.style.cssText="position:absolute;left:"+Lx+";top:"+Ty+";transform:translate(-50%,22px);font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(198,165,83,0.68);pointer-events:none;z-index:3;white-space:nowrap;text-align:center;";
-    grid.appendChild(lbl);
-  });
-}
+var priors=[], teams=[];
+var showArrows=true, showGhosts=true, showLabels=true;
+var COORDS = CourseAxis.makeCoords(9,82);   // matches this grid's padding
+var teamColor = {};
 
 // ── LOAD ───────────────────────────────────────────────────────────────
 async function loadData(){
   if(SUPABASE_URL && SUPABASE_ANON){
-    try {
-      var [r1, r2, r3] = await Promise.all([
-        fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+"&select=id,x,y", {headers:{"apikey":SUPABASE_ANON}}),
-        fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&select=prior_id,team_id,team_name", {headers:{"apikey":SUPABASE_ANON}}),
-        fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&select=team_name,x,y", {headers:{"apikey":SUPABASE_ANON}}),
+    try{
+      var hdr={"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON};
+      var rs=await Promise.all([
+        fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+"&select=id,x,y,moat_type",{headers:hdr}),
+        fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&select=prior_id,team_name",{headers:hdr}),
+        fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&select=team_name,x,y,moat_type",{headers:hdr})
       ]);
-      var priorData = await r1.json();
-      var assignData = await r2.json();
-      var teamData = await r3.json();
-
-      // Build a team_id lookup from assignments
-      var assignMap = {};
-      assignData.forEach(function(a){ assignMap[a.prior_id] = a.team_id; });
-      priors = priorData.map(function(p){ return Object.assign({},p,{team_id:assignMap[p.id]||null}); });
-
-      // Assign colours by team index
-      var teamNames = [...new Set(assignData.map(function(a){return a.team_name;}))];
-      teams = teamData.map(function(t,i){
-        return { id:"t"+(i+1), name:t.team_name, x:t.x, y:t.y, color:TEAM_COLORS[i%TEAM_COLORS.length] };
-      });
-    } catch(e){
-      console.warn("Supabase unavailable — using demo data:", e.message);
-      priors = DEMO_PRIORS; teams = DEMO_TEAMS;
-    }
-  } else {
-    priors = DEMO_PRIORS; teams = DEMO_TEAMS;
-  }
+      var priorData=await rs[0].json(), assignData=await rs[1].json(), teamData=await rs[2].json();
+      var nameBy={}; assignData.forEach(function(a){ nameBy[a.prior_id]=a.team_name; });
+      priors=priorData.map(function(p){ return Object.assign({},p,{team:nameBy[p.id]||null}); });
+      teams=teamData.map(function(t){ return {name:t.team_name,x:t.x,y:t.y,moat_type:t.moat_type}; });
+      await CourseAxis.readSessionMode(SUPABASE_URL,SUPABASE_ANON,SESSION_ID);
+    }catch(e){ console.warn("Supabase unavailable — demo:",e.message); priors=DEMO_PRIORS; teams=DEMO_TEAMS; }
+  } else { priors=DEMO_PRIORS; teams=DEMO_TEAMS; }
+  teams.forEach(function(t,i){ teamColor[t.name]=TEAM_COLORS[i%TEAM_COLORS.length]; });
+  if(!window.__ctrlMounted){ CourseAxis.mountControls(document.getElementById("axisControls"),{allowAuto:true,onChange:render}); window.__ctrlMounted=true; }
   render();
 }
 
+function npos(p,mode){ var q=CourseAxis.pointPos(p,mode,COORDS); return {x:parseFloat(q.left),y:parseFloat(q.top)}; }
+
 // ── RENDER ─────────────────────────────────────────────────────────────
 function render(){
-  var grid = document.getElementById("grid");
-  // Clear dynamic elements
-  [].slice.call(grid.querySelectorAll(".prior-ghost,.team-endpoint,.team-lbl,.lens-anchor-lbl,.lens-anchor-dot")).forEach(function(n){n.remove();});
-  document.getElementById("mapSvg").innerHTML = "";
-  document.getElementById("legendTeams").innerHTML = "";
+  var grid=document.getElementById("grid");
+  var svg=document.getElementById("mapSvg"); svg.innerHTML="";
+  [].slice.call(grid.querySelectorAll(".prior-ghost,.team-endpoint,.team-lbl")).forEach(function(n){n.remove();});
+  document.getElementById("legendTeams").innerHTML="";
 
-  // Build team colour map
-  var teamColorMap = {};
-  teams.forEach(function(t){ teamColorMap[t.id] = t.color; });
+  var allPts=priors.concat(teams);
+  CourseAxis.chooseMode(allPts); var mode=CourseAxis.state.mode;
 
-  renderAnchors(grid);
+  var yl=CourseAxis.yLabels(mode);
+  var yends=document.querySelectorAll(".yaxis .yaxis-end");
+  if(yends[0]) yends[0].textContent=yl.top;
+  if(yends[1]) yends[1].textContent=yl.bottom;
+  var yt=document.querySelector(".yaxis .yaxis-title"); if(yt) yt.textContent=yl.title;
 
-  // Compute centroid of priors per team
-  var teamCentroids = {};
-  teams.forEach(function(t){
-    var ps = priors.filter(function(p){ return p.team_id===t.id; });
-    if(!ps.length) return;
-    var cx = ps.reduce(function(s,p){return s+p.x;},0)/ps.length;
-    var cy = ps.reduce(function(s,p){return s+p.y;},0)/ps.length;
-    teamCentroids[t.id] = {x:cx, y:cy};
-  });
+  CourseAxis.renderField(grid, allPts, mode, COORDS, {noDots:true});
 
-  // ARROWS: from each prior to its team position
   if(showArrows){
-    var svg = document.getElementById("mapSvg");
     priors.forEach(function(p){
-      if(!p.team_id) return;
-      var team = teams.find(function(t){return t.id===p.team_id;});
-      if(!team || team.x===undefined || team.y===undefined) return;
-      var col = teamColorMap[p.team_id] || "rgba(198,165,83,0.5)";
-
-      var line = document.createElementNS("http://www.w3.org/2000/svg","line");
-      line.setAttribute("x1",toX(p.x)+"%"); line.setAttribute("y1",toY(p.y)+"%");
-      line.setAttribute("x2",toX(team.x)+"%"); line.setAttribute("y2",toY(team.y)+"%");
-      line.setAttribute("stroke",col.replace(")",",0.45)").replace("rgb","rgba"));
-      line.setAttribute("stroke-width","1.2");
-      line.setAttribute("stroke-dasharray","5,3");
+      if(!p.team) return;
+      var t=teams.find(function(z){return z.name===p.team;});
+      if(!t||t.x==null) return;
+      var col=teamColor[p.team]||"rgba(198,165,83,0.5)";
+      var a=npos(p,mode), b=npos(t,mode);
+      var line=document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
+      line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
+      line.setAttribute("stroke",col);line.setAttribute("stroke-opacity","0.45");
+      line.setAttribute("stroke-width","1.2");line.setAttribute("stroke-dasharray","5,3");
       svg.appendChild(line);
-
-      // Tiny arrowhead
-      var dx=toX(team.x)-toX(p.x), dy=toY(team.y)-toY(p.y), len=Math.sqrt(dx*dx+dy*dy);
-      if(len>3){
-        var angle=Math.atan2(dy,dx), al=6, aw=3.5;
-        var ax=toX(team.x)-al*Math.cos(angle), ay=toY(team.y)-al*Math.sin(angle);
+      var dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
+      if(len>3){ var ang=Math.atan2(dy,dx),al=6,aw=3.5;
+        var ax=b.x-al*Math.cos(ang),ay=b.y-al*Math.sin(ang);
         var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
-        poly.setAttribute("points",
-          toX(team.x)+"%,"+toY(team.y)+"% "+
-          (ax-aw*Math.sin(angle))+"%,"+(ay+aw*Math.cos(angle))+"% "+
-          (ax+aw*Math.sin(angle))+"%,"+(ay-aw*Math.cos(angle))+"%"
-        );
-        poly.setAttribute("fill",col.replace(")",",0.7)").replace("rgb","rgba"));
+        poly.setAttribute("points", b.x+"%,"+b.y+"% "+(ax-aw*Math.sin(ang))+"%,"+(ay+aw*Math.cos(ang))+"% "+(ax+aw*Math.sin(ang))+"%,"+(ay-aw*Math.cos(ang))+"%");
+        poly.setAttribute("fill",col);poly.setAttribute("fill-opacity","0.7");
         svg.appendChild(poly);
       }
     });
   }
 
-  // PRIOR GHOSTS
   if(showGhosts){
     priors.forEach(function(p){
-      var ghost = document.createElement("div");
-      ghost.className = "prior-ghost";
-      ghost.style.left=toX(p.x)+"%"; ghost.style.top=toY(p.y)+"%";
-      grid.appendChild(ghost);
+      var g=document.createElement("div"); g.className="prior-ghost";
+      var a=npos(p,mode); g.style.left=a.x+"%"; g.style.top=a.y+"%";
+      grid.appendChild(g);
     });
   }
 
-  // TEAM DOTS
   teams.forEach(function(t){
-    if(t.x===undefined || t.y===undefined) return;
-    var dot = document.createElement("div");
-    dot.className = "team-endpoint";
-    dot.style.cssText = "left:"+toX(t.x)+"%;top:"+toY(t.y)+"%;width:16px;height:16px;background:"+t.color+";border-color:"+t.color;
-    dot.title = t.name;
-    grid.appendChild(dot);
+    if(t.x==null) return;
+    var col=teamColor[t.name]; var b=npos(t,mode);
+    var d=document.createElement("div"); d.className="team-endpoint";
+    d.style.cssText="left:"+b.x+"%;top:"+b.y+"%;width:16px;height:16px;background:"+col+";border-color:"+col;
+    d.title=t.name; grid.appendChild(d);
+    if(showLabels){ var l=document.createElement("div"); l.className="team-lbl"; l.style.cssText="left:"+b.x+"%;top:"+b.y+"%;color:"+col; l.textContent=t.name; grid.appendChild(l); }
+    var li=document.createElement("div"); li.className="li"; li.innerHTML='<div class="li-dot" style="background:'+col+'"></div><span>'+t.name+'</span>'; document.getElementById("legendTeams").appendChild(li);
+  });
 
-    if(showLabels){
-      var lbl = document.createElement("div");
-      lbl.className = "team-lbl";
-      lbl.style.cssText = "left:"+toX(t.x)+"%;top:"+toY(t.y)+"%;color:"+t.color;
-      lbl.textContent = t.name;
-      grid.appendChild(lbl);
+  document.getElementById("statBadge").textContent=priors.length+" priors \u00b7 "+teams.length+" teams";
+  renderStats();
+}
+
+function renderStats(){
+  var statsRow=document.getElementById("statsRow"); statsRow.innerHTML="";
+  var td=[];
+  teams.forEach(function(t){
+    var ps=priors.filter(function(p){return p.team===t.name;});
+    if(!ps.length||t.x==null) return;
+    var avg=ps.map(function(p){return Math.sqrt(Math.pow(p.x-t.x,2)+Math.pow(p.y-t.y,2));}).reduce(function(s,d){return s+d;},0)/ps.length;
+    td.push({name:t.name,color:teamColor[t.name],avg:avg,n:ps.length});
+  });
+  td.sort(function(a,b){return b.avg-a.avg;});
+  if(td.length){ var m=td[0]; addStat(statsRow,m.avg.toFixed(2),"Largest table movement",m.name+" moved its members the furthest from their priors.",m.color); }
+  if(priors.length){
+    var pCx=priors.reduce(function(s,p){return s+p.x;},0)/priors.length, pCy=priors.reduce(function(s,p){return s+p.y;},0)/priors.length;
+    var tX=teams.filter(function(t){return t.x!=null;});
+    if(tX.length){
+      var tCx=tX.reduce(function(s,t){return s+t.x;},0)/tX.length, tCy=tX.reduce(function(s,t){return s+t.y;},0)/tX.length;
+      addStat(statsRow,Math.sqrt(Math.pow(tCx-pCx,2)+Math.pow(tCy-pCy,2)).toFixed(2),"Room-level shift","The collective centre of gravity moved from "+coordWords(pCx,pCy)+" to "+coordWords(tCx,tCy)+".","var(--gold)");
+      if(tX.length>1){ var vX=tX.reduce(function(s,t){return s+Math.pow(t.x-tCx,2);},0)/tX.length, vY=tX.reduce(function(s,t){return s+Math.pow(t.y-tCy,2);},0)/tX.length;
+        addStat(statsRow,Math.sqrt(vX+vY).toFixed(2),"Team spread on map","How dispersed the team hypotheses are. High = genuine disagreement. Low = the room converged.","var(--inkd)"); }
     }
-
-    // Legend
-    var li = document.createElement("div");
-    li.className = "li";
-    li.innerHTML = '<div class="li-dot" style="background:'+t.color+'"></div><span>'+t.name+'</span>';
-    document.getElementById("legendTeams").appendChild(li);
-  });
-
-  // Badge
-  document.getElementById("statBadge").textContent = priors.length+" priors · "+teams.length+" teams";
-
-  // Stats
-  renderStats(teamCentroids);
-}
-
-function renderStats(centroids){
-  var statsRow = document.getElementById("statsRow");
-  statsRow.innerHTML = "";
-
-  // Average distance per team
-  var teamDistances = [];
-  teams.forEach(function(t){
-    var ps = priors.filter(function(p){return p.team_id===t.id;});
-    if(!ps.length || t.x===undefined) return;
-    var dists = ps.map(function(p){ return Math.sqrt(Math.pow(p.x-t.x,2)+Math.pow(p.y-t.y,2)); });
-    var avg = dists.reduce(function(s,d){return s+d;},0)/dists.length;
-    teamDistances.push({name:t.name, color:t.color, avg:avg, n:ps.length});
-  });
-  teamDistances.sort(function(a,b){return b.avg-a.avg;});
-
-  // Most-moved team
-  if(teamDistances.length){
-    var most = teamDistances[0];
-    addStat(statsRow, most.avg.toFixed(2), "Largest table movement", most.name+" moved its members the furthest from their priors.", most.color);
-  }
-
-  // Room centroid shift
-  var pCx = priors.reduce(function(s,p){return s+p.x;},0)/priors.length;
-  var pCy = priors.reduce(function(s,p){return s+p.y;},0)/priors.length;
-  var teamX = teams.filter(function(t){return t.x!==undefined;});
-  var tCx = teamX.reduce(function(s,t){return s+t.x;},0)/teamX.length;
-  var tCy = teamX.reduce(function(s,t){return s+t.y;},0)/teamX.length;
-  var roomDist = Math.sqrt(Math.pow(tCx-pCx,2)+Math.pow(tCy-pCy,2));
-  addStat(statsRow, roomDist.toFixed(2), "Room-level shift", 
-    "The collective centre of gravity moved from "+coordWords(pCx,pCy)+" to "+coordWords(tCx,tCy)+".", "var(--gold)");
-
-  // Convergence (std dev of team positions)
-  if(teamX.length>1){
-    var varX = teamX.reduce(function(s,t){return s+Math.pow(t.x-tCx,2);},0)/teamX.length;
-    var varY = teamX.reduce(function(s,t){return s+Math.pow(t.y-tCy,2);},0)/teamX.length;
-    var spread = Math.sqrt(varX+varY).toFixed(2);
-    addStat(statsRow, spread, "Team spread on map", 
-      "How dispersed the team hypotheses are. High = genuine disagreement. Low = the room converged.", "var(--inkd)");
   }
 }
+function addStat(c,val,label,note,color){ var x=document.createElement("div"); x.className="stat-card"; x.innerHTML='<div class="stat-val" style="color:'+color+'">'+val+'</div><div class="stat-label">'+label+'</div><div class="stat-note">'+note+'</div>'; c.appendChild(x); }
+function coordWords(x,y){ var xs=x<-0.15?"incumbent-leaning":x>0.15?"new-entrant / open":"mixed"; var ys=y>0.15?"up for grabs":y<-0.15?"locked in":"partly settled"; return xs+" \u00b7 "+ys; }
 
-function addStat(container, val, label, note, color){
-  var c = document.createElement("div");
-  c.className = "stat-card";
-  c.innerHTML = '<div class="stat-val" style="color:'+color+'">'+val+'</div>'+
-    '<div class="stat-label">'+label+'</div>'+
-    '<div class="stat-note">'+note+'</div>';
-  container.appendChild(c);
-}
-
-function coordWords(x,y){
-  var xs = x<-0.15?"incumbent-leaning":x>0.15?"new-entrant / open":"mixed";
-  var ys = y>0.15?"up for grabs":y<-0.15?"locked in":"partly settled";
-  return xs+" · "+ys;
-}
-
-// ── TOGGLES ────────────────────────────────────────────────────────────
 function toggleArrows(){ showArrows=!showArrows; document.getElementById("btnArrows").classList.toggle("on",showArrows); render(); }
 function toggleGhosts(){ showGhosts=!showGhosts; document.getElementById("btnGhosts").classList.toggle("on",showGhosts); render(); }
 function toggleLabels(){ showLabels=!showLabels; document.getElementById("btnLabels").classList.toggle("on",showLabels); render(); }
 
-// ── INIT ───────────────────────────────────────────────────────────────
 window.addEventListener("load", loadData);
 </script>
 </body>

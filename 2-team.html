@@ -584,6 +584,20 @@ button.action.ghost:hover {
   color: var(--ink-faint);
   margin-left: 6px;
 }
+.minimap-wrap{margin:18px 0 8px;text-align:left}
+.mm-cap{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.mm-block{display:grid;grid-template-columns:96px 1fr;grid-template-rows:1fr 18px;gap:5px}
+.mm-y{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;text-align:right;padding:4px 6px 4px 0;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-dim);line-height:1.3}
+.mm-grid{position:relative;height:240px;border:1px solid rgba(244,240,233,0.3)}
+.mm-x{grid-column:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-dim)}
+.mm-gl{position:absolute;background:rgba(244,240,233,0.16)}
+.mm-gl-h{top:50%;left:0;right:0;height:1px}
+.mm-gl-v{left:50%;top:0;bottom:0;width:1px}
+.mm-dot{position:absolute;border-radius:50%;transform:translate(-50%,-50%)}
+.mm-anchor{width:8px;height:8px;opacity:.6;border:1px solid rgba(244,240,233,0.4)}
+.mm-lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.03em;color:rgba(244,240,233,0.5);transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none}
+.mm-you{width:14px;height:14px;border:2px solid var(--gold);box-shadow:0 0 0 3px rgba(198,165,83,0.18);z-index:10}
+.mm-you-lbl{color:var(--gold);font-weight:500}
 </style>
 <script src="config.js"></script>
 </head>
@@ -690,6 +704,16 @@ button.action.ghost:hover {
       <button class="action ghost" onclick="clearForm()">Clear</button>
     </div>
 
+    <div class="minimap-wrap" id="teamMapWrap" style="display:none">
+      <div class="mm-cap">Your table among the usual suspects</div>
+      <div class="mm-block">
+        <div class="mm-y"><span>↑ up for grabs</span><span>↓ locked in</span></div>
+        <div class="mm-grid" id="teamMapGrid"></div>
+        <div></div>
+        <div class="mm-x"><span>← incumbent</span><span>new entrant →</span></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Printable card preview -->
@@ -765,38 +789,28 @@ button.action.ghost:hover {
       }
     } catch(e){ console.warn("phase check:", e.message); }
 
-    // 2. Populate the team dropdown from teams created in formation
+    // 2. Populate the team dropdown — always shown as a dropdown
     try {
-      const r = await fetch(
-        SUPABASE_URL + "/rest/v1/course_assignments?session_id=eq." + SESSION_ID + "&select=team_name",
-        { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } }
-      );
-      if (r.ok) {
-        const rows = await r.json();
-        const names = [...new Set(rows.map(x => x.team_name).filter(Boolean))].sort();
-        if (names.length) {
-          const sel = document.getElementById("teamNameSelect");
-          const txt = document.getElementById("teamName");
-          const hint = document.getElementById("teamNameHint");
-          sel.innerHTML = '<option value="">— select your team —</option>' +
-            names.map(n => '<option value="'+n.replace(/"/g,'&quot;')+'">'+n+'</option>').join('') +
-            '<option value="__other__">Other / not listed…</option>';
-          sel.style.display = "block";
-          txt.style.display = "none";
-          hint.style.display = "block";
-          // When a team is picked, mirror it into the hidden text field
-          sel.addEventListener("change", function(){
-            if (sel.value === "__other__") {
-              txt.style.display = "block";
-              txt.value = "";
-              txt.focus();
-            } else {
-              txt.style.display = "none";
-              txt.value = sel.value;
-            }
-          });
-        }
-      }
+      const sel  = document.getElementById("teamNameSelect");
+      const txt  = document.getElementById("teamName");
+      const hint = document.getElementById("teamNameHint");
+      let names = [];
+      const hdr = { "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON };
+      try { const r1 = await fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&select=team_name",{headers:hdr});
+            if(r1.ok){ (await r1.json()).forEach(function(x){ names.push(x.team_name); }); } } catch(e){}
+      try { const r2 = await fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&select=team_name",{headers:hdr});
+            if(r2.ok){ (await r2.json()).forEach(function(x){ names.push(x.team_name); }); } } catch(e){}
+      names = [...new Set(names.filter(Boolean))].sort();
+      sel.innerHTML = '<option value="">\u2014 select your team \u2014</option>' +
+        names.map(function(n){ return '<option value="'+String(n).replace(/"/g,'&quot;')+'">'+n+'</option>'; }).join('') +
+        '<option value="__other__">Other / type a name\u2026</option>';
+      sel.style.display = "block";
+      txt.style.display = "none";
+      hint.style.display = "block";
+      sel.addEventListener("change", function(){
+        if (sel.value === "__other__") { txt.style.display="block"; txt.value=""; txt.focus(); }
+        else { txt.style.display="none"; txt.value=sel.value; }
+      });
     } catch(e){ console.warn("team list:", e.message); }
   });
 
@@ -879,9 +893,35 @@ button.action.ghost:hover {
 
   // ── Placement helpers (same engine as Phase 1) ───────────────────────
   var LENS_ANCHORS = {
-    hyperscaler:{x:0.10,y:-0.60}, chipmaker:{x:0.55,y:-0.55}, llm:{x:-0.40,y:-0.40},
-    saas:{x:0.50,y:0.55}, orchestrator:{x:-0.45,y:0.48}, inhouse:{x:0.45,y:0.00},
+    hyperscaler:{x:-0.62,y:-0.50,m:"distribution"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
+    saas:{x:-0.40,y:0.42,m:"workflow_embed"}, orchestrator:{x:0.62,y:0.48,m:"sor"}, inhouse:{x:-0.10,y:-0.30,m:"switching"},
   };
+  var MM_COLOUR = { scale:"rgb(127,191,127)", data:"rgb(111,168,220)", workflow_embed:"rgb(224,168,96)", sor:"rgb(224,168,96)", switching:"rgb(206,150,110)", distribution:"rgb(224,128,128)", reg:"rgb(190,135,205)", reputation:"rgb(130,200,195)" };
+  var MM_ANCHOR_LABEL = { hyperscaler:"Hyperscaler", chipmaker:"Chip", llm:"LLM", saas:"Vertical SaaS", orchestrator:"Orchestrator", inhouse:"In-house" };
+  function renderTeamMap(pl){
+    var grid = document.getElementById("teamMapGrid"); if(!grid) return;
+    document.getElementById("teamMapWrap").style.display = "block";
+    grid.innerHTML = '<div class="mm-gl mm-gl-h"></div><div class="mm-gl mm-gl-v"></div>';
+    function L(x){ return ((x+1)/2*88+6).toFixed(1)+"%"; }
+    function T(y){ return ((-y+1)/2*88+6).toFixed(1)+"%"; }
+    Object.keys(LENS_ANCHORS).forEach(function(k){
+      var a=LENS_ANCHORS[k];
+      var d=document.createElement("div"); d.className="mm-dot mm-anchor";
+      d.style.left=L(a.x); d.style.top=T(a.y); d.style.background=MM_COLOUR[a.m]||"rgba(244,240,233,0.4)";
+      grid.appendChild(d);
+      var lbl=document.createElement("div"); lbl.className="mm-lbl";
+      lbl.style.left=L(a.x); lbl.style.top="calc("+T(a.y)+" + 11px)"; lbl.textContent=MM_ANCHOR_LABEL[k]||k;
+      grid.appendChild(lbl);
+    });
+    if(pl && pl.x!=null && pl.y!=null){
+      var you=document.createElement("div"); you.className="mm-dot mm-you";
+      you.style.left=L(pl.x); you.style.top=T(pl.y); you.style.background=MM_COLOUR[pl.moat]||"var(--gold)";
+      grid.appendChild(you);
+      var yl=document.createElement("div"); yl.className="mm-lbl mm-you-lbl";
+      yl.style.left=L(pl.x); yl.style.top="calc("+T(pl.y)+" - 13px)"; yl.textContent="YOUR TABLE";
+      grid.appendChild(yl);
+    }
+  }
   function clampXY(n){ return Math.max(-1, Math.min(1, n)); }
 
   async function placeTeam(hypothesis, bottleneck, falsifier, recordId){
@@ -897,10 +937,10 @@ button.action.ghost:hover {
       if(!res.ok) throw new Error("Edge "+res.status);
       var d = await res.json();
       if(typeof d.x !== "number") throw new Error("bad shape");
-      return { x:clampXY(d.x), y:clampXY(d.y), justification:d.justification, placed_by:d.placed_by };
+      return { x:clampXY(d.x), y:clampXY(d.y), moat:d.moat||null, justification:d.justification, placed_by:d.placed_by };
     } catch(e){
       // graceful fallback: centre of map
-      return { x:0, y:0, justification:"Placement unavailable — dot placed at centre.", placed_by:"fallback" };
+      return { x:0, y:0, moat:null, justification:"Placement unavailable — dot placed at centre.", placed_by:"fallback" };
     }
   }
   // ─────────────────────────────────────────────────────────────────────
@@ -1162,7 +1202,8 @@ Output format: 2-3 numbered questions, then optionally one closing sentence invi
     const placed = await placeTeam(v.hypothesis, v.bottleneck, v.falsifier, recordId);
     payload.placement = placed;
     window.__teamCard = payload;
-    showToast('Submitted — placed on map: ' + coordWords(placed.x, placed.y));
+    showToast('Submitted — placed on map: ' + coordWords(placed.x, placed.y, placed.moat));
+    try{ renderTeamMap(placed); }catch(e){ console.warn("teammap:", e.message); }
     console.log("TEAM CARD:", JSON.stringify(payload, null, 2));
 
     // Mark as submitted; allow re-submit (upsert) but make the state clear
@@ -1172,10 +1213,12 @@ Output format: 2-3 numbered questions, then optionally one closing sentence invi
     }
   }
 
-  function coordWords(x, y){
-    var xs = x > 0.15 ? "incumbent" : x < -0.15 ? "new-entrant/open" : "mixed";
-    var ys = y > 0.15 ? "data/workflow moat" : y < -0.15 ? "infra/scale moat" : "mixed mechanism";
-    return xs + " · " + ys;
+  function coordWords(x, y, moat){
+    var xs = x < -0.15 ? "incumbent" : x > 0.15 ? "new-entrant/open" : "mixed";
+    var ys = y > 0.15 ? "up for grabs" : y < -0.15 ? "locked in" : "partly settled";
+    var ms = { scale:"infrastructure/scale", data:"data network-effects", workflow_embed:"workflow-embedding", sor:"system-of-record", switching:"switching-cost", distribution:"distribution-leverage", reg:"regulatory", reputation:"reputational-capital" };
+    var mm = moat && ms[moat] ? " · " + ms[moat] + " moat" : "";
+    return xs + " · " + ys + mm;
   }
 
   function fallbackCopy(text) {

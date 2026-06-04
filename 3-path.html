@@ -35,12 +35,12 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .path.show{display:block}
 
 /* MAP */
-.map-block{display:block;margin-bottom:22px}
-.ylabel{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:center;padding:4px 0}
-.map-row{display:flex;align-items:center;gap:7px}
-.xlabel{flex:0 0 58px;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.35}
-.xlabel .xsub{display:block;color:var(--inkf);font-size:7.5px;margin-top:2px}
-.grid{position:relative;flex:1;height:320px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
+.map-block{display:grid;grid-template-columns:16px 1fr;grid-template-rows:1fr 20px;gap:5px;margin-bottom:22px}
+.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:4px 0;overflow:hidden}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.grid{grid-column:2;grid-row:1;position:relative;height:320px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd)}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
 
@@ -74,6 +74,8 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .err.show{display:block}
 .spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--golds);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.anchor{position:absolute;width:14px;height:14px;border-radius:50%;border:1px dashed rgba(244,240,233,0.28);transform:translate(-50%,-50%);z-index:5;pointer-events:none}
+.anchor-lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:rgba(244,240,233,0.34);transform:translate(-50%,-50%);white-space:nowrap;z-index:5;pointer-events:none}
 </style>
 <script src="config.js"></script>
 </head>
@@ -104,17 +106,18 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 <!-- PATH VIEW -->
 <div class="path" id="pathView">
 
+  <div id="axisControls" style="display:flex;gap:14px;align-items:center;margin-bottom:12px"></div>
+
   <div class="map-block">
-    <div class="ylabel">↑ Up for grabs</div>
-    <div class="map-row">
-      <div class="xlabel">← Incumbents<span class="xsub">few</span></div>
-      <div class="grid" id="pathGrid">
-        <div class="gl-h"></div><div class="gl-v"></div>
-        <svg class="path-svg" id="pathSvg"></svg>
-      </div>
-      <div class="xlabel">New →<span class="xsub">open</span></div>
+    <div class="yaxis">
+      <span class="yaxis-end">Up for grabs</span>
+      <span class="yaxis-title">↑ Settled?</span>
+      <span class="yaxis-end">Locked in</span>
     </div>
-    <div class="ylabel">↓ Locked in</div>
+    <div class="grid" id="pathGrid">
+      <svg class="path-svg" id="pathSvg"></svg>
+    </div>
+    <div class="xaxis"><span>Incumbent</span><span style="color:var(--gold)">Player type</span><span>New entrant</span></div>
   </div>
 
   <div class="dist-card">
@@ -138,6 +141,7 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 </div>
 </div>
 
+<script src="course_axis.js"></script>
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────
 // On deployment, pass session config via URL params:
@@ -156,8 +160,8 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
 // ── DEMO DATA ──────────────────────────────────────────────────────────
 var DEMO = {
-  prior: { name:"Alex", x:0.55, y:0.55, thesis:"Orchestrators win because they compose the stack on demand and sit above both hyperscalers and SaaS incumbents." },
-  team:  { name:"Table 1", x:-0.45, y:-0.05, hypothesis:"Vertical SaaS incumbents capture the most new value because 15 years of proprietary regulated data and workflow embedding beats any AI-native challenger on speed to value.", bottleneck:"Domain data and regulatory permission to operate.", color:"#7fbf7f" }
+  prior: { name:"Alex", x:0.8, y:0.7, thesis:"Orchestrators win because they compose the stack on demand and sit above both hyperscalers and SaaS incumbents." },
+  team:  { name:"Table 1", x:-0.55, y:0.55, hypothesis:"Vertical SaaS incumbents capture the most new value because 15 years of proprietary regulated data and workflow embedding beats any AI-native challenger on speed to value.", bottleneck:"Domain data and regulatory permission to operate.", color:"#7fbf7f" }
 };
 
 // ── LOOKUP ─────────────────────────────────────────────────────────────
@@ -203,6 +207,7 @@ async function lookupPath(){
     team = DEMO.team;
   }
 
+  try{ await CourseAxis.readSessionMode(SUPABASE_URL,SUPABASE_ANON,SESSION_ID); }catch(e){}
   renderPath(prior, team);
 }
 
@@ -212,68 +217,60 @@ function toYPct(y){ return ((1-y)/2*82+9); }
 
 function renderPath(prior, team){
   var grid = document.getElementById("pathGrid");
-  // Clear previous dots
   [].slice.call(grid.querySelectorAll(".pdot,.tdot2,.dot-lbl")).forEach(function(n){ n.remove(); });
+  var svg = document.getElementById("pathSvg"); svg.innerHTML = "";
 
-  var px = toXPct(prior.x), py = toYPct(prior.y);
-  var tx = toXPct(team.x || 0), ty = toYPct(team.y || 0);
-
-  // Draw SVG arrow
-  var svg = document.getElementById("pathSvg");
-  svg.innerHTML = "";
-  // Dashed line
-  var line = document.createElementNS("http://www.w3.org/2000/svg","line");
-  line.setAttribute("x1",px+"%"); line.setAttribute("y1",py+"%");
-  line.setAttribute("x2",tx+"%"); line.setAttribute("y2",ty+"%");
-  line.setAttribute("stroke","rgba(198,165,83,0.55)");
-  line.setAttribute("stroke-width","1.5");
-  line.setAttribute("stroke-dasharray","5,4");
-  svg.appendChild(line);
-
-  // Arrowhead at team end
-  var dx = tx-px, dy = ty-py, len = Math.sqrt(dx*dx+dy*dy);
-  if(len > 2){
-    var angle = Math.atan2(dy, dx);
-    var arrowLen = 8, arrowWid = 5;
-    var ax = tx-arrowLen*Math.cos(angle), ay = ty-arrowLen*Math.sin(angle);
-    var p1x = ax-arrowWid*Math.sin(angle), p1y = ay+arrowWid*Math.cos(angle);
-    var p2x = ax+arrowWid*Math.sin(angle), p2y = ay-arrowWid*Math.cos(angle);
-    var poly = document.createElementNS("http://www.w3.org/2000/svg","polygon");
-    poly.setAttribute("points", tx+"%,"+ty+"% "+p1x+"%,"+p1y+"% "+p2x+"%,"+p2y+"%");
-    poly.setAttribute("fill","rgba(198,165,83,0.8)");
-    svg.appendChild(poly);
+  window.__prior = prior; window.__team = team;
+  if(!window.__ctrlMounted){
+    CourseAxis.mountControls(document.getElementById("axisControls"),
+      { allowAuto:false, onChange:function(){ renderPath(window.__prior, window.__team); } });
+    window.__ctrlMounted = true;
   }
 
-  // Prior dot (gold, faint)
-  var pdot = document.createElement("div");
-  pdot.className = "pdot";
-  pdot.style.left=px+"%"; pdot.style.top=py+"%";
-  pdot.title = prior.name+" (your prior)";
-  grid.appendChild(pdot);
-  var plbl = document.createElement("div");
-  plbl.className = "dot-lbl";
-  plbl.style.left=px+"%"; plbl.style.top=py+"%";
-  plbl.textContent = "You (prior)";
-  grid.appendChild(plbl);
+  var pts=[prior, team];
+  CourseAxis.chooseMode(pts); var mode=CourseAxis.state.mode;
+  var COORDS = CourseAxis.makeCoords(9,82);
 
-  // Team dot (coloured)
-  var tdot = document.createElement("div");
-  tdot.className = "tdot2";
-  tdot.style.cssText = "left:"+tx+"%;top:"+ty+"%;background:"+(team.color||"#7fbf7f")+";border-color:"+(team.color||"#7fbf7f");
-  tdot.title = team.name+" (team hypothesis)";
-  grid.appendChild(tdot);
-  var tlbl = document.createElement("div");
-  tlbl.className = "dot-lbl";
-  tlbl.style.left=tx+"%"; tlbl.style.top=ty+"%";
-  tlbl.textContent = team.name||"Your team";
-  grid.appendChild(tlbl);
+  // y-axis labels follow the mode
+  var yl=CourseAxis.yLabels(mode);
+  var ye=document.querySelectorAll(".yaxis .yaxis-end");
+  if(ye[0]) ye[0].textContent=yl.top; if(ye[1]) ye[1].textContent=yl.bottom;
+  var yt=document.querySelector(".yaxis .yaxis-title"); if(yt) yt.textContent=yl.title;
 
-  // Distance card
+  // shared field (gridlines/lanes + the 6 anchors); we draw the path on top
+  CourseAxis.renderField(grid, pts, mode, COORDS, {noDots:true});
+  function np(p){ var q=CourseAxis.pointPos(p,mode,COORDS); return {x:parseFloat(q.left),y:parseFloat(q.top)}; }
+  var a=np(prior), b=np(team);
+
+  // arrow prior -> team
+  var line=document.createElementNS("http://www.w3.org/2000/svg","line");
+  line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
+  line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
+  line.setAttribute("stroke","rgba(198,165,83,0.55)");line.setAttribute("stroke-width","1.5");line.setAttribute("stroke-dasharray","5,4");
+  svg.appendChild(line);
+  var dx=b.x-a.x, dy=b.y-a.y, len=Math.sqrt(dx*dx+dy*dy);
+  if(len>2){ var ang=Math.atan2(dy,dx), al=8, aw=5;
+    var ax=b.x-al*Math.cos(ang), ay=b.y-al*Math.sin(ang);
+    var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    poly.setAttribute("points", b.x+"%,"+b.y+"% "+(ax-aw*Math.sin(ang))+"%,"+(ay+aw*Math.cos(ang))+"% "+(ax+aw*Math.sin(ang))+"%,"+(ay-aw*Math.cos(ang))+"%");
+    poly.setAttribute("fill","rgba(198,165,83,0.8)"); svg.appendChild(poly);
+  }
+
+  // prior dot
+  var pdot=document.createElement("div"); pdot.className="pdot";
+  pdot.style.left=a.x+"%"; pdot.style.top=a.y+"%"; pdot.title=(prior.name||"")+" (your prior)"; grid.appendChild(pdot);
+  var plbl=document.createElement("div"); plbl.className="dot-lbl"; plbl.style.left=a.x+"%"; plbl.style.top=a.y+"%"; plbl.textContent="You (prior)"; grid.appendChild(plbl);
+
+  // team dot
+  var tdot=document.createElement("div"); tdot.className="tdot2";
+  tdot.style.cssText="left:"+b.x+"%;top:"+b.y+"%;background:"+(team.color||"#7fbf7f")+";border-color:"+(team.color||"#7fbf7f");
+  tdot.title=(team.name||"")+" (team hypothesis)"; grid.appendChild(tdot);
+  var tlbl=document.createElement("div"); tlbl.className="dot-lbl"; tlbl.style.left=b.x+"%"; tlbl.style.top=b.y+"%"; tlbl.textContent=team.name||"Your team"; grid.appendChild(tlbl);
+
+  // distance card + compare
   document.getElementById("dStart").innerHTML = '<em>'+coordWords(prior.x, prior.y)+'</em>';
   document.getElementById("dTeam").innerHTML  = '<em>'+coordWords(team.x, team.y)+'</em>';
   document.getElementById("dProse").innerHTML = movementProse(prior, team);
-
-  // Side-by-side
   document.getElementById("cmpPrior").textContent = prior.thesis || "(no thesis recorded)";
   document.getElementById("cmpTeam").textContent  = team.hypothesis || "(hypothesis not yet submitted)";
   document.getElementById("cmpTeamLabel").textContent = (team.name||"Your team")+" hypothesis";
@@ -281,12 +278,6 @@ function renderPath(prior, team){
 
   document.getElementById("pathView").classList.add("show");
   document.getElementById("pathView").scrollIntoView({behavior:"smooth",block:"nearest"});
-}
-
-function coordWords(x,y){
-  var xs = x<-0.15?"incumbent-leaning":x>0.15?"new-entrant / open":"mixed player-type";
-  var ys = y>0.15?"up for grabs":y<-0.15?"locked in":"partly settled";
-  return xs+" · "+ys;
 }
 
 function movementProse(prior, team){
@@ -298,13 +289,13 @@ function movementProse(prior, team){
 
   if(Math.abs(dx) > 0.2){
     xDir = dx>0
-      ? "Your table moved you toward <strong>new-entrant / open</strong> players"
+      ? "Your table moved you toward <strong>new-entrant / open</strong> models"
       : "Your table moved you toward <strong>incumbent / concentrated</strong> players";
   }
   if(Math.abs(dy) > 0.2){
     yDir = dy>0
-      ? (xDir ? ", and toward <strong>up for grabs</strong> — the outcome more contestable" : "Your table moved you toward <strong>up for grabs</strong> — the outcome more contestable")
-      : (xDir ? ", and toward <strong>locked in</strong> — the outcome more settled" : "Your table moved you toward <strong>locked in</strong> — the outcome more settled");
+      ? (xDir ? ", and toward <strong>up for grabs</strong> (more contestable)" : "Your table moved you toward <strong>up for grabs</strong> — more contestable")
+      : (xDir ? ", and toward <strong>locked in</strong> (more settled)" : "Your table moved you toward <strong>locked in</strong> — more settled");
   }
 
   if(!xDir && !yDir){

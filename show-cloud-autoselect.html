@@ -54,6 +54,8 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .legend{margin-top:14px;padding:10px 14px;border:1px solid var(--line);background:var(--bge);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkd);line-height:1.9}
 .legend strong{color:var(--ink);font-weight:500}
 .swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 4px -1px 12px;border:1px solid rgba(244,240,233,0.4)}
+.anchor{position:absolute;width:16px;height:16px;border-radius:50%;border:1px dashed rgba(244,240,233,0.30);transform:translate(-50%,-50%);z-index:4;pointer-events:none}
+.anchor-lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(244,240,233,0.36);transform:translate(-50%,-50%);white-space:nowrap;z-index:4;pointer-events:none}
 </style>
 <script src="config.js"></script>
 </head>
@@ -73,6 +75,7 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
     <button data-m="moat">Moat</button>
   </div>
   <button class="refresh-btn" onclick="loadAndRender()">&#8635; Refresh</button>
+    <button class="refresh-btn" id="anchorBtn" onclick="toggleAnchors()">Anchors: on</button>
 </div>
 
 <div class="map-block">
@@ -113,6 +116,14 @@ var MARGIN = 0.04;    // hysteresis so the mode doesn't flip-flop on refresh
 var override = "auto";
 var mode = null;
 
+var LENS_ANCHORS = {
+  hyperscaler:{x:-0.62,y:-0.50,m:"distribution"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
+  saas:{x:-0.40,y:0.42,m:"workflow_embed"}, orchestrator:{x:0.62,y:0.48,m:"sor"}, inhouse:{x:-0.10,y:-0.30,m:"switching"}
+};
+var ANCHOR_LABEL = { hyperscaler:"Hyperscaler", chipmaker:"Chip", llm:"LLM", saas:"Vertical SaaS", orchestrator:"Orchestrator", inhouse:"In-house" };
+var showAnchors = true;
+var sessionMode = null;  // course_sessions.axis_mode lock (null = none)
+
 var DEMO = [
   {x:-0.62,y:-0.55,moat_type:"distribution",thesis:"Big tech wins on distribution"},
   {x:-0.50,y:-0.50,moat_type:"distribution",thesis:"Copilot stapled to seats"},
@@ -145,6 +156,7 @@ function moatScore(ps){
 function chooseMode(ps){
   var s=settleScore(ps), m=moatScore(ps);
   if(override!=="auto"){ mode=override; }
+  else if(sessionMode==="settle"||sessionMode==="moat"){ mode=sessionMode; }
   else if(mode===null){ mode=(m>=s)?"moat":"settle"; }
   else if(mode==="settle" && m>s+MARGIN){ mode="moat"; }
   else if(mode==="moat"  && s>m+MARGIN){ mode="settle"; }
@@ -157,6 +169,7 @@ function renderSettle(grid,ps){
     '<span class="yaxis-title">Is the outcome settled?</span>'+
     '<span class="yaxis-end">&darr; Locked in<br>already decided</span>';
   grid.innerHTML='<div class="gl gl-h"></div><div class="gl gl-v"></div>';
+  renderAnchors(grid,"settle");
   ps.forEach(function(p){
     if(p.x==null) return;
     var d=document.createElement("div"); d.className="pdot";
@@ -191,6 +204,7 @@ function renderMoat(grid,ps){
     grid.appendChild(lbl);
   });
 
+  renderAnchors(grid,"moat");
   ps.forEach(function(p){
     if(p.x==null) return;
     var lane=laneOf(p.moat_type); if(!lane) return;
@@ -217,6 +231,27 @@ function renderLegend(picked){
     "<strong>Organizing split: "+picked.toUpperCase()+"</strong> &nbsp; "+why+"<br>Moats:"+keys;
 }
 
+function renderAnchors(grid,mode){
+  if(!showAnchors) return;
+  var laneH=100/LANE_ORDER.length;
+  Object.keys(LENS_ANCHORS).forEach(function(k){
+    var a=LENS_ANCHORS[k], top;
+    if(mode==="moat"){
+      var i=LANE_ORDER.indexOf(KEY2LANE[a.m]); if(i<0) return;
+      var within=(1-(a.y+1)/2);
+      top=(i*laneH+(0.18+within*0.64)*laneH)+"%";
+    } else { top=toTop(a.y); }
+    var ring=document.createElement("div"); ring.className="anchor";
+    ring.style.left=toLeft(a.x); ring.style.top=top; grid.appendChild(ring);
+    var lbl=document.createElement("div"); lbl.className="anchor-lbl";
+    lbl.style.left=toLeft(a.x); lbl.style.top="calc("+top+" + 13px)";
+    lbl.textContent=ANCHOR_LABEL[k]||k; grid.appendChild(lbl);
+  });
+}
+function toggleAnchors(){ showAnchors=!showAnchors;
+  document.getElementById("anchorBtn").textContent="Anchors: "+(showAnchors?"on":"off");
+  render(window.__last||DEMO);
+}
 function render(ps){
   var grid=document.getElementById("grid");
   var placed=ps.filter(function(p){return p.x!=null;});
@@ -243,9 +278,11 @@ async function loadAndRender(noLoop){
       "&select=x,y,moat_type,thesis&order=created_at.asc",
       { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } });
     if(!res.ok) throw new Error("HTTP "+res.status);
+    try{ var lr=await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID+"&select=axis_mode",{headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON}});
+         if(lr.ok){ var lrows=await lr.json(); sessionMode=(lrows[0]&&lrows[0].axis_mode)||null; } }catch(e){}
     var data=await res.json();
-    render(data.length?data:DEMO);
-  }catch(e){ console.warn("using demo:",e.message); render(DEMO); }
+    window.__last=data.length?data:DEMO; render(window.__last);
+  }catch(e){ console.warn("using demo:",e.message); window.__last=DEMO; render(DEMO); }
   if(!noLoop) setTimeout(function(){loadAndRender();},8000);
 }
 window.addEventListener("load",function(){loadAndRender();});

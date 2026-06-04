@@ -69,18 +69,6 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .role-what .none{color:var(--inkf);font-style:italic}
 .role-what a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(198,165,83,0.4)}
 </style>
-<script>
-// Control-panel gate — obfuscation, not security (password is in source).
-// Stops a participant who finds the URL from changing phase or wiping data.
-(function(){
-  try{ if(sessionStorage.getItem("ctrlok")==="1") return; }catch(e){}
-  if(prompt("Control panel password")==="1980"){ try{sessionStorage.setItem("ctrlok","1");}catch(e){} return; }
-  window.__CTRL_LOCKED = true;
-  document.addEventListener("DOMContentLoaded", function(){
-    document.body.innerHTML = "<div style='color:rgba(244,240,233,.6);font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;letter-spacing:.1em'>LOCKED</div>";
-  });
-})();
-</script>
 <script src="config.js"></script>
 </head>
 <body>
@@ -110,6 +98,17 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   </div>
 
   <div id="rolePages" style="margin-top:20px;border-top:1px solid var(--line);padding-top:18px"></div>
+</div>
+
+<!-- AXIS LOCK -->
+<div class="panel">
+  <div class="panel-label">Axis lock · what every display shows on Y</div>
+  <p class="note" style="margin-top:0">Locks the organizing axis across show-cloud, show-map, show-paths and 3-path so they never disagree. <strong>Auto</strong> lets the room pages self-select by which dimension splits the room more; lock <strong>Settledness</strong> or <strong>Moat</strong> to force one. 3-path always inherits this.</p>
+  <div class="phase-btns" style="grid-template-columns:repeat(3,1fr)">
+    <button class="phase-btn" id="ax-auto"   onclick="setAxis(null)"><span class="pn">A</span>Auto</button>
+    <button class="phase-btn" id="ax-settle" onclick="setAxis('settle')"><span class="pn">S</span>Settledness</button>
+    <button class="phase-btn" id="ax-moat"   onclick="setAxis('moat')"><span class="pn">M</span>Moat</button>
+  </div>
 </div>
 
 <!-- HEALTH CHECK -->
@@ -223,6 +222,27 @@ async function setPhase(n){
   }catch(e){ toast("Phase change failed: "+e.message); }
 }
 
+async function loadAxis(){
+  try{
+    var r=await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID+"&select=axis_mode",{headers:hdr()});
+    var rows=await r.json();
+    var cur=(rows.length && rows[0].axis_mode) ? rows[0].axis_mode : "auto";
+    ["auto","settle","moat"].forEach(function(k){ var el=document.getElementById("ax-"+k); if(el) el.classList.toggle("active", k===cur); });
+  }catch(e){}
+}
+async function setAxis(mode){
+  try{
+    var r=await fetch(SUPABASE_URL+"/rest/v1/course_sessions?id=eq."+SESSION_ID,{
+      method:"PATCH",
+      headers:Object.assign({"Content-Type":"application/json","Prefer":"return=minimal"},hdr()),
+      body:JSON.stringify({axis_mode:mode})
+    });
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    toast("Axis \u2192 "+(mode||"auto")+" (all displays follow)");
+    loadAxis();
+  }catch(e){ toast("Axis lock failed: "+e.message+" — did you run course_axis_mode.sql?"); }
+}
+
 // ── COUNTS ──
 async function countTable(table,extra){
   var url=SUPABASE_URL+"/rest/v1/"+table+"?session_id=eq."+SESSION_ID+"&select="+(extra||"id");
@@ -324,10 +344,10 @@ async function resetSession(){
 
 // ── INIT ──
 window.addEventListener("load",function(){
-  if(window.__CTRL_LOCKED) return;
   document.getElementById("sessLabel").textContent=(typeof SESSION_ID==="string")?SESSION_ID:"session";
   loadPhase();
   loadCounts();
+  loadAxis();
 });
 </script>
 </body>
