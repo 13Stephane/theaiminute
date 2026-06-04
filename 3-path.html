@@ -7,20 +7,12 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
-  --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
-  --gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);
-  --line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);
-}
+:root{--bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);--ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);--gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);--line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);}
 html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
 .app{max-width:680px;margin:0 auto;padding:28px 22px 70px}
-.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
 h1{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-.02em;margin-bottom:4px;line-height:1.1}
 h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:26px}
-
-/* LOOKUP */
 .lookup{padding:14px 16px;border:1px solid var(--line);background:var(--bge);margin-bottom:24px}
 .lookup-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .lookup input{flex:1;min-width:140px;background:var(--bge2);border:1px solid var(--lines);color:var(--ink);font-family:'Fraunces',serif;font-size:15px;padding:10px 13px}
@@ -28,32 +20,24 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .lookup input::placeholder{color:var(--inkf);font-style:italic}
 .btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border:1px solid var(--gold);cursor:pointer;transition:all .15s;background:transparent;color:var(--gold)}
 .btn:hover{background:var(--gold);color:var(--bg)}
+.btn.sm{font-size:9px;padding:5px 10px;letter-spacing:.08em}
+.btn.on{background:var(--gold);color:var(--bg)}
 .cfg-note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkf);margin-top:10px;line-height:1.5}
-
-/* PATH CONTENT */
-.path{display:none}
-.path.show{display:block}
-
-/* MAP */
-.map-block{display:grid;grid-template-columns:16px 1fr;grid-template-rows:1fr 20px;gap:5px;margin-bottom:22px}
-.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:4px 0;overflow:hidden}
+.axis-toggle{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.path{display:none}.path.show{display:block}
+.map-block{display:grid;grid-template-columns:14px 1fr;grid-template-rows:1fr 20px;gap:5px;margin-bottom:22px}
+.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:4px 0;overflow:visible}
 .yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2}
 .yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
-.grid{grid-column:2;grid-row:1;position:relative;height:320px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
+.grid{grid-column:2;grid-row:1;position:relative;height:320px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2);overflow:hidden}
 .xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd)}
 .gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.16);z-index:1}
 .gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.16);z-index:1}
-
-/* SVG ARROW */
 .path-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible}
-
-/* DOTS */
 .pdot,.tdot2{position:absolute;border-radius:50%;transform:translate(-50%,-50%);z-index:10}
 .pdot{width:12px;height:12px;background:rgba(198,165,83,0.5);border:2px solid var(--gold)}
 .tdot2{width:14px;height:14px;border:2px solid}
 .dot-lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--ink);white-space:nowrap;transform:translate(10px,-50%);z-index:11;pointer-events:none}
-
-/* DISTANCE CARD */
 .dist-card{padding:16px 18px;border:1px solid var(--line);background:var(--bge);margin-bottom:20px}
 .dist-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
 .dist-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);flex-shrink:0;width:100px}
@@ -62,26 +46,18 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .dist-arrow{font-size:22px;color:var(--gold);margin:10px 0;line-height:1}
 .movement-prose{font-size:14px;line-height:1.6;color:var(--inkd);font-style:italic;padding:12px 0;border-top:1px solid var(--line);margin-top:10px}
 .movement-prose strong{font-style:normal;color:var(--ink);font-weight:500}
-
-/* SIDE BY SIDE */
 .compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
 @media(max-width:540px){.compare{grid-template-columns:1fr}}
 .cmp-block{padding:14px 16px;border:1px solid var(--line);background:var(--bge)}
 .cmp-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
 .cmp-text{font-size:13px;line-height:1.55;color:var(--inkd)}
-
 .err{padding:12px 14px;border:1px solid rgba(220,130,80,.4);background:rgba(220,130,80,.08);font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgb(220,130,80);margin-top:12px;display:none}
 .err.show{display:block}
-.spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--golds);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.anchor{position:absolute;width:14px;height:14px;border-radius:50%;border:1px dashed rgba(244,240,233,0.28);transform:translate(-50%,-50%);z-index:5;pointer-events:none}
-.anchor-lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:rgba(244,240,233,0.34);transform:translate(-50%,-50%);white-space:nowrap;z-index:5;pointer-events:none}
 </style>
 <script src="config.js"></script>
 </head>
 <body>
 <div class="app">
-
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
   <circle cx="14" cy="14" r="13" stroke="rgba(198,165,83,0.22)" stroke-width="1"/>
   <circle cx="14" cy="14" r="9"  stroke="rgba(198,165,83,0.35)" stroke-width="1"/>
@@ -96,23 +72,22 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
     <input id="nameInput" type="text" placeholder="Your name or initials (as you entered it)">
     <button class="btn" onclick="lookupPath()">Show my path</button>
   </div>
-  <div class="cfg-note" id="cfgNote">
-    <!-- populated from URL params or config -->
-    Demo mode — showing synthetic data. In the deployed session, this page is pre-linked with your session.
-  </div>
+  <div class="cfg-note" id="cfgNote">Demo mode — showing synthetic data.</div>
   <div class="err" id="errMsg"></div>
 </div>
 
-<!-- PATH VIEW -->
 <div class="path" id="pathView">
-
-  <div id="axisControls" style="display:flex;gap:14px;align-items:center;margin-bottom:12px"></div>
-
+  <div class="axis-toggle">
+    <button class="btn sm on" id="btnSettle" onclick="setMode('settle')">Settledness</button>
+    <button class="btn sm" id="btnMoat" onclick="setMode('moat')">Moat</button>
+    <span style="margin-left:4px"></span>
+    <button class="btn sm on" id="btnAnch" onclick="toggleAnchors()">Anchors</button>
+  </div>
   <div class="map-block">
     <div class="yaxis">
-      <span class="yaxis-end">Up for grabs</span>
-      <span class="yaxis-title">↑ Settled?</span>
-      <span class="yaxis-end">Locked in</span>
+      <span class="yaxis-end" id="yTop">contestable</span>
+      <span class="yaxis-title" id="yTitle">settled?</span>
+      <span class="yaxis-end" id="yBot">decided</span>
     </div>
     <div class="grid" id="pathGrid">
       <svg class="path-svg" id="pathSvg"></svg>
@@ -122,7 +97,7 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 
   <div class="dist-card">
     <div class="dist-row"><span class="dist-label">You started</span><span class="dist-val" id="dStart"></span></div>
-    <div class="dist-arrow">↓</div>
+    <div class="dist-arrow">&#8595;</div>
     <div class="dist-row"><span class="dist-label">Table landed</span><span class="dist-val" id="dTeam"></span></div>
     <div class="movement-prose" id="dProse"></div>
   </div>
@@ -137,20 +112,12 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
       <div class="cmp-text" id="cmpTeam"></div>
     </div>
   </div>
-
 </div>
 </div>
 
-<script src="course_axis.js"></script>
 <script>
-// ── CONFIG ─────────────────────────────────────────────────────────────
-// On deployment, pass session config via URL params:
-//   ?session=june11&url=https://xxx.supabase.co&key=eyJ...
-// Or hardcode:
-
-// Read from URL params on load
 (function(){
-  var p = new URLSearchParams(window.location.search);
+  var p=new URLSearchParams(window.location.search);
   if(p.get("url"))     SUPABASE_URL  = p.get("url");
   if(p.get("key"))     SUPABASE_ANON = p.get("key");
   if(p.get("session")) SESSION_ID    = p.get("session");
@@ -158,158 +125,186 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   if(SUPABASE_URL)     document.getElementById("cfgNote").textContent = "Session: "+SESSION_ID;
 })();
 
-// ── DEMO DATA ──────────────────────────────────────────────────────────
+// ── inline moat taxonomy (no external dependency) ────────────────────────────
+var LANE_ORDER = ["reputation","reg","distribution","switching","workflow_sor","data","scale"];
+var LANE_META  = {
+  reputation:   {label:"Reputational capital",        col:"rgb(130,200,195)"},
+  reg:          {label:"Regulatory entrenchment",     col:"rgb(190,135,205)"},
+  distribution: {label:"Distribution leverage",       col:"rgb(224,128,128)"},
+  switching:    {label:"Switching costs",             col:"rgb(206,150,110)"},
+  workflow_sor: {label:"Workflow & system-of-record", col:"rgb(224,168,96)"},
+  data:         {label:"Data network effects",        col:"rgb(111,168,220)"},
+  scale:        {label:"Infrastructure / scale",      col:"rgb(127,191,127)"}
+};
+var KEY2LANE = {scale:"scale",data:"data",workflow_embed:"workflow_sor",sor:"workflow_sor",switching:"switching",distribution:"distribution",reg:"reg",reputation:"reputation"};
+function laneOf(m){ return KEY2LANE[m]||null; }
+
+var ANCHORS = [
+  {x:-0.62,y:-0.50,m:"distribution",label:"Hyperscaler"},
+  {x:-0.52,y:-0.42,m:"scale",       label:"Chip"},
+  {x: 0.10,y: 0.50,m:"scale",       label:"LLM"},
+  {x:-0.40,y: 0.42,m:"workflow_embed",label:"Vertical SaaS"},
+  {x: 0.62,y: 0.48,m:"sor",         label:"Orchestrator"},
+  {x:-0.10,y:-0.30,m:"switching",   label:"In-house"}
+];
+
+var pathMode    = "settle";
+var showAnchors = true;
+
+function setMode(m){
+  pathMode=m;
+  document.getElementById("btnSettle").classList.toggle("on",m==="settle");
+  document.getElementById("btnMoat").classList.toggle("on",m==="moat");
+  if(window.__prior) renderPath(window.__prior, window.__team);
+}
+function toggleAnchors(){
+  showAnchors=!showAnchors;
+  document.getElementById("btnAnch").classList.toggle("on",showAnchors);
+  if(window.__prior) renderPath(window.__prior, window.__team);
+}
+
+// ── coordinate helpers (pad 9, span 82) ───────────────────────────────────────
+function L(x){ return ((x+1)/2*82+9).toFixed(1)+"%"; }  // x=-1 left (incumbent)
+function T(y){ return ((1-y)/2*82+9).toFixed(1)+"%"; }  // y=+1 top (contestable)
+function dotPos(p){
+  if(pathMode==="moat"){
+    var lane=laneOf(p.moat_type||p.moat); var idx=LANE_ORDER.indexOf(lane);
+    if(idx<0) idx=LANE_ORDER.length-1;
+    var lH=100/LANE_ORDER.length, within=(p.y==null)?0.5:(1-(p.y+1)/2);
+    return {left:L(p.x), top:(idx*lH+(0.18+within*0.64)*lH).toFixed(1)+"%"};
+  }
+  return {left:L(p.x), top:T(p.y==null?0:p.y)};
+}
+
+// ── field renderer ────────────────────────────────────────────────────────────
+function renderField(grid){
+  [].slice.call(grid.querySelectorAll(".gl-h,.gl-v,.lane,.lane-lbl,.anchor-ring,.anchor-lbl")).forEach(function(n){n.remove();});
+  if(pathMode==="moat"){
+    var v=document.createElement("div"); v.className="gl-v"; grid.appendChild(v);
+    var lH=100/LANE_ORDER.length;
+    LANE_ORDER.forEach(function(lane,i){
+      var band=document.createElement("div");
+      band.style.cssText="position:absolute;left:0;right:0;top:"+(i*lH)+"%;height:"+lH+"%;border-top:"+(i>0?"1px solid rgba(244,240,233,0.09)":"none")+";z-index:1";
+      band.className="lane"; grid.appendChild(band);
+      var lbl=document.createElement("div"); lbl.className="lane-lbl";
+      lbl.style.cssText="position:absolute;left:8px;top:"+(i*lH+lH/2)+"%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.05em;text-transform:uppercase;color:"+LANE_META[lane].col+";z-index:3;pointer-events:none";
+      lbl.textContent=LANE_META[lane].label; grid.appendChild(lbl);
+    });
+    document.getElementById("yTop").textContent="\u2191 trust";
+    document.getElementById("yTitle").textContent="moat";
+    document.getElementById("yBot").textContent="silicon \u2193";
+  } else {
+    var h=document.createElement("div"); h.className="gl-h"; grid.appendChild(h);
+    var v=document.createElement("div"); v.className="gl-v"; grid.appendChild(v);
+    document.getElementById("yTop").textContent="contestable";
+    document.getElementById("yTitle").textContent="settled?";
+    document.getElementById("yBot").textContent="decided";
+  }
+  if(showAnchors) ANCHORS.forEach(function(a){
+    var top = (pathMode==="moat") ? (function(){
+      var lane=laneOf(a.m); var idx=LANE_ORDER.indexOf(lane); if(idx<0)idx=LANE_ORDER.length-1;
+      var lH=100/LANE_ORDER.length, within=(a.y==null)?0.5:(1-(a.y+1)/2);
+      return (idx*lH+(0.18+within*0.64)*lH).toFixed(1)+"%";
+    })() : T(a.y);
+    var lx=L(a.x);
+    var r=document.createElement("div"); r.className="anchor-ring";
+    r.style.cssText="position:absolute;left:"+lx+";top:"+top+";width:15px;height:15px;border-radius:50%;border:1px dashed rgba(244,240,233,0.28);transform:translate(-50%,-50%);z-index:4;pointer-events:none";
+    grid.appendChild(r);
+    var al=document.createElement("div"); al.className="anchor-lbl";
+    al.style.cssText="position:absolute;left:"+lx+";top:calc("+top+" + 11px);font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:rgba(244,240,233,0.34);transform:translate(-50%,-50%);white-space:nowrap;z-index:4;pointer-events:none";
+    al.textContent=a.label; grid.appendChild(al);
+  });
+}
+
+// ── DEMO ──────────────────────────────────────────────────────────────────────
 var DEMO = {
-  prior: { name:"Alex", x:0.8, y:0.7, thesis:"Orchestrators win because they compose the stack on demand and sit above both hyperscalers and SaaS incumbents." },
-  team:  { name:"Table 1", x:-0.55, y:0.55, hypothesis:"Vertical SaaS incumbents capture the most new value because 15 years of proprietary regulated data and workflow embedding beats any AI-native challenger on speed to value.", bottleneck:"Domain data and regulatory permission to operate.", color:"#7fbf7f" }
+  prior: { name:"Alex", x:0.80, y:0.70, moat_type:"sor",
+           thesis:"Orchestrators win because they compose the stack on demand and sit above both hyperscalers and SaaS incumbents." },
+  team:  { name:"Table 1", x:-0.55, y:0.55, moat_type:"workflow_embed", color:"#7fbf7f",
+           hypothesis:"Vertical SaaS incumbents capture the most new value because 15 years of proprietary regulated data and workflow embedding beats any AI-native challenger on speed to value.",
+           bottleneck:"Domain data and regulatory permission to operate.",  color:"#7fbf7f" }
 };
 
-// ── LOOKUP ─────────────────────────────────────────────────────────────
+// ── LOOKUP ────────────────────────────────────────────────────────────────────
 async function lookupPath(){
-  var name = document.getElementById("nameInput").value.trim();
+  var name=document.getElementById("nameInput").value.trim();
   if(!name){ showErr("Enter your name or initials."); return; }
   hideErr();
-
   var prior, team;
-
   if(SUPABASE_URL && SUPABASE_ANON){
-    try {
-      // Fetch prior (case-insensitive name match)
-      var r1 = await fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+"&name=ilike."+encodeURIComponent(name)+"*&limit=1", {
-        headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON}
-      });
-      var priors = await r1.json();
+    try{
+      var hdr={"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON};
+      var r1=await fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+"&name=ilike."+encodeURIComponent(name)+"*&limit=1",{headers:hdr});
+      var priors=await r1.json();
       if(!priors.length){ showErr("Name '"+name+"' not found. Check spelling or initials."); return; }
-      prior = priors[0];
-
-      // Fetch team assignment
-      var r2 = await fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&prior_id=eq."+prior.id+"&limit=1", {
-        headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON}
-      });
-      var assigns = await r2.json();
+      prior=priors[0];
+      var r2=await fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&prior_id=eq."+prior.id+"&limit=1",{headers:hdr});
+      var assigns=await r2.json();
       if(!assigns.length){ showErr("Team assignment not found for '"+name+"'. Check with the facilitator."); return; }
-
-      // Fetch team hypothesis
-      var r3 = await fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&team_name=eq."+encodeURIComponent(assigns[0].team_name)+"&limit=1", {
-        headers:{"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON}
-      });
-      var teamRows = await r3.json();
-      team = teamRows[0] || { name:assigns[0].team_name, x:0, y:0, hypothesis:"(hypothesis not yet submitted)", color:"#7fbf7f" };
-      team.color = team.color || "#7fbf7f";
-    } catch(e){
-      showErr("Couldn't reach Supabase: "+e.message+". Showing demo data."); 
-      prior = Object.assign({}, DEMO.prior, {name:name});
-      team = DEMO.team;
-    }
-  } else {
-    // Demo mode
-    prior = Object.assign({}, DEMO.prior, {name:name});
-    team = DEMO.team;
-  }
-
-  try{ await CourseAxis.readSessionMode(SUPABASE_URL,SUPABASE_ANON,SESSION_ID); }catch(e){}
+      var r3=await fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&team_name=eq."+encodeURIComponent(assigns[0].team_name)+"&limit=1",{headers:hdr});
+      var teamRows=await r3.json();
+      team=teamRows[0]||{name:assigns[0].team_name,x:0,y:0,moat_type:null,hypothesis:"(not yet submitted)",color:"#7fbf7f"};
+      team.color=team.color||"#7fbf7f"; team.name=team.name||assigns[0].team_name;
+    }catch(e){ showErr("Couldn't reach Supabase: "+e.message+". Showing demo."); prior=Object.assign({},DEMO.prior,{name:name}); team=DEMO.team; }
+  } else { prior=Object.assign({},DEMO.prior,{name:name}); team=DEMO.team; }
   renderPath(prior, team);
 }
 
-// ── RENDER ─────────────────────────────────────────────────────────────
-function toXPct(x){ return ((x+1)/2*82+9); }  // returns number (percent)
-function toYPct(y){ return ((1-y)/2*82+9); }
-
+// ── RENDER PATH ───────────────────────────────────────────────────────────────
 function renderPath(prior, team){
-  var grid = document.getElementById("pathGrid");
-  [].slice.call(grid.querySelectorAll(".pdot,.tdot2,.dot-lbl")).forEach(function(n){ n.remove(); });
-  var svg = document.getElementById("pathSvg"); svg.innerHTML = "";
-
-  window.__prior = prior; window.__team = team;
-  if(!window.__ctrlMounted){
-    CourseAxis.mountControls(document.getElementById("axisControls"),
-      { allowAuto:false, onChange:function(){ renderPath(window.__prior, window.__team); } });
-    window.__ctrlMounted = true;
-  }
-
-  var pts=[prior, team];
-  CourseAxis.chooseMode(pts); var mode=CourseAxis.state.mode;
-  var COORDS = CourseAxis.makeCoords(9,82);
-
-  // y-axis labels follow the mode
-  var yl=CourseAxis.yLabels(mode);
-  var ye=document.querySelectorAll(".yaxis .yaxis-end");
-  if(ye[0]) ye[0].textContent=yl.top; if(ye[1]) ye[1].textContent=yl.bottom;
-  var yt=document.querySelector(".yaxis .yaxis-title"); if(yt) yt.textContent=yl.title;
-
-  // shared field (gridlines/lanes + the 6 anchors); we draw the path on top
-  CourseAxis.renderField(grid, pts, mode, COORDS, {noDots:true});
-  function np(p){ var q=CourseAxis.pointPos(p,mode,COORDS); return {x:parseFloat(q.left),y:parseFloat(q.top)}; }
-  var a=np(prior), b=np(team);
-
-  // arrow prior -> team
+  window.__prior=prior; window.__team=team;
+  var grid=document.getElementById("pathGrid");
+  [].slice.call(grid.querySelectorAll(".pdot,.tdot2,.dot-lbl")).forEach(function(n){n.remove();});
+  document.getElementById("pathSvg").innerHTML="";
+  renderField(grid);
+  var a=dotPos(prior), b=dotPos(team);
+  var ax=parseFloat(a.left), ay=parseFloat(a.top), bx=parseFloat(b.left), by=parseFloat(b.top);
+  // arrow
+  var svg=document.getElementById("pathSvg");
   var line=document.createElementNS("http://www.w3.org/2000/svg","line");
-  line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
-  line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
+  line.setAttribute("x1",ax+"%");line.setAttribute("y1",ay+"%");
+  line.setAttribute("x2",bx+"%");line.setAttribute("y2",by+"%");
   line.setAttribute("stroke","rgba(198,165,83,0.55)");line.setAttribute("stroke-width","1.5");line.setAttribute("stroke-dasharray","5,4");
   svg.appendChild(line);
-  var dx=b.x-a.x, dy=b.y-a.y, len=Math.sqrt(dx*dx+dy*dy);
-  if(len>2){ var ang=Math.atan2(dy,dx), al=8, aw=5;
-    var ax=b.x-al*Math.cos(ang), ay=b.y-al*Math.sin(ang);
+  var dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy);
+  if(len>2){var ang=Math.atan2(dy,dx),al=8,aw=5;var hx=bx-al*Math.cos(ang),hy=by-al*Math.sin(ang);
     var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
-    poly.setAttribute("points", b.x+"%,"+b.y+"% "+(ax-aw*Math.sin(ang))+"%,"+(ay+aw*Math.cos(ang))+"% "+(ax+aw*Math.sin(ang))+"%,"+(ay-aw*Math.cos(ang))+"%");
-    poly.setAttribute("fill","rgba(198,165,83,0.8)"); svg.appendChild(poly);
-  }
-
+    poly.setAttribute("points",bx+"%,"+by+"% "+(hx-aw*Math.sin(ang))+"%,"+(hy+aw*Math.cos(ang))+"% "+(hx+aw*Math.sin(ang))+"%,"+(hy-aw*Math.cos(ang))+"%");
+    poly.setAttribute("fill","rgba(198,165,83,0.8)");svg.appendChild(poly);}
   // prior dot
-  var pdot=document.createElement("div"); pdot.className="pdot";
-  pdot.style.left=a.x+"%"; pdot.style.top=a.y+"%"; pdot.title=(prior.name||"")+" (your prior)"; grid.appendChild(pdot);
-  var plbl=document.createElement("div"); plbl.className="dot-lbl"; plbl.style.left=a.x+"%"; plbl.style.top=a.y+"%"; plbl.textContent="You (prior)"; grid.appendChild(plbl);
-
+  var pd=document.createElement("div");pd.className="pdot";pd.style.left=a.left;pd.style.top=a.top;pd.title="You (prior)";grid.appendChild(pd);
+  var pl=document.createElement("div");pl.className="dot-lbl";pl.style.left=a.left;pl.style.top=a.top;pl.textContent="You (prior)";grid.appendChild(pl);
   // team dot
-  var tdot=document.createElement("div"); tdot.className="tdot2";
-  tdot.style.cssText="left:"+b.x+"%;top:"+b.y+"%;background:"+(team.color||"#7fbf7f")+";border-color:"+(team.color||"#7fbf7f");
-  tdot.title=(team.name||"")+" (team hypothesis)"; grid.appendChild(tdot);
-  var tlbl=document.createElement("div"); tlbl.className="dot-lbl"; tlbl.style.left=b.x+"%"; tlbl.style.top=b.y+"%"; tlbl.textContent=team.name||"Your team"; grid.appendChild(tlbl);
-
-  // distance card + compare
-  document.getElementById("dStart").innerHTML = '<em>'+coordWords(prior.x, prior.y)+'</em>';
-  document.getElementById("dTeam").innerHTML  = '<em>'+coordWords(team.x, team.y)+'</em>';
-  document.getElementById("dProse").innerHTML = movementProse(prior, team);
-  document.getElementById("cmpPrior").textContent = prior.thesis || "(no thesis recorded)";
-  document.getElementById("cmpTeam").textContent  = team.hypothesis || "(hypothesis not yet submitted)";
-  document.getElementById("cmpTeamLabel").textContent = (team.name||"Your team")+" hypothesis";
-  if(team.color) document.getElementById("cmpTeamLabel").style.color = team.color;
-
+  var td=document.createElement("div");td.className="tdot2";td.style.cssText="left:"+b.left+";top:"+b.top+";background:"+(team.color||"#7fbf7f")+";border-color:"+(team.color||"#7fbf7f");td.title=team.name||"Your team";grid.appendChild(td);
+  var tl=document.createElement("div");tl.className="dot-lbl";tl.style.left=b.left;tl.style.top=b.top;tl.textContent=team.name||"Your team";grid.appendChild(tl);
+  // cards
+  document.getElementById("dStart").innerHTML='<em>'+coordWords(prior.x,prior.y)+'</em>';
+  document.getElementById("dTeam").innerHTML='<em>'+coordWords(team.x,team.y)+'</em>';
+  document.getElementById("dProse").innerHTML=movementProse(prior,team);
+  document.getElementById("cmpPrior").textContent=prior.thesis||"(no thesis recorded)";
+  document.getElementById("cmpTeam").textContent=team.hypothesis||"(not yet submitted)";
+  document.getElementById("cmpTeamLabel").textContent=(team.name||"Your team")+" hypothesis";
+  if(team.color) document.getElementById("cmpTeamLabel").style.color=team.color;
   document.getElementById("pathView").classList.add("show");
   document.getElementById("pathView").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
-function movementProse(prior, team){
-  var dx = (team.x||0) - prior.x;
-  var dy = (team.y||0) - prior.y;
-  var dist = Math.sqrt(dx*dx + dy*dy);
-
-  var xDir = "", yDir = "", overall = "";
-
-  if(Math.abs(dx) > 0.2){
-    xDir = dx>0
-      ? "Your table moved you toward <strong>new-entrant / open</strong> models"
-      : "Your table moved you toward <strong>incumbent / concentrated</strong> players";
-  }
-  if(Math.abs(dy) > 0.2){
-    yDir = dy>0
-      ? (xDir ? ", and toward <strong>up for grabs</strong> (more contestable)" : "Your table moved you toward <strong>up for grabs</strong> — more contestable")
-      : (xDir ? ", and toward <strong>locked in</strong> (more settled)" : "Your table moved you toward <strong>locked in</strong> — more settled");
-  }
-
-  if(!xDir && !yDir){
-    overall = "You and your table landed in essentially the same place — your opening read was close to where the group converged. Worth asking: did your reasoning reinforce theirs, or did everyone share the same blind spot?";
-  } else {
-    overall = (xDir + yDir + ".") + " The distance between your prior and your table's position is <strong>"+(dist<0.4?"small":"meaningful")+(dist>0.8?" — a significant shift":"")+
-      "</strong>. Did the discussion reveal something you hadn't considered, or did you pull the table somewhere?";
-  }
-
-  return overall;
+function coordWords(x,y){
+  var xs=x<-0.15?"incumbent-leaning":x>0.15?"new-entrant / open":"mixed player-type";
+  var ys=y>0.15?"up for grabs":y<-0.15?"locked in":"partly settled";
+  return xs+" \u00b7 "+ys;
+}
+function movementProse(prior,team){
+  var dx=(team.x||0)-prior.x, dy=(team.y||0)-prior.y, dist=Math.sqrt(dx*dx+dy*dy);
+  var xDir="",yDir="";
+  if(Math.abs(dx)>0.2) xDir=dx>0?"Your table moved you toward <strong>new-entrant / open</strong> models":"Your table moved you toward <strong>incumbent / concentrated</strong> players";
+  if(Math.abs(dy)>0.2) yDir=dy>0?(xDir?", and toward <strong>up for grabs</strong> (more contestable)":"Your table moved you toward <strong>up for grabs</strong> \u2014 more contestable"):(xDir?", and toward <strong>locked in</strong> (more settled)":"Your table moved you toward <strong>locked in</strong> \u2014 more settled");
+  if(!xDir&&!yDir) return "You and your table landed in essentially the same place \u2014 your opening read was close to where the group converged.";
+  return (xDir+yDir+".")+' The distance is <strong>'+(dist<0.4?"small":"meaningful")+(dist>0.8?" \u2014 a significant shift":"")+'</strong>. Did the discussion reveal something you hadn\u2019t considered?';
 }
 
-function showErr(msg){ var e=document.getElementById("errMsg"); e.textContent=msg; e.classList.add("show"); }
-function hideErr(){ document.getElementById("errMsg").classList.remove("show"); }
+function showErr(msg){var e=document.getElementById("errMsg");e.textContent=msg;e.classList.add("show");}
+function hideErr(){document.getElementById("errMsg").classList.remove("show");}
 </script>
 </body>
 </html>

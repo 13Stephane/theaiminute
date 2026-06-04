@@ -94,8 +94,18 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .li{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 7px;border:1px solid transparent;transition:all .15s;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--inkd)}
 .li:hover,.li.sel{border-color:var(--gold);color:var(--ink)}
 .li-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+.yaxis,.yaxis-end{overflow:visible !important}
+.arrow-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:5}
+.prior-ghost{position:absolute;width:7px;height:7px;border-radius:50%;transform:translate(-50%,-50%);z-index:6;background:rgba(244,240,233,0.14);border:1px solid rgba(244,240,233,0.28);pointer-events:none}
+.tlabel{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--ink);white-space:nowrap;transform:translate(9px,-50%);z-index:13;pointer-events:none;opacity:0;transition:opacity .1s}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.tbtn{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border:1px solid rgba(244,240,233,0.28);color:var(--inkd);background:transparent;cursor:pointer}
+.tbtn.on{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.tbadge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold)}
 </style>
 <script src="config.js"></script>
+<script src="course_axis.js"></script>
 </head>
 <body>
 <div class="app">
@@ -104,22 +114,31 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <circle cx="14" cy="14" r="9"  stroke="rgba(198,165,83,0.35)" stroke-width="1"/>
   <circle cx="14" cy="14" r="5.5" stroke="rgb(198,165,83)" stroke-width="1.2"/>
   <circle cx="14" cy="14" r="3.2" fill="rgba(198,165,83,0.72)"/>
-</svg><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)">Course · Model Map · Plenary 1</div></div>
-<h1>The room's <em>map</em> of where new value will be created</h1>
-<p class="sub" id="mapSubtitle">9 teams · 4 models · click a cluster to load its teams into the table</p>
-<button onclick="loadFromDB()" id="loadBtn" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;margin-bottom:16px">Load live teams from DB</button>
-<div id="axisControls" style="display:flex;gap:14px;align-items:center;margin-bottom:14px"></div>
-<div class="axis-why"><strong>Why these axes?</strong> Player type (incumbent vs. new entrant) is fixed left↔right. The vertical dimension follows the room — settledness, or the moat lane it splits on — set by the facilitator’s axis lock or auto-selected.</div>
+</svg><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)">Course &middot; Model Map &middot; Plenary 1</div></div>
+<h1>The room&rsquo;s <em>map</em> &mdash; where value migrates and who captures it</h1>
+<p class="sub" id="mapSub">Click a team dot to open its cluster analysis.</p>
+
+<div class="toolbar">
+  <button onclick="loadFromDB()" id="loadBtn" class="tbtn" style="border-color:var(--gold);color:var(--gold)">Load live teams</button>
+  <div id="axisControls" style="display:inline-flex;align-items:center;gap:6px"></div>
+  <div style="width:1px;height:18px;background:rgba(244,240,233,0.18)"></div>
+  <button id="btnArrows" class="tbtn on" onclick="toggleArrows()">Arrows</button>
+  <button id="btnGhosts" class="tbtn on" onclick="toggleGhosts()">Ghosts</button>
+  <button id="btnLabels" class="tbtn" onclick="toggleLabels()">Labels</button>
+  <span class="tbadge" id="mapBadge">9 teams</span>
+</div>
 
 <div class="layout">
   <div>
     <div class="map-block">
       <div class="yaxis">
-        <span class="yaxis-end">Data · distribution</span>
-        <span class="yaxis-title">↑ Capture mechanism</span>
-        <span class="yaxis-end">Infrastructure · scale</span>
+        <span class="yaxis-end" id="yTop">contestable</span>
+        <span class="yaxis-title" id="yTitle">settled?</span>
+        <span class="yaxis-end" id="yBot">decided</span>
       </div>
-      <div class="grid" id="grid"></div>
+      <div class="grid" id="grid">
+        <svg class="arrow-svg" id="arrowSvg"></svg>
+      </div>
       <div class="xaxis">
         <span>Incumbent</span>
         <span class="mid">Player type</span>
@@ -129,158 +148,346 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
     <div class="legend" id="legend"></div>
   </div>
   <div class="detail">
-    <div class="detail-hd" id="detailHd"><div class="detail-empty">Click a team dot (or a name in the legend) to see its hypothesis, bottleneck, falsifier, and recorded dissent.</div></div>
+    <div class="detail-hd" id="detailHd"><div class="detail-empty">Click a team dot or a legend cluster to load hypotheses, bottlenecks, falsifiers, and dissent &mdash; plus a live signal analysis.</div></div>
     <div class="detail-tabs" id="detailTabs" style="display:none"></div>
     <div class="detail-body" id="detailBody"></div>
   </div>
 </div>
 </div>
-
-<script src="course_axis.js"></script>
 <script>
-// ── Edge Function config — replace before deploying ──────────────────
+// ── DEMO TEAMS ────────────────────────────────────────────────────────────────
+var TEAMS = [
+  { id:0, team:"Falcon", x: 0.50, y: 0.50, moat_type:"sor",          px:0.78, py:0.62,
+    hypothesis:"The most new value is created at the agentic orchestration layer that composes vertical AI on demand \u2014 neither hyperscalers nor SaaS incumbents own it.",
+    bottleneck:"Cross-system trust and reliability in multi-step agent composition; whoever holds the orchestration graph holds the rents.",
+    falsifier:"If GPT-6 or Claude 5 ship reliable multi-step composition out of the box by mid-2027, the layer commoditizes.",
+    dissent:"Two members held vertical SaaS still captures more \u2014 orchestration is fragile in regulated domains.", weak:false },
+  { id:1, team:"Vega",   x: 0.55, y: 0.42, moat_type:"workflow_embed", px:0.72, py:0.28,
+    hypothesis:"AI-native challengers attacking regulated verticals (clinical trials, legal discovery) create the most new value where incumbents carry 15 years of technical debt.",
+    bottleneck:"Speed of clean-slate rebuild with foundation models; incumbents can\u2019t rewrite without breaking existing customers.",
+    falsifier:"If no AI-native challenger in healthcare or legal-tech raises a Series C above $200M by end of 2027, the wedge isn\u2019t real.",
+    dissent:"One member argued incumbents will simply acquire the strongest challengers before scale.", weak:false },
+  { id:2, team:"Atlas",  x:-0.45, y: 0.38, moat_type:"data",          px:-0.55, py:0.60,
+    hypothesis:"Vertical SaaS incumbents embedding AI into existing workflows capture the most value \u2014 proprietary regulated data plus 15 years of trust beats any challenger.",
+    bottleneck:"Domain data and regulatory permission to operate; generic models and entrants can\u2019t earn either fast enough.",
+    falsifier:"If two-plus top-3 category leaders in regulated verticals are displaced by AI-native challengers within 24 months.",
+    dissent:"Two members held the orchestration layer captures more \u2014 regulated data ages quickly.", weak:false },
+  { id:3, team:"Juno",   x:-0.60, y:-0.40, moat_type:"distribution",  px:-0.42, py:-0.55,
+    hypothesis:"Whoever owns distribution \u2014 incumbent SaaS, the mobile OS duopoly, productivity suites \u2014 captures the most value by adding AI to their install base.",
+    bottleneck:"Distribution lock-in and switching costs, not AI capability; the best model in the lowest-friction channel wins.",
+    falsifier:"If any AI-native challenger reaches 10M enterprise seats without an incumbent distribution partner by end of 2026.",
+    dissent:"One member argued this just describes Microsoft and Google \u2014 a description of who already won, not a model.", weak:false },
+  { id:4, team:"Orion",  x: 0.68, y: 0.60, moat_type:"scale",         px:0.55, py:0.75,
+    hypothesis:"Open-source ecosystems around frontier-parity open weights create the most value \u2014 a Cambrian explosion without rent-extraction by any single player.",
+    bottleneck:"Coordination of distributed contribution and trust without a central authority.",
+    falsifier:"If frontier closed models stay 18+ months ahead of best open weights through 2028, value compresses to the labs.",
+    dissent:"One member thought hyperscalers capture the open flow through compute lock-in anyway.", weak:true },
+  { id:5, team:"Sable",  x: 0.62, y: 0.54, moat_type:"sor",           px:0.45, py:0.65,
+    hypothesis:"Value migrates to open protocol layers \u2014 the AI equivalent of HTTP \u2014 no single player owns. Capture shifts to adjacent tooling, evaluation, compliance.",
+    bottleneck:"Adoption of a common protocol by enough production systems to create the network effect.",
+    falsifier:"If no cross-company AI protocol achieves production adoption across 5+ major vendors by end of 2027.",
+    dissent:"The table split evenly \u2014 half held hyperscalers prevent standardisation; half held it\u2019s the only stable equilibrium.", weak:true },
+  { id:6, team:"Kite",   x:-0.62, y:-0.58, moat_type:"scale",         px:-0.72, py:-0.42,
+    hypothesis:"Most new value compresses upward to three hyperscalers \u2014 inference cost at frontier scale is the binding bottleneck and only they have capital, energy, chips.",
+    bottleneck:"Capital intensity and energy access for frontier inference at scale.",
+    falsifier:"If inference cost falls 100\u00d7 and runs locally on consumer hardware by 2028, the moat dissolves.",
+    dissent:"One member argued LLM labs capture more through model IP and licensing.", weak:false },
+  { id:7, team:"Pike",   x: 0.12, y:-0.32, moat_type:"scale",         px:0.00, py:-0.50,
+    hypothesis:"The real capture point is the foundation model layer \u2014 the best labs extract rents through API pricing and licensing regardless of who builds on top.",
+    bottleneck:"Sustained technical lead at the frontier; architectural innovations that compound and resist replication for 18+ months.",
+    falsifier:"If three-plus open-weight models match frontier closed performance on enterprise benchmarks before end of 2026.",
+    dissent:"Two members argued model commoditization is inevitable \u2014 labs forced into infra or services.", weak:false },
+  { id:8, team:"Wren",   x:-0.18, y: 0.28, moat_type:"switching",     px:0.20, py:0.42,
+    hypothesis:"Large enterprises building proprietary AI in-house \u2014 custom models on their own data \u2014 capture the most durable value, not external SaaS or APIs.",
+    bottleneck:"Talent and data infrastructure; the bottleneck is organizational capacity to fine-tune and redeploy, not model capability.",
+    falsifier:"If fewer than 10 Fortune 500 firms report material revenue from proprietary AI within 3 years.",
+    dissent:"Most of the table held this is a 2028+ story; near-term value goes to application-layer vendors.", weak:true },
+];
+var TABS = [
+  {key:"hypothesis",label:"Hypothesis"},{key:"bottleneck",label:"Bottleneck"},
+  {key:"falsifier", label:"Falsifier"}, {key:"dissent",   label:"Dissent"}
+];
 
-// ── LOAD LIVE TEAMS FROM DATABASE ─────────────────────────────────────────────
-async function loadFromDB(){
-  try {
-    var res = await fetch(
-      SUPABASE_URL + "/rest/v1/course_teams?session_id=eq." + SESSION_ID +
-      "&select=team_name,hypothesis,bottleneck,falsifier,dissent,x,y,moat_type&order=created_at.asc",
-      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } }
-    );
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    var rows = await res.json();
-    if(!rows.length) throw new Error("no teams yet");
-    TEAMS = rows.map(function(r,i){
-      return { id:i, team:r.team_name||("Team "+(i+1)), hypothesis:r.hypothesis||"", bottleneck:r.bottleneck||"",
-               falsifier:r.falsifier||"", dissent:r.dissent||"", x:(r.x!=null?r.x:0), y:(r.y!=null?r.y:0),
-               moat_type:r.moat_type||null, weak:false };
+// ── STATE ─────────────────────────────────────────────────────────────────────
+var MODELS = [];
+var PRIORS = [];  // {id, x, y, moat_type, team (team_name)}
+var selModel = null;
+var activeTab = "hypothesis";
+var showArrows = true, showGhosts = true, showLabels = false;
+var COORDS = CourseAxis.makeCoords(5,90);
+var contraCache = {};
+
+// ── SETTLE CLUSTER DEFS ───────────────────────────────────────────────────────
+var QUAD_DEFS = [
+  {key:"new-up",    name:"New entrant \u00b7 contestable", col:"#7fbf7f"},
+  {key:"incumb-up", name:"Incumbent \u00b7 contestable",   col:"#e0b86f"},
+  {key:"new-down",  name:"New entrant \u00b7 locked in",   col:"#6fa8dc"},
+  {key:"incumb-down",name:"Incumbent \u00b7 locked in",    col:"#e08080"}
+];
+function quadKey(t){ return (t.x<0?"incumb":"new")+"-"+(t.y>=0?"up":"down"); }
+
+function buildModels(){
+  var mode = CourseAxis.state.mode;
+  MODELS = [];
+  if(mode==="moat"){
+    var groups = {};
+    TEAMS.forEach(function(t){
+      var lane = CourseAxis.laneOf(t.moat_type)||"scale";
+      if(!groups[lane]){ var lm=CourseAxis.LANE_META[lane]||{}; groups[lane]={id:Object.keys(groups).length,key:lane,name:lm.label||lane,col:lm.colour||"rgba(198,165,83,0.7)",tids:[]}; }
+      groups[lane].tids.push(t.id);
     });
-    await CourseAxis.readSessionMode(SUPABASE_URL,SUPABASE_ANON,SESSION_ID);
-    selTeam=null; activeTab="hypothesis";
-    render(); renderLegend(); resetDetail();
-    var b=document.getElementById("loadBtn"); b.textContent="↺ Refresh"; b.style.borderColor="rgb(127,191,127)"; b.style.color="rgb(127,191,127)";
-  } catch(e){
-    console.warn("DB load failed, keeping demo data:", e.message);
-    document.getElementById("loadBtn").textContent="Load failed — using demo";
+    CourseAxis.LANE_ORDER.forEach(function(lane){ if(groups[lane]) MODELS.push(groups[lane]); });
+  } else {
+    QUAD_DEFS.forEach(function(qd,qi){
+      var members = TEAMS.filter(function(t){ return quadKey(t)===qd.key; });
+      if(!members.length) return;
+      var teamNames = members.map(function(t){return t.team;}).join(", ");
+      MODELS.push({id:qi, key:qd.key, name:qd.name, desc:teamNames, tids:members.map(function(t){return t.id;}), col:qd.col});
+    });
   }
 }
 
-var TEAMS = [
-  { id:0, team:"Falcon", hypothesis:"The most new value is created at the agentic orchestration layer that composes vertical AI on demand — neither hyperscalers nor SaaS incumbents own it.", bottleneck:"Cross-system trust and reliability in multi-step agent composition; whoever holds the orchestration graph holds the rents.", falsifier:"If GPT-6 or Claude 5 ship reliable multi-step composition out of the box by mid-2027, the layer commoditizes.", dissent:"Two members held vertical SaaS still captures more — orchestration is fragile in regulated domains.", weak:false },
-  { id:1, team:"Vega", hypothesis:"AI-native challengers attacking regulated verticals (clinical trials, legal discovery) create the most new value where incumbents carry 15 years of technical debt.", bottleneck:"Speed of clean-slate rebuild with foundation models; incumbents can't rewrite without breaking existing customers.", falsifier:"If no AI-native challenger in healthcare or legal-tech raises a Series C above $200M by end of 2027, the wedge isn't real.", dissent:"One member argued incumbents will simply acquire the strongest challengers before scale.", weak:false },
-  { id:2, team:"Atlas", hypothesis:"Vertical SaaS incumbents embedding AI into existing workflows capture the most value — proprietary regulated data plus 15 years of trust beats any challenger.", bottleneck:"Domain data and regulatory permission to operate; generic models and entrants can't earn either fast enough.", falsifier:"If two-plus top-3 category leaders in regulated verticals are displaced by AI-native challengers within 24 months.", dissent:"Two members held the orchestration layer captures more — regulated data ages quickly.", weak:false },
-  { id:3, team:"Juno", hypothesis:"Whoever owns distribution — incumbent SaaS, the mobile OS duopoly, productivity suites — captures the most value by adding AI to their install base.", bottleneck:"Distribution lock-in and switching costs, not AI capability; the best model in the lowest-friction channel wins.", falsifier:"If any AI-native challenger reaches 10M enterprise seats without an incumbent distribution partner by end of 2026.", dissent:"One member argued this just describes Microsoft and Google — a description of who already won, not a model.", weak:false },
-  { id:4, team:"Orion", hypothesis:"Open-source ecosystems around frontier-parity open weights create the most value — a Cambrian explosion without rent-extraction by any single player.", bottleneck:"Coordination of distributed contribution and trust without a central authority.", falsifier:"If frontier closed models stay 18+ months ahead of best open weights through 2028, value compresses to the labs.", dissent:"One member thought hyperscalers capture the open flow through compute lock-in anyway.", weak:true },
-  { id:5, team:"Sable", hypothesis:"Value migrates to open protocol layers — the AI equivalent of HTTP — no single player owns. Capture shifts to adjacent tooling, evaluation, compliance.", bottleneck:"Adoption of a common protocol by enough production systems to create the network effect.", falsifier:"If no cross-company AI protocol achieves production adoption across 5+ major vendors by end of 2027.", dissent:"The table split evenly — half held hyperscalers prevent standardisation; half held it's the only stable equilibrium.", weak:true },
-  { id:6, team:"Kite", hypothesis:"Most new value compresses upward to three hyperscalers — inference cost at frontier scale is the binding bottleneck and only they have capital, energy, chips.", bottleneck:"Capital intensity and energy access for frontier inference at scale.", falsifier:"If inference cost falls 100× and runs locally on consumer hardware by 2028, the moat dissolves.", dissent:"One member argued LLM labs capture more through model IP and licensing.", weak:false },
-  { id:7, team:"Pike", hypothesis:"The real capture point is the foundation model layer — the best labs extract rents through API pricing and licensing regardless of who builds on top.", bottleneck:"Sustained technical lead at the frontier; architectural innovations that compound and resist replication for 18+ months.", falsifier:"If three-plus open-weight models match frontier closed performance on enterprise benchmarks before end of 2026.", dissent:"Two members argued model commoditization is inevitable — labs forced into infra or services.", weak:false },
-  { id:8, team:"Wren", hypothesis:"Large enterprises building proprietary AI in-house — custom models on their own data — capture the most durable value, not external SaaS or APIs.", bottleneck:"Talent and data infrastructure; the bottleneck is organizational capacity to fine-tune and redeploy, not model capability.", falsifier:"If fewer than 10 Fortune 500 firms report material revenue from proprietary AI within 3 years.", dissent:"Most of the table held this is a 2028+ story; near-term value goes to application-layer vendors.", weak:true },
-];
-
-// ── state ──
-var selTeam = null;
-var activeTab = "hypothesis";
-var TABS = [
-  { key:"hypothesis", label:"Hypothesis" },
-  { key:"bottleneck", label:"Bottleneck" },
-  { key:"falsifier",  label:"Falsifier"  },
-  { key:"dissent",    label:"Dissent"    }
-];
-var COORDS = CourseAxis.makeCoords(5,90);
-
-// demo team positions + moats (used when no live data)
-var DEMO_POS = {
-  Falcon:{x:0.50,y:0.50,m:"sor"}, Vega:{x:0.55,y:0.45,m:"workflow_embed"},
-  Atlas:{x:-0.45,y:0.40,m:"data"}, Juno:{x:-0.60,y:-0.40,m:"distribution"},
-  Orion:{x:0.70,y:0.60,m:"scale"}, Sable:{x:0.65,y:0.55,m:"sor"},
-  Kite:{x:-0.60,y:-0.60,m:"scale"}, Pike:{x:-0.20,y:-0.30,m:"scale"},
-  Wren:{x:0.20,y:0.30,m:"switching"}
-};
-function normalizeDemo(){
-  TEAMS.forEach(function(t){
-    var d=DEMO_POS[t.team]; if(!d) return;
-    if(t.x==null) t.x=d.x; if(t.y==null) t.y=d.y; if(!t.moat_type) t.moat_type=d.m;
-  });
+function modelFor(tid){
+  return MODELS.find(function(m){ return m.tids.indexOf(tid)!==-1; })||null;
 }
-function resetDetail(){
-  document.getElementById("detailHd").innerHTML='<div class="detail-empty">Click a team dot (or a name in the legend) to see its hypothesis, bottleneck, falsifier, and recorded dissent.</div>';
-  document.getElementById("detailTabs").style.display="none";
-  document.getElementById("detailBody").innerHTML="";
-}
-function npos(p,mode){ var q=CourseAxis.pointPos(p,mode,COORDS); return {x:parseFloat(q.left),y:parseFloat(q.top)}; }
 
-// ── RENDER ──
+// ── LOAD ──────────────────────────────────────────────────────────────────────
+async function loadFromDB(){
+  try{
+    var hdr={"apikey":SUPABASE_ANON,"Authorization":"Bearer "+SUPABASE_ANON};
+    var [r1,r2,r3]=await Promise.all([
+      fetch(SUPABASE_URL+"/rest/v1/course_teams?session_id=eq."+SESSION_ID+"&select=id,team_name,hypothesis,bottleneck,falsifier,dissent,x,y,moat_type&order=created_at.asc",{headers:hdr}),
+      fetch(SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+"&select=id,x,y,moat_type",{headers:hdr}),
+      fetch(SUPABASE_URL+"/rest/v1/course_assignments?session_id=eq."+SESSION_ID+"&select=prior_id,team_name",{headers:hdr})
+    ]);
+    var td=await r1.json(), pd=await r2.json(), ad=await r3.json();
+    var nameByPrior={}; ad.forEach(function(a){nameByPrior[a.prior_id]=a.team_name;});
+    var teamByName={}; td.forEach(function(r,i){teamByName[r.team_name||("Team "+(i+1))]=i;});
+    TEAMS=td.map(function(r,i){return {id:i,team:r.team_name||("Team "+(i+1)),hypothesis:r.hypothesis||"",bottleneck:r.bottleneck||"",falsifier:r.falsifier||"",dissent:r.dissent||"",x:(r.x!=null?r.x:0),y:(r.y!=null?r.y:0),moat_type:r.moat_type||null,weak:false,px:null,py:null};});
+    PRIORS=pd.filter(function(p){return p.x!=null;}).map(function(p){return {id:p.id,x:p.x,y:p.y,moat_type:p.moat_type,team:nameByPrior[p.id]||null};});
+    // attach one prior position per team (first prior found)
+    PRIORS.forEach(function(p){ if(!p.team) return; var ti=teamByName[p.team]; if(ti==null) return; var t=TEAMS[ti]; if(t.px==null){t.px=p.x;t.py=p.y;} });
+    await CourseAxis.readSessionMode(SUPABASE_URL,SUPABASE_ANON,SESSION_ID);
+    contraCache={}; selModel=null; activeTab="hypothesis";
+    buildModels(); render(); renderLegend();
+    var b=document.getElementById("loadBtn"); b.textContent="\u21ba Refresh"; b.style.color="rgb(127,191,127)"; b.style.borderColor="rgb(127,191,127)";
+  }catch(e){ console.warn("DB unavailable \u2014 demo mode:",e.message); buildModels(); render(); renderLegend(); }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function npos(p,x,y){ var q=CourseAxis.pointPos({x:x,y:y,moat_type:(p?p.moat_type:null)},CourseAxis.state.mode,COORDS); return {x:parseFloat(q.left),y:parseFloat(q.top),l:q.left,t:q.top}; }
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
 function render(){
   var grid=document.getElementById("grid");
-  [].slice.call(grid.querySelectorAll(".tmdot,.tmlbl")).forEach(function(n){n.remove();});
-  CourseAxis.chooseMode(TEAMS); var mode=CourseAxis.state.mode;
-  var yl=CourseAxis.yLabels(mode);
-  var ye=document.querySelectorAll(".yaxis .yaxis-end");
-  if(ye[0]) ye[0].textContent=yl.top; if(ye[1]) ye[1].textContent=yl.bottom;
-  var yt=document.querySelector(".yaxis .yaxis-title"); if(yt) yt.textContent=yl.title;
+  [].slice.call(grid.querySelectorAll(".tdot,.tlabel,.prior-ghost")).forEach(function(n){n.remove();});
+  document.getElementById("arrowSvg").innerHTML="";
+  buildModels();
+  var mode=CourseAxis.state.mode;
+
+  // Y-axis labels
+  if(mode==="moat"){
+    document.getElementById("yTop").textContent="\u2191 trust";
+    document.getElementById("yTitle").textContent="moat";
+    document.getElementById("yBot").textContent="silicon \u2193";
+  } else {
+    document.getElementById("yTop").textContent="contestable";
+    document.getElementById("yTitle").textContent="settled?";
+    document.getElementById("yBot").textContent="decided";
+  }
+
   CourseAxis.renderField(grid, TEAMS, mode, COORDS, {noDots:true});
+
+  // Prior ghosts
+  if(showGhosts) TEAMS.forEach(function(t){
+    if(t.px==null) return;
+    var pos=npos(t,t.px,t.py);
+    var g=document.createElement("div"); g.className="prior-ghost";
+    g.style.left=pos.l; g.style.top=pos.t; grid.appendChild(g);
+  });
+
+  // Arrows prior→team (SVG)
+  if(showArrows){
+    var svg=document.getElementById("arrowSvg");
+    TEAMS.forEach(function(t){
+      if(t.px==null||t.x==null) return;
+      var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.5)";
+      var a=npos(t,t.px,t.py), b=npos(t,t.x,t.y);
+      var line=document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
+      line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
+      line.setAttribute("stroke",col);line.setAttribute("stroke-opacity","0.45");
+      line.setAttribute("stroke-width","1.2");line.setAttribute("stroke-dasharray","4,3");
+      svg.appendChild(line);
+      // arrowhead
+      var dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
+      if(len>2){ var ang=Math.atan2(dy,dx),al=7,aw=4;
+        var hx=b.x-al*Math.cos(ang),hy=b.y-al*Math.sin(ang);
+        var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+        poly.setAttribute("points",b.x+"%,"+b.y+"% "+(hx-aw*Math.sin(ang))+"%,"+(hy+aw*Math.cos(ang))+"% "+(hx+aw*Math.sin(ang))+"%,"+(hy-aw*Math.cos(ang))+"%");
+        poly.setAttribute("fill",col);poly.setAttribute("opacity","0.7");svg.appendChild(poly);
+      }
+    });
+  }
+
+  // Team dots + hover labels
   TEAMS.forEach(function(t){
     if(t.x==null) return;
-    var col=CourseAxis.colour(t.moat_type); var pos=npos(t,mode);
-    var d=document.createElement("div"); d.className="tmdot"; d.dataset.id=t.id;
-    d.style.cssText="position:absolute;left:"+pos.x+"%;top:"+pos.y+"%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);z-index:10;cursor:pointer;background:"+col+";border:1.5px solid "+(selTeam===t.id?"var(--ink)":"rgba(244,240,233,0.55)");
+    var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.75)";
+    var pos=npos(t,t.x,t.y);
+    var d=document.createElement("div"); d.className="tdot"; d.id="dot"+t.id;
+    d.style.left=pos.l; d.style.top=pos.t; d.style.background=col; d.style.borderColor=col;
+    d.classList.toggle("dimmed", selModel!==null && (!m||m.id!==selModel));
     d.title=t.team;
-    d.addEventListener("click", function(e){ e.stopPropagation(); selectTeam(t.id); });
+    d.addEventListener("click", function(e){ e.stopPropagation(); if(m) selectModel(m.id); });
+    d.addEventListener("mouseenter", function(){ var lbl=document.getElementById("lbl"+t.id); if(lbl) lbl.style.opacity="1"; });
+    d.addEventListener("mouseleave", function(){ var lbl=document.getElementById("lbl"+t.id); if(lbl&&!showLabels) lbl.style.opacity="0"; });
     grid.appendChild(d);
-    var l=document.createElement("div"); l.className="tmlbl";
-    l.style.cssText="position:absolute;left:"+pos.x+"%;top:"+pos.y+"%;transform:translate(9px,-50%);font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:rgba(244,240,233,0.8);white-space:nowrap;z-index:11;pointer-events:none";
-    l.textContent=t.team; grid.appendChild(l);
+    var l=document.createElement("div"); l.className="tlabel"; l.id="lbl"+t.id;
+    l.style.left=pos.l; l.style.top=pos.t; l.textContent=t.team;
+    l.style.opacity=showLabels?"1":"0";
+    grid.appendChild(l);
   });
-  document.getElementById("mapSubtitle").textContent = TEAMS.length+" teams · click a dot for its detail";
+
+  document.getElementById("mapBadge").textContent=TEAMS.length+" teams";
 }
 
 function renderLegend(){
   var leg=document.getElementById("legend"); leg.innerHTML="";
   var hdr=document.createElement("span");
   hdr.style.cssText="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd);margin-right:4px";
-  hdr.textContent="Teams:"; leg.appendChild(hdr);
-  TEAMS.forEach(function(t){
-    var col=CourseAxis.colour(t.moat_type);
-    var el=document.createElement("div"); el.className="li"+(selTeam===t.id?" sel":""); el.id="li"+t.id;
-    el.innerHTML='<div class="li-dot" style="background:'+col+'"></div><span>'+t.team+'</span>';
-    el.addEventListener("click", function(){ selectTeam(t.id); });
+  hdr.textContent="Clusters:"; leg.appendChild(hdr);
+  MODELS.forEach(function(m){
+    var teams=TEAMS.filter(function(t){return m.tids.indexOf(t.id)!==-1;});
+    var el=document.createElement("div"); el.className="li"+(selModel===m.id?" sel":""); el.id="li"+m.id;
+    el.innerHTML='<div class="li-dot" style="background:'+m.col+'"></div><span><strong style="color:'+m.col+'">'+m.name+'</strong> &middot; '+teams.map(function(t){return t.team;}).join(", ")+'</span>';
+    el.addEventListener("click",function(){ selectModel(m.id); });
     leg.appendChild(el);
   });
 }
 
-function selectTeam(id){
-  selTeam=id;
-  var t=null; TEAMS.forEach(function(x){ if(x.id===id) t=x; });
-  if(!t) return;
+function selectModel(mid){
+  selModel=mid;
+  var m=MODELS.find(function(x){return x.id===mid;}); if(!m) return;
+  var teams=TEAMS.filter(function(t){return m.tids.indexOf(t.id)!==-1;});
   render(); renderLegend();
-  var col=CourseAxis.colour(t.moat_type);
-  var laneName=(CourseAxis.LANE_META[CourseAxis.laneOf(t.moat_type)]||{}).label||"unclassified";
+  [].slice.call(document.querySelectorAll(".li")).forEach(function(el){el.classList.remove("sel");});
+  var li=document.getElementById("li"+mid); if(li) li.classList.add("sel");
   document.getElementById("detailHd").innerHTML=
-    '<div class="detail-model" style="color:'+col+'">'+t.team+'</div>'+
-    '<div class="detail-desc">Moat: '+laneName+'</div>';
+    '<div class="detail-model" style="color:'+m.col+'">'+m.name+'</div>'+
+    '<div class="detail-desc">'+(m.desc||teams.map(function(t){return t.team;}).join(", "))+'</div>'+
+    '<div class="detail-teams">'+teams.length+' team'+(teams.length!==1?"s":"")+'</div>';
   var tabsEl=document.getElementById("detailTabs"); tabsEl.style.display="flex"; tabsEl.innerHTML="";
   TABS.forEach(function(tb){
     var b=document.createElement("button"); b.className="dtab"+(activeTab===tb.key?" on":""); b.textContent=tb.label;
-    b.addEventListener("click", function(){ activeTab=tb.key; renderTeamBody(t);
-      [].slice.call(tabsEl.children).forEach(function(x,i){ x.classList.toggle("on",TABS[i].key===activeTab); }); });
+    b.addEventListener("click",function(){ activeTab=tb.key; renderTabs(); renderBody(mid); });
     tabsEl.appendChild(b);
   });
-  renderTeamBody(t);
+  renderBody(mid);
 }
 
-function renderTeamBody(t){
+function renderTabs(){
+  [].slice.call(document.querySelectorAll(".dtab")).forEach(function(b,i){b.classList.toggle("on",TABS[i].key===activeTab);});
+}
+
+function renderBody(mid){
+  var m=MODELS.find(function(x){return x.id===mid;}); if(!m) return;
+  var teams=TEAMS.filter(function(t){return m.tids.indexOf(t.id)!==-1;});
   var body=document.getElementById("detailBody");
-  var val=t[activeTab]||"(none recorded)";
-  var isWarn=activeTab==="dissent"; var col=CourseAxis.colour(t.moat_type);
-  body.innerHTML='<div class="team-block"><div class="tb-name"><span class="tb-dot" style="background:'+col+'"></span>'+t.team+'</div><div class="tb-text '+(isWarn?"warn":"")+'">'+val+'</div></div>';
+  var contraId="contra-"+mid;
+  [].slice.call(body.querySelectorAll(".contra-panel")).forEach(function(el){if(el.id!==contraId)el.remove();});
+  [].slice.call(body.querySelectorAll("[id^='rows-']")).forEach(function(el){if(el.id!=="rows-"+mid)el.remove();});
+  if(!document.getElementById(contraId)){
+    var panel=document.createElement("div"); panel.className="contra-panel"; panel.id=contraId;
+    var panelHd=document.createElement("div"); panelHd.className="contra-hd"; panelHd.dataset.panel=contraId;
+    panelHd.addEventListener("click",function(){toggleContra(this.dataset.panel);});
+    var t1=document.createElement("span"); t1.className="contra-title"; t1.textContent="\u26a1 What\u2019s remarkable about this cluster"; panelHd.appendChild(t1);
+    var t2=document.createElement("span"); t2.className="contra-badge"; t2.id=contraId+"-badge"; t2.textContent="Tap to analyse"; panelHd.appendChild(t2);
+    var panelBd=document.createElement("div"); panelBd.className="contra-body"; panelBd.id=contraId+"-body";
+    panelBd.innerHTML='<div class="contra-loading" id="'+contraId+'-loading" style="display:none"><span class="spinner"></span>Reading the cluster\u2026</div><div id="'+contraId+'-signals"></div>';
+    panel.appendChild(panelHd); panel.appendChild(panelBd); body.insertBefore(panel,body.firstChild);
+  }
+  var rows=document.getElementById("rows-"+mid);
+  if(!rows){rows=document.createElement("div");rows.id="rows-"+mid;body.appendChild(rows);}
+  var isWarn=activeTab==="dissent";
+  rows.innerHTML=teams.map(function(t){
+    var val=t[activeTab]||"";
+    var flag=(activeTab==="falsifier"&&t.weak)?'<div class="tb-flag">\u26a0 observability unclear \u2014 names a direction, not a clear trigger</div>':"";
+    return '<div class="team-block"><div class="tb-name"><span class="tb-dot" style="background:'+m.col+'"></span>'+t.team+'</div><div class="tb-text '+(isWarn?"warn":"")+'">'+val+'</div>'+flag+'</div>';
+  }).join("");
 }
 
-// ── INIT ──
-window.addEventListener("load", function(){
-  normalizeDemo();
-  CourseAxis.mountControls(document.getElementById("axisControls"),{allowAuto:true,onChange:function(){ render(); }});
-  render(); renderLegend();
+// ── CONTRA ENGINE ─────────────────────────────────────────────────────────────
+function toggleContra(panelId){
+  var bodyEl=document.getElementById(panelId+"-body"), badge=document.getElementById(panelId+"-badge");
+  var isOpen=bodyEl.classList.toggle("open");
+  if(isOpen&&badge.textContent==="Tap to analyse"){ badge.textContent="Analysing\u2026"; runContra(panelId); }
+  else if(!isOpen){ badge.textContent=bodyEl.querySelector("[data-done]")?"Signals ready":"Tap to analyse"; }
+}
+
+var contraCache={};
+async function runContra(panelId){
+  var mid=parseInt(panelId.replace("contra-",""));
+  var m=MODELS.find(function(x){return x.id===mid;}); if(!m) return;
+  var teams=TEAMS.filter(function(t){return m.tids.indexOf(t.id)!==-1;});
+  var loading=document.getElementById(panelId+"-loading"), sigBox=document.getElementById(panelId+"-signals"), badge=document.getElementById(panelId+"-badge");
+  if(contraCache[mid]){renderSignals(sigBox,badge,contraCache[mid]);return;}
+  loading.style.display="flex";
+  var lines=teams.map(function(t){return "["+t.team+"] Hypothesis: "+t.hypothesis+" | Bottleneck: "+t.bottleneck+" | Falsifier: "+t.falsifier+" | Dissent: "+t.dissent;}).join("\n");
+  try{
+    var res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,
+        system:"You analyse strategy hypothesis clusters. Return ONLY valid JSON.",
+        messages:[{role:"user",content:"Cluster: "+m.name+"\nAll teams in this cluster agree on the broad capture story.\nFind 2-4 REMARKABLE signals: convergences, tensions, dissent patterns, falsifier gaps.\n\nTEAMS:\n"+lines+'\n\nReturn JSON: {"signals":[{"label":"SHORT_LABEL","icon":"emoji","observation":"one sentence max 25 words","color":"gold|warn|ok"}]}'}]})
+    });
+    if(!res.ok) throw new Error("api "+res.status);
+    var d=await res.json();
+    var raw=d.content.filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("").trim();
+    var parsed=JSON.parse(raw.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim());
+    contraCache[mid]=parsed.signals||[];
+  }catch(e){ contraCache[mid]=ruleBasedSignals(teams); }
+  loading.style.display="none"; renderSignals(sigBox,badge,contraCache[mid]);
+}
+
+function renderSignals(sigBox,badge,signals){
+  if(!signals.length){sigBox.innerHTML='<div class="signal-err">No signals generated.</div>';return;}
+  var cm={gold:"var(--gold)",warn:"var(--warn)",ok:"rgb(127,191,127)"};
+  sigBox.innerHTML=signals.map(function(s){var col=cm[s.color]||"var(--gold)";
+    return '<div class="signal"><div class="signal-label" style="color:'+col+'"><span class="signal-icon">'+s.icon+"</span>"+s.label+'</div><div class="signal-text">'+s.observation+"</div></div>";
+  }).join("");
+  sigBox.setAttribute("data-done","1"); badge.textContent=signals.length+" signal"+(signals.length!==1?"s":"");
+}
+
+function ruleBasedSignals(teams){
+  var signals=[];
+  if(teams.length<2) return signals;
+  var highD=teams.filter(function(t){return t.dissent&&t.dissent.length>60;}),noD=teams.filter(function(t){return !t.dissent||t.dissent.length<20;});
+  if(highD.length>0&&noD.length>0) signals.push({icon:"\u26a1",label:"DISSENT ASYMMETRY",color:"warn",observation:highD.map(function(t){return t.team;}).join(" and ")+" recorded strong dissent; "+noD.map(function(t){return t.team;}).join(" and ")+" recorded none. Same cluster, different table dynamics."});
+  else if(highD.length===teams.length) signals.push({icon:"\ud83d\udd25",label:"SHARED INTERNAL TENSION",color:"warn",observation:"Every team in this cluster recorded significant dissent \u2014 the model is contested within tables, not just between them."});
+  var weak=teams.filter(function(t){return t.weak;});
+  if(weak.length>0) signals.push({icon:"\u26a0",label:"FALSIFIER GAP",color:"warn",observation:weak.map(function(t){return t.team;}).join(", ")+(weak.length===1?" has a falsifier":" have falsifiers")+" that name a direction but no observable event or threshold."});
+  var btw=teams.map(function(t){return (t.bottleneck||"").toLowerCase();});
+  var shared=["data","regulation","distribution","capital","network","switching"].filter(function(w){return btw.filter(function(b){return b.includes(w);}).length===teams.length;});
+  if(shared.length>0&&teams.length>1) signals.push({icon:"\ud83c\udfaf",label:"BOTTLENECK CONVERGENCE",color:"gold",observation:"All teams name \u2018"+shared[0]+"\u2019 as the binding constraint \u2014 tight agreement on the mechanism; worth testing if it\u2019s a shared blind spot."});
+  else if(teams.length>1) signals.push({icon:"\ud83d\udd00",label:"BOTTLENECK SPLIT",color:"gold",observation:"Teams agree on the broad position but name different binding constraints \u2014 the disagreement on mechanism is the most productive question."});
+  var crossD=teams.filter(function(t){var d=(t.dissent||"").toLowerCase();return d.includes("orchestrat")||d.includes("hyperscal")||d.includes("open")||d.includes("lab");});
+  if(crossD.length>0) signals.push({icon:"\u2194",label:"CROSS-CLUSTER DISSENT",color:"gold",observation:crossD.map(function(t){return t.team;}).join(", ")+" recorded dissent pointing toward a different model \u2014 the minority view may deserve airtime."});
+  return signals.slice(0,4);
+}
+
+// ── TOGGLES ───────────────────────────────────────────────────────────────────
+function toggleArrows(){ showArrows=!showArrows; document.getElementById("btnArrows").classList.toggle("on",showArrows); render(); }
+function toggleGhosts(){ showGhosts=!showGhosts; document.getElementById("btnGhosts").classList.toggle("on",showGhosts); render(); }
+function toggleLabels(){
+  showLabels=!showLabels; document.getElementById("btnLabels").classList.toggle("on",showLabels);
+  [].slice.call(document.querySelectorAll(".tlabel")).forEach(function(l){l.style.opacity=showLabels?"1":"0";});
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener("load",function(){
+  CourseAxis.mountControls(document.getElementById("axisControls"),{allowAuto:true,onChange:function(){selModel=null;buildModels();render();renderLegend();}});
+  buildModels(); render(); renderLegend();
 });
 </script>
 </body>

@@ -293,7 +293,7 @@ function buildPrompt(text, tagHint){
 async function placeOnAxes(text, tagHint, recordId){
   var res = await fetch(SUPABASE_URL + "/functions/v1/course_place", {
     method:"POST",
-    headers:{ "Content-Type":"application/json", "apikey": SUPABASE_ANON },
+    headers:{ "Content-Type":"application/json", "apikey": SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON },
     body: JSON.stringify({ text:text, lens:tagHint, kind:"prior", record_id:recordId, table:"course_priors" })
   });
   if(!res.ok) throw new Error("Edge Function "+res.status);
@@ -367,12 +367,12 @@ async function submitPrior(){
           "Authorization": "Bearer " + SUPABASE_ANON,
           "Prefer": "return=minimal"
         },
-        body: JSON.stringify({
-          x: placed.x, y: placed.y,
-          moat_type: placed.moat, confidence: placed.confidence,
-          justification: placed.justification,
-          placed_by: placed.placed_by
-        })
+        body: JSON.stringify((function(){
+          var VALID=["scale","data","workflow_embed","sor","switching","distribution","reg","reputation"];
+          var b={x:placed.x,y:placed.y,confidence:placed.confidence,justification:placed.justification,placed_by:placed.placed_by};
+          if(placed.moat && VALID.indexOf(placed.moat)!==-1) b.moat_type=placed.moat;
+          return b;
+        })())
       });
       console.log("COORDS WRITTEN BACK for", recordId);
     } catch(e){ console.warn("coord write-back failed:", e.message); }
