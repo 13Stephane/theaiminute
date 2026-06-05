@@ -127,6 +127,8 @@ window.addEventListener("load", function(){
   if(urlField)  urlField.value  = SUPABASE_URL;
   if(keyField)  keyField.value  = SUPABASE_ANON;
   if(sessField) sessField.value = SESSION_ID;
+  // Auto-restore state if config is available
+  if(typeof SUPABASE_URL !== "undefined" && SUPABASE_URL) setTimeout(load, 80);
 });
 
 var TEAM_COLORS = ["#7fbf7f","#6fa8dc","#e0b86f","#e08080","#8a6b9e","#5e9e8a","#c4a0e0","#9e6b6b","#a0c4ff","#ffd6a5"];
@@ -175,17 +177,45 @@ async function load(){
     priors = DEMO;
   }
 
-  // Build teams
-  teams = [];
-  for(var i=0;i<n;i++){
-    teams.push({id:"t"+(i+1), name:TEAM_NAMES[i]||("Team "+(i+1)), color:TEAM_COLORS[i%TEAM_COLORS.length], members:[]});
+  // Try to restore existing assignments from DB
+  var restored = false;
+  if(url && key && priors !== DEMO){
+    try{
+      var ra = await fetch(url+"/rest/v1/course_assignments?session_id=eq."+sess+"&select=prior_id,team_name&order=created_at.asc",
+        {headers:{"apikey":key,"Authorization":"Bearer "+key}});
+      if(ra.ok){
+        var assigns = await ra.json();
+        if(assigns.length){
+          // Rebuild teams from saved assignments
+          var seen=[]; assigns.forEach(function(a){ if(a.team_name&&seen.indexOf(a.team_name)===-1) seen.push(a.team_name); });
+          teams = seen.map(function(name,i){
+            return {id:"t"+(i+1), name:name, color:TEAM_COLORS[i%TEAM_COLORS.length], members:[]};
+          });
+          assigns.forEach(function(a){
+            if(!a.team_name) return;
+            var t=teams.find(function(x){return x.name===a.team_name;});
+            if(t && a.prior_id!=null && t.members.indexOf(a.prior_id)===-1) t.members.push(a.prior_id);
+          });
+          restored = true;
+        }
+      }
+    } catch(e){ console.warn("restore assignments failed:", e.message); }
   }
 
-  // Auto-assign for diversity (quadrant sort + round-robin)
-  autoAssign();
+  if(!restored){
+    // Fresh auto-assignment
+    teams = [];
+    for(var i=0;i<n;i++){
+      teams.push({id:"t"+(i+1), name:TEAM_NAMES[i]||("Team "+(i+1)), color:TEAM_COLORS[i%TEAM_COLORS.length], members:[]});
+    }
+    autoAssign();
+  }
 
-  showStatus("ok","Loaded "+priors.length+" participants · assigned to "+n+" teams for diversity");
-  document.getElementById("diversityNote").style.display = "block";
+  var msg = restored
+    ? ("Restored — "+priors.length+" participants, "+teams.length+" teams from saved assignments")
+    : ("Loaded "+priors.length+" participants · assigned to "+n+" teams for diversity");
+  showStatus("ok", msg);
+  if(!restored) document.getElementById("diversityNote").style.display = "block";
   document.getElementById("commitRow").style.display = "flex";
   render();
 }

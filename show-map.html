@@ -26,10 +26,10 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .layout{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;align-items:start}
 @media(max-width:880px){.layout{grid-template-columns:1fr;gap:18px}}
 
-.map-block{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 22px;gap:6px}
-.yaxis{grid-column:1;grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;overflow:hidden}
-.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);text-align:center;line-height:1.2;overflow:hidden}
-.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.map-block{display:grid;grid-template-columns:110px 1fr;grid-template-rows:1fr 22px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding:8px 8px 8px 0;text-align:right}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);line-height:1.3}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:right}
 .grid{grid-column:2;grid-row:1;position:relative;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
 .xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd)}
 .xaxis .mid{color:var(--gold);letter-spacing:.12em}
@@ -95,7 +95,6 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .li:hover,.li.sel{border-color:var(--gold);color:var(--ink)}
 .li-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
-.yaxis,.yaxis-end{overflow:visible !important}
 .arrow-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:5}
 .prior-ghost{position:absolute;width:7px;height:7px;border-radius:50%;transform:translate(-50%,-50%);z-index:6;background:rgba(244,240,233,0.14);border:1px solid rgba(244,240,233,0.28);pointer-events:none}
 .tlabel{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--ink);white-space:nowrap;transform:translate(9px,-50%);z-index:13;pointer-events:none;opacity:0;transition:opacity .1s}
@@ -132,9 +131,9 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <div>
     <div class="map-block">
       <div class="yaxis">
-        <span class="yaxis-end" id="yTop">contestable</span>
-        <span class="yaxis-title" id="yTitle">settled?</span>
-        <span class="yaxis-end" id="yBot">decided</span>
+        <span class="yaxis-end" id="yTop">&#8593; Contestable<br>up for grabs</span>
+        <span class="yaxis-title" id="yTitle">Settled?</span>
+        <span class="yaxis-end" id="yBot">&#8595; Decided<br>locked in</span>
       </div>
       <div class="grid" id="grid">
         <svg class="arrow-svg" id="arrowSvg"></svg>
@@ -266,7 +265,6 @@ async function loadFromDB(){
     TEAMS=td.map(function(r,i){return {id:i,team:r.team_name||("Team "+(i+1)),hypothesis:r.hypothesis||"",bottleneck:r.bottleneck||"",falsifier:r.falsifier||"",dissent:r.dissent||"",x:(r.x!=null?r.x:0),y:(r.y!=null?r.y:0),moat_type:r.moat_type||null,weak:false,px:null,py:null};});
     PRIORS=pd.filter(function(p){return p.x!=null;}).map(function(p){return {id:p.id,x:p.x,y:p.y,moat_type:p.moat_type,team:nameByPrior[p.id]||null};});
     // attach one prior position per team (first prior found)
-    PRIORS.forEach(function(p){ if(!p.team) return; var ti=teamByName[p.team]; if(ti==null) return; var t=TEAMS[ti]; if(t.px==null){t.px=p.x;t.py=p.y;} });
     await CourseAxis.readSessionMode(SUPABASE_URL,SUPABASE_ANON,SESSION_ID);
     contraCache={}; selModel=null; activeTab="hypothesis";
     buildModels(); render(); renderLegend();
@@ -288,38 +286,39 @@ function render(){
   // Y-axis labels
   if(mode==="moat"){
     document.getElementById("yTop").textContent="\u2191 trust";
-    document.getElementById("yTitle").textContent="moat";
+    document.getElementById("yTitle").textContent="The moat stack";
     document.getElementById("yBot").textContent="silicon \u2193";
   } else {
-    document.getElementById("yTop").textContent="contestable";
-    document.getElementById("yTitle").textContent="settled?";
-    document.getElementById("yBot").textContent="decided";
+    document.getElementById("yTop").innerHTML="↑ Contestable<br>up for grabs";
+    document.getElementById("yTitle").textContent="Settled?";
+    document.getElementById("yBot").innerHTML="↓ Decided<br>locked in";
   }
 
   CourseAxis.renderField(grid, TEAMS, mode, COORDS, {noDots:true});
 
-  // Prior ghosts
-  if(showGhosts) TEAMS.forEach(function(t){
-    if(t.px==null) return;
-    var pos=npos(t,t.px,t.py);
+  // Prior ghosts — one dot per prior
+  if(showGhosts) PRIORS.forEach(function(p){
+    if(p.x==null) return;
+    var pos=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y);
     var g=document.createElement("div"); g.className="prior-ghost";
     g.style.left=pos.l; g.style.top=pos.t; grid.appendChild(g);
   });
 
-  // Arrows prior→team (SVG)
-  if(showArrows){
+  // Arrows — one per prior, from prior position to its team
+  if(showArrows && PRIORS.length){
     var svg=document.getElementById("arrowSvg");
-    TEAMS.forEach(function(t){
-      if(t.px==null||t.x==null) return;
+    var tbn={}; TEAMS.forEach(function(t){tbn[t.team]=t;});
+    PRIORS.forEach(function(p){
+      if(p.x==null||!p.team) return;
+      var t=tbn[p.team]; if(!t||t.x==null) return;
       var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.5)";
-      var a=npos(t,t.px,t.py), b=npos(t,t.x,t.y);
+      var a=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y), b=npos(t,t.x,t.y);
       var line=document.createElementNS("http://www.w3.org/2000/svg","line");
       line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
       line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
       line.setAttribute("stroke",col);line.setAttribute("stroke-opacity","0.45");
       line.setAttribute("stroke-width","1.2");line.setAttribute("stroke-dasharray","4,3");
       svg.appendChild(line);
-      // arrowhead
       var dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
       if(len>2){ var ang=Math.atan2(dy,dx),al=7,aw=4;
         var hx=b.x-al*Math.cos(ang),hy=b.y-al*Math.sin(ang);
@@ -485,9 +484,15 @@ function toggleLabels(){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+function initDemoPriors(){
+  if(PRIORS.length) return;
+  TEAMS.forEach(function(t,i){
+    if(t.px!=null) PRIORS.push({id:"dp"+i,x:t.px,y:t.py,moat_type:t.moat_type,team:t.team});
+  });
+}
 window.addEventListener("load",function(){
   CourseAxis.mountControls(document.getElementById("axisControls"),{allowAuto:true,onChange:function(){selModel=null;buildModels();render();renderLegend();}});
-  buildModels(); render(); renderLegend();
+  initDemoPriors(); buildModels(); render(); renderLegend();
 });
 </script>
 </body>
