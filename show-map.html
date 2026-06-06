@@ -115,15 +115,13 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <circle cx="14" cy="14" r="3.2" fill="rgba(198,165,83,0.72)"/>
 </svg><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)">Course &middot; Model Map &middot; Plenary 1</div></div>
 <h1>The room&rsquo;s <em>map</em> &mdash; where value migrates and who captures it</h1>
-<p class="sub" id="mapSub">Click a team dot to open its cluster analysis.</p>
+<p class="sub" id="mapSub">Hover a team to see where its members started. Click it for the cluster analysis.</p>
 
 <div class="toolbar">
   <button onclick="loadFromDB()" id="loadBtn" class="tbtn" style="border-color:var(--gold);color:var(--gold)">Load live teams</button>
   <div id="axisControls" style="display:inline-flex;align-items:center;gap:6px"></div>
   <div style="width:1px;height:18px;background:rgba(244,240,233,0.18)"></div>
-  <button id="btnArrows" class="tbtn on" onclick="toggleArrows()">Arrows</button>
-  <button id="btnGhosts" class="tbtn on" onclick="toggleGhosts()">Ghosts</button>
-  <button id="btnLabels" class="tbtn" onclick="toggleLabels()">Labels</button>
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;color:var(--inkf);font-style:italic">hover a team \u2192 its members &amp; arrows</span>
   <span class="tbadge" id="mapBadge">9 teams</span>
 </div>
 
@@ -212,7 +210,6 @@ var MODELS = [];
 var PRIORS = [];  // {id, x, y, moat_type, team (team_name)}
 var selModel = null;
 var activeTab = "hypothesis";
-var showArrows = true, showGhosts = true, showLabels = false;
 var COORDS = CourseAxis.makeCoords(5,90);
 var contraCache = {};
 
@@ -296,38 +293,38 @@ function render(){
 
   CourseAxis.renderField(grid, TEAMS, mode, COORDS, {noDots:true});
 
-  // Prior ghosts — one dot per prior
-  if(showGhosts) PRIORS.forEach(function(p){
-    if(p.x==null) return;
-    var pos=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y);
-    var g=document.createElement("div"); g.className="prior-ghost";
-    g.style.left=pos.l; g.style.top=pos.t; grid.appendChild(g);
+  // Prior ghosts + arrows — rendered for every team but HIDDEN; a team's set
+  // reveals only while that team's dot is hovered (see showTeamOverlay).
+  var tbn={}; TEAMS.forEach(function(t){tbn[t.team]=t;});
+  var svg=document.getElementById("arrowSvg");
+  PRIORS.forEach(function(p){
+    if(p.x==null||!p.team) return;
+    var t=tbn[p.team]; if(!t||t.x==null) return;
+    var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.6)";
+    var a=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y), b=npos(t,t.x,t.y);
+    // ghost
+    var g=document.createElement("div"); g.className="prior-ghost"; g.setAttribute("data-tid",t.id);
+    g.style.left=a.l; g.style.top=a.t; g.style.opacity="0";
+    grid.appendChild(g);
+    // arrow line
+    var line=document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
+    line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
+    line.setAttribute("stroke",col);line.setAttribute("stroke-opacity","0.5");
+    line.setAttribute("stroke-width","1.3");line.setAttribute("stroke-dasharray","4,3");
+    line.setAttribute("data-tid",t.id); line.style.opacity="0";
+    svg.appendChild(line);
+    // arrowhead
+    var dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
+    if(len>2){ var ang=Math.atan2(dy,dx),al=7,aw=4;
+      var hx=b.x-al*Math.cos(ang),hy=b.y-al*Math.sin(ang);
+      var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+      poly.setAttribute("points",b.x+"%,"+b.y+"% "+(hx-aw*Math.sin(ang))+"%,"+(hy+aw*Math.cos(ang))+"% "+(hx+aw*Math.sin(ang))+"%,"+(hy-aw*Math.cos(ang))+"%");
+      poly.setAttribute("fill",col);poly.setAttribute("fill-opacity","0.75");
+      poly.setAttribute("data-tid",t.id); poly.style.opacity="0";
+      svg.appendChild(poly);
+    }
   });
-
-  // Arrows — one per prior, from prior position to its team
-  if(showArrows && PRIORS.length){
-    var svg=document.getElementById("arrowSvg");
-    var tbn={}; TEAMS.forEach(function(t){tbn[t.team]=t;});
-    PRIORS.forEach(function(p){
-      if(p.x==null||!p.team) return;
-      var t=tbn[p.team]; if(!t||t.x==null) return;
-      var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.5)";
-      var a=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y), b=npos(t,t.x,t.y);
-      var line=document.createElementNS("http://www.w3.org/2000/svg","line");
-      line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
-      line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
-      line.setAttribute("stroke",col);line.setAttribute("stroke-opacity","0.45");
-      line.setAttribute("stroke-width","1.2");line.setAttribute("stroke-dasharray","4,3");
-      svg.appendChild(line);
-      var dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
-      if(len>2){ var ang=Math.atan2(dy,dx),al=7,aw=4;
-        var hx=b.x-al*Math.cos(ang),hy=b.y-al*Math.sin(ang);
-        var poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
-        poly.setAttribute("points",b.x+"%,"+b.y+"% "+(hx-aw*Math.sin(ang))+"%,"+(hy+aw*Math.cos(ang))+"% "+(hx+aw*Math.sin(ang))+"%,"+(hy-aw*Math.cos(ang))+"%");
-        poly.setAttribute("fill",col);poly.setAttribute("opacity","0.7");svg.appendChild(poly);
-      }
-    });
-  }
 
   // Team dots + hover labels
   TEAMS.forEach(function(t){
@@ -339,12 +336,12 @@ function render(){
     d.classList.toggle("dimmed", selModel!==null && (!m||m.id!==selModel));
     d.title=t.team;
     d.addEventListener("click", function(e){ e.stopPropagation(); if(m) selectModel(m.id); });
-    d.addEventListener("mouseenter", function(){ var lbl=document.getElementById("lbl"+t.id); if(lbl) lbl.style.opacity="1"; });
-    d.addEventListener("mouseleave", function(){ var lbl=document.getElementById("lbl"+t.id); if(lbl&&!showLabels) lbl.style.opacity="0"; });
+    d.addEventListener("mouseenter", function(){ showTeamOverlay(t.id,true); });
+    d.addEventListener("mouseleave", function(){ showTeamOverlay(t.id,false); });
     grid.appendChild(d);
     var l=document.createElement("div"); l.className="tlabel"; l.id="lbl"+t.id;
     l.style.left=pos.l; l.style.top=pos.t; l.textContent=t.team;
-    l.style.opacity=showLabels?"1":"0";
+    l.style.opacity="0";
     grid.appendChild(l);
   });
 
@@ -476,11 +473,11 @@ function ruleBasedSignals(teams){
 }
 
 // ── TOGGLES ───────────────────────────────────────────────────────────────────
-function toggleArrows(){ showArrows=!showArrows; document.getElementById("btnArrows").classList.toggle("on",showArrows); render(); }
-function toggleGhosts(){ showGhosts=!showGhosts; document.getElementById("btnGhosts").classList.toggle("on",showGhosts); render(); }
-function toggleLabels(){
-  showLabels=!showLabels; document.getElementById("btnLabels").classList.toggle("on",showLabels);
-  [].slice.call(document.querySelectorAll(".tlabel")).forEach(function(l){l.style.opacity=showLabels?"1":"0";});
+function showTeamOverlay(tid,on){
+  var op = on ? "1" : "0";
+  [].slice.call(document.querySelectorAll('.prior-ghost[data-tid="'+tid+'"]')).forEach(function(g){ g.style.opacity=op; });
+  [].slice.call(document.querySelectorAll('#arrowSvg [data-tid="'+tid+'"]')).forEach(function(a){ a.style.opacity=op; });
+  var lbl=document.getElementById("lbl"+tid); if(lbl) lbl.style.opacity=op;
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -491,7 +488,7 @@ function initDemoPriors(){
   });
 }
 window.addEventListener("load",function(){
-  CourseAxis.mountControls(document.getElementById("axisControls"),{allowAuto:true,onChange:function(){selModel=null;buildModels();render();renderLegend();}});
+  CourseAxis.mountControls(document.getElementById("axisControls"),{allowAuto:true,labels:{settle:"Decided?"},onChange:function(){selModel=null;buildModels();render();renderLegend();}});
   initDemoPriors(); buildModels(); render(); renderLegend();
 });
 </script>

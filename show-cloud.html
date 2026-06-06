@@ -10,46 +10,67 @@
 :root{
   --bg:rgb(25,60,63);--bge:rgb(30,68,71);--bge2:rgb(20,50,53);
   --ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);
-  --gold:rgb(198,165,83);--line:rgba(244,240,233,0.12);
+  --gold:rgb(198,165,83);--golds:rgba(198,165,83,0.15);
+  --line:rgba(244,240,233,0.12);--lines:rgba(244,240,233,0.28);
 }
 html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
-.app{max-width:960px;margin:0 auto;padding:24px 24px 50px}
-.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
-h1{font-family:'Fraunces',serif;font-weight:400;font-size:32px;letter-spacing:-.02em;margin-bottom:4px}
+.app{max-width:1180px;margin:0 auto;padding:22px 22px 60px}
+h1{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-.02em;margin-bottom:3px;line-height:1.1}
 h1 em{font-style:italic;color:var(--gold);font-weight:300}
-.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:6px}
-.meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--inkf);margin-bottom:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold)}
-.refresh-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border:1px solid rgba(244,240,233,0.28);color:var(--inkd);background:transparent;cursor:pointer}
-.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+.sub{font-style:italic;font-size:13px;color:var(--inkd);margin-bottom:16px}
 
-/* MAP */
-.map-block{display:block}
-.ylabel{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);text-align:center;padding:7px 0}
-.map-row{display:flex;align-items:center;gap:12px}
-.xlabel{flex:0 0 104px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.4}
-.xlabel .xsub{display:block;color:var(--inkf);font-size:9px;letter-spacing:.05em;margin-top:3px}
-.grid{position:relative;flex:1;height:520px;border:1.5px solid rgba(244,240,233,0.4)}
+.layout{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;align-items:start}
+@media(max-width:880px){.layout{grid-template-columns:1fr;gap:18px}}
 
-/* QUADRANT SHADING */
-.quad-bg{position:absolute;pointer-events:none}
+.map-block{display:grid;grid-template-columns:110px 1fr;grid-template-rows:1fr 22px;gap:6px}
+.yaxis{grid-column:1;grid-row:1;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding:8px 8px 8px 0;text-align:right}
+.yaxis-end{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--inkd);line-height:1.3}
+.yaxis-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:right}
+.grid{grid-column:2;grid-row:1;position:relative;height:460px;border:1.5px solid rgba(244,240,233,0.4);background:var(--bge2)}
+.xaxis{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--inkd)}
+.xaxis .mid{color:var(--gold);letter-spacing:.12em}
 
-/* GRID LINES */
-.gl-h{position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(244,240,233,0.22);z-index:2}
-.gl-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(244,240,233,0.22);z-index:2}
+.pdot{position:absolute;width:11px;height:11px;border-radius:50%;border:1.5px solid;transform:translate(-50%,-50%);z-index:10;transition:transform .25s,top .4s,left .4s;cursor:default}
+.pdot:hover{transform:translate(-50%,-50%) scale(1.7);z-index:20}
 
-/* QUADRANT LABELS */
-.qlabel{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;pointer-events:none;z-index:3;line-height:1.4;text-align:center}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.tbtn{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border:1px solid rgba(244,240,233,0.28);color:var(--inkd);background:transparent;cursor:pointer}
+.tbtn:hover{border-color:var(--gold);color:var(--gold)}
+.tbadge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border:1px solid var(--gold);color:var(--gold)}
+.tstamp{font-style:italic;color:var(--inkf);font-size:11px;font-family:'IBM Plex Mono',monospace}
 
-/* DOTS */
-.pdot{position:absolute;width:11px;height:11px;border-radius:50%;background:rgba(198,165,83,0.75);border:1.5px solid var(--gold);transform:translate(-50%,-50%);z-index:10;transition:all .3s;cursor:default}
-.pdot:hover{transform:translate(-50%,-50%) scale(1.7);z-index:20;background:var(--gold)}
-
-/* LEGEND */
-.legend{margin-top:14px;padding:10px 14px;border:1px solid var(--line);background:var(--bge);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--inkd);line-height:1.8}
-.legend strong{color:var(--ink);font-weight:500}
+/* EXPLAINER BOX (reuses show-map .detail chrome) */
+.detail{border:1px solid var(--lines);background:var(--bge)}
+.detail-hd{padding:14px 16px;border-bottom:1px solid var(--line)}
+.detail-title{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.detail-body{padding:4px 0}
+.ax{padding:13px 16px;border-bottom:1px solid var(--line)}
+.ax:last-child{border-bottom:none}
+.ax-name{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.ax-poles{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.04em;color:var(--ink);margin-bottom:5px}
+.ax-poles .vs{color:var(--inkf);margin:0 6px}
+.ax-text{font-size:12.5px;line-height:1.5;color:var(--inkd)}
+.ax-text em{color:var(--ink);font-style:italic}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-right:2px;vertical-align:middle}
+.moat-row{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--inkd)}
+.moat-row span{display:inline-flex;align-items:center;gap:5px}
+.anchor-list{list-style:none;margin:7px 0 0;padding:0}
+.anchor-list li{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--inkd);padding:3px 0;display:flex;align-items:baseline;gap:7px;line-height:1.35}
+.anchor-list .an{color:var(--ink);min-width:96px;display:inline-block}
+.anchor-list .pos{color:var(--inkf)}
+.lane-item{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid rgba(244,240,233,0.06)}
+.lane-item:last-child{border-bottom:none}
+.lane-item .ln{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.04em;color:var(--ink);min-width:118px;display:flex;align-items:center;gap:6px}
+.lane-item .ld{font-size:11.5px;color:var(--inkd);line-height:1.4}
+.anchor-why{padding:7px 0;border-bottom:1px solid rgba(244,240,233,0.06)}
+.anchor-why:last-child{border-bottom:none}
+.anchor-why .aw-hd{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:var(--ink);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.anchor-why .aw-tag{color:var(--inkf);text-transform:uppercase;letter-spacing:.04em}
+.anchor-why .aw-text{font-size:11.5px;color:var(--inkd);line-height:1.45}
+.anchor-why .aw-text em{color:var(--ink);font-style:normal}
 </style>
 <script src="config.js"></script>
+<script src="course_axis.js"></script>
 </head>
 <body>
 <div class="app">
@@ -59,120 +80,98 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <circle cx="14" cy="14" r="9"  stroke="rgba(198,165,83,0.35)" stroke-width="1"/>
   <circle cx="14" cy="14" r="5.5" stroke="rgb(198,165,83)" stroke-width="1.2"/>
   <circle cx="14" cy="14" r="3.2" fill="rgba(198,165,83,0.72)"/>
-</svg><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)">Course · Prior Cloud · Facilitator view</div></div>
-<h1>Where the room starts — <em>before</em> the lecture</h1>
-<p class="sub">Each dot is one person's gut read. No names. The cloud shows the room's collective starting point.</p>
+</svg><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)">Course &middot; Prior Cloud &middot; Facilitator view</div></div>
+<h1>Where the room starts &mdash; <em>before</em> the lecture</h1>
+<p class="sub">Each dot is one person&rsquo;s gut read. No names. The cloud shows the room&rsquo;s collective starting point.</p>
 
-<div class="meta">
-  <div class="badge" id="countBadge">— submitted</div>
-  <div class="badge" id="placedBadge">— placed</div>
-  <button class="refresh-btn" onclick="loadAndRender()">↺ Refresh</button>
-  <span style="font-style:italic;color:var(--inkf)" id="lastUpdate"></span>
+<div class="toolbar">
+  <button class="tbtn" style="border-color:var(--gold);color:var(--gold)" onclick="loadAndRender()">&#8634; Refresh</button>
+  <div id="axisControls" style="display:inline-flex;align-items:center;gap:6px"></div>
+  <span class="tbadge" id="countBadge">&mdash; submitted</span>
+  <span class="tbadge" id="placedBadge">&mdash; placed</span>
+  <span class="tstamp" id="lastUpdate"></span>
 </div>
 
-<div class="map-block">
-  <div class="ylabel">↑ Up for grabs · still contestable</div>
-  <div class="map-row">
-    <div class="xlabel">← Incumbents<span class="xsub">concentrated few</span></div>
-    <div class="grid" id="grid">
-      <div class="gl-h"></div>
-      <div class="gl-v"></div>
+<div class="layout">
+  <div>
+    <div class="map-block">
+      <div class="yaxis">
+        <span class="yaxis-end" id="yTop">&#8593; Still open<br>up for grabs</span>
+        <span class="yaxis-title" id="yTitle">Decided?</span>
+        <span class="yaxis-end" id="yBot">&#8595; Already decided<br>locked in</span>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="xaxis">
+        <span>Incumbent</span>
+        <span class="mid">Who captures it</span>
+        <span>New entrant / open</span>
+      </div>
     </div>
-    <div class="xlabel">New entrants →<span class="xsub">open &amp; distributed</span></div>
   </div>
-  <div class="ylabel">↓ Locked in · already decided</div>
+
+  <div class="detail">
+    <div class="detail-hd">
+      <div class="detail-title">The map, explained</div>
+      <div class="ca-seg" id="expSeg" style="margin-top:10px;width:max-content">
+        <button data-exp="decided" class="on">Decided?</button>
+        <button data-exp="moat">Moat</button>
+        <button data-exp="anchors">Anchors</button>
+      </div>
+    </div>
+    <div class="detail-body">
+
+      <!-- DECIDED? — the two axes -->
+      <div class="exp" id="exp-decided">
+        <div class="ax">
+          <div class="ax-name">Left &harr; right &middot; who captures it</div>
+          <div class="ax-poles">&larr; Incumbents / a concentrated few <span class="vs">vs</span> new entrants / open &amp;&nbsp;distributed &rarr;</div>
+          <div class="ax-text">Over the next 3&ndash;5 years, who keeps the new value? <em>Left</em> if a few big players hold it; <em>right</em> if it spreads to challengers and open ecosystems.</div>
+        </div>
+        <div class="ax">
+          <div class="ax-name">Up &harr; down &middot; decided? <span style="color:var(--inkf);text-transform:none;letter-spacing:0">(&ldquo;settledness&rdquo;)</span></div>
+          <div class="ax-poles">&uarr; Still open / up for grabs <span class="vs">vs</span> already decided / locked in &darr;</div>
+          <div class="ax-text">Has the world already <em>settled</em> who wins, or is the race still being run? <em>Top</em> = genuinely contestable; <em>bottom</em> = structurally locked in. A strong moat or a confident voice is <em>not</em> the same as a decided outcome.</div>
+        </div>
+      </div>
+
+      <!-- MOAT — the colour lanes -->
+      <div class="exp" id="exp-moat" style="display:none">
+        <div class="ax">
+          <div class="ax-name">Colour &middot; the moat the bet rests on</div>
+          <div class="ax-text">Each dot&rsquo;s colour is the single mechanism that read leans on to defend the value. In <em>Moat</em> mode the vertical axis re-stacks into these lanes &mdash; closest to the silicon at the bottom, human trust at the top.</div>
+          <div id="moatLanes" style="margin-top:9px"></div>
+        </div>
+      </div>
+
+      <!-- ANCHORS — why each sits where it does, in moat language -->
+      <div class="exp" id="exp-anchors" style="display:none">
+        <div class="ax">
+          <div class="ax-name">The 6 anchors <span style="color:var(--inkf);text-transform:none;letter-spacing:0">(faint rings)</span></div>
+          <div class="ax-text">Reference positions for the usual suspects. Each sits where its <em>moat</em> puts it &mdash; a dot near an anchor shares that bet; a dot far from all of them is an original read.</div>
+          <ul class="anchor-list" id="anchorWhy" style="margin-top:9px"></ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 </div>
 
-<div class="legend">
-  <strong>Reading the cloud.</strong>
-  Each dot is one person's gut read before the lecture.
-  Left = incumbents / concentrated · Right = new entrants / open ·
-  Top = the outcome's still up for grabs · Bottom = it looks locked in.
-  Colour = the moat they're betting on:
-  <span style="color:rgb(150,190,140)">scale / network</span> ·
-  <span style="color:rgb(120,185,200)">data</span> ·
-  <span style="color:rgb(230,140,105)">workflow</span> ·
-  <span style="color:rgb(184,162,216)">regulatory</span>.
-  <br>Keep this up during the lecture — watch whether the room's instinct holds or shifts.
-  In Plenary 1 the team positions land on the same frame, and the distance each table
-  travelled from its members' starting points becomes the teaching point.
-</div>
-
-</div>
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-
-// ── DEMO fallback ─────────────────────────────────────────────────────────────
+// ── DEMO fallback (used only when the DB is unreachable) ──────────────────────
 var DEMO = [
-  {x:-0.80,y:-0.55,moat_type:"scale"},{x:-0.60,y:0.35,moat_type:"scale"},
-  {x:-0.50,y:-0.45,moat_type:"scale"},{x:-0.40,y:0.40,moat_type:"workflow"},
-  {x:-0.20,y:-0.20,moat_type:"data"},{x:0.10,y:0.30,moat_type:"data"},
-  {x:0.30,y:-0.40,moat_type:"reg"},{x:0.42,y:0.15,moat_type:"reg"},
-  {x:0.52,y:-0.35,moat_type:"workflow"},{x:0.68,y:0.45,moat_type:"workflow"},
-  {x:0.80,y:0.55,moat_type:"workflow"},{x:0.50,y:-0.10,moat_type:"reg"},
+  {x:-0.80,y:-0.55,moat_type:"scale"},  {x:-0.60,y:0.35,moat_type:"scale"},
+  {x:-0.50,y:-0.45,moat_type:"distribution"},{x:-0.40,y:0.40,moat_type:"workflow_embed"},
+  {x:-0.20,y:-0.20,moat_type:"data"},   {x:0.10,y:0.30,moat_type:"data"},
+  {x:0.30,y:-0.40,moat_type:"reg"},     {x:0.42,y:0.15,moat_type:"sor"},
+  {x:0.52,y:-0.35,moat_type:"switching"},{x:0.68,y:0.45,moat_type:"sor"},
+  {x:0.80,y:0.55,moat_type:"reputation"},{x:0.50,y:-0.10,moat_type:"reg"}
 ];
 
-// Convert axis coords (-1..+1) to grid % (5%–95%)
-function toLeft(x){ return ((x+1)/2*90+5).toFixed(2)+"%"; }
-function toTop(y) { return ((-y+1)/2*90+5).toFixed(2)+"%"; }  // y flipped: +y = top
+var COORDS = CourseAxis.makeCoords(5,90);
+var PRIORS = [];
 
-// Six lens anchor positions on the fixed axes
-var LENS_ANCHORS = [
-  { name:"Hyperscaler",    x:-0.62, y:-0.50 },
-  { name:"Chipmaker",      x:-0.52, y:-0.42 },
-  { name:"Incumbent SaaS", x:-0.40, y: 0.42 },
-  { name:"LLM labs",       x: 0.10, y: 0.50 },
-  { name:"Orchestrator",   x: 0.62, y: 0.48 },
-  { name:"In-house",       x:-0.10, y:-0.30 },
-];
-
-function renderQuadrants(){
-  var grid = document.getElementById("grid");
-  [].slice.call(grid.querySelectorAll(".quad-bg,.qlabel,.anchor-lbl")).forEach(function(n){n.remove();});
-
-  var quads = [
-    {left:"0%",  top:"0%",  w:"50%", h:"50%", bg:"rgba(244,240,233,0.022)", label:"Incumbent\nstill contestable", lx:"25%", ly:"12%", col:"rgba(244,240,233,0.40)"},
-    {left:"50%", top:"0%",  w:"50%", h:"50%", bg:"rgba(198,165,83,0.045)",   label:"New entrant\nup for grabs",     lx:"75%", ly:"12%", col:"rgba(198,165,83,0.6)"},
-    {left:"0%",  top:"50%", w:"50%", h:"50%", bg:"rgba(198,165,83,0.045)",   label:"Incumbent\nlocked in",          lx:"25%", ly:"62%", col:"rgba(198,165,83,0.6)"},
-    {left:"50%", top:"50%", w:"50%", h:"50%", bg:"rgba(244,240,233,0.022)",  label:"New entrant\nalready decided",  lx:"75%", ly:"62%", col:"rgba(244,240,233,0.40)"},
-  ];
-
-  quads.forEach(function(q){
-    var bg = document.createElement("div");
-    bg.className = "quad-bg";
-    bg.style.cssText = "left:"+q.left+";top:"+q.top+";width:"+q.w+";height:"+q.h+
-      ";background:"+q.bg+";border:1px solid "+q.bg.replace("0.05","0.15")+";z-index:1";
-    grid.insertBefore(bg, grid.firstChild);
-
-    var lbl = document.createElement("div");
-    lbl.className = "qlabel";
-    lbl.style.cssText = "left:"+q.lx+";top:"+q.ly+";transform:translate(-50%,-50%);color:"+q.col;
-    lbl.textContent = q.label;
-    grid.appendChild(lbl);
-  });
-
-  // Lens anchors — dashed gold rings with a centre tick and a label below
-  LENS_ANCHORS.forEach(function(a){
-    var Lx = toLeft(a.x), Ty = toTop(a.y);
-    var ring = document.createElement("div");
-    ring.className = "anchor-lbl";
-    ring.style.cssText = "position:absolute;left:"+Lx+";top:"+Ty+";width:40px;height:40px;border:1px dashed rgba(198,165,83,0.6);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:3";
-    grid.appendChild(ring);
-    var tick = document.createElement("div");
-    tick.className = "anchor-lbl";
-    tick.style.cssText = "position:absolute;left:"+Lx+";top:"+Ty+";width:4px;height:4px;border-radius:50%;background:rgba(198,165,83,0.7);transform:translate(-50%,-50%);pointer-events:none;z-index:3";
-    grid.appendChild(tick);
-    var lbl = document.createElement("div");
-    lbl.className = "anchor-lbl";
-    lbl.style.cssText = "position:absolute;left:"+Lx+";top:"+Ty+";transform:translate(-50%,26px);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(198,165,83,0.72);pointer-events:none;z-index:3;white-space:nowrap;text-align:center";
-    lbl.textContent = a.name;
-    grid.appendChild(lbl);
-  });
-}
-
-var MOAT_COLORS = { scale:"rgb(150,190,140)", data:"rgb(120,185,200)", workflow:"rgb(230,140,105)", reg:"rgb(184,162,216)" };
-
-// fan co-located dots onto a small ring so none hide; stable across refreshes (sort by index)
+// Fan co-located dots onto a small ring so none hide; stable across refreshes.
 function spreadOverlaps(pts){
   var groups={};
   pts.forEach(function(p){ var k=Math.round(p.px/6)+","+Math.round(p.py/6); (groups[k]=groups[k]||[]).push(p); });
@@ -182,67 +181,138 @@ function spreadOverlaps(pts){
     var R=13;
     g.forEach(function(p,i){
       var ang=(2*Math.PI*i)/g.length - Math.PI/2;
-      var r=g.length>6 ? R*Math.sqrt((i+1)/g.length) : R;   // spiral when dense
+      var r=g.length>6 ? R*Math.sqrt((i+1)/g.length) : R;
       p.px+=Math.cos(ang)*r; p.py+=Math.sin(ang)*r;
     });
   });
 }
 
-function render(priors){
-  var grid = document.getElementById("grid");
+function setYLabels(mode){
+  if(mode==="moat"){
+    document.getElementById("yTop").innerHTML="&#8593; Trust<br>furthest from silicon";
+    document.getElementById("yTitle").textContent="The moat stack";
+    document.getElementById("yBot").innerHTML="&#8595; Compute<br>closest to silicon";
+  } else {
+    document.getElementById("yTop").innerHTML="&#8593; Still open<br>up for grabs";
+    document.getElementById("yTitle").textContent="Decided?";
+    document.getElementById("yBot").innerHTML="&#8595; Already decided<br>locked in";
+  }
+}
+
+var LANE_DESC = {
+  scale:        "Compute, chips, energy, capital \u2014 raw scale economics.",
+  data:         "A proprietary corpus that compounds the more it is used.",
+  workflow_sor: "Woven into how work gets done; you hold the authoritative copy.",
+  switching:    "Leaving is expensive \u2014 migration, retraining, integration risk.",
+  distribution: "You own the channel to the buyer \u2014 install base, the OS, procurement.",
+  reg:          "Certification and licensing that take years and capital to earn.",
+  reputation:   "Verified trust earned over time; a newcomer cannot manufacture it."
+};
+function renderMoatLanes(){
+  var box=document.getElementById("moatLanes"); if(box.children.length) return;
+  CourseAxis.LANE_ORDER.forEach(function(lane){          // top (trust) -> bottom (silicon)
+    var m=CourseAxis.LANE_META[lane]; if(!m) return;
+    var row=document.createElement("div"); row.className="lane-item";
+    row.innerHTML='<span class="ln"><span class="swatch" style="background:'+m.colour+'"></span>'+m.label+'</span>'+
+                  '<span class="ld">'+(LANE_DESC[lane]||"")+'</span>';
+    box.appendChild(row);
+  });
+}
+
+// Why each anchor sits where it does — moat-first language.
+var ANCHOR_WHY = [
+  { name:"Hyperscaler",    tag:"bottom-left \u00b7 locked",      sw:"distribution",
+    text:"A <em>concentrated few</em> own the clouds, and the moat is <em>distribution</em> \u2014 they ship AI straight into install bases they already hold, so the contest closes fast." },
+  { name:"Chipmaker",      tag:"bottom-left \u00b7 locked",      sw:"scale",
+    text:"A handful of designers and fabs; the moat is <em>scale</em> \u2014 compute, capital and energy cannot be willed into existence, so the floor stays narrow and settled." },
+  { name:"Incumbent SaaS", tag:"top-left \u00b7 contestable",    sw:"workflow_sor",
+    text:"An <em>incumbent</em>, but the moat is <em>workflow embedding</em> \u2014 sticky, yet an AI-native challenger can rebuild the workflow, so who wins is not yet decided." },
+  { name:"LLM labs",       tag:"top-centre \u00b7 contestable",  sw:"scale",
+    text:"Incumbents and a few entrants; the moat is <em>scale</em> (frontier compute) and the race is still being run \u2014 high and undecided." },
+  { name:"Orchestrator",   tag:"top-right \u00b7 wide open",     sw:"workflow_sor",
+    text:"A <em>new entrant / open</em> layer; the moat is <em>system-of-record</em> \u2014 whoever holds the orchestration graph across models, which nobody owns yet." },
+  { name:"In-house",       tag:"lower-centre \u00b7 leans locked", sw:"switching",
+    text:"Large firms build their own; the moat is <em>switching costs</em> \u2014 once it is built internally it rarely gets ripped out." }
+];
+function renderAnchorWhy(){
+  var box=document.getElementById("anchorWhy"); if(box.children.length) return;
+  ANCHOR_WHY.forEach(function(a){
+    var c=CourseAxis.colour(a.sw);
+    var li=document.createElement("li"); li.className="anchor-why"; li.style.display="block"; li.style.padding="7px 0";
+    li.innerHTML='<div class="aw-hd"><span class="swatch" style="background:'+c+'"></span>'+a.name+
+                 ' <span class="aw-tag">'+a.tag+'</span></div>'+
+                 '<div class="aw-text">'+a.text+'</div>';
+    box.appendChild(li);
+  });
+}
+function showExp(which){
+  ["decided","moat","anchors"].forEach(function(k){
+    document.getElementById("exp-"+k).style.display = (k===which)?"block":"none";
+  });
+  [].slice.call(document.querySelectorAll("#expSeg button")).forEach(function(b){
+    b.classList.toggle("on", b.dataset.exp===which);
+  });
+}
+
+function render(){
+  var grid=document.getElementById("grid");
+  // clear our own dots (leave the .ca-field that renderField manages)
   [].slice.call(grid.querySelectorAll(".pdot")).forEach(function(n){n.remove();});
-  var gw = grid.clientWidth, gh = grid.clientHeight;
 
-  var placed = priors.filter(function(p){ return p.x !== null && p.y !== null; });
+  var placed=PRIORS.filter(function(p){return p.x!=null&&p.y!=null;});
+  CourseAxis.chooseMode(placed);          // respects Auto / override / session lock
+  var mode=CourseAxis.state.mode;
+  setYLabels(mode);
 
-  var pts = placed.map(function(p,i){
-    return {
-      px: ((p.x+1)/2*90+5)/100*gw,    // x: -1 left → +1 right
-      py: ((-p.y+1)/2*90+5)/100*gh,   // y: +1 top → -1 bottom
-      moat: p.moat_type || null,
-      thesis: p.thesis || "",
-      i: i
-    };
+  // frame + anchors only; we draw the cloud ourselves so overlaps can fan out
+  CourseAxis.renderField(grid, placed, mode, COORDS, {noDots:true});
+
+  var gw=grid.clientWidth, gh=grid.clientHeight;
+  var pts=placed.map(function(p,i){
+    var q=CourseAxis.pointPos(p, mode, COORDS);
+    return { px:parseFloat(q.left)/100*gw, py:parseFloat(q.top)/100*gh, moat:p.moat_type||null, thesis:p.thesis||"", i:i };
   });
   spreadOverlaps(pts);
 
   pts.forEach(function(p){
-    var dot = document.createElement("div");
-    dot.className = "pdot";
-    dot.style.left = p.px.toFixed(1)+"px";
-    dot.style.top  = p.py.toFixed(1)+"px";
-    var c = p.moat && MOAT_COLORS[p.moat] ? MOAT_COLORS[p.moat] : "rgb(198,165,83)";
-    dot.style.background = c;
-    dot.style.borderColor = c;
-    if(p.thesis) dot.title = p.thesis.slice(0,100);
+    var dot=document.createElement("div"); dot.className="pdot";
+    dot.style.left=p.px.toFixed(1)+"px"; dot.style.top=p.py.toFixed(1)+"px";
+    var c=CourseAxis.colour(p.moat);
+    dot.style.background=c; dot.style.borderColor=c;
+    if(p.thesis) dot.title=p.thesis.slice(0,120);
     grid.appendChild(dot);
   });
 
-  document.getElementById("countBadge").textContent  = priors.length + " submitted";
+  document.getElementById("countBadge").textContent  = PRIORS.length + " submitted";
   document.getElementById("placedBadge").textContent = placed.length + " placed";
-  document.getElementById("lastUpdate").textContent  =
-    "Last update: " + new Date().toLocaleTimeString();
+  document.getElementById("lastUpdate").textContent  = "Last update: " + new Date().toLocaleTimeString();
 }
 
 async function loadAndRender(){
-  renderQuadrants();
-  try {
-    var res = await fetch(
-      SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + SESSION_ID +
+  try{
+    await CourseAxis.readSessionMode(SUPABASE_URL, SUPABASE_ANON, SESSION_ID);
+    var res=await fetch(
+      SUPABASE_URL+"/rest/v1/course_priors?session_id=eq."+SESSION_ID+
       "&select=x,y,thesis,moat_type&order=created_at.asc",
-      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } }
-    );
+      { headers:{ "apikey":SUPABASE_ANON, "Authorization":"Bearer "+SUPABASE_ANON } });
     if(!res.ok) throw new Error("HTTP "+res.status);
-    var data = await res.json();
-    render(data.length ? data : DEMO);
-  } catch(e){
-    console.warn("using demo:", e.message);
-    render(DEMO);
+    PRIORS=await res.json();           // empty-on-success renders an empty map (not DEMO)
+  }catch(e){
+    console.warn("cloud load failed \u2014 demo mode:", e.message);
+    if(!PRIORS.length) PRIORS=DEMO;
   }
-  setTimeout(loadAndRender, 8000);
+  render();
+  clearTimeout(window.__cloudPoll);
+  window.__cloudPoll=setTimeout(loadAndRender, 8000);
 }
 
-window.addEventListener("load", loadAndRender);
+window.addEventListener("load", function(){
+  renderMoatLanes(); renderAnchorWhy();
+  [].slice.call(document.querySelectorAll('#expSeg button')).forEach(function(b){ b.onclick=function(){ showExp(b.dataset.exp); }; });
+  CourseAxis.mountControls(document.getElementById("axisControls"),
+    { allowAuto:true, labels:{settle:"Decided?"}, onChange:render });
+  loadAndRender();
+});
 </script>
 </body>
 </html>

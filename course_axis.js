@@ -116,8 +116,9 @@
     var wrap=document.createElement("div"); wrap.className="ca-controls";
 
     var seg=document.createElement("div"); seg.className="ca-seg";
-    var modes = allowAuto ? [["auto","Auto"],["settle","Settledness"],["moat","Moat"]]
-                          : [["settle","Settledness"],["moat","Moat"]];
+    var L = opts.labels || {};
+    var modes = allowAuto ? [["auto", L.auto||"Auto"],["settle", L.settle||"Settledness"],["moat", L.moat||"Moat"]]
+                          : [["settle", L.settle||"Settledness"],["moat", L.moat||"Moat"]];
     modes.forEach(function(pair){
       var b=document.createElement("button"); b.textContent=pair[1]; b.dataset.m=pair[0];
       if(pair[0]===state.override) b.classList.add("on");
