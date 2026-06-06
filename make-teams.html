@@ -284,7 +284,10 @@ function render(){
     wrap.appendChild(card);
   });
 
-  updateCommitNote();
+  // Pool is a derived view: recompute it on every render so it can never
+  // desync from team state. showUnassigned() also handles the commit note +
+  // button, so it subsumes updateCommitNote() in both branches.
+  showUnassigned();
 }
 
 function makeChip(p, t){
@@ -329,10 +332,9 @@ function moveTo(pid, toTeamId){
 }
 
 function removeFromTeam(pid){
-  // Remove from team — person goes back to unassigned pool, visible in commit note
+  // Remove from team — render() re-derives the unassigned pool.
   teams.forEach(function(t){ t.members = t.members.filter(function(m){return m!==pid;}); });
   render();
-  showUnassigned();
 }
 
 // Unassigned participants — shown as a warning if any exist
