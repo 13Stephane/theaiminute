@@ -129,9 +129,9 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <div>
     <div class="map-block">
       <div class="yaxis">
-        <span class="yaxis-end" id="yTop">&#8593; Contestable<br>up for grabs</span>
+        <span class="yaxis-end" id="yTop">&#8593; Up for grabs<br><span style="opacity:.6">tomorrow&rsquo;s value</span></span>
         <span class="yaxis-title" id="yTitle">Settled?</span>
-        <span class="yaxis-end" id="yBot">&#8595; Decided<br>locked in</span>
+        <span class="yaxis-end" id="yBot">&#8595; Locked in<br><span style="opacity:.6">today&rsquo;s capture</span></span>
       </div>
       <div class="grid" id="grid">
         <svg class="arrow-svg" id="arrowSvg"></svg>
@@ -272,6 +272,22 @@ async function loadFromDB(){
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function npos(p,x,y){ var q=CourseAxis.pointPos({x:x,y:y,moat_type:(p?p.moat_type:null)},CourseAxis.state.mode,COORDS); return {x:parseFloat(q.left),y:parseFloat(q.top),l:q.left,t:q.top}; }
 
+// Fan apart any dots that land on (almost) the same pixel, so none hide behind another.
+function fanApart(pts){
+  var groups={};
+  pts.forEach(function(p){ var k=Math.round(p.px/7)+","+Math.round(p.py/7); (groups[k]=groups[k]||[]).push(p); });
+  Object.keys(groups).forEach(function(k){
+    var g=groups[k]; if(g.length<2) return;
+    g.sort(function(a,b){return a.i-b.i;});
+    var R=15;
+    g.forEach(function(p,i){
+      var ang=(2*Math.PI*i)/g.length - Math.PI/2;
+      var r=g.length>6 ? R*Math.sqrt((i+1)/g.length) : R;
+      p.px+=Math.cos(ang)*r; p.py+=Math.sin(ang)*r;
+    });
+  });
+}
+
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render(){
   var grid=document.getElementById("grid");
@@ -286,27 +302,33 @@ function render(){
     document.getElementById("yTitle").textContent="The moat stack";
     document.getElementById("yBot").textContent="silicon \u2193";
   } else {
-    document.getElementById("yTop").innerHTML="↑ Contestable<br>up for grabs";
+    document.getElementById("yTop").innerHTML="↑ Up for grabs<br><span style='opacity:.6'>tomorrow's value</span>";
     document.getElementById("yTitle").textContent="Settled?";
-    document.getElementById("yBot").innerHTML="↓ Decided<br>locked in";
+    document.getElementById("yBot").innerHTML="↓ Locked in<br><span style='opacity:.6'>today's capture</span>";
   }
 
   CourseAxis.renderField(grid, TEAMS, mode, COORDS, {noDots:true});
 
-  // Prior ghosts + arrows — rendered for every team but HIDDEN; a team's set
-  // reveals only while that team's dot is hovered (see showTeamOverlay).
+  // Team render positions — fan apart any that collide so none hide behind another
+  var gw=grid.clientWidth||700, gh=grid.clientHeight||460;
+  var tp=TEAMS.filter(function(t){return t.x!=null;}).map(function(t,idx){
+    var q=npos(t,t.x,t.y); return {tid:t.id, px:q.x/100*gw, py:q.y/100*gh, i:idx};
+  });
+  fanApart(tp);
+  var TPOS={}; tp.forEach(function(o){ TPOS[o.tid]={l:o.px/gw*100, t:o.py/gh*100}; });
+
+  // Prior ghosts + arrows — rendered for every team but HIDDEN; revealed on team hover.
   var tbn={}; TEAMS.forEach(function(t){tbn[t.team]=t;});
   var svg=document.getElementById("arrowSvg");
   PRIORS.forEach(function(p){
     if(p.x==null||!p.team) return;
-    var t=tbn[p.team]; if(!t||t.x==null) return;
+    var t=tbn[p.team]; if(!t||t.x==null||!TPOS[t.id]) return;
     var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.6)";
-    var a=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y), b=npos(t,t.x,t.y);
-    // ghost
+    var a=npos({x:p.x,y:p.y,moat_type:p.moat_type},p.x,p.y);
+    var b={x:TPOS[t.id].l, y:TPOS[t.id].t};
     var g=document.createElement("div"); g.className="prior-ghost"; g.setAttribute("data-tid",t.id);
     g.style.left=a.l; g.style.top=a.t; g.style.opacity="0";
     grid.appendChild(g);
-    // arrow line
     var line=document.createElementNS("http://www.w3.org/2000/svg","line");
     line.setAttribute("x1",a.x+"%");line.setAttribute("y1",a.y+"%");
     line.setAttribute("x2",b.x+"%");line.setAttribute("y2",b.y+"%");
@@ -314,7 +336,6 @@ function render(){
     line.setAttribute("stroke-width","1.3");line.setAttribute("stroke-dasharray","4,3");
     line.setAttribute("data-tid",t.id); line.style.opacity="0";
     svg.appendChild(line);
-    // arrowhead
     var dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);
     if(len>2){ var ang=Math.atan2(dy,dx),al=7,aw=4;
       var hx=b.x-al*Math.cos(ang),hy=b.y-al*Math.sin(ang);
@@ -326,13 +347,13 @@ function render(){
     }
   });
 
-  // Team dots + hover labels
+  // Team dots + hover labels (at fanned positions)
   TEAMS.forEach(function(t){
-    if(t.x==null) return;
+    if(t.x==null||!TPOS[t.id]) return;
     var m=modelFor(t.id); var col=m?m.col:"rgba(198,165,83,0.75)";
-    var pos=npos(t,t.x,t.y);
+    var Lp=TPOS[t.id].l+"%", Tp=TPOS[t.id].t+"%";
     var d=document.createElement("div"); d.className="tdot"; d.id="dot"+t.id;
-    d.style.left=pos.l; d.style.top=pos.t; d.style.background=col; d.style.borderColor=col;
+    d.style.left=Lp; d.style.top=Tp; d.style.background=col; d.style.borderColor=col;
     d.classList.toggle("dimmed", selModel!==null && (!m||m.id!==selModel));
     d.title=t.team;
     d.addEventListener("click", function(e){ e.stopPropagation(); if(m) selectModel(m.id); });
@@ -340,7 +361,7 @@ function render(){
     d.addEventListener("mouseleave", function(){ showTeamOverlay(t.id,false); });
     grid.appendChild(d);
     var l=document.createElement("div"); l.className="tlabel"; l.id="lbl"+t.id;
-    l.style.left=pos.l; l.style.top=pos.t; l.textContent=t.team;
+    l.style.left=Lp; l.style.top=Tp; l.textContent=t.team;
     l.style.opacity="0";
     grid.appendChild(l);
   });

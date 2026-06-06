@@ -96,9 +96,9 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   <div>
     <div class="map-block">
       <div class="yaxis">
-        <span class="yaxis-end" id="yTop">&#8593; Still open<br>up for grabs</span>
+        <span class="yaxis-end" id="yTop">&#8593; Up for grabs<br><span style="opacity:.6">tomorrow&rsquo;s value</span></span>
         <span class="yaxis-title" id="yTitle">Decided?</span>
-        <span class="yaxis-end" id="yBot">&#8595; Already decided<br>locked in</span>
+        <span class="yaxis-end" id="yBot">&#8595; Locked in<br><span style="opacity:.6">today&rsquo;s capture</span></span>
       </div>
       <div class="grid" id="grid"></div>
       <div class="xaxis">
@@ -130,7 +130,7 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
         <div class="ax">
           <div class="ax-name">Up &harr; down &middot; decided? <span style="color:var(--inkf);text-transform:none;letter-spacing:0">(&ldquo;settledness&rdquo;)</span></div>
           <div class="ax-poles">&uarr; Still open / up for grabs <span class="vs">vs</span> already decided / locked in &darr;</div>
-          <div class="ax-text">Has the world already <em>settled</em> who wins, or is the race still being run? <em>Top</em> = genuinely contestable; <em>bottom</em> = structurally locked in. A strong moat or a confident voice is <em>not</em> the same as a decided outcome.</div>
+          <div class="ax-text">Has the world already <em>settled</em> who wins, or is the race still being run? <em>Top</em> = genuinely contestable; <em>bottom</em> = structurally locked in. A strong moat or a confident voice is <em>not</em> the same as a decided outcome.<br><br>Read it in time: <em>bottom</em> = who captures <em>today&rsquo;s</em> value looks settled; <em>top</em> = who creates <em>tomorrow&rsquo;s</em> value is still open. &ldquo;Locked&rdquo; describes the current board &mdash; not a prophecy about the next one.</div>
         </div>
       </div>
 
@@ -193,9 +193,9 @@ function setYLabels(mode){
     document.getElementById("yTitle").textContent="The moat stack";
     document.getElementById("yBot").innerHTML="&#8595; Compute<br>closest to silicon";
   } else {
-    document.getElementById("yTop").innerHTML="&#8593; Still open<br>up for grabs";
+    document.getElementById("yTop").innerHTML="&#8593; Up for grabs<br><span style='opacity:.6'>tomorrow's value</span>";
     document.getElementById("yTitle").textContent="Decided?";
-    document.getElementById("yBot").innerHTML="&#8595; Already decided<br>locked in";
+    document.getElementById("yBot").innerHTML="&#8595; Locked in<br><span style='opacity:.6'>today's capture</span>";
   }
 }
 
@@ -222,9 +222,9 @@ function renderMoatLanes(){
 // Why each anchor sits where it does — moat-first language.
 var ANCHOR_WHY = [
   { name:"Hyperscaler",    tag:"bottom-left \u00b7 locked",      sw:"distribution",
-    text:"A <em>concentrated few</em> own the clouds, and the moat is <em>distribution</em> \u2014 they ship AI straight into install bases they already hold, so the contest closes fast." },
+    text:"A <em>concentrated few</em> own the clouds, and the moat is <em>distribution</em> \u2014 they ship AI straight into install bases they already hold, so the contest over <em>today&rsquo;s</em> value closes fast." },
   { name:"Chipmaker",      tag:"bottom-left \u00b7 locked",      sw:"scale",
-    text:"A handful of designers and fabs; the moat is <em>scale</em> \u2014 compute, capital and energy cannot be willed into existence, so the floor stays narrow and settled." },
+    text:"A handful of designers and fabs; the moat is <em>scale</em> \u2014 compute, capital and energy cannot be willed into existence, so today&rsquo;s value pools with a narrow, settled few." },
   { name:"Incumbent SaaS", tag:"top-left \u00b7 contestable",    sw:"workflow_sor",
     text:"An <em>incumbent</em>, but the moat is <em>workflow embedding</em> \u2014 sticky, yet an AI-native challenger can rebuild the workflow, so who wins is not yet decided." },
   { name:"LLM labs",       tag:"top-centre \u00b7 contestable",  sw:"scale",
