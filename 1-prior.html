@@ -86,6 +86,7 @@ textarea::placeholder{color:var(--inkf);font-style:italic}
 .mm-you-lbl{color:var(--gold);font-weight:500}
 </style>
 <script src="config.js"></script>
+<script src="course_axis.js"></script>
 </head>
 <body>
 <div class="app">
@@ -250,39 +251,13 @@ function clearTag(){
 }
 
 // ====================================================================
-//  SHARED PLACEMENT ENGINE (inlined so this file is self-contained)
-//  Same function Phase 2 uses — scores ONE claim on the TWO FIXED axes.
+//  PLACEMENT ENGINE — server-side (course_place Edge Function)
+//  The classification rubric lives in ONE place: the deployed Edge
+//  Function. No client-side copy — a stale inline rubric would silently
+//  diverge from production (it had, in fact, drifted). Anchors come from
+//  the shared axis module so every view places identically.
 // ====================================================================
-var AXIS_RUBRIC =
-"AXIS X — WHO CAPTURES THE NEW VALUE (over 3–5 years):\n" +
-"  -1.0 = INCUMBENTS or a CONCENTRATED FEW (established platforms, the dominant 2-3 players, in-house at scale, or an incumbent that wins by ACQUIRING the challenger)\n" +
-"  +1.0 = NEW ENTRANTS or OPEN / DISTRIBUTED ecosystems (challengers, startups, open weights, no single owner)\n\n" +
-"AXIS Y — IS THE 3–5 YEAR OUTCOME ALREADY SETTLED (read the author's FRAMING, not which player they name):\n" +
-"  -1.0 = LOCKED IN — author treats the winner as structurally inevitable (\"distribution decides it\", \"already over\"), stated as fact\n" +
-"  +1.0 = UP FOR GRABS — author treats it as genuinely open (\"could go either way\", \"early innings\", conditional or hedged)\n" +
-"  USE THE FULL RANGE. Two authors naming the SAME player can sit at OPPOSITE Y ends. Reserve the middle (-0.2..0.2) ONLY for claims that explicitly balance both. About the WORLD's settledness as framed, NOT your view, NOT the speaker's confidence.\n\n" +
-"MOAT — single dominant mechanism (lane/colour only; does NOT move x/y). Return ONE key, ordered silicon->trust:\n" +
-"  scale = compute/chips/energy/capital · data = proprietary corpus that compounds · workflow_embed = woven into how work gets done · sor = holds the authoritative system of record · switching = costly to leave (migration/retraining/integration) · distribution = owns the channel / install base / enterprise contracts · reg = certification/licensing/jurisdiction · reputation = verified trust a newcomer cannot manufacture\n" +
-"CONFIDENCE — how assertively stated (speaker, not world): hedged ~0.2 · categorical ~0.9 · default 0.5";
-
-var LENS_ANCHORS = {
-  hyperscaler:{x:-0.62,y:-0.50,m:"distribution"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
-  saas:{x:-0.40,y:0.42,m:"workflow_embed"}, orchestrator:{x:0.62,y:0.48,m:"sor"}, inhouse:{x:-0.10,y:-0.30,m:"switching"},
-};
-var MOATS = ["scale","data","workflow_embed","sor","switching","distribution","reg","reputation"];
-function clamp01(n){ return Math.max(0, Math.min(1, n)); }
-
-function clamp(n){ return Math.max(-1, Math.min(1, n)); }
-
-function buildPrompt(text, tagHint){
-  return "You position a strategic claim about AI / software value capture onto two FIXED axes, " +
-    "and classify its dominant moat. Do NOT invent axes. Score each axis from -1.0 to +1.0.\n" + AXIS_RUBRIC + "\n\n" +
-    "Read the SUBSTANCE, not surface keywords. A claim that an incumbent wins by ACQUIRING a challenger is -X (the incumbent captures).\n" +
-    "Y examples (same player, opposite ends): 'Hyperscalers have already won — distribution settles it' -> y≈-0.8; 'Hyperscalers lead, but open weights could still flip the app layer' -> y≈+0.6.\n\n" +
-    (tagHint ? ("The author tapped the lens '"+tagHint+"' as a hint — use it only if the text is genuinely ambiguous; the text overrides it.\n\n") : "") +
-    "CLAIM:\n\"" + text + "\"\n\n" +
-    'Return ONLY valid JSON, no markdown:\n{"x": <-1..1>, "y": <-1..1>, "moat": "scale|data|workflow_embed|sor|switching|distribution|reg|reputation", "confidence": <0..1>, "justification": "<one sentence, max 22 words, naming the X end, the Y end, and the moat>"}';
-}
+var LENS_ANCHORS = CourseAxis.LENS_ANCHORS;
 
 // ── EDGE FUNCTION call — key stays server-side ──────────────────────
 // SUPABASE_URL and SUPABASE_ANON_KEY are the only values needed in the browser.
@@ -414,8 +389,9 @@ function renderMiniMap(p){
   var grid = document.getElementById("mmGrid"); if(!grid) return;
   document.getElementById("minimapWrap").style.display = "block";
   grid.innerHTML = '<div class="mm-gl mm-gl-h"></div><div class="mm-gl mm-gl-v"></div>';
-  function L(x){ return ((x+1)/2*88+6).toFixed(1)+"%"; }
-  function T(y){ return ((-y+1)/2*88+6).toFixed(1)+"%"; }
+  var MMC = CourseAxis.makeCoords(5, 90);
+  function L(x){ return MMC.toLeft(x); }
+  function T(y){ return MMC.toTop(y); }
   Object.keys(LENS_ANCHORS).forEach(function(k){
     var a = LENS_ANCHORS[k];
     var d = document.createElement("div"); d.className="mm-dot mm-anchor";

@@ -55,6 +55,7 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
 .err.show{display:block}
 </style>
 <script src="config.js"></script>
+<script src="course_axis.js"></script>
 </head>
 <body>
 <div class="app">
@@ -125,28 +126,16 @@ h1 em{font-style:italic;color:var(--gold);font-weight:300}
   if(SUPABASE_URL)     document.getElementById("cfgNote").textContent = "Session: "+SESSION_ID;
 })();
 
-// ── inline moat taxonomy (no external dependency) ────────────────────────────
-var LANE_ORDER = ["reputation","reg","distribution","switching","workflow_sor","data","scale"];
-var LANE_META  = {
-  reputation:   {label:"Reputational capital",        col:"rgb(130,200,195)"},
-  reg:          {label:"Regulatory entrenchment",     col:"rgb(190,135,205)"},
-  distribution: {label:"Distribution leverage",       col:"rgb(224,128,128)"},
-  switching:    {label:"Switching costs",             col:"rgb(206,150,110)"},
-  workflow_sor: {label:"Workflow & system-of-record", col:"rgb(224,168,96)"},
-  data:         {label:"Data network effects",        col:"rgb(111,168,220)"},
-  scale:        {label:"Infrastructure / scale",      col:"rgb(127,191,127)"}
-};
-var KEY2LANE = {scale:"scale",data:"data",workflow_embed:"workflow_sor",sor:"workflow_sor",switching:"switching",distribution:"distribution",reg:"reg",reputation:"reputation"};
-function laneOf(m){ return KEY2LANE[m]||null; }
+// ── moat taxonomy + anchors: single source of truth (course_axis.js) ─────────
+//    No inline copy — these are the same objects the facilitator views use.
+var LANE_ORDER = CourseAxis.LANE_ORDER;
+var LANE_META  = CourseAxis.LANE_META;            // note: colour key is `.colour`
+function laneOf(m){ return CourseAxis.laneOf(m); }
 
-var ANCHORS = [
-  {x:-0.62,y:-0.50,m:"distribution",label:"Hyperscaler"},
-  {x:-0.52,y:-0.42,m:"scale",       label:"Chip"},
-  {x: 0.10,y: 0.50,m:"scale",       label:"LLM"},
-  {x:-0.40,y: 0.42,m:"workflow_embed",label:"Vertical SaaS"},
-  {x: 0.62,y: 0.48,m:"sor",         label:"Orchestrator"},
-  {x:-0.10,y:-0.30,m:"switching",   label:"In-house"}
-];
+var ANCHORS = Object.keys(CourseAxis.LENS_ANCHORS).map(function(k){
+  var a = CourseAxis.LENS_ANCHORS[k];
+  return { x:a.x, y:a.y, m:a.m, label:(CourseAxis.ANCHOR_LABEL[k]||k) };
+});
 
 var pathMode    = "settle";
 var showAnchors = true;
@@ -163,9 +152,10 @@ function toggleAnchors(){
   if(window.__prior) renderPath(window.__prior, window.__team);
 }
 
-// ── coordinate helpers (pad 9, span 82) ───────────────────────────────────────
-function L(x){ return ((x+1)/2*82+9).toFixed(1)+"%"; }  // x=-1 left (incumbent)
-function T(y){ return ((1-y)/2*82+9).toFixed(1)+"%"; }  // y=+1 top (contestable)
+// ── coordinate helpers: shared transform (pad 5, span 90 — same as all views) ──
+var COORDS = CourseAxis.makeCoords(5, 90);
+function L(x){ return COORDS.toLeft(x); }   // x=-1 left (incumbent)
+function T(y){ return COORDS.toTop(y); }    // y=+1 top (contestable)
 function dotPos(p){
   if(pathMode==="moat"){
     var lane=laneOf(p.moat_type||p.moat); var idx=LANE_ORDER.indexOf(lane);
@@ -187,7 +177,7 @@ function renderField(grid){
       band.style.cssText="position:absolute;left:0;right:0;top:"+(i*lH)+"%;height:"+lH+"%;border-top:"+(i>0?"1px solid rgba(244,240,233,0.09)":"none")+";z-index:1";
       band.className="lane"; grid.appendChild(band);
       var lbl=document.createElement("div"); lbl.className="lane-lbl";
-      lbl.style.cssText="position:absolute;left:8px;top:"+(i*lH+lH/2)+"%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.05em;text-transform:uppercase;color:"+LANE_META[lane].col+";z-index:3;pointer-events:none";
+      lbl.style.cssText="position:absolute;left:8px;top:"+(i*lH+lH/2)+"%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.05em;text-transform:uppercase;color:"+LANE_META[lane].colour+";z-index:3;pointer-events:none";
       lbl.textContent=LANE_META[lane].label; grid.appendChild(lbl);
     });
     document.getElementById("yTop").textContent="\u2191 trust";
