@@ -23,27 +23,35 @@
      await CourseAxis.writeSessionMode(URL, SVC, SID, m);// facilitator lock (control.html)
    ============================================================================ */
 (function(){
-  // ── taxonomy (8 classifier keys -> 7 display lanes) ──────────────────────
+  // ── taxonomy (Helmer's 7 Powers -> 7 display lanes) ──────────────────────
+  //  Canonical keys are identity; legacy keys fold forward so any old data or
+  //  hardcoded demo keys still resolve. distribution->scale, sor+reg->cornered,
+  //  workflow_embed->switching, data->network, reputation->branding.
   var KEY2LANE = {
-    scale:"scale", data:"data",
-    workflow_embed:"workflow_sor", sor:"workflow_sor",
-    switching:"switching", distribution:"distribution",
-    reg:"reg", reputation:"reputation"
+    // Helmer 7 (canonical, identity)
+    scale:"scale", network:"network", cornered:"cornered",
+    switching:"switching", process:"process", counter:"counter", branding:"branding",
+    // legacy aliases -> Helmer fold
+    data:"network",
+    workflow_embed:"switching", workflow_sor:"switching",
+    sor:"cornered", reg:"cornered",
+    distribution:"scale",
+    reputation:"branding"
   };
-  var LANE_ORDER = ["reputation","reg","distribution","switching","workflow_sor","data","scale"]; // top->bottom
+  var LANE_ORDER = ["branding","counter","process","switching","cornered","network","scale"]; // top->bottom
   var LANE_META = {
-    reputation:   { label:"Reputational capital",        colour:"rgb(130,200,195)" },
-    reg:          { label:"Regulatory entrenchment",     colour:"rgb(190,135,205)" },
-    distribution: { label:"Distribution leverage",       colour:"rgb(224,128,128)" },
-    switching:    { label:"Switching costs",             colour:"rgb(206,150,110)" },
-    workflow_sor: { label:"Workflow & system-of-record", colour:"rgb(224,168,96)"  },
-    data:         { label:"Data network effects",        colour:"rgb(111,168,220)" },
-    scale:        { label:"Infrastructure / scale",      colour:"rgb(127,191,127)" }
+    branding:  { label:"Branding / reputation", colour:"rgb(130,200,195)" },
+    counter:   { label:"Counter-positioning",   colour:"rgb(224,128,128)" },
+    process:   { label:"Process power",          colour:"rgb(190,135,205)" },
+    switching: { label:"Switching costs",        colour:"rgb(206,150,110)" },
+    cornered:  { label:"Cornered resource",      colour:"rgb(224,168,96)"  },
+    network:   { label:"Network economies",      colour:"rgb(111,168,220)" },
+    scale:     { label:"Scale economies",        colour:"rgb(127,191,127)" }
   };
   var ENUM_K = 7;
   var LENS_ANCHORS = {
-    hyperscaler:{x:-0.62,y:-0.50,m:"distribution"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
-    saas:{x:-0.40,y:0.42,m:"workflow_embed"}, orchestrator:{x:0.62,y:0.48,m:"sor"}, inhouse:{x:-0.10,y:-0.30,m:"switching"}
+    hyperscaler:{x:-0.62,y:-0.50,m:"scale"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
+    saas:{x:-0.40,y:0.42,m:"switching"}, orchestrator:{x:0.62,y:0.48,m:"cornered"}, inhouse:{x:-0.10,y:-0.30,m:"switching"}
   };
   var ANCHOR_LABEL = { hyperscaler:"Hyperscaler", chipmaker:"Chip", llm:"LLM", saas:"Vertical SaaS", orchestrator:"Orchestrator", inhouse:"In-house" };
 
