@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Compass · Founder House</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+:root{
+  --bg:rgb(25,60,63);
+  --ink:rgb(244,240,233);
+  --ink-dim:rgba(244,240,233,0.62);
+  --ink-faint:rgba(244,240,233,0.32);
+  --gold:rgb(198,165,83);
+  --line:rgba(244,240,233,0.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-weight:400;line-height:1.55;font-size:16px;-webkit-font-smoothing:antialiased;}
+.page{max-width:920px;margin:0 auto;padding:88px 56px 120px;}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
+.hero h1{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(38px,6vw,60px);line-height:1.08;letter-spacing:-0.02em;margin-bottom:18px;}
+.hero h1 em{font-style:italic;color:var(--gold);font-weight:300;}
+.hero .sub{font-size:19px;line-height:1.5;color:var(--ink-dim);max-width:680px;}
+.hero .kicker{font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:var(--gold);margin-top:22px;}
+
+h2{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-top:72px;margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+p{margin-bottom:14px;}
+.lead{font-size:18px;line-height:1.55;margin-bottom:22px;}
+strong{font-weight:500;color:var(--gold);}
+em{font-style:italic;}
+.dim{color:var(--ink-dim);}
+
+.tool-frame{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#FAFAF8;margin:24px 0 14px;}
+.tool-frame iframe{width:100%;height:560px;border:0;display:block;}
+.tool-cap{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;color:var(--ink-faint);margin-bottom:24px;}
+.tool-cap a{color:var(--gold);text-decoration:none;border-bottom:1px solid var(--line);}
+
+.validation{background:rgba(244,240,233,0.025);border-left:2px solid var(--gold);padding:20px 24px;margin:24px 0;}
+.validation .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.validation p{font-size:15px;margin-bottom:0;}
+
+.scale-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);margin:24px 0;}
+.scale-cell{background:var(--bg);padding:22px 18px;}
+.scale-cell .lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.scale-cell .nm{font-family:'Fraunces',serif;font-size:22px;margin-bottom:10px;}
+.scale-cell .bd{font-size:13.5px;line-height:1.5;color:var(--ink-dim);}
+
+.ledger{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:24px 0;}
+.col h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:500;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+.col.shipped h3{color:var(--gold);}
+.col.pending h3{color:var(--ink-dim);}
+ul.clean{list-style:none;}
+ul.clean li{padding:9px 0 9px 22px;position:relative;font-size:14.5px;line-height:1.5;border-bottom:1px solid var(--line);}
+ul.clean li:last-child{border-bottom:none;}
+ul.clean li::before{content:'·';position:absolute;left:4px;color:var(--gold);font-size:18px;top:7px;}
+.col.pending ul.clean li{color:var(--ink-dim);}
+.col.pending ul.clean li::before{color:var(--ink-faint);}
+
+.signature{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--gold);margin-top:28px;padding-top:24px;border-top:1px solid var(--gold);}
+
+.footer{margin-top:84px;padding-top:24px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.07em;color:var(--ink-faint);line-height:1.8;}
+.footer .name{color:var(--gold);}
+
+a:focus-visible,iframe:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+@media (max-width:720px){
+  .page{padding:56px 24px 80px;}
+  .scale-grid{grid-template-columns:1fr 1fr;}
+  .ledger{grid-template-columns:1fr;gap:36px;}
+  .tool-frame iframe{height:460px;}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="eyebrow">Compass · A decision operating system</div>
+    <h1>When intelligence gets cheap,<br>value moves to <em>judgment.</em></h1>
+    <p class="sub">And judgment is defensible only when you can prove the path you took — not just the answer. Compass builds both: the instrument that reads where value is migrating, and the append-only record that makes the reading honest over time.</p>
+    <p class="kicker">I don't build a smarter assistant. I build an honest one.</p>
+  </div>
+
+  <h2>The orientation — reading value migration</h2>
+  <p class="lead">My main angle is value migration: under rising returns to intelligence, profit leaves the activity that just got cheap and reappears where abundance hasn't reached. I built an instrument to read it firm by firm.</p>
+  <p>The <strong>AI Value Capture Simulation</strong> scores a company on Teece's logic — appropriability regime and complementary assets — against a modularity axis (how easily AI substitutes the components). Pick an industry, a firm, and a level of AI action, and read which moats hold and which dissipate.</p>
+
+  <div class="tool-frame">
+    <iframe src="teece_tool.html" title="AI Value Capture Simulation — Teece moat diagnostic" loading="lazy"></iframe>
+  </div>
+  <p class="tool-cap">Live tool · select Industry → Company → Scenario · the “Methodology &amp; validation” tab carries the outcome test. If the embed is blank, open <a href="teece_tool.html">teece_tool.html</a> directly (host it alongside this page).</p>
+
+  <div class="validation">
+    <div class="label">Why the score isn't decorative</div>
+    <p>Across companies with real market-return data, a firm's Teece position tracks its risk-adjusted outcome — EV/Revenue explained at R² ≈ 0.63, with a positive, significant Fama-French-five-factor alpha relationship. This is <strong>early validation under the deliberate-confidence frame</strong>; the full pre-registered result resolves at Compass's November 2026 gate. One cycle can falsify; it cannot yet prove.</p>
+  </div>
+
+  <h2>Four scales, one need</h2>
+  <p class="lead">Compass reads structural conditions at four nested scales under one epistemic stance: the system proposes, the human disposes. The need it serves is the gap between when a structural problem becomes <em>real</em> and when it becomes <em>visible</em>.</p>
+  <div class="scale-grid">
+    <div class="scale-cell"><div class="lbl">Individual</div><div class="nm">Currents</div><div class="bd">Latent network and knowledge value, before the opportunity is lost.</div></div>
+    <div class="scale-cell"><div class="lbl">Governance</div><div class="nm">Course</div><div class="bd">The eroding foundations of a past decision, before the decision fails.</div></div>
+    <div class="scale-cell"><div class="lbl">Organizational</div><div class="nm">Cadence</div><div class="bd">Coordination drift, before it becomes attrition or scandal.</div></div>
+    <div class="scale-cell"><div class="lbl">Firm-in-market</div><div class="nm">Constellation</div><div class="bd">A thesis drifting from truth, before the capital is misallocated.</div></div>
+  </div>
+
+  <h2>What's running today</h2>
+  <p class="lead">The moat is the <strong>trajectory</strong>, not the method: a capable model can absorb an articulated method, but it cannot replay a path-dependent record run under uncertainty, on a clock. That thesis is implemented at the data-model level — here is the honest state of it.</p>
+
+  <div class="ledger">
+    <div class="col shipped">
+      <h3>Shipped — verifiable with code or access</h3>
+      <ul class="clean">
+        <li>Live multi-agent pipeline on Supabase / Postgres edge functions: RSS ingestion (4-hour cadence) → event processing (2-hour) → provenance-tracked hypothesis generation. Haiku for cheap extraction, Sonnet for reasoning.</li>
+        <li>Append-only, hash-chained record — the trajectory thesis enforced in the schema, not asserted in prose.</li>
+        <li>Prompt-injection fence on the extraction path, verified against a planted adversarial fixture with a committed test harness.</li>
+        <li>Source-agnostic merge contract: append-mostly upserts that coalesce null→value and never overwrite a fact with an inference.</li>
+      </ul>
+    </div>
+    <div class="col pending">
+      <h3>Designed, not yet built — commitment tense</h3>
+      <ul class="clean">
+        <li>The human-disposal write path — schema present and audit-chained, interactive surface unbuilt.</li>
+        <li>Model-vendor abstraction and a portability suite — principle settled, build pending; vendor independence asserted, not yet verified.</li>
+        <li>Relationship-side ingestion — machinery live, real data still starved.</li>
+        <li>Constellation's full pre-registered validation — resolves at the November 2026 gate.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="signature">I claim what ships. What doesn't, I say so. The honest tense is the brand.</p>
+
+  <div class="footer">
+    Compass · Helping leaders read where value is migrating and build capacity to capture it.<br>
+    Empowering humans, individually and collectively, with heart and courage — not groupthink or average thinking.<br>
+    <span class="name">S. Guerraz, CFA, MBA</span> · theaiminute.blog
+  </div>
+
+</div>
+</body>
+</html>
