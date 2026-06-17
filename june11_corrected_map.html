@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>June 11 · The audit — what I expected, and what the data did to it</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+:root{--bg:rgb(25,60,63);--bge:rgb(20,50,53);--ink:rgb(244,240,233);--inkd:rgba(244,240,233,0.62);--inkf:rgba(244,240,233,0.32);--gold:rgb(198,165,83);--line:rgba(244,240,233,0.14);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.page{max-width:880px;margin:0 auto;padding:56px 44px 90px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+h1{font-weight:400;font-size:33px;line-height:1.12;letter-spacing:-.02em;margin-bottom:6px}
+h1 em{font-style:italic;color:var(--gold);font-weight:300}
+.sub{font-style:italic;font-size:14px;color:var(--inkd);margin-bottom:30px}
+h2{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:42px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.mapwrap{border:1.5px solid rgba(244,240,233,0.35);background:var(--bge)}
+.note{font-size:12.5px;color:var(--inkd);font-style:italic;margin-top:10px;line-height:1.55}
+.tray{margin-top:14px;border:1px dashed rgba(244,240,233,0.3);padding:12px 14px}
+.tray-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--inkd);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 9px;border:1px solid rgba(244,240,233,0.25);color:var(--inkd);border-radius:2px}
+.barrow{display:grid;grid-template-columns:170px 1fr 30px;gap:12px;align-items:center;padding:7px 0}
+.barlbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--inkd)}
+.bartrack{height:14px;background:rgba(244,240,233,0.06);position:relative}
+.barfill{height:100%;position:absolute;left:0;top:0}
+.barn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);text-align:right}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:36px}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.colhead{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--inkd)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:9px;height:9px;border-radius:50%;display:inline-block}
+.footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--inkf);line-height:1.7}
+.gold-rule{height:1px;background:var(--gold);width:56px;margin:48px 0 20px}
+p.body{font-size:14.5px;color:var(--inkd);margin-bottom:12px}
+p.body strong{color:var(--gold);font-weight:500}
+.lead{font-size:17px;line-height:1.55;color:var(--ink);margin-bottom:8px}
+.lead em{font-style:italic;color:var(--gold)}
+.scorecard{margin:6px 0 4px;border:1px solid var(--line)}
+.sc-row{display:grid;grid-template-columns:1fr 1fr 116px;border-bottom:1px solid var(--line)}
+.sc-row:last-child{border-bottom:none}
+.sc-row.head{background:rgba(244,240,233,0.03)}
+.sc-row.head>div{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:11px 16px}
+.sc-cell{padding:15px 16px;font-size:13.5px;line-height:1.5;border-right:1px solid var(--line)}
+.sc-cell:last-child{border-right:none}
+.sc-pred{color:var(--inkd)}
+.sc-out{color:var(--ink)}
+.sc-verdict{display:flex;align-items:center;justify-content:center;border-right:none}
+.vtag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border:1px solid;border-radius:2px;text-align:center;line-height:1.3}
+.v-wrong{color:var(--warn,#dc8250);border-color:rgba(220,130,80,0.5)}
+.v-cal{color:#7fbf7f;border-color:rgba(127,191,127,0.5)}
+.v-sup{color:var(--gold);border-color:rgba(198,165,83,0.5)}
+@media(max-width:700px){.sc-row{grid-template-columns:1fr}.sc-cell{border-right:none}.sc-row.head{display:none}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="eyebrow">Course · June 11 masterclass · The record</div>
+<h1>What the room <em>actually</em> said</h1>
+<p class="sub">The corrected map of all nine teams, the mechanism the room converged on — and, at the end, the audit of my own predictions.</p>
+
+<p class="lead">The masterclass asked one question: <em>when AI makes software cheap, who gets the profits?</em> Fifty executives, nine teams, ninety minutes. Here is what the nine teams committed to, rebuilt from the cards exactly as written.</p>
+
+<h2>The map, corrected and completed</h2>
+<div class="mapwrap">
+<svg viewBox="0 0 760 560" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Mono, monospace">
+  <line x1="380" y1="30" x2="380" y2="490" stroke="rgba(244,240,233,0.16)"/>
+  <line x1="70" y1="260" x2="690" y2="260" stroke="rgba(244,240,233,0.16)"/>
+  <text x="70" y="516" fill="rgba(244,240,233,0.5)" font-size="10" letter-spacing="1">INCUMBENT</text>
+  <text x="380" y="516" fill="rgb(198,165,83)" font-size="10" letter-spacing="2" text-anchor="middle">PLAYER TYPE</text>
+  <text x="690" y="516" fill="rgba(244,240,233,0.5)" font-size="10" letter-spacing="1" text-anchor="end">NEW ENTRANT / OPEN</text>
+  <text x="58" y="42" fill="rgba(244,240,233,0.5)" font-size="10" text-anchor="end">↑ UP FOR GRABS</text>
+  <text x="58" y="264" fill="rgb(198,165,83)" font-size="10" text-anchor="end">SETTLED?</text>
+  <text x="58" y="488" fill="rgba(244,240,233,0.5)" font-size="10" text-anchor="end">↓ LOCKED IN</text>
+
+  <!-- anchors -->
+  <g fill="none" stroke="rgba(244,240,233,0.22)" stroke-dasharray="3,3">
+    <circle cx="187.8" cy="375" r="9"/><circle cx="218.8" cy="356.6" r="9"/>
+    <circle cx="411" cy="145" r="9"/><circle cx="256" cy="163.4" r="9"/>
+    <circle cx="572.2" cy="149.6" r="9"/><circle cx="349" cy="329" r="9"/>
+  </g>
+  <g fill="rgba(244,240,233,0.32)" font-size="8.5">
+    <text x="166" y="396">HYPERSCALER</text><text x="218.8" y="345">CHIP</text>
+    <text x="411" y="133">LLM</text><text x="256" y="186">VERTICAL SAAS</text>
+    <text x="540" y="172">ORCHESTRATOR</text><text x="358" y="350">IN-HOUSE</text>
+  </g>
+
+  <!-- 18 AI-placed priors (small, faint) -->
+  <g opacity="0.55">
+    <circle cx="469" cy="93" r="4.5" fill="#e0b86f"/><circle cx="479" cy="100" r="4.5" fill="#7fbf7f"/>
+    <circle cx="467" cy="107" r="4.5" fill="rgba(244,240,233,0.45)"/><circle cx="477" cy="88" r="4.5" fill="#e0b86f"/>
+    <circle cx="74" cy="252" r="4.5" fill="rgba(244,240,233,0.45)"/><circle cx="74" cy="263" r="4.5" fill="#e0b86f"/>
+    <circle cx="80" cy="257" r="4.5" fill="#e0b86f"/><circle cx="80" cy="269" r="4.5" fill="#e0b86f"/>
+    <circle cx="593" cy="72" r="4.5" fill="#e0b86f"/><circle cx="603" cy="78" r="4.5" fill="rgba(244,240,233,0.45)"/>
+    <circle cx="595" cy="84" r="4.5" fill="rgba(244,240,233,0.45)"/><circle cx="628" cy="53" r="4.5" fill="rgba(244,240,233,0.45)"/>
+    <circle cx="70" cy="444" r="4.5" fill="#e0b86f"/><circle cx="70" cy="421" r="4.5" fill="#e0b86f"/>
+    <circle cx="70" cy="191" r="4.5" fill="#e0b86f"/><circle cx="411" cy="99" r="4.5" fill="rgba(244,240,233,0.45)"/>
+    <circle cx="473" cy="76" r="4.5" fill="#e0b86f"/><circle cx="132" cy="191" r="4.5" fill="#e0b86f"/>
+  </g>
+
+  <!-- TEAMS · in-room placements (solid) -->
+  <!-- Vega/Sable/Orion identical (-0.8,0.3)->(132,191): fanned -->
+  <g stroke-width="2">
+    <circle cx="118" cy="178" r="9" fill="#7fbf7f" stroke="#7fbf7f"/>
+    <text x="131" y="172" fill="rgb(244,240,233)" font-size="10">VEGA</text>
+    <circle cx="106" cy="198" r="9" fill="#e0b86f" stroke="#e0b86f"/>
+    <text x="64" y="216" fill="rgb(244,240,233)" font-size="10">SABLE</text>
+    <circle cx="132" cy="200" r="9" fill="#e0b86f" stroke="#e0b86f"/>
+    <text x="145" y="208" fill="rgb(244,240,233)" font-size="10">ORION</text>
+    <circle cx="70" cy="444" r="9" fill="#e0b86f" stroke="#e0b86f"/>
+    <text x="84" y="448" fill="rgb(244,240,233)" font-size="10">ATLAS</text>
+  </g>
+
+  <!-- TEAMS · recomputed 12 Jun (dashed ring) -->
+  <!-- recomputed: filled dot + clean outer ring (not scalloped) -->
+  <g>
+    <circle cx="70"  cy="260" r="6.5" fill="#c08bd0"/><circle cx="70"  cy="260" r="11" fill="none" stroke="rgb(244,240,233)" stroke-width="1.4" stroke-opacity="0.85"/>
+    <circle cx="132" cy="122" r="6.5" fill="#6fa8dc"/><circle cx="132" cy="122" r="11" fill="none" stroke="rgb(244,240,233)" stroke-width="1.4" stroke-opacity="0.85"/>
+    <circle cx="597" cy="76"  r="6.5" fill="#cf8f5a"/><circle cx="597" cy="76"  r="11" fill="none" stroke="rgb(244,240,233)" stroke-width="1.4" stroke-opacity="0.85"/>
+    <circle cx="380" cy="76"  r="6.5" fill="#6fa8dc"/><circle cx="380" cy="76"  r="11" fill="none" stroke="rgb(244,240,233)" stroke-width="1.4" stroke-opacity="0.85"/>
+    <circle cx="132" cy="329" r="6.5" fill="#6fa8dc"/><circle cx="132" cy="329" r="11" fill="none" stroke="rgb(244,240,233)" stroke-width="1.4" stroke-opacity="0.85"/>
+  </g>
+  <g fill="rgb(244,240,233)" font-size="10">
+    <text x="84" y="276">FALCON</text>
+    <text x="145" y="126">PIKE</text>
+    <text x="610" y="80">JUNO</text>
+    <text x="393" y="70">KITE</text>
+    <text x="145" y="333">WREN</text>
+  </g>
+
+  <!-- annotations -->
+  <g>
+    <rect x="180" y="222" width="226" height="34" fill="rgba(198,165,83,0.08)" stroke="rgba(198,165,83,0.4)" stroke-width="0.7"/>
+    <text x="190" y="236" fill="rgb(198,165,83)" font-size="9">VEGA · SABLE · ORION: identical stored</text>
+    <text x="190" y="248" fill="rgb(198,165,83)" font-size="9">coords (−0.8, 0.3) — model attractor</text>
+    <line x1="180" y1="239" x2="146" y2="206" stroke="rgba(198,165,83,0.4)" stroke-width="0.7"/>
+    <rect x="430" y="380" width="250" height="46" fill="rgba(244,240,233,0.04)" stroke="rgba(244,240,233,0.3)" stroke-width="0.7" stroke-dasharray="3,3"/>
+    <text x="442" y="396" fill="rgba(244,240,233,0.7)" font-size="9">DASHED RING = placed 12 Jun, same engine,</text>
+    <text x="442" y="408" fill="rgba(244,240,233,0.7)" font-size="9">single run, from the cards as written.</text>
+    <text x="442" y="420" fill="rgba(244,240,233,0.7)" font-size="9">Live write-back was blocked by a schema check.</text>
+  </g>
+</svg>
+</div>
+
+<div class="tray">
+<div class="tray-label">Still in the tray — prior entries the engine could not read (displayed in-room as real geometry; they were not)</div>
+<div class="chips">
+  <span class="chip">7 priors → defaulted to centre (0,0)</span>
+  <span class="chip">7 priors → defaulted to lens anchors</span>
+</div>
+</div>
+<p class="note">Why five teams were missing on June 11, resolved: the v3.2 taxonomy update changed the engine's moat vocabulary, but the database's check constraint still enforced the old one — every placement labeled cornered, branding, process, network or counter was rejected at write time, silently. The four that persisted were scale and switching: the only two keys both vocabularies shared. The integrity constraint did its job; the instrument had changed underneath it.</p>
+
+<div class="legend">
+<span><span class="sw" style="background:#e0b86f"></span> switching</span>
+<span><span class="sw" style="background:#7fbf7f"></span> scale</span>
+<span><span class="sw" style="background:#6fa8dc"></span> cornered</span>
+<span><span class="sw" style="background:#c08bd0"></span> branding</span>
+<span><span class="sw" style="background:#cf8f5a"></span> process</span>
+<span>solid = stored in the room · dashed ring = recomputed 12 Jun</span>
+</div>
+
+
+<h2>The mechanism question — full set, engine vs. blind reading</h2>
+<div class="cols">
+<div>
+<div class="colhead" style="color:var(--inkd)">ENGINE, ALL NINE TEAMS (after recompute)</div>
+<div class="barrow"><span class="barlbl">cornered resource</span><div class="bartrack"><div class="barfill" style="width:33%;background:#6fa8dc"></div></div><span class="barn">3</span></div>
+<div class="barrow"><span class="barlbl">switching costs</span><div class="bartrack"><div class="barfill" style="width:33%;background:#e0b86f"></div></div><span class="barn">3</span></div>
+<div class="barrow"><span class="barlbl">scale · process · branding</span><div class="bartrack"><div class="barfill" style="width:33%;background:rgba(244,240,233,0.35)"></div></div><span class="barn">3</span></div>
+</div>
+<div>
+<div class="colhead" style="color:var(--gold)">BLIND-CODED FROM THE TEAMS' PROSE</div>
+<div class="barrow"><span class="barlbl">cornered resource</span><div class="bartrack"><div class="barfill" style="width:44%;background:#6fa8dc"></div></div><span class="barn">4</span></div>
+<div class="barrow"><span class="barlbl">switching costs</span><div class="bartrack"><div class="barfill" style="width:33%;background:#e0b86f"></div></div><span class="barn">3</span></div>
+<div class="barrow"><span class="barlbl">counter/branding · platform</span><div class="bartrack"><div class="barfill" style="width:22%;background:#c08bd0"></div></div><span class="barn">2</span></div>
+</div>
+</div>
+<p class="note">Two independent readings — the engine on a clean run, and a human coding the prose blind — now broadly agree: no switching-cost convergence. The room's centre of gravity is <strong style="color:var(--gold)">cornered resource: your own data, hardware, energy</strong>. The June 11 "switching" picture was the instrument, three layers deep.</p>
+
+
+<h2>What survives — the backbone</h2>
+<p class="body"><strong>The priors are real.</strong> 32 cold reads locked before any input. Of the lenses chosen, one in eighteen picked the hyperscaler — the room declined the priced consensus from minute two.</p>
+<p class="body"><strong>The cards are real.</strong> Nine positions with mechanisms, dissent, and falsifiers in the teams' own words — rich enough that the room's signal could be recovered twice over, by a clean engine run and by a blind human reading, agreeing with each other.</p>
+<p class="body"><strong>The room's finding, completed:</strong> a strong lean toward incumbents and builders who hold the cornered inputs — own data, hardware, energy — with the contest still live. Neither the hyperscaler consensus nor the LLM hype.</p>
+
+
+<div class="gold-rule"></div>
+
+<h2>Coda — the audit of my own predictions</h2>
+<p class="body">A method is only honest if it can be wrong on the record. Before opening the session data, I wrote down four predictions, then checked them. Two were wrong — and those two are the reason this page exists.</p>
+<div class="scorecard">
+<div class="sc-row head"><div>What I predicted</div><div>What the data showed</div><div>Verdict</div></div>
+<div class="sc-row">
+<div class="sc-cell sc-pred">The room would anchor on the hyperscalers — the available, priced-in answer.</div>
+<div class="sc-cell sc-out">Of the cold reads that named a player, one in eighteen picked a hyperscaler. The room declined the consensus from minute two.</div>
+<div class="sc-cell sc-verdict"><span class="vtag v-wrong">Wrong</span></div>
+</div>
+<div class="sc-row">
+<div class="sc-cell sc-pred">The instrument would behave — the map would show what the room actually said.</div>
+<div class="sc-cell sc-out">A bug parked unplaceable answers at the centre, manufacturing a convergence that wasn't there. Three failure layers in all.</div>
+<div class="sc-cell sc-verdict"><span class="vtag v-wrong">Wrong</span></div>
+</div>
+<div class="sc-row">
+<div class="sc-cell sc-pred">One to two of the nine team falsifiers would pass the stranger test — decidable by an outsider in 2029.</div>
+<div class="sc-cell sc-out">Two passed cleanly, three partly, four failed. Slightly pessimistic, well calibrated.</div>
+<div class="sc-cell sc-verdict"><span class="vtag v-cal">Calibrated</span></div>
+</div>
+<div class="sc-row">
+<div class="sc-cell sc-pred">The room would land neither on the hyperscaler consensus nor on the LLM hype.</div>
+<div class="sc-cell sc-out">It landed on cornered inputs — own data, hardware, energy — and in-house builders. Supported in the prose, once the map was corrected.</div>
+<div class="sc-cell sc-verdict"><span class="vtag v-sup">Supported</span></div>
+</div>
+</div>
+<p class="note">Two predictions wrong, one calibrated, one supported. The two I got wrong are the two worth publishing — the room was sharper than I expected, and my own instrument was the thing that hid it.</p>
+
+
+<div class="footer">
+Course · instrument audit · 12 Jun 2026 · built from course_priors / course_teams / course_assignments, session june11<br>
+Failure layers found: silent fallback placement (14/32 priors) · taxonomy fold compressing in-house prose into "switching" · display coercion of NULLs to (0,0) and the scale lane · schema check constraint rejecting the v3.2 moat vocabulary at write time (root cause of the five missing teams) · run-to-run placement drift at temp 0.2.<br>
+Fixes adopted: place once, store, every view reads the record · unplaceable entries surface in the tray · schema and instrument version together.
+</div>
+
+</div>
+</body>
+</html>
