@@ -101,7 +101,7 @@
 
     /* ── ARTIFACT ── */
     .artifact-wrap{margin:1.25rem 0;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:rgba(244,240,233,.03);}
-    .artifact-wrap iframe{width:100%;height:500px;border:none;display:block;}
+    .artifact-wrap iframe{width:100%;height:620px;border:none;display:block;}
     .artifact-caption{font-size:.78rem;color:var(--muted);font-family:'DM Sans',sans-serif;padding:.65rem .85rem;border-top:1px solid var(--border);line-height:1.5;font-style:italic;}
 
     /* ── IMAGE ── */
@@ -116,7 +116,7 @@
     .carousel-track-outer{overflow:hidden;}
     .carousel-track{display:flex;transition:transform .38s cubic-bezier(.4,0,.2,1);will-change:transform;}
     .carousel-slide{flex:0 0 100%;position:relative;}
-    .carousel-slide img{width:100%;height:auto;display:block;}
+    .carousel-slide img{width:100%;display:block;object-fit:cover;max-height:460px;}
     .carousel-slide-body{padding:.75rem 1rem;font-size:.83rem;color:var(--ink);line-height:1.6;font-family:'DM Sans',sans-serif;}
     .carousel-slide-caption{font-size:.75rem;color:var(--muted);padding:.45rem 1rem .65rem;border-top:1px solid var(--border);font-style:italic;line-height:1.45;}
     .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(25,60,63,.72);border:1px solid rgba(244,240,233,.18);color:var(--cream);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;backdrop-filter:blur(6px);transition:background .2s,border-color .2s;z-index:5;padding:0;line-height:1;}
@@ -451,6 +451,17 @@
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
   function copyLink(url){navigator.clipboard.writeText(url).then(()=>showToast('Link copied ✓'));}
   function copyDraft(draft,url){navigator.clipboard.writeText((draft||'')+'\n\n'+url).then(()=>showToast('Draft copied — paste into LinkedIn ✓'));}
+  // Auto-size artifact iframes to their content so the graph is never clipped.
+  // Requires the artifact to post {type:'artifact-height', height:<px>} on load/resize.
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (d.type === 'artifact-height' && typeof d.height === 'number') {
+      document.querySelectorAll('.artifact-wrap iframe').forEach(f => {
+        if (f.contentWindow === e.source) f.style.height = Math.ceil(d.height) + 'px';
+      });
+    }
+  });
+
   loadPosts();
 </script>
 </body>
