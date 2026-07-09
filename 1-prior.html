@@ -87,6 +87,7 @@ textarea::placeholder{color:var(--inkf);font-style:italic}
 </style>
 <script src="config.js"></script>
 <script src="course_axis.js"></script>
+<script src="course_emit.js"></script>
 </head>
 <body>
 <div class="app">
@@ -258,6 +259,10 @@ function clearTag(){
 //  the shared axis module so every view places identically.
 // ====================================================================
 var LENS_ANCHORS = CourseAxis.LENS_ANCHORS;
+// The elicitation question these priors answer — carried into the C1 object.
+var COURSE_QUESTION = (typeof window.COURSE_QUESTION !== "undefined" && window.COURSE_QUESTION)
+  ? window.COURSE_QUESTION
+  : "Where will the new value go?";
 
 // ── EDGE FUNCTION call — key stays server-side ──────────────────────
 // SUPABASE_URL and SUPABASE_ANON_KEY are the only values needed in the browser.
@@ -334,7 +339,7 @@ async function submitPrior(){
   // 3b. Write placement coords back from the browser directly.
   if(recordId){
     try {
-      await fetch(SUPABASE_URL + "/rest/v1/course_priors?id=eq." + recordId, {
+      var wb = await fetch(SUPABASE_URL + "/rest/v1/course_priors?id=eq." + recordId, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -343,14 +348,34 @@ async function submitPrior(){
           "Prefer": "return=minimal"
         },
         body: JSON.stringify((function(){
-          var VALID=["scale","data","workflow_embed","sor","switching","distribution","reg","reputation"];
+          
           var b={x:placed.x,y:placed.y,confidence:placed.confidence,justification:placed.justification,placed_by:placed.placed_by};
-          if(placed.moat && VALID.indexOf(placed.moat)!==-1) b.moat_type=placed.moat;
+          if(placed.moat) b.moat_type=placed.moat;
           return b;
         })())
       });
+      if(!wb.ok){ var wbd = await wb.text(); console.error("WRITE-BACK REJECTED", wb.status, wbd); throw new Error("write-back "+wb.status); }
       console.log("COORDS WRITTEN BACK for", recordId);
-    } catch(e){ console.warn("coord write-back failed:", e.message); }
+    } catch(e){ console.error("WRITE-BACK FAILED:", e.message); }
+  }
+
+  // 3c. Second sink: append this prior to the Log as a C1 elicitation object,
+  //     built from the SAME values just written. Best-effort — it never blocks
+  //     the room. A failure is loud (D1) and surfaced, never silent.
+  if(window.CourseEmit){
+    try {
+      var emit = await CourseEmit.elicitation({
+        sessionId: SESSION_ID,
+        questionText: COURSE_QUESTION,
+        person: payload.name,
+        x: payload.x, y: payload.y, moat: payload.moat,
+        rationale: payload.thesis,
+        placedBy: payload.placed_by,
+        reason: (placed && placed.reason) || null,
+        sourceRef: recordId
+      });
+      if(!emit.ok) console.error("LOG EMISSION FAILED:", emit.reason);
+    } catch(e){ console.error("LOG EMISSION FAILED:", e && e.message); }
   }
 
   // 4. Show placement result
@@ -366,8 +391,8 @@ async function submitPrior(){
 function coordWords(x,y,moat){
   var xs = x < -0.15 ? "incumbent-leaning" : x > 0.15 ? "new-entrant / open" : "mixed player-type";
   var ys = y < -0.15 ? "looks locked in" : y > 0.15 ? "still up for grabs" : "partly settled";
-  var ms = { scale:"infrastructure / scale moat", data:"data network-effects moat", workflow_embed:"workflow-embedding moat", sor:"system-of-record moat", switching:"switching-cost moat", distribution:"distribution-leverage moat", reg:"regulatory moat", reputation:"reputational-capital moat" };
-  var mm = moat && ms[moat] ? "  ·  " + ms[moat] : "";
+  var ms = CourseAxis.MOAT_LABEL;
+  var mm = moat && ms[moat] ? "  ·  " + ms[moat] + " moat" : "";
   return xs + "  ·  " + ys + mm;
 }
 
@@ -383,7 +408,7 @@ function resetForm(){
   document.getElementById("submitBtn").disabled = true;
 }
 
-var MM_COLOUR = { scale:"rgb(127,191,127)", data:"rgb(111,168,220)", workflow_embed:"rgb(224,168,96)", sor:"rgb(224,168,96)", switching:"rgb(206,150,110)", distribution:"rgb(224,128,128)", reg:"rgb(190,135,205)", reputation:"rgb(130,200,195)" };
+function MM_COLOUR_of(m){ return CourseAxis.colour(m); }  // single source (course_axis.js)
 var MM_ANCHOR_LABEL = { hyperscaler:"Hyperscaler", chipmaker:"Chip", llm:"LLM", saas:"Vertical SaaS", orchestrator:"Orchestrator", inhouse:"In-house" };
 function renderMiniMap(p){
   var grid = document.getElementById("mmGrid"); if(!grid) return;
@@ -395,7 +420,7 @@ function renderMiniMap(p){
   Object.keys(LENS_ANCHORS).forEach(function(k){
     var a = LENS_ANCHORS[k];
     var d = document.createElement("div"); d.className="mm-dot mm-anchor";
-    d.style.left=L(a.x); d.style.top=T(a.y); d.style.background=MM_COLOUR[a.m]||"rgba(244,240,233,0.4)";
+    d.style.left=L(a.x); d.style.top=T(a.y); d.style.background=MM_COLOUR_of(a.m)||"rgba(244,240,233,0.4)";
     grid.appendChild(d);
     var lbl=document.createElement("div"); lbl.className="mm-lbl";
     lbl.style.left=L(a.x); lbl.style.top="calc("+T(a.y)+" + 11px)";
@@ -403,7 +428,7 @@ function renderMiniMap(p){
   });
   if(p && p.x!=null && p.y!=null){
     var you=document.createElement("div"); you.className="mm-dot mm-you";
-    you.style.left=L(p.x); you.style.top=T(p.y); you.style.background=MM_COLOUR[p.moat]||"var(--gold)";
+    you.style.left=L(p.x); you.style.top=T(p.y); you.style.background=MM_COLOUR_of(p.moat)||"var(--gold)";
     grid.appendChild(you);
     var yl=document.createElement("div"); yl.className="mm-lbl mm-you-lbl";
     yl.style.left=L(p.x); yl.style.top="calc("+T(p.y)+" - 13px)"; yl.textContent="YOU";

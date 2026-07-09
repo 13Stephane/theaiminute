@@ -55,6 +55,18 @@
   };
   var ANCHOR_LABEL = { hyperscaler:"Hyperscaler", chipmaker:"Chip", llm:"LLM", saas:"Vertical SaaS", orchestrator:"Orchestrator", inhouse:"In-house" };
 
+  // moat-key -> human gloss (the 8 taxonomy keys). Single source for the prose
+  // labels the participant pages used to hand-mirror. Append " moat" at the call
+  // site as the copy requires. Keyed by the canonical 8; legacy keys resolve via
+  // laneOf() for colour, and read their gloss from their canonical spelling.
+  var MOAT_LABEL = {
+    scale:"infrastructure / scale", data:"data network-effects",
+    workflow_embed:"workflow-embedding", sor:"system-of-record",
+    switching:"switching-cost", distribution:"distribution-leverage",
+    reg:"regulatory", reputation:"reputational-capital"
+  };
+  function moatLabel(m){ return MOAT_LABEL[m] || null; }
+
   function laneOf(m){ return KEY2LANE[m] || null; }
   function colour(m){ var l=laneOf(m); return (l && LANE_META[l].colour) || "rgba(198,165,83,0.75)"; }
 
@@ -258,6 +270,7 @@
   window.CourseAxis = {
     KEY2LANE:KEY2LANE, LANE_ORDER:LANE_ORDER, LANE_META:LANE_META, ENUM_K:ENUM_K,
     LENS_ANCHORS:LENS_ANCHORS, ANCHOR_LABEL:ANCHOR_LABEL,
+    MOAT_LABEL:MOAT_LABEL, moatLabel:moatLabel,
     laneOf:laneOf, colour:colour, makeCoords:makeCoords,
     settleScore:settleScore, moatScore:moatScore, chooseMode:chooseMode,
     mountControls:mountControls, renderAnchors:renderAnchors, clearAnchors:clearAnchors,

@@ -600,6 +600,7 @@ button.action.ghost:hover {
 .mm-you-lbl{color:var(--gold);font-weight:500}
 </style>
 <script src="config.js"></script>
+<script src="course_axis.js"></script>
 </head>
 <body>
 
@@ -892,12 +893,12 @@ button.action.ghost:hover {
                    // change per session
 
   // ── Placement helpers (same engine as Phase 1) ───────────────────────
-  var LENS_ANCHORS = {
-    hyperscaler:{x:-0.62,y:-0.50,m:"distribution"}, chipmaker:{x:-0.52,y:-0.42,m:"scale"}, llm:{x:0.10,y:0.50,m:"scale"},
-    saas:{x:-0.40,y:0.42,m:"workflow_embed"}, orchestrator:{x:0.62,y:0.48,m:"sor"}, inhouse:{x:-0.10,y:-0.30,m:"switching"},
-  };
-  var MM_COLOUR = { scale:"rgb(127,191,127)", data:"rgb(111,168,220)", workflow_embed:"rgb(224,168,96)", sor:"rgb(224,168,96)", switching:"rgb(206,150,110)", distribution:"rgb(224,128,128)", reg:"rgb(190,135,205)", reputation:"rgb(130,200,195)" };
-  var MM_ANCHOR_LABEL = { hyperscaler:"Hyperscaler", chipmaker:"Chip", llm:"LLM", saas:"Vertical SaaS", orchestrator:"Orchestrator", inhouse:"In-house" };
+  // Single source of truth (course_axis.js) — no inline vocabulary. Anchors and
+  // colours came from a hand-mirrored copy that had drifted from the module
+  // (hyperscaler/saas/orchestrator moat keys disagreed); T2 now forbids that.
+  var LENS_ANCHORS = CourseAxis.LENS_ANCHORS;
+  function MM_COLOUR_of(m){ return CourseAxis.colour(m); }
+  var MM_ANCHOR_LABEL = CourseAxis.ANCHOR_LABEL;
   function renderTeamMap(pl){
     var grid = document.getElementById("teamMapGrid"); if(!grid) return;
     document.getElementById("teamMapWrap").style.display = "block";
@@ -907,7 +908,7 @@ button.action.ghost:hover {
     Object.keys(LENS_ANCHORS).forEach(function(k){
       var a=LENS_ANCHORS[k];
       var d=document.createElement("div"); d.className="mm-dot mm-anchor";
-      d.style.left=L(a.x); d.style.top=T(a.y); d.style.background=MM_COLOUR[a.m]||"rgba(244,240,233,0.4)";
+      d.style.left=L(a.x); d.style.top=T(a.y); d.style.background=MM_COLOUR_of(a.m)||"rgba(244,240,233,0.4)";
       grid.appendChild(d);
       var lbl=document.createElement("div"); lbl.className="mm-lbl";
       lbl.style.left=L(a.x); lbl.style.top="calc("+T(a.y)+" + 11px)"; lbl.textContent=MM_ANCHOR_LABEL[k]||k;
@@ -915,7 +916,7 @@ button.action.ghost:hover {
     });
     if(pl && pl.x!=null && pl.y!=null){
       var you=document.createElement("div"); you.className="mm-dot mm-you";
-      you.style.left=L(pl.x); you.style.top=T(pl.y); you.style.background=MM_COLOUR[pl.moat]||"var(--gold)";
+      you.style.left=L(pl.x); you.style.top=T(pl.y); you.style.background=MM_COLOUR_of(pl.moat)||"var(--gold)";
       grid.appendChild(you);
       var yl=document.createElement("div"); yl.className="mm-lbl mm-you-lbl";
       yl.style.left=L(pl.x); yl.style.top="calc("+T(pl.y)+" - 13px)"; yl.textContent="YOUR TABLE";
@@ -1216,7 +1217,7 @@ Output format: 2-3 numbered questions, then optionally one closing sentence invi
   function coordWords(x, y, moat){
     var xs = x < -0.15 ? "incumbent" : x > 0.15 ? "new-entrant/open" : "mixed";
     var ys = y > 0.15 ? "up for grabs" : y < -0.15 ? "locked in" : "partly settled";
-    var ms = { scale:"infrastructure/scale", data:"data network-effects", workflow_embed:"workflow-embedding", sor:"system-of-record", switching:"switching-cost", distribution:"distribution-leverage", reg:"regulatory", reputation:"reputational-capital" };
+    var ms = CourseAxis.MOAT_LABEL;
     var mm = moat && ms[moat] ? " · " + ms[moat] + " moat" : "";
     return xs + " · " + ys + mm;
   }
