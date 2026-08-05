@@ -35,11 +35,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Check RSS feed health
+      - name: Check content health
         id: check
         env:
-          FEED_URL: ${{ vars.RSS_FEED_URL || 'https://theaiminute.blog/rss.xml' }}
-          MAX_AGE_HOURS: ${{ vars.RSS_MAX_AGE_HOURS || '48' }}
+          # Defaults monitor the Supabase published-posts endpoint (the blog has
+          # no classic RSS feed). Override any of these with repository variables.
+          FEED_URL: ${{ vars.RSS_FEED_URL || 'https://kcobpakjfluuyfzswtoq.supabase.co/rest/v1/posts?status=eq.published&order=published_at.desc&limit=5' }}
+          MAX_AGE_HOURS: ${{ vars.RSS_MAX_AGE_HOURS || '72' }}
+          # Public Supabase anon key (already shipped in the site's config.js /
+          # index.html). Required to read the endpoint; override via repo variable.
+          API_KEY: ${{ vars.SUPABASE_ANON || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjb2JwYWtqZmx1dXlmenN3dG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MTEyMTgsImV4cCI6MjA5Mjk4NzIxOH0.qSlZOSGMtfBWfNlrJrO-SWLRumLFZb0qVkZPWh1dRWM' }}
         run: |
           set +e
           report="$(python .github/scripts/check_rss.py)"
