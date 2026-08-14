@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<!--
+  THE PANDEMIC POLICY ROOM  —  v2.1 · 2026-08-12
+  Managerial Economics · DTU Executive MBA (MMT) · September 2026 cohort
+  Build: average-unemployment rubric · mechanism monitor (6 loops incl. animal spirits)
+         · QE in €bn/quarter · rationale capture · advisors' expert band · Model & formulas tab
+  Validated by policy_room_harness.js — 71/71 passing.
+  Companion: 07_policy_room_league_table.html (same scoring rubric — keep versions in step).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pandemic Policy Room — 2020–2021</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F; --teal3:#2C615F;
+    --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6;
+    --ink:#15302E; --muted:#5E726F;
+    --green:#3E8E5A; --red:#B0492F; --blue:#3F6E8C;
+    --fed:#C6A553; --ecb:#5C8FB0; --usg:#C97A4A; --eug:#6FA083;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.45;padding:clamp(12px,2vw,28px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .eyebrow{font:600 12px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(22px,3.2vw,32px);line-height:1.05;margin-top:4px}
+  .qbadge{text-align:right}
+  .qbadge .ql{font-family:Georgia,serif;font-size:clamp(20px,2.8vw,30px);font-weight:700;color:var(--gold)}
+  .qbadge .qp{font-size:12px;color:#A9B7B5}
+  .qdots{display:flex;gap:5px;justify-content:flex-end;margin-top:5px}
+  .qdots i{width:9px;height:9px;border-radius:50%;background:rgba(244,240,233,.22)}
+  .qdots i.done{background:var(--green)} .qdots i.now{background:var(--gold)}
+
+  .news{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-left:4px solid var(--gold);border-radius:10px;padding:13px 16px;margin-bottom:16px}
+  .news .h{font:700 11px "Calibri";letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+  .news .body{font-size:14px;color:#E4DFD4}
+  .news .hint{margin-top:8px;font-size:12.5px;color:#AFC3BC;font-style:italic}
+  .news .hint b{color:var(--gold-soft);font-style:normal}
+
+  /* gauges */
+  .gauges{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  @media(max-width:760px){.gauges{grid-template-columns:1fr}}
+  .econ{background:var(--cream);color:var(--ink);border-radius:13px;padding:14px 16px}
+  .econ h3{font-family:Georgia,serif;font-size:16px;color:var(--teal);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .flag{font-size:18px}
+  .grow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+  .g{background:var(--cream2);border-radius:9px;padding:8px 10px}
+  .g .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  .g .v{font-family:Georgia,serif;font-size:19px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+  .g .v small{font-size:11px;font-weight:400}
+  .g .t{font-size:10.5px;font-weight:700;margin-top:1px}
+  .g .spark{margin-top:4px;height:22px;width:100%;display:block}
+  .g .spark path{fill:none;stroke-width:1.6;opacity:.75}
+  .g .why{font-size:9.5px;color:var(--muted);line-height:1.25;margin-top:3px;font-style:italic}
+  .hintline{font-size:10.5px;color:var(--muted);line-height:1.4}
+  .hintline b{color:var(--teal)}
+  .resumebar{background:rgba(198,165,83,.14);border:1px solid var(--gold);border-radius:11px;padding:11px 15px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--cream)}
+  .resumebar b{color:var(--gold)}
+  .resumebar .btn{padding:6px 14px;font-size:12px}
+  .lockbanner{margin-top:10px;background:rgba(198,165,83,.12);border:1px solid rgba(198,165,83,.5);border-radius:9px;padding:9px 13px;font-size:12px;color:var(--cream)}
+  .lockbanner b{color:var(--gold)}
+  .buildstamp{display:inline-block;margin-left:10px;font-size:10.5px;color:var(--muted);font-family:Calibri;letter-spacing:.04em}
+  .logq{border-bottom:1px solid rgba(25,60,63,.14);padding:11px 0}
+  .lqh{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--teal);margin-bottom:6px}
+  .lqres{font-family:Calibri;font-size:10.5px;font-weight:400;color:var(--muted)}
+  .logt{width:100%;border-collapse:collapse}
+  .logt td{padding:4px 8px 4px 0;font-size:11.5px;vertical-align:top;color:var(--ink)}
+  .lrole{font-weight:700;color:var(--teal);white-space:nowrap;width:150px}
+  .lwhy{color:var(--muted)}
+  .ltag{display:inline-block;background:var(--gold);color:var(--teal);font-weight:700;font-size:9.5px;padding:1px 7px;border-radius:999px;margin-right:4px}
+  .lnone{font-style:italic;color:#A6B0AD}
+  .coh{margin-top:10px;padding-top:9px;border-top:1px solid rgba(25,60,63,.15)}
+  .cohh{font-size:11.5px;font-weight:700;color:var(--teal);margin-bottom:5px}
+  .cohrow{font-size:11.5px;line-height:1.45;margin-bottom:3px;padding-left:16px;position:relative;color:var(--ink)}
+  .cohrow:before{position:absolute;left:0;font-weight:700}
+  .cohrow.bad:before{content:"\u26A0";color:#B0492F}
+  .cohrow.ok:before{content:"\u2713";color:#3E8E5A}
+  .cohseat{font-weight:700;color:var(--teal)}
+  .cohnote{font-size:10.5px;color:var(--muted);font-style:italic;margin-top:5px;line-height:1.4}
+  .cohlist{margin:4px 0 8px 18px;font-size:12px;line-height:1.5;color:var(--ink)}
+  .cohlist li{margin-bottom:3px}
+  .cohcaveat{font-size:11.5px;color:var(--muted);font-style:italic}
+  .cmpcharts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  @media(max-width:760px){.cmpcharts{grid-template-columns:1fr}}
+  .cmpchart{background:var(--cream2);border-radius:11px;padding:10px 12px 4px}
+  .crith{font-family:Georgia,serif;font-size:17px;color:var(--teal);margin:18px 0 8px}
+  .critgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.critgrid{grid-template-columns:1fr}}
+  .critcard{background:var(--cream2);border-left:4px solid var(--gold);border-radius:9px;padding:11px 13px}
+  .critcard .crole{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--teal);margin-bottom:5px}
+  .critcard div{font-size:11.5px;line-height:1.45;color:var(--ink);margin-bottom:5px}
+  .critcard b{color:var(--teal)}
+  .critcard .cdef{color:#5E726F}
+  .critfoot{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:9px;line-height:1.45}
+  .eqwhy{background:var(--cream2);border-radius:11px;padding:14px 17px}
+  .eqwhy p{font-size:12.5px;line-height:1.55;color:var(--ink);margin-bottom:9px}
+  .eqwhy p:last-child{margin-bottom:0}
+  .eqwhy b{color:var(--teal)}
+  .cmplegend{font-size:11.5px;color:var(--muted);line-height:1.5;margin:2px 0 14px}
+  .cmplegend b{color:var(--teal)}
+  .mixnote{font-size:9.5px;color:var(--muted);font-style:italic;margin:-2px 0 7px 2px;line-height:1.3}
+  .objbox{background:rgba(198,165,83,.10);border:1px solid var(--gold);border-radius:11px;padding:13px 16px;margin-bottom:14px}
+  .objbox h4{font-family:Georgia,serif;font-size:15px;color:var(--gold);margin-bottom:6px}
+  .objgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:8px}
+  .objgrid div{font-size:11.5px;color:var(--cream);line-height:1.4}
+  .objgrid b{color:var(--gold-soft,#E7D6A6)}
+  .objfoot{font-size:11px;color:#A9B7B5;margin-top:9px;font-style:italic;line-height:1.4}
+  .fwdchartwrap{background:var(--cream2);border-radius:11px;padding:12px 14px 6px;margin-bottom:14px}
+  .fwdcharttitle{font-size:11.5px;font-weight:700;color:var(--teal);margin-bottom:4px;font-family:Calibri}
+  .fwdchart{width:100%;height:auto;display:block}
+  .scorewhy{font-size:11.5px;color:var(--ink);line-height:1.45;margin-top:6px}
+  .scorewhy b{color:var(--teal)}
+  .up{color:var(--red)} .down{color:var(--green)} .flat{color:var(--muted)}
+  .spark{display:block;margin-top:3px}
+
+  .shared{display:flex;gap:10px;flex-wrap:wrap;background:var(--cream);color:var(--ink);border-radius:13px;padding:12px 16px;margin-bottom:18px;justify-content:space-around}
+  .sg{text-align:center;min-width:90px}
+  .sg .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  .sg .v{font-family:Georgia,serif;font-size:20px;font-weight:700;color:var(--teal);margin-top:2px}
+
+  /* decisions */
+  .decis{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
+  @media(max-width:760px){.decis{grid-template-columns:1fr}}
+  .panel{background:var(--cream);color:var(--ink);border-radius:13px;padding:15px 17px;border-top:4px solid var(--gold)}
+  .panel.fed{border-top-color:var(--fed)} .panel.ecb{border-top-color:var(--ecb)} .panel.usg{border-top-color:var(--usg)} .panel.eug{border-top-color:var(--eug)}
+  .panel .role{font-family:Georgia,serif;font-size:16px;font-weight:700;color:var(--teal)}
+  .panel .mandate{font-size:11px;color:var(--muted);margin-bottom:11px}
+  .dec{margin-bottom:12px}
+  .dec label{display:flex;justify-content:space-between;font:600 12.5px "Calibri";color:var(--teal);margin-bottom:5px}
+  .dec label .v{color:var(--red);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:999px;background:var(--cream2)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid #fff;cursor:pointer}
+  .mix{margin-top:6px}
+  .mix .mh{font:600 11.5px "Calibri";color:var(--teal);margin-bottom:6px;display:flex;justify-content:space-between}
+  .mix .mh .tot{color:var(--muted);font-weight:400}
+  .mixrow{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .mixrow .nm{font-size:11px;color:var(--ink);width:118px;flex:none}
+  .mixrow input{flex:1}
+  .mixrow .pc{font-size:11px;color:var(--muted);width:34px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .resolve{display:flex;justify-content:center;margin:16px 0 6px}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:11px;padding:14px 30px;font:700 16px "Calibri";cursor:pointer;transition:.15s}
+  .btn:hover{background:#D4B868}
+  .btn.ghost{background:transparent;color:var(--cream);border:1px solid rgba(244,240,233,.35)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .briefing{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-radius:12px;padding:16px 18px;margin-top:14px;display:none}
+  .briefing .h{font:700 11px "Calibri";letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .briefing .body{font-size:13.5px;color:#E4DFD4;white-space:pre-wrap}
+  .briefing .status{font-size:12px;color:var(--gold-soft)}
+
+  .debrief{background:var(--cream);color:var(--ink);border-radius:14px;padding:22px 24px;margin-top:16px;display:none}
+  .debrief h2{font-family:Georgia,serif;font-size:22px;color:var(--teal);margin-bottom:6px}
+  .mech{margin-top:14px;border-top:1px solid rgba(25,60,63,.15);padding-top:12px}
+  .mech h3{font-family:Georgia,serif;font-size:15px;color:var(--teal);margin-bottom:3px}
+  .mech .sub{font-size:11.5px;color:var(--muted);margin-bottom:10px}
+  .loop{display:flex;gap:10px;align-items:flex-start;background:var(--cream2);border-radius:9px;padding:8px 11px;margin-bottom:7px;border-left:4px solid #C9C2B4;transition:.2s}
+  .loop.on{border-left-color:var(--gold);background:#F3ECDA;box-shadow:0 2px 8px rgba(198,165,83,.25)}
+  .loop.hot{border-left-color:#B0492F;background:#F5E4DE}
+  .loop .ln{min-width:148px}
+  .loop .nm{font-size:12px;font-weight:700;color:var(--teal)}
+  .loop .ch{font-size:10.5px;color:var(--muted);margin-top:1px}
+  .loop .rd{flex:1;font-size:12px;color:var(--ink);line-height:1.35}
+  .loop .rd b{color:var(--teal)}
+  .modelbtn{margin-top:8px;background:transparent;border:1px solid rgba(198,165,83,.5);color:var(--gold);font:600 12px "Calibri";padding:6px 12px;border-radius:8px;cursor:pointer}
+  .modelbtn:hover{background:rgba(198,165,83,.12)}
+  .overlay{position:fixed;inset:0;background:rgba(10,26,27,.86);z-index:100;display:none;overflow:auto;padding:30px 16px}
+  .overlay.on{display:block}
+  .modelcard{max-width:900px;margin:0 auto;background:var(--cream);color:var(--ink);border-radius:16px;padding:28px 32px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .modelcard h2{font-family:Georgia,serif;color:var(--teal);font-size:24px;margin-bottom:4px}
+  .modelcard .msub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .modelcard h3{font-family:Georgia,serif;color:var(--teal);font-size:16px;margin:18px 0 6px;border-bottom:2px solid var(--gold);padding-bottom:3px}
+  .eq{background:#EEE7DA;border-radius:8px;padding:9px 12px;font-family:"Consolas",monospace;font-size:12.5px;color:#173230;margin:7px 0;overflow-x:auto}
+  .modelcard p{font-size:13px;line-height:1.5;margin:5px 0}
+  .modelcard .var{color:var(--teal);font-weight:700}
+  .closex{float:right;background:var(--teal);color:var(--cream);border:none;border-radius:8px;padding:7px 13px;font:700 13px "Calibri";cursor:pointer}
+  .dec .ref{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.3}
+  .expband{font-size:11px;color:#8A6E26;margin-top:4px;font-style:italic}
+  .ismnote{margin-top:6px;font-size:11px;color:var(--muted)}
+  .ratwrap{margin-top:9px}
+  .ratwrap label{font-size:11px;font-weight:700;color:var(--teal);display:block;margin-bottom:4px}
+  .rattags{display:flex;flex-wrap:wrap;gap:5px}
+  .rattag{font-size:10.5px;padding:4px 9px;border-radius:999px;border:1px solid rgba(25,60,63,.25);background:var(--cream);color:var(--teal);cursor:pointer;user-select:none;transition:.12s}
+  .rattag.sel{background:var(--gold);border-color:var(--gold);color:var(--teal);font-weight:700}
+  .ratnote{margin-top:6px;width:100%;font-size:11px;padding:5px 8px;border:1px solid rgba(25,60,63,.2);border-radius:7px;font-family:"Calibri";color:var(--ink)}
+  .mechnotes{margin-top:10px;font-size:12.5px;color:var(--ink);line-height:1.5;background:rgba(198,165,83,.10);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:9px 12px}
+  .debrief .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:680px){.debrief .cmp{grid-template-columns:1fr}}
+  .cmpcard{background:var(--cream2);border-radius:10px;padding:13px 15px}
+  .cmpcard h4{font-family:Georgia,serif;font-size:14px;color:var(--teal);margin-bottom:8px}
+  .cmprow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px solid #DBD2C2}
+  .cmprow:last-child{border-bottom:none}
+  .cmprow .you{font-weight:700;color:var(--ink)} .cmprow .act{color:var(--muted)}
+  .assess{font-size:13.5px;color:var(--ink);white-space:pre-wrap;margin-top:8px;line-height:1.5}
+  .scorebar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:14px 0;padding:13px 16px;background:var(--cream2);border-radius:11px}
+  .bigscore{text-align:center} .bigscore .k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .bigscore .v{font-family:Georgia,serif;font-size:34px;font-weight:700;color:var(--teal)} .bigscore .v small{font-size:14px;color:var(--muted)}
+  .rolescores{flex:1;min-width:240px} .rolescores .k{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .rsrow{display:flex;gap:8px;flex-wrap:wrap} .rs{font-size:12px;background:var(--cream);border-radius:7px;padding:5px 9px;color:var(--ink)} .rs b{color:var(--teal)} .rs.best{background:var(--gold);color:var(--teal)} .rs.best b{color:var(--teal)}
+  .export{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .export input{flex:none;width:220px;padding:9px 11px;border:1px solid #CDBfA8;border-radius:8px;font:400 13px Calibri;color:var(--ink)}
+  .export .exhint{font-size:11.5px;color:var(--muted);font-style:italic}
+  .fwd{margin-top:18px;border-top:1px solid #DBD2C2;padding-top:16px}
+  .fwd h3{font-family:Georgia,serif;font-size:17px;color:var(--teal);margin-bottom:6px}
+  .fwdp{font-size:13px;color:var(--ink);max-width:78ch;margin-bottom:12px} .fwdp b{color:var(--red)}
+  .fwdctrl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--cream2);border-radius:10px;padding:12px 15px}
+  .fwdctrl label{font:600 13px Calibri;color:var(--teal);display:flex;gap:7px;align-items:center;flex:none}
+  .fwdctrl label span{color:var(--red)} .fwdctrl input[type=range]{flex:1;min-width:160px}
+  .fwdcards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:680px){.fwdcards{grid-template-columns:1fr}}
+  .fwdcard{background:var(--cream2);border-radius:10px;padding:11px 14px}
+  .fwdcard .fl{font-family:Georgia,serif;font-weight:700;font-size:13.5px;color:var(--teal);margin-bottom:4px}
+  .fwdcard .fr{font-size:12.5px;color:var(--ink)} .fwdcard .fr b{color:var(--teal)}
+  .fwdverdict{margin-top:12px;border-left:4px solid var(--gold);padding:10px 0 10px 14px;background:linear-gradient(90deg,rgba(198,165,83,.12),transparent);border-radius:0 8px 8px 0;font-size:13.5px;color:var(--ink)}
+  .fwdverdict.good{border-left-color:var(--green);background:linear-gradient(90deg,rgba(62,142,90,.12),transparent)}
+  .fwdverdict.warn{border-left-color:var(--red);background:linear-gradient(90deg,rgba(176,73,47,.12),transparent)}
+  .fwdnote{margin-top:9px;font-size:12.5px;color:var(--muted);font-style:italic;max-width:80ch}
+
+  .footnote{margin-top:20px;color:#9FB0AD;font-size:11.5px;max-width:90ch}
+  .footnote b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">Future-Back Finance · Policy Simulation</div>
+      <h1>The Pandemic Policy Room</h1>
+      <button class="modelbtn" id="modelBtn">\u2699 Model &amp; formulas</button>
+      <button class="modelbtn" id="logBtn">\u{1F4CB} Decision log</button>
+      <button class="modelbtn" id="restartBtn">\u21ba Restart</button>
+      <span class="buildstamp">build v2.5</span>
+    </div>
+    <div class="qbadge">
+      <div class="ql" id="qLabel">2020 Q1</div>
+      <div class="qp" id="qPhase">Decisions due</div>
+      <div class="qdots" id="qDots"></div>
+    </div>
+  </div>
+
+  <div class="objbox" id="objBox">
+    <h4>Before you start &mdash; what each seat is graded on</h4>
+    <div style="font-size:12px;color:var(--cream);line-height:1.45">
+      You are scored on <b>stabilisation</b>: keeping both economies near 2% inflation and full employment across the
+      whole game &mdash; not on copying what actually happened. Reality was not optimal, and beating it is expected.
+      Each seat also has its own mandate:
+    </div>
+    <div class="objgrid">
+      <div><b>Federal Reserve</b> &mdash; US rate + QE. Judged on US inflation near 2% and unemployment near 4%.</div>
+      <div><b>ECB</b> &mdash; euro rate + QE. Judged on euro-area inflation <i>and</i> keeping the periphery spread near 1pp.</div>
+      <div><b>US Government</b> &mdash; stimulus size + composition. Judged on recovery without overheating; a large debt surge costs points.</div>
+      <div><b>Euro-area Governments</b> &mdash; stimulus size + composition. Judged on recovery plus spread discipline.</div>
+    </div>
+    <div class="objfoot">
+      Two things to internalise before Q1: inflation answers your decisions <b>3&ndash;6 quarters later</b>, so you are always steering ahead of the gauges.
+      And your mandates conflict by design &mdash; the Fed wants price stability while the Treasury wants a fast recovery. Negotiate; do not default to the average call.
+      <span style="cursor:pointer;text-decoration:underline" id="objHide">Hide this</span>
+    </div>
+  </div>
+
+  <div class="news">
+    <div class="h">Situation report — what you know now</div>
+    <div class="body" id="newsBody"></div>
+    <div class="hint" id="newsHint"></div>
+  </div>
+
+  <!-- gauges -->
+  <div class="gauges">
+    <div class="econ" id="econUS"></div>
+    <div class="econ" id="econEU"></div>
+  </div>
+  <div class="shared" id="shared"></div>
+
+  <!-- decisions -->
+  <div class="decis">
+    <div class="panel fed" id="pFed"></div>
+    <div class="panel ecb" id="pEcb"></div>
+    <div class="panel usg" id="pUsg"></div>
+    <div class="panel eug" id="pEug"></div>
+  </div>
+
+  <div class="resolve" id="resolveRow">
+    <button class="btn" id="resolveBtn">Resolve quarter &rarr;</button>
+  </div>
+
+  <div class="briefing" id="briefing">
+    <div class="h">AI briefing — last quarter</div>
+    <div class="status" id="briefStatus"></div>
+    <div class="body" id="briefBody"></div>
+    <div class="mech" id="mech">
+      <h3>The machine you are driving \u2014 which loops fired this quarter</h3>
+      <div class="sub">Gold = engaged by this quarter\u2019s decisions \u00B7 red = working against you \u00B7 grey = idle. Same five loops every quarter \u2014 learn to see them.</div>
+      <div id="loops"></div>
+      <div class="mechnotes" id="mechNotes"></div>
+    </div>
+    <div class="resolve" id="nextRow" style="display:none"><button class="btn" id="nextBtn">Next quarter &rarr;</button></div>
+    <div class="lockbanner" id="lockBanner" style="display:none">Decisions are locked for this quarter. Read the briefing, then press <b>Next quarter</b> to set the next round.</div>
+  </div>
+
+  <div class="overlay" id="logOverlay">
+    <div class="modelcard">
+      <button class="closex" id="logClose">Close</button>
+      <h2>Decision log</h2>
+      <div class="msub">Every decision taken so far, by quarter and by seat \u2014 with the reason each seat recorded at the time.</div>
+      <div id="logBody"></div>
+    </div>
+  </div>
+  <div class="overlay" id="modelOverlay">
+    <div class="modelcard">
+      <button class="closex" id="modelClose">Close</button>
+      <h2>The model behind the room</h2>
+      <div class="msub">Every equation the simulation uses, in one place. All flows are quarterly; two economies (US, EU) are solved each quarter, then coupled through trade, markets, and sentiment. This is a teaching model \u2014 directionally faithful, not a forecasting tool.</div>
+
+      <h3>1 \u00B7 Output \u2014 an IS\u2013LM reduced form</h3>
+      <div class="eq">Y = 0.40\u00B7Y\u208B\u2081 + pandemic + 0.60\u00B7fiscal \u2212 0.30\u00B7(realRate \u2212 r*) + 0.10\u00B7QE + 0.15\u00B7Y_other + 0.06\u00B7sentiment</div>
+      <p><span class="var">IS curve:</span> output falls when the real rate rises above its neutral level r* (\u22120.5% US, \u22121.0% EU). <span class="var">LM / balance-sheet channel:</span> QE adds demand directly \u2014 the lever that still works when the policy rate is stuck at zero. <span class="var">realRate</span> = policy rate \u2212 inflation. Output is then squashed through a tanh so extreme stimulus saturates rather than exploding.</p>
+      <div class="eq">Y = 14\u00B7tanh(Y / 14)</div>
+
+      <h3>2 \u00B7 Fiscal impulse \u2014 size \u00D7 composition, with inertia</h3>
+      <div class="eq">fiscalRaw = stim \u00D7 \u03A3(mix\u2096 \u00B7 demand\u2096)     fiscal = 0.25\u00B7fiscalRaw + 0.60\u00B7fiscalRaw\u208B\u2081</div>
+      <p>Stimulus size (% GDP) times the demand-potency of its composition. The five archetypes \u2014 household transfers, job retention, business liquidity, health, investment \u2014 differ in demand, inflation, capacity-preservation, employment-shield and shock-attenuation weights. Spending arrives with inertia (last quarter\u2019s impulse still working).</p>
+
+      <h3>3 \u00B7 Unemployment \u2014 Okun, shielded by furlough</h3>
+      <div class="eq">U = U\u208B\u2081 \u2212 1.5\u00B7\u0394Y\u00B7(1 \u2212 shield) + 0.18\u00B7(U* \u2212 U\u208B\u2081)</div>
+      <p>Okun\u2019s law: output growth cuts unemployment. <span class="var">shield</span> comes from the job-retention (furlough) share \u2014 it breaks the link between the output shock and layoffs, which is exactly the US\u2013EU divergence of 2020. U reverts gently toward its natural rate U* (4.0% US, 7.2% EU).</p>
+
+      <h3>4 \u00B7 Inflation \u2014 expectations + the 3\u20136 quarter pipe</h3>
+      <div class="eq">\u03C0 = 0.55\u00B7\u03C0\u208B\u2081 + 0.45\u00B72 + 0.09\u00B7Y\u208B\u2081 + laggedDemand + supplyShock + scarring \u2212 0.50\u00B7max(0, r\u22120.75)</div>
+      <div class="eq">laggedDemand = \u03A3 0.05\u00B7impulse\u209C  for impulses 3\u20136 quarters old</div>
+      <p>Inflation is anchored partly on its past and partly on the 2% target, pushed by the output gap, and \u2014 crucially \u2014 by demand injected <span class="var">3 to 6 quarters earlier</span>. This lag is the core lesson: today\u2019s stimulus shows up in prices next year. Supply shocks (energy, reopening) and scarring add to it; rate hikes above 0.75% subtract, progressively. <b>Why inflation still climbs late:</b> the 2021 energy and reopening shock is exogenous — it happened whatever you do — and the demand you injected in 2020 is landing at exactly that moment. You cannot avoid the rise; you can decide how far it runs. A Fed that hikes early and firmly can hold end-2021 inflation near 4–5% instead of 7–8%, but it pays for that in a wider output gap and higher unemployment along the way — which the score counts, every quarter. That trade-off is the exercise.</p>
+
+      <h3>5 \u00B7 Financial stress, equities, FX</h3>
+      <div class="eq">stress = max(4, 0.45\u00B7stress\u208B\u2081 + 0.7\u00B7pandemicRisk \u2212 0.5\u00B7(QE_US+QE_EU))</div>
+      <div class="eq">S&amp;P 500 = SPX\u208B\u2081 + 2.2\u00B7totalQE + 1.6\u00B7Y_US \u2212 0.7\u00B7\u0394stress \u2212 0.35\u00B7stress</div><div class="eq">STOXX 50 = STOXX\u208B\u2081 + 1.9\u00B7totalQE + 1.6\u00B7Y_EU \u2212 0.7\u00B7\u0394stress \u2212 0.35\u00B7stress \u2212 1.2\u00B7max(0, spread\u22121)</div><p><b>Why Europe usually lags \u2014 but need not.</b> The two indices share the liquidity and stress channels, so they move together in a crisis. They diverge for three reasons: European equities track euro-area output, they carry a penalty when the periphery spread widens, and they respond slightly less to central-bank liquidity. A furlough-led Europe therefore tends to trail a transfers-led US, because furlough protects jobs rather than driving demand. It is not fixed, though: run stronger euro-area fiscal support with sustained ECB QE and a contained spread, and STOXX ends the game <i>above</i> the S&amp;P. If Europe lagged in your game, that was a consequence of the policy mix, not a rule of the model.</p>
+      <div class="eq">FX(EUR/USD) = FX\u208B\u2081 + 0.006\u00B7QE_US \u2212 0.004\u00B7(Y_US \u2212 Y_EU)</div>
+      <p>QE calms stress and lifts equities; the pandemic shock raises stress. The relative Fed\u2013ECB stance moves the exchange rate.</p>
+
+      <h3>6 \u00B7 Euro-area fragmentation \u2014 the spread loop</h3>
+      <div class="eq">spread = max(0.4, 0.6\u00B7spread\u208B\u2081 + 0.05\u00B7(debt_EU \u2212 90) \u2212 0.22\u00B7QE_EU)</div>
+      <p>Rising periphery debt widens the spread; ECB QE compresses it. A high spread tightens financial conditions across the euro area regardless of the ECB\u2019s policy rate \u2014 a self-reinforcing loop the EU must actively fight.</p><p><b>Why the spread matters more than inflation for cohesion.</b> Inflation is painful but shared: it hits Germany and Italy alike, and every member faces the same central bank response. The spread is different \u2014 it is a <i>divergence</i> in the price of money <i>inside</i> a single currency. When Italy borrows at 4% and Germany at 1%, one monetary policy produces two different economies: the same ECB rate is restrictive in the south and loose in the north. Sustained, that asks whether the currency union can hold at all \u2014 the question behind 2012\u2019s \u201Cwhatever it takes\u201D and behind the ECB\u2019s anti-fragmentation tools since. You can survive high inflation as a union; you cannot survive a permanent spread. That is why it is scored separately, and why the ECB seat is graded on it.</p>
+
+      <h3>7 \u00B7 Animal spirits \u2014 the sentiment loop</h3>
+      <div class="eq">raw = 0.6\u00B7sentiment\u208B\u2081 + 0.42\u00B7Y + 0.02\u00B7(equities\u2212100) \u2212 0.05\u00B7(stress\u221216) \u2212 0.35\u00B7max(0, spread\u22121)<br/>sentiment = 10\u00B7tanh(raw / 10)</div>
+      <p>Confidence tracks realised output, markets and (inversely) stress, then feeds <i>back</i> into next quarter\u2019s demand (the 0.06\u00B7sentiment term in equation 1). Positive spirits amplify your stimulus; fear dilutes it. Set the gain to zero and the loop switches off.</p>
+
+      <h3>8 \u00B7 Scoring</h3>
+      <div class="eq">teamLoss = \u03A3\u2091 [ 1.0\u00B7avgInflGap + 0.7\u00B7avgUnempGap + 0.5\u00B7endOutputGap ] + 0.3\u00B7avgStress/10 + 0.6\u00B7max(0, peakSpread\u22121)</div>
+      <div class="eq">teamScore = clamp(100 \u2212 7\u00B7teamLoss, 0, 100)</div>
+      <p>Scored on <span class="var">stabilisation across the whole game</span> \u2014 both economies near 2% inflation and full employment, penalised for stress and a blown spread. Unemployment counts every quarter, not just at the end. Each role is also scored against its own mandate. You are graded against stabilisation, never against copying what actually happened \u2014 reality wasn\u2019t optimal.</p>
+
+      <p style="margin-top:16px;color:var(--muted);font-size:12px">A full workbook of these formulas, with worked numbers, is available alongside the game.</p>
+    </div>
+  </div>
+  <div class="debrief" id="debrief"></div>
+
+  <p class="footnote"><b>How calibrated.</b> Real Q1-2020 starting conditions for both blocs; under roughly the actual decisions the engine reproduces the real divergence (US unemployment spiking to double digits on layoffs while Europe&rsquo;s furlough schemes hold it near 8%, and US inflation arriving earlier). It is a <b>stylised reduced-form engine</b> (IS / Phillips / Okun with a money, FX and fragmentation channel and explicit lags), not a forecast — the debrief lays your path against what actually happened so the differences are the lesson. Information is point-in-time: you see only what was knowable that quarter, with leading half-hints and lagged headline gauges.</p>
+</div>
+
+<script>
+/* =================== ENGINE (validated) =================== */
+const QLABEL=["2020 Q1","2020 Q2","2020 Q3","2020 Q4","2021 Q1","2021 Q2","2021 Q3","2021 Q4"];
+const PANDEMIC={US:[-2.5,-11,-4,-3.5,-2,-1,-1.2,-0.5,-0.2,0,0,0],EU:[-2.5,-13,-3,-5.5,-4,-2,-1.2,-1.0,-0.2,0,0,0]};
+const SUPPLY={US:[0,0,0,0.3,0.5,1.2,2.0,2.4,2.0,1.2,0.6,0.2],EU:[0,0,0,0.1,0.2,0.6,1.1,2.2,3.0,3.2,2.0,1.0]};
+const NAT={US:4.0,EU:7.2};
+const SENT_K=0.06; // animal-spirits gain (tunable; 0 disables the loop)
+const ARCH={
+  cheques:  {dem:1.0,infl:0.9,cap:0.0,shield:0.0,health:0,label:"Household transfers",
+             note:"Fastest demand, hottest on inflation. Shields no jobs \u2014 firms still lay off."},
+  retention:{dem:0.6,infl:0.3,cap:0.3,shield:1.0,health:0,label:"Job retention (furlough)",
+             note:"Pays firms to keep staff: unemployment barely moves. Slower recovery, cooler prices."},
+  liquidity:{dem:0.4,infl:0.2,cap:1.0,shield:0.3,health:0,label:"Business liquidity",
+             note:"Loans and guarantees keep capacity alive \u2014 prevents scarring, little demand now."},
+  health:   {dem:0.3,infl:0.1,cap:0.3,shield:0.1,health:1,label:"Health & vaccines",
+             note:"The only lever that shrinks the shock itself rather than offsetting it."},
+  infra:    {dem:0.5,infl:0.4,cap:0.2,shield:0.2,health:0,label:"Investment / infrastructure",
+             note:"Slow to land, adds capacity later. A recovery tool, not a rescue tool."}
+};
+const ARCH_KEYS=["cheques","retention","liquidity","health","infra"];
+
+// The pre-COVID starting point. Charts prepend this so every series begins at its
+// true baseline (indices at 100) instead of jumping in after the first quarter resolves.
+const INIT={q:"2019 Q4",
+  US:{Y:0.5,U:3.5,pi:2.3,r:1.6,debt:108},
+  EU:{Y:0.2,U:7.4,pi:1.2,r:0.0,debt:84},
+  SPX:100,STOXX:100,FX:1.11,stress:16,spread:1.3,sent:{US:0,EU:0}};
+function chartHist(h){ return [JSON.parse(JSON.stringify(INIT)),...h]; }
+function newGame(){
+  return {
+    t:0,
+    US:{Y:0.5,U:3.5,pi:2.3,r:1.6,debt:108},
+    EU:{Y:0.2,U:7.4,pi:1.2,r:0.0,debt:84},
+    SPX:100,STOXX:100,FX:1.11,stress:16,spread:1.3, sent:{US:0,EU:0},
+    pipe:{US:[],EU:[]}, prevFiscal:{US:0,EU:0},
+    hist:[], decisions:[]
+  };
+}
+function mixShares(mixRaw){ // normalise 5 raw weights to shares
+  let tot=0; ARCH_KEYS.forEach(k=>tot+=mixRaw[k]); if(tot<=0)tot=1;
+  const s={}; ARCH_KEYS.forEach(k=>s[k]=mixRaw[k]/tot); return s;
+}
+function stepEconomy(g,e,dec,t,otherStartY){
+  const s=g[e]; const mix=mixShares(dec.mix); const stim=dec.stim;
+  let dem=0,infl=0,cap=0,shield=0,health=0;
+  ARCH_KEYS.forEach(k=>{const a=ARCH[k];dem+=mix[k]*a.dem;infl+=mix[k]*a.infl;cap+=mix[k]*a.cap;shield+=mix[k]*a.shield;health+=mix[k]*a.health;});
+  const fiscalRaw=stim*dem;
+  const fiscal=0.25*fiscalRaw+0.60*g.prevFiscal[e]; g.prevFiscal[e]=fiscalRaw;
+  const pand=PANDEMIC[e][t]*(1-0.5*Math.min(1,health*stim/3));
+  const realRate=s.r-s.pi, qe=dec.qe, spill=0.15*otherStartY;
+  let Y=0.40*s.Y+pand+0.60*fiscal-0.30*(realRate-(e==="US"?-0.5:-1.0))+0.10*qe+spill+SENT_K*g.sent[e];
+  Y=14*Math.tanh(Y/14);
+  const eShield=Math.min(0.93,1.4*shield), dY=Y-s.Y;
+  let U=s.U-1.5*dY*(1-eShield); U=U+0.18*(NAT[e]-U); U=Math.max(NAT[e]-0.6,U);
+  const scarring=Math.max(0,(-pand)-6)*(1-cap)*0.12;
+  g.pipe[e].push({dem:fiscal+0.15*qe,t});
+  let lag=0; g.pipe[e].forEach(x=>{const a=t-x.t;if(a>=3&&a<=6)lag+=0.05*x.dem;});
+  let pi=0.55*s.pi+0.45*2+0.09*s.Y+lag+SUPPLY[e][t]+scarring-0.50*Math.max(0,dec.r-0.75);
+  return {Y:+Y.toFixed(2),U:+U.toFixed(2),pi:+pi.toFixed(2),r:dec.r,debt:Math.round(s.debt+stim*0.8)};
+}
+function resolveQuarter(g,dUS,dEU){
+  const t=g.t, startUS=g.US.Y, startEU=g.EU.Y;
+  const nUS=stepEconomy(g,"US",dUS,t,startEU);
+  const nEU=stepEconomy(g,"EU",dEU,t,startUS);
+  const liq=dUS.qe+dEU.qe, risk=(-PANDEMIC.US[t]-PANDEMIC.EU[t]), prevStress=g.stress;
+  g.stress=Math.max(4,0.45*g.stress+0.7*risk-0.5*liq+(t===0?34:0));
+  g.SPX=Math.max(60,g.SPX+2.2*liq+1.6*nUS.Y-0.7*(g.stress-prevStress)-(t===0?28:0)-0.35*g.stress);
+  // Europe: same liquidity and stress channels, but driven by euro-area output and
+  // additionally penalised by the periphery spread — fragmentation is an equity story too.
+  g.STOXX=Math.max(60,g.STOXX+1.9*liq+1.6*nEU.Y-0.7*(g.stress-prevStress)-(t===0?26:0)-0.35*g.stress-1.2*Math.max(0,g.spread-1));
+  g.FX=Math.max(1.04,Math.min(1.25,g.FX+0.006*dUS.qe-0.004*(nUS.Y-nEU.Y)-0.003*(g.stress>25?1:0)));
+  g.spread=Math.max(0.4,0.6*g.spread+0.05*(nEU.debt-90)-0.22*dEU.qe+(t===0?1.8:0));
+  // animal spirits: confidence tracks realised output, equities, and (inversely) stress — then feeds next quarter's demand
+  const dSPX=g.SPX-100;
+  // smooth saturation (tanh): confidence can approach the bounds but never pins flat,
+  // so the index keeps reporting movement even through the depth of the shock.
+  const sRawUS = 0.6*g.sent.US + 0.42*nUS.Y + 0.02*(g.SPX-100) - 0.05*(g.stress-16);
+  const sRawEU = 0.6*g.sent.EU + 0.42*nEU.Y + 0.02*(g.STOXX-100) - 0.05*(g.stress-16) - 0.35*Math.max(0,g.spread-1);
+  g.sent.US = 10*Math.tanh(sRawUS/10);
+  g.sent.EU = 10*Math.tanh(sRawEU/10);
+  g.US=nUS; g.EU=nEU;
+  g.decisions.push({US:JSON.parse(JSON.stringify(dUS)),EU:JSON.parse(JSON.stringify(dEU))});
+  g.hist.push({q:QLABEL[t],US:{...nUS},EU:{...nEU},SPX:Math.round(g.SPX),STOXX:Math.round(g.STOXX),FX:+g.FX.toFixed(3),stress:Math.round(g.stress),spread:+g.spread.toFixed(2),sent:{US:+g.sent.US.toFixed(2),EU:+g.sent.EU.toFixed(2)}});
+  g.t++;
+}
+
+/* ~Actual decisions for the debrief comparison */
+const ACTUAL={
+  US:{r:[0.25,0.1,0.1,0.1,0.1,0.1,0.1,0.15],qe:[6,9,4,3,2,2,1,-1],stim:[1,8,3,2,7,3,1,1],
+    mix:i=> i>=6?{cheques:25,retention:5,liquidity:10,health:5,infra:55}:{cheques:65,retention:10,liquidity:15,health:10,infra:0}},
+  EU:{r:[0,0,0,0,0,0,0,0],qe:[5,8,4,4,3,3,2,1],stim:[1,4,3,3,3,3,2,2],
+    mix:i=> i>=5?{cheques:10,retention:45,liquidity:10,health:5,infra:30}:{cheques:10,retention:65,liquidity:15,health:10,infra:0}}
+};
+function actualRun(){
+  const g=newGame();
+  for(let t=0;t<8;t++){
+    resolveQuarter(g,
+      {r:ACTUAL.US.r[t],qe:ACTUAL.US.qe[t],stim:ACTUAL.US.stim[t],mix:ACTUAL.US.mix(t)},
+      {r:ACTUAL.EU.r[t],qe:ACTUAL.EU.qe[t],stim:ACTUAL.EU.stim[t],mix:ACTUAL.EU.mix(t)});
+  }
+  return g.hist;
+}
+
+/* =================== SCORING (shared rubric) =================== */
+const NATURAL_S={US:4.0,EU:7.2}, DEBT0={US:108,EU:84};
+function scoreFromHist(hist){
+  const n=hist.length, avg=a=>a.reduce((x,y)=>x+y,0)/a.length, m={};
+  for(const e of ["US","EU"]){
+    m[e]={ avgInflGap:avg(hist.map(h=>Math.abs(h[e].pi-2))),
+      uGap:avg(hist.map(h=>Math.max(0,h[e].U-NATURAL_S[e]))), endYgap:Math.abs(hist[n-1][e].Y),
+      endInfl:hist[n-1][e].pi, debtSurge:Math.max(0,hist[n-1][e].debt-DEBT0[e]) };
+  }
+  const avgStress=avg(hist.map(h=>h.stress)), peakSpread=Math.max(...hist.map(h=>h.spread));
+  let L=0; for(const e of ["US","EU"]) L+=1.0*m[e].avgInflGap+0.7*m[e].uGap+0.5*m[e].endYgap;
+  L+=0.3*(avgStress/10)+0.6*Math.max(0,peakSpread-1);
+  const teamScore=Math.max(0,Math.min(100,Math.round(100-7*L)));
+  const roleLoss={
+    Fed:1.0*m.US.avgInflGap+0.8*m.US.uGap+0.2*(avgStress/10),
+    ECB:1.2*m.EU.avgInflGap+0.9*Math.max(0,peakSpread-1)+0.3*m.EU.uGap,
+    USGov:0.8*m.US.endYgap+0.8*m.US.uGap+0.5*Math.max(0,m.US.endInfl-3)+0.25*(m.US.debtSurge/10),
+    EUGov:0.8*m.EU.endYgap+0.8*m.EU.uGap+0.6*Math.max(0,peakSpread-1)+0.25*(m.EU.debtSurge/10)
+  };
+  const roleScore={}; for(const k in roleLoss) roleScore[k]=Math.max(0,Math.min(100,Math.round(100-12*roleLoss[k])));
+  let bestRole="Fed",bv=-1; for(const k in roleScore) if(roleScore[k]>bv){bv=roleScore[k];bestRole=k;}
+  return {teamScore,roleScore,bestRole,L:+L.toFixed(2),avgStress:Math.round(avgStress),peakSpread:+peakSpread.toFixed(2)};
+}
+
+/* =================== CONTENT (point-in-time) =================== */
+const NEWS=[
+ {b:"A new virus is spreading fast; Italy and Spain lock down and the US declares an emergency. Equity markets are in free-fall — the worst week since 2008 — and an oil-price war adds to the stress. No one knows how deep or how long this goes.",
+  h:"Jobless claims just starting to spike; activity surveys collapsing; credit markets freezing."},
+ {b:"Near-total lockdowns. Output is collapsing at a pace never recorded; US jobless claims run into the tens of millions. There is no vaccine and no clear reopening date.",
+  h:"Layoffs landing in real time; mobility near zero; the first hints of supply disruption."},
+ {b:"Economies reopen partially and a sharp rebound begins. Infections resurge over the summer. Vaccine trials look promising but remain unproven.",
+  h:"Goods demand surging while services lag; housing hot; shipping costs beginning to climb."},
+ {b:"A harsh second wave forces winter lockdowns, hardest in Europe. But vaccines report success in November and approvals begin — a path out is visible at last.",
+  h:"Markets rallying on reopening hopes; freight and input costs rising; household savings piling up."},
+ {b:"Vaccination campaigns ramp up. The US passes a large new stimulus package. Europe&rsquo;s rollout is slower and new variants worry policymakers. The recovery is diverging across the Atlantic.",
+  h:"Used-car and commodity prices jumping; bottlenecks widening; early wage pressure in surveys."},
+ {b:"Reopening accelerates as vaccinations spread. Demand is booming and supply cannot keep up. US inflation prints are climbing, and a debate opens over whether it is &lsquo;transitory.&rsquo;",
+  h:"Price rises broadening beyond used cars; rents firming; labour shortages widely reported."},
+ {b:"The Delta variant slows momentum. Global supply chains are badly snarled — ports, chips, freight — and energy prices climb into the autumn, especially in Europe.",
+  h:"Inflation proving sticky; longer-term expectations drifting up; wage growth accelerating."},
+ {b:"Inflation hits multi-decade highs. &lsquo;Transitory&rsquo; is quietly retired. Europe&rsquo;s inflation is high too but seen as more energy-driven. A new variant, Omicron, emerges as you weigh how fast to tighten.",
+  h:"Markets now pricing rate hikes; the question is how to tighten without choking a young recovery."}
+];
+
+/* =================== STATE & UI =================== */
+let G=newGame();
+let ACTUAL_HIST=actualRun();
+// default decisions (carried & editable). Start neutral.
+function defaultDecision(role){
+  if(role==="US") return {r:1.5,qe:0,stim:0,mix:{cheques:30,retention:30,liquidity:20,health:20,infra:0}};
+  return {r:0.0,qe:0,stim:0,mix:{cheques:15,retention:45,liquidity:20,health:20,infra:0}};
+}
+let curUS=defaultDecision("US"), curEU=defaultDecision("EU");
+
+const $=id=>document.getElementById(id);
+function fmt(v,d){return (v>=0?"":"")+v.toFixed(d===undefined?1:d);}
+
+// Sparkline of the series so far — the trajectory behind the headline number.
+function sparkSVG(series, color, natural){
+  const s=(series||[]).filter(v=>typeof v==='number' && isFinite(v));
+  if(s.length<2) return '<svg class="spark" viewBox="0 0 100 22"></svg>';
+  const vals=[...s]; if(typeof natural==="number") vals.push(natural);
+  const mn=Math.min(...vals), mx=Math.max(...vals), rng=(mx-mn)||1, n=s.length;
+  const pts=s.map((v,i)=>[ (i/(n-1))*98+1, 20-((v-mn)/rng)*18 ]);
+  const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const last=pts[n-1];
+  const natLine = (typeof natural==="number")
+    ? `<line x1="1" y1="${(20-((natural-mn)/rng)*18).toFixed(1)}" x2="99" y2="${(20-((natural-mn)/rng)*18).toFixed(1)}" stroke="#C6A553" stroke-width="1" stroke-dasharray="2 2"/>`
+    : ``;
+  return `<svg class="spark" viewBox="0 0 100 22" preserveAspectRatio="none">`
+       + natLine
+       + `<path d="${d}" stroke="${color}"/>`
+       + `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="1.9" fill="${color}"/></svg>`;
+}
+function gaugeHTML(eco,prevHist){
+  const trend=(now,prev,inv)=>{ if(prev===undefined)return ['flat','·'];
+    const d=now-prev; const cls=d>0.05?(inv?'down':'up'):d<-0.05?(inv?'up':'down'):'flat';
+    return [cls, d>0.05?'\u25b2':d<-0.05?'\u25bc':'\u2192']; };
+  const prev=prevHist?prevHist[eco]:undefined;
+  const cur=G[eco];
+  const SP='#193C3F';
+  const S=f=>chartHist(G.hist).map(f);
+  function cell(k,val,unit,prevVal,inv,prelim,series,why,natural){
+    const [tc,ta]=trend(val,prevVal,inv);
+    return `<div class="g"><div class="k">${k}</div><div class="v">${val.toFixed(1)}<small>${unit}</small></div>`
+      + `<div class="t ${tc}">${ta} ${prelim?'prelim':''}</div>`
+      + sparkSVG(series,SP,natural)
+      + (why?`<div class="why">${why}</div>`:'')
+      + `</div>`;
+  }
+  const eqNow = eco==='US' ? G.SPX : G.STOXX;
+  const eqSeries = eco==='US' ? S(h=>h.SPX) : S(h=>h.STOXX);
+  const eqName = eco==='US' ? 'S&amp;P 500' : 'STOXX 50';
+  const prevH = G.hist.length>1 ? G.hist[G.hist.length-2] : undefined;
+  const eqPrev = prevH ? (eco==='US'?prevH.SPX:prevH.STOXX) : undefined;
+  let out = cell("Output gap",cur.Y,"%",prev&&prev.Y,false,true,S(h=>h[eco].Y),
+                 "negative = economy producing less than it could; factories and people are idle")
+       + cell("Unemployment",cur.U,"%",prev&&prev.U,false,false,S(h=>h[eco].U),
+                 "gold line = normal level for this economy ("+(eco==='US'?'4.0':'7.2')+"%). Only the distance above it is scored",
+                 eco==='US'?4.0:7.2)
+       + cell("Inflation",cur.pi,"%",prev&&prev.pi,false,true,S(h=>h[eco].pi),
+                 "target is 2%. Reacts to your spending 3\u20136 quarters later")
+       + cell("Policy rate",cur.r,"%",prev&&prev.r,false,false,S(h=>h[eco].r),
+                 "what matters is this minus inflation (the real rate)")
+       + cell("Debt/GDP",cur.debt,"%",prev&&prev.debt,false,false,S(h=>h[eco].debt),
+                 "started at "+(eco==='US'?'108':'84')+"%. A large rise costs you points")
+       + cell(eqName,eqNow,"",eqPrev,false,false,eqSeries,"100 = pre-COVID")
+       + cell("Confidence",G.sent[eco],"",prevH&&prevH.sent&&prevH.sent[eco],false,false,S(h=>h.sent&&h.sent[eco]),
+                 "0 = normal. High confidence makes your spending work better; low confidence makes it work worse");
+  if(eco==='EU'){
+    out += cell("Periphery spread",G.spread,"pp",prevH&&prevH.spread,false,false,S(h=>h.spread),
+                 "how much more Italy pays than Germany to borrow. Above ~1pp, southern Europe faces tight money even if the ECB is easy");
+  }
+  return out;
+}
+function renderGauges(){
+  const prev=G.hist.length>1?G.hist[G.hist.length-2]:undefined;
+  $("econUS").innerHTML=`<h3><span class="flag">\u{1F1FA}\u{1F1F8}</span> United States</h3><div class="grow">${gaugeHTML("US",prev)}</div>`;
+  $("econEU").innerHTML=`<h3><span class="flag">\u{1F1EA}\u{1F1FA}</span> Euro area</h3><div class="grow">${gaugeHTML("EU",prev)}</div>`;
+  $("shared").innerHTML=
+     `<div class="sg"><div class="k">EUR / USD</div><div class="v">${G.FX.toFixed(3)}</div></div>`
+   + `<div class="sg"><div class="k">Financial stress</div><div class="v">${Math.round(G.stress)}</div></div>`
+   + `<div class="sg" style="min-width:430px;text-align:left"><div class="hintline">`
+   + `<b>Reading the boxes.</b> Each tile shows the latest value, its direction, and the path so far. `
+   + `A <b>negative output gap</b> means the economy is producing less than it could: idle factories, people out of work. Positive means it is running hot. `
+   + `Equities are split by bloc: S&amp;P&nbsp;500 in the US box, STOXX&nbsp;50 in the euro box.`
+   + `</div></div>`;
+}
+
+function mixUI(role,dec){
+  let rows=ARCH_KEYS.map(k=>{
+    const tot=ARCH_KEYS.reduce((a,x)=>a+dec.mix[x],0)||1;
+    const pc=Math.round(100*dec.mix[k]/tot);
+    return `<div class="mixrow"><span class="nm">${ARCH[k].label}</span>
+      <input type="range" min="0" max="100" value="${dec.mix[k]}" data-role="${role}" data-mix="${k}">
+      <span class="pc" id="pc-${role}-${k}">${pc}%</span></div>
+      <div class="mixnote">${ARCH[k].note}</div>`;
+  }).join("");
+  return `<div class="mix"><div class="mh"><span>Stimulus composition</span><span class="tot">shares</span></div>${rows}</div>`;
+}
+function panelGov(role,dec,cls,name,flag,mandate){
+  $(role==="US"?"pUsg":"pEug").className="panel "+cls;
+  $(role==="US"?"pUsg":"pEug").innerHTML=
+    `<div class="role">${flag} ${name}</div><div class="mandate">${mandate}</div>
+     <div class="dec"><label>Fiscal stimulus this quarter <span class="v" id="v-${role}-stim">${dec.stim.toFixed(1)}% GDP</span></label>
+       <input type="range" min="0" max="12" step="0.5" value="${dec.stim}" data-role="${role}" data-field="stim"></div>
+     ${mixUI(role,dec)}${ratUI(role,"gov")}`;
+}
+
+const RATIONALE={
+  US:["Fight the downturn","Fear overheating","Protect financial system","Save fiscal space","Match the ECB/Fed"],
+  EU:["Fight the downturn","Fear overheating","Defend the spread","Save fiscal space","Match the ECB/Fed"]
+};
+window.RAT={US:{cb:{tags:[],note:""},gov:{tags:[],note:""}},EU:{cb:{tags:[],note:""},gov:{tags:[],note:""}}};
+function ratUI(role,which){
+  const set=RATIONALE[role]||RATIONALE.US; const st=window.RAT[role][which];
+  const tags=set.map(tg=>`<span class="rattag${st.tags.includes(tg)?' sel':''}" data-role="${role}" data-which="${which}" data-tag="${tg}">${tg}</span>`).join("");
+  return `<div class="ratwrap"><label>Why this decision? (tag one or more \u2014 we compare reasoning to result)</label>
+    <div class="rattags">${tags}</div>
+    <input class="ratnote" data-role="${role}" data-which="${which}" placeholder="Optional: one line of rationale" value="${st.note.replace(/"/g,'&quot;')}"></div>`;
+}
+function panelCB(role,dec,cls,name,flag,mandate){
+  $(role==="US"?"pFed":"pEcb").className="panel "+cls;
+  $(role==="US"?"pFed":"pEcb").innerHTML=
+    `<div class="role">${flag} ${name}</div><div class="mandate">${mandate}</div>
+     <div class="dec"><label>Policy rate <span class="v" id="v-${role}-r">${dec.r.toFixed(2)}%</span></label>
+       <input type="range" min="0" max="3" step="0.25" value="${dec.r}" data-role="${role}" data-field="r"></div>
+     <div class="dec"><label>QE / balance-sheet pace <span class="v" id="v-${role}-qe">${qeLabel(dec.qe)}</span></label>
+       <input type="range" min="0" max="12" step="0.5" value="${dec.qe}" data-role="${role}" data-field="qe">
+       <div class="ref">Asset purchases per quarter. Reference: Fed/ECB peak pace \u2248 \u20AC350\u2013400bn/q (2020\u201321). Zero = balance sheet flat.</div></div><div class="ismnote"><b>IS\u2013LM read:</b> the policy rate moves output along the IS curve (lower real rate \u2192 more demand). With the rate near zero, QE is the LM-side lever \u2014 it eases financial conditions when the rate can\u2019t fall further.</div>${ratUI(role,"cb")}`;
+}
+function qeBn(q){return Math.round(q*50);}
+function qeLabel(q){const b=qeBn(q);const w=q<=0.5?"none":q<3?"light":q<6?"moderate":q<9?"heavy":"massive";return q<=0.5?"none (\u20AC0bn/q)":`\u20AC${b}bn/q \u00B7 ${w}`;}
+
+function renderPanels(){
+  panelCB("US",curUS,"fed","Federal Reserve","\u{1F1FA}\u{1F1F8}","Mandate: maximum employment & price stability.");
+  panelCB("EU",curEU,"ecb","European Central Bank","\u{1F1EA}\u{1F1FA}","Mandate: price stability for the whole euro area.");
+  panelGov("US",curUS,"usg","US Government","\u{1F1FA}\u{1F1F8}","Fiscal authority: one Treasury, one budget.");
+  panelGov("EU",curEU,"eug","Euro-area Governments","\u{1F1EA}\u{1F1FA}","Many treasuries, one currency — watch the spread.");
+}
+
+document.addEventListener("click",e=>{
+  const t=e.target; if(!t.classList||!t.classList.contains("rattag"))return;
+  const {role,which,tag}=t.dataset; const st=window.RAT[role][which];
+  const i=st.tags.indexOf(tag); if(i>=0)st.tags.splice(i,1); else st.tags.push(tag);
+  t.classList.toggle("sel");
+});
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.classList&&el.classList.contains("ratnote")){ window.RAT[el.dataset.role][el.dataset.which].note=el.value; return; }
+});
+document.addEventListener("input",e=>{
+  const el=e.target; if(el.tagName!=="INPUT")return;
+  const role=el.dataset.role; if(!role)return;
+  const dec=role==="US"?curUS:curEU;
+  if(el.dataset.field){ dec[el.dataset.field]=+el.value;
+    if(el.dataset.field==="r")$(`v-${role}-r`).textContent=(+el.value).toFixed(2)+"%";
+    if(el.dataset.field==="qe")$(`v-${role}-qe`).textContent=qeLabel(+el.value);
+    if(el.dataset.field==="stim")$(`v-${role}-stim`).textContent=(+el.value).toFixed(1)+"% GDP";
+  }
+  if(el.dataset.mix){ dec.mix[el.dataset.mix]=+el.value;
+    const tot=ARCH_KEYS.reduce((a,x)=>a+dec.mix[x],0)||1;
+    ARCH_KEYS.forEach(k=>{const p=$(`pc-${role}-${k}`); if(p)p.textContent=Math.round(100*dec.mix[k]/tot)+"%";});
+  }
+});
+
+function renderNews(){
+  const n=NEWS[Math.min(G.t,7)];
+  $("newsBody").innerHTML=n.b;
+  $("newsHint").innerHTML="<b>Leading signals:</b> "+n.h;
+}
+// ---- Persistence: survive a reload / accidental tab close ----
+// Uses the artifact storage API when available; degrades silently when it is not
+// (e.g. the file opened directly from disk), in which case the game simply won't resume.
+const SAVE_KEY="policyroom:session";
+let SAVE_OK=true;
+async function saveState(){
+  if(!SAVE_OK) return;
+  try{
+    if(!window.storage) { SAVE_OK=false; return; }
+    await window.storage.set(SAVE_KEY, JSON.stringify({
+      v:2, savedAt:new Date().toISOString(),
+      G:{t:G.t,US:G.US,EU:G.EU,SPX:G.SPX,STOXX:G.STOXX,FX:G.FX,stress:G.stress,spread:G.spread,
+         sent:G.sent,pipe:G.pipe,prevFiscal:G.prevFiscal,hist:G.hist,decisions:G.decisions},
+      curUS, curEU, team:(document.getElementById("teamName")||{}).value||""
+    }));
+  }catch(e){ SAVE_OK=false; }
+}
+async function loadState(){
+  try{
+    if(!window.storage) return null;
+    const r=await window.storage.get(SAVE_KEY);
+    if(!r||!r.value) return null;
+    const s=JSON.parse(r.value);
+    if(!s||s.v!==2||!s.G||!Array.isArray(s.G.hist)) return null;
+    return s;
+  }catch(e){ return null; }
+}
+async function clearState(){ try{ if(window.storage) await window.storage.delete(SAVE_KEY); }catch(e){} }
+function applyState(s){
+  Object.assign(G,s.G);
+  if(s.curUS) curUS=s.curUS;
+  if(s.curEU) curEU=s.curEU;
+}
+// Decisions are editable only in the decision phase. Once a quarter is resolved the
+// inputs lock, so nobody can quietly change a dial while the briefing is on screen.
+function setDecisionsEnabled(on){
+  document.querySelectorAll('#pFed input, #pEcb input, #pUsg input, #pEug input, .rattag, .ratnote').forEach(el=>{
+    if(el.tagName==="INPUT"||el.tagName==="BUTTON"){ el.disabled=!on; }
+    el.style.pointerEvents = on ? "" : "none";
+    el.style.opacity = on ? "" : "0.55";
+  });
+  const rb=document.getElementById("resolveBtn"); if(rb){ rb.disabled=!on; }
+  const banner=document.getElementById("lockBanner");
+  if(banner) banner.style.display = on ? "none" : "block";
+}
+function renderQuarter(){
+  $("qLabel").textContent=QLABEL[Math.min(G.t,7)];
+  $("qPhase").textContent=G.t>=8?"Complete":"Decisions due";
+  $("qDots").innerHTML=QLABEL.map((_,i)=>`<i class="${i<G.t?'done':i===G.t?'now':''}"></i>`).join("");
+  renderNews(); renderGauges(); renderPanels();
+}
+
+/* ============ resolve & briefing ============ */
+try{ $("objHide").onclick=()=>$("objBox").style.display="none"; }catch(e){}
+$("restartBtn").onclick=async()=>{
+  if(!confirm("Start the game again from 2020 Q1? The current game will be discarded.")) return;
+  await clearState();
+  G=newGame(); curUS=defaultDecision("US"); curEU=defaultDecision("EU");
+  window.RAT={US:{cb:{tags:[],note:""},gov:{tags:[],note:""}},EU:{cb:{tags:[],note:""},gov:{tags:[],note:""}}};
+  $("debrief").innerHTML=""; $("briefing").style.display="none"; $("resolveRow").style.display="flex";
+  renderQuarter(); setDecisionsEnabled(true); window.scrollTo({top:0,behavior:"smooth"});
+};
+$("logBtn").onclick=()=>{ renderLog(); $("logOverlay").classList.add("on"); };
+$("logClose").onclick=()=>$("logOverlay").classList.remove("on");
+$("logOverlay").onclick=(e)=>{ if(e.target===$("logOverlay")) $("logOverlay").classList.remove("on"); };
+$("modelBtn").onclick=()=>$("modelOverlay").classList.add("on");
+$("modelClose").onclick=()=>$("modelOverlay").classList.remove("on");
+$("modelOverlay").onclick=(e)=>{ if(e.target===$("modelOverlay")) $("modelOverlay").classList.remove("on"); };
+$("resolveBtn").onclick=async ()=>{
+  const t=G.t;
+  window.__preState=cloneGame(G);
+  const dUS={r:curUS.r,qe:curUS.qe,stim:curUS.stim,mix:{...curUS.mix},
+    rationale:{cb:JSON.parse(JSON.stringify(window.RAT.US.cb)),gov:JSON.parse(JSON.stringify(window.RAT.US.gov))}};
+  const dEU={r:curEU.r,qe:curEU.qe,stim:curEU.stim,mix:{...curEU.mix},
+    rationale:{cb:JSON.parse(JSON.stringify(window.RAT.EU.cb)),gov:JSON.parse(JSON.stringify(window.RAT.EU.gov))}};
+  resolveQuarter(G,dUS,dEU);
+  setDecisionsEnabled(false);
+  saveState();
+  // reset rationale selections for next quarter
+  window.RAT={US:{cb:{tags:[],note:""},gov:{tags:[],note:""}},EU:{cb:{tags:[],note:""},gov:{tags:[],note:""}}};
+  renderGauges(); 
+  $("qDots").innerHTML=QLABEL.map((_,i)=>`<i class="${i<G.t?'done':i===G.t?'now':''}"></i>`).join("");
+  $("resolveRow").style.display="none";
+  $("briefing").style.display="block";
+  await briefing(t);
+};
+function cloneGame(g){ return JSON.parse(JSON.stringify(g)); }
+// Given the game state BEFORE quarter t was resolved, and the decisions actually taken,
+// report the inflation/unemployment range internal experts would have considered by
+// nudging stimulus and QE below and above what was done (one-quarter counterfactuals).
+function expertBand(preState, dUS, dEU){
+  function run(mult, qeDelta){
+    const g=cloneGame(preState);
+    const a={...dUS, stim:Math.max(0,+(dUS.stim*mult).toFixed(1)), qe:Math.max(0,dUS.qe+qeDelta), mix:{...dUS.mix}};
+    const b={...dEU, stim:Math.max(0,+(dEU.stim*mult).toFixed(1)), qe:Math.max(0,dEU.qe+qeDelta), mix:{...dEU.mix}};
+    resolveQuarter(g,a,b);
+    const h=g.hist[g.hist.length-1];
+    return {piUS:h.US.pi,uUS:h.US.U,piEU:h.EU.pi,uEU:h.EU.U};
+  }
+  const lo=run(0.5,-2), hi=run(1.5,2), mid=run(1,0);
+  return {
+    piUS:[Math.min(lo.piUS,mid.piUS,hi.piUS),Math.max(lo.piUS,mid.piUS,hi.piUS)],
+    uUS:[Math.min(hi.uUS,mid.uUS,lo.uUS),Math.max(hi.uUS,mid.uUS,lo.uUS)],
+    piEU:[Math.min(lo.piEU,mid.piEU,hi.piEU),Math.max(lo.piEU,mid.piEU,hi.piEU)],
+    uEU:[Math.min(hi.uEU,mid.uEU,lo.uEU),Math.max(hi.uEU,mid.uEU,lo.uEU)],
+    lessStim:{piUS:lo.piUS,uUS:lo.uUS}, moreStim:{piUS:hi.piUS,uUS:hi.uUS}
+  };
+}
+function pipePending(e,t){
+  let tot=0;
+  G.pipe[e].forEach(x=>{ for(let q=t+1;q<8;q++){ const a=q-x.t; if(a>=3&&a<=6) tot+=0.05*x.dem; } });
+  return tot;
+}
+function topArch(d){ let b="cheques",bv=-1; ARCH_KEYS.forEach(k=>{ if(d.mix[k]>bv){bv=d.mix[k];b=k;} }); return b; }
+function renderMechanism(t){
+  const r=G.hist[t], prev=t>0?G.hist[t-1]:{US:{Y:0.5,U:3.5,pi:2.3},EU:{Y:0.2,U:7.4,pi:1.2},stress:16,spread:1.3};
+  const dUS=G.decisions[t].US, dEU=G.decisions[t].EU;
+  const dYus=+(r.US.Y-prev.US.Y).toFixed(1), dYeu=+(r.EU.Y-prev.EU.Y).toFixed(1);
+  const dUus=+(r.US.U-prev.US.U).toFixed(1), dUeu=+(r.EU.U-prev.EU.U).toFixed(1);
+  const pUS=+pipePending("US",t).toFixed(1), pEU=+pipePending("EU",t).toFixed(1);
+  const aUS=topArch(dUS), aEU=topArch(dEU);
+  const supportOn = dUS.stim+dEU.stim>1 || dUS.qe+dEU.qe>4 || dUS.r<0.5;
+  const shieldUS = aUS==="retention", shieldEU = aEU==="retention";
+  const fragHot = r.spread>1.6;
+  const healthOn = (dUS.mix.health||0)>25 || (dEU.mix.health||0)>25;
+  const pandemicLive = t<4;
+  const loops=[
+    { on:supportOn, hot:false, nm:"1 \u00B7 Demand support", ch:"rates \u2193 \u00B7 QE \u00B7 fiscal \u2192 spending \u2192 output",
+      rd:`Output gap moved <b>${dYus>=0?"+":""}${dYus}pp US</b>, <b>${dYeu>=0?"+":""}${dYeu}pp EU</b> this quarter. Rates ${dUS.r}% / ${dEU.r}%, fiscal ${dUS.stim}% / ${dEU.stim}% GDP.` },
+    { on:pUS+pEU>0.3, hot:(r.US.pi>4||r.EU.pi>4), nm:"2 \u00B7 Inflation pipe (3\u20136q lag)", ch:"today\u2019s demand \u2192 \u2026 \u2192 prices, later",
+      rd:`Money you have already spent will still push prices up by about <b>${pUS}pp in the US</b> and <b>${pEU}pp in the euro area</b> over the next few quarters. This is already decided \u2014 stopping spending now cannot take it back. Inflation today is ${r.US.pi}% / ${r.EU.pi}%. Spending affects prices only 3 to 6 quarters later, so you must act before you can see the result.` },
+    { on:dUS.stim+dEU.stim>1, hot:(dUus>1.5&&!shieldUS), nm:"3 \u00B7 Labour channel", ch:"shock \u2192 layoffs \u00B7 furlough shields, transfers don\u2019t",
+      rd:`US chose <b>${ARCH[aUS].label}</b> (unemployment ${dUus>=0?"up":"down"} ${Math.abs(dUus)}pp, now ${r.US.U}%); EU chose <b>${ARCH[aEU].label}</b> (unemployment ${dUeu>=0?"up":"down"} ${Math.abs(dUeu)}pp, now ${r.EU.U}%). `
+        + (aUS===aEU
+            ? `Both blocs picked the <b>same design</b> this quarter, so any difference in unemployment comes from the size of the spending and from where each economy started \u2014 not from the design. Try different designs to see the channel at work.`
+            : `Different designs: furlough pays firms to keep people employed, so unemployment barely moves. Cash transfers support spending but do not stop lay-offs. Same money, different result for jobs.`) },
+    { on:dEU.qe>3||fragHot, hot:fragHot, nm:"4 \u00B7 Euro-area fragmentation", ch:"debt + stress \u2192 spread \u2192 EU tightens itself \u00B7 ECB QE pushes back",
+      rd:`Periphery spread <b>${r.spread}pp</b>${fragHot?" \u2014 fragmenting: the spread is un-doing your stimulus in the south":""}. ECB QE ${qeLabel(dEU.qe)} is the counterweight.` },
+    { on:healthOn&&pandemicLive, hot:false, nm:"5 \u00B7 Shock attenuation", ch:"health & vaccine spending \u2192 smaller pandemic drag itself",
+      rd: pandemicLive? `Health share: US ${dUS.mix.health||0}%, EU ${dEU.mix.health||0}%. This is the only lever that shrinks the shock rather than offsetting it.` : `Pandemic drag has faded \u2014 this loop is now closed; what remains is what your earlier choices put in the pipe.` },
+    { on:Math.abs((r.sent?r.sent.US:0))>0.5||Math.abs((r.sent?r.sent.EU:0))>0.5, hot:((r.sent?r.sent.US:0)<-1.5||(r.sent?r.sent.EU:0)<-1.5), nm:"6 \u00B7 Animal spirits", ch:"output & markets \u2192 confidence \u2192 next quarter\u2019s demand",
+      rd:`Confidence: US <b>${(r.sent?r.sent.US:0).toFixed(1)}</b>, euro area <b>${(r.sent?r.sent.EU:0).toFixed(1)}</b> (0 = normal). `
+        + (((r.sent?r.sent.US:0)>1||(r.sent?r.sent.EU:0)>1)
+            ? `People and firms are optimistic, so your next euro of spending will do <i>more</i> work than usual. Good moment to start withdrawing support.`
+            : (((r.sent?r.sent.US:0)<-1||(r.sent?r.sent.EU:0)<-1)
+              ? `People and firms are pessimistic, so your next euro of spending will do <i>less</i> work than usual. You cannot order confidence to return \u2014 you rebuild it: calm the markets (QE lowers financial stress), keep people in their jobs (furlough), and avoid sudden reversals in policy. Confidence follows results, with a delay.`
+              : `Confidence is close to normal, so it is neither helping nor hurting you this quarter.`)) },
+  ];
+  $("loops").innerHTML=loops.map(l=>`<div class="loop ${l.hot?"hot":l.on?"on":""}"><div class="ln"><div class="nm">${l.nm}</div><div class="ch">${l.ch}</div></div><div class="rd">${l.rd}</div></div>`).join("");
+  const notes=[];
+  notes.push(`Fed set ${dUS.r}% with QE ${qeLabel(dUS.qe)}; ECB ${dEU.r}% with QE ${qeLabel(dEU.qe)}.`);
+  notes.push(`US Gov ran ${dUS.stim}% GDP (${ARCH[aUS].label}); EU Govs ${dEU.stim}% GDP (${ARCH[aEU].label}).`);
+  if(pUS>1.5||pEU>1.5) notes.push(`Watch the pipe: \u2248${Math.max(pUS,pEU)}pp of inflation pressure is already committed \u2014 cutting stimulus now cannot recall it.`);
+  if(fragHot) notes.push(`The spread at ${r.spread}pp is quietly tightening euro-area conditions regardless of the ECB rate \u2014 fragmentation is a policy actor too.`);
+  const uGapDiff=Math.abs((r.US.U-4.0)-(r.EU.U-7.2));
+  if(uGapDiff>1.5) notes.push(`Relative to their natural rates, US and EU unemployment have diverged by ${uGapDiff.toFixed(1)}pp \u2014 composition, not size: the 2020 furlough-vs-transfers divergence, reproduced by your own choices.`);
+  if(Math.abs((r.sent?r.sent.US:0))>1||Math.abs((r.sent?r.sent.EU:0))>1) notes.push(`Animal spirits are now ${((r.sent?r.sent.US:0)+(r.sent?r.sent.EU:0))>0?"working for you \u2014 the same policy buys more next quarter":"working against you \u2014 the same policy buys less until confidence recovers"}.`);
+  $("mechNotes").innerHTML="<b>Read the quarter:</b> "+notes.join(" ");
+
+  // ---- reasoning vs result: did the stated rationale match what happened? ----
+  const rat=[];
+  function judge(role,which,label){
+    const R=(role==="US"?dUS:dEU).rationale?.[which]; if(!R||!R.tags||!R.tags.length)return;
+    const e=role, over=r[e].pi>3.5, cold=r[e].U>NAT[e]+2.5, frag=r.spread>1.6;
+    R.tags.forEach(tag=>{
+      let verdict="";
+      if(tag==="Fear overheating"){ verdict= over? "and inflation did run hot \u2014 reasoning matched the result." : "but inflation stayed contained \u2014 the fear may have been overweighted."; }
+      else if(tag==="Fight the downturn"){ verdict= cold? "and output is still weak \u2014 the diagnosis holds; consider whether the dose was enough." : "and output recovered \u2014 reasoning matched the result."; }
+      else if(tag==="Defend the spread"){ verdict= frag? "yet the spread widened \u2014 the intent was right but the tools fell short." : "and the spread held \u2014 reasoning matched the result."; }
+      else if(tag==="Save fiscal space"){ verdict= (r[e].debt>DEBT0?"debt still rose \u2014 restraint had limits.":"and debt was contained \u2014 consistent."); }
+      else if(tag==="Protect financial system"){ verdict= r.stress>25? "but stress stayed high \u2014 revisit the channel." : "and stress eased \u2014 consistent."; }
+      else verdict="\u2014 compare against the gauges.";
+      rat.push(`<b>${label}</b> reasoned \u201C${tag}\u201D: ${verdict}`);
+    });
+    if(R.note) rat.push(`<b>${label}</b> noted: \u201C${R.note}\u201D`);
+  }
+  const DEBT0={US:108,EU:84};
+  judge("US","cb","Fed"); judge("EU","cb","ECB"); judge("US","gov","US Gov"); judge("EU","gov","EU Govs");
+  $("mechNotes").innerHTML += coherenceHTML(t);
+  if(rat.length){ $("mechNotes").innerHTML += `<div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(25,60,63,.15)"><b>Reasoning vs result</b> \u2014 good decisions can hide weak reasoning, and vice versa:<br>${rat.join("<br>")}</div>`; }
+  // ---- expert range: what a ±dose would have produced this quarter ----
+  try{
+    if(window.__preState){
+      const band=expertBand(window.__preState, dUS, dEU);
+      const f=(x)=>x.toFixed(1);
+      const piSpread=Math.abs(band.piUS[1]-band.piUS[0])>0.15;
+      const uTxt=`US unemployment ${f(band.uUS[0])}\u2013${f(band.uUS[1])}%`;
+      const piTxt=piSpread? `US inflation ${f(band.piUS[0])}\u2013${f(band.piUS[1])}% this quarter` : `US inflation barely moves this quarter (the dose lands in prices 3\u20136q later)`;
+      $("mechNotes").innerHTML += `<div class="expband" style="margin-top:8px"><b>Advisors\u2019 range</b> \u2014 had you gone lighter \u2194 heavier on stimulus &amp; QE: ${uTxt}, ${piTxt}. You landed at US ${f(r.US.U)}% unemployment / ${f(r.US.pi)}% inflation. Lighter would have meant ~${f(band.lessStim.uUS)}% unemployment now, with more inflation building in the pipe; heavier the reverse \u2014 the trade-off you are steering.</div>`;
+    }
+  }catch(err){}
+}
+async function briefing(t){
+  renderMechanism(t);
+  const r=G.hist[t];
+  $("briefStatus").textContent="Reading the quarter\u2026"; $("briefBody").textContent=""; $("nextRow").style.display="none";
+  const dUS=G.decisions[t].US, dEU=G.decisions[t].EU;
+  const topMix=d=>{let best="cheques",bv=-1;ARCH_KEYS.forEach(k=>{if(d.mix[k]>bv){bv=d.mix[k];best=k;}});return ARCH[best].label;};
+  const prompt=`You are an economic advisor debriefing a policy game on the 2020-21 pandemic. Quarter just resolved: ${QLABEL[t]}.
+Decisions — Fed: rate ${dUS.r}%, QE ${qeLabel(dUS.qe)}; US fiscal ${dUS.stim}% GDP, mostly ${topMix(dUS)}. ECB: rate ${dEU.r}%, QE ${qeLabel(dEU.qe)}; EU fiscal ${dEU.stim}% GDP, mostly ${topMix(dEU)}.
+Resulting gauges — US: output gap ${r.US.Y}%, unemployment ${r.US.U}%, inflation ${r.US.pi}%. EU: output gap ${r.EU.Y}%, unemployment ${r.EU.U}%, inflation ${r.EU.pi}%. Equities ${r.SPX}, EUR/USD ${r.FX}, financial stress ${r.stress}, EU spread ${r.spread}pp.
+In 4-5 sentences, plain and concrete: what these decisions did this quarter, naming the mechanism loops at work (demand support; the 3-6 quarter inflation pipe; the labour channel, furlough vs transfers; euro-area fragmentation and the spread; shock attenuation via health spending). Comment briefly on the contribution of each role - central banks and governments, US and EU - so every player learns from what the others did. End with the one thing building with a lag they should watch. Where a role gave a rationale (below), say whether the result vindicates or challenges that reasoning \u2014 a good outcome with flawed reasoning still deserves a flag. No preamble, no lists.
+Stated rationales this quarter: Fed \u2014 ${(dUS.rationale?.cb?.tags||[]).join(", ")||"none"}${dUS.rationale?.cb?.note?" ("+dUS.rationale.cb.note+")":""}; ECB \u2014 ${(dEU.rationale?.cb?.tags||[]).join(", ")||"none"}${dEU.rationale?.cb?.note?" ("+dEU.rationale.cb.note+")":""}; US Gov \u2014 ${(dUS.rationale?.gov?.tags||[]).join(", ")||"none"}${dUS.rationale?.gov?.note?" ("+dUS.rationale.gov.note+")":""}; EU Govs \u2014 ${(dEU.rationale?.gov?.tags||[]).join(", ")||"none"}${dEU.rationale?.gov?.note?" ("+dEU.rationale.gov.note+")":""}.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok)throw 0;
+    const data=await res.json();
+    const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+    if(!txt)throw 0;
+    $("briefStatus").textContent=""; $("briefBody").textContent=txt;
+  }catch(e){
+    $("briefStatus").textContent="(offline summary)";
+    $("briefBody").textContent=fallbackBrief(t,r,dUS,dEU);
+  }
+  if(G.t>=8){ $("nextRow").innerHTML='<button class="btn" id="toDebrief">See the debrief &rarr;</button>';
+    $("nextRow").style.display="flex"; $("toDebrief").onclick=showDebrief; }
+  else { $("nextRow").style.display="flex";
+    $("nextBtn").onclick=()=>{ $("briefing").style.display="none"; $("resolveRow").style.display="flex"; renderQuarter(); setDecisionsEnabled(true); window.scrollTo({top:0,behavior:"smooth"}); }; }
+}
+function fallbackBrief(t,r,dUS,dEU){
+  let s=`US output gap ${r.US.Y}% with unemployment ${r.US.U}%; euro area ${r.EU.Y}% with unemployment ${r.EU.U}%. `;
+  if(r.US.U-r.EU.U>1.5) s+="The US is taking the hit through layoffs while Europe's job-retention holds employment up. ";
+  else if(r.EU.U-r.US.U>1) s+="Europe's measured unemployment now runs above the US. ";
+  if(r.US.pi>4||r.EU.pi>4) s+=`Inflation is building (US ${r.US.pi}%, EU ${r.EU.pi}%) — the lagged result of earlier stimulus and money growth meeting supply limits. `;
+  else s+="Inflation is still quiet, but demand poured in now shows up in prices only in 3-6 quarters. ";
+  s+=`Markets: equities ${r.SPX}, stress ${r.stress}, EU spread ${r.spread}pp.`;
+  return s;
+}
+
+/* ============ debrief ============ */
+function showDebrief(){
+  $("briefing").style.display="none";
+  const youEnd=G.hist[7], actEnd=ACTUAL_HIST[7];
+  const row=(lbl,y,a,u)=>`<div class="cmprow"><span>${lbl}</span><span><span class="you">${y}${u||''}</span> &nbsp;<span class="act">vs ${a}${u||''} actual</span></span></div>`;
+  const usCard=`<div class="cmpcard"><h4>\u{1F1FA}\u{1F1F8} United States — end 2021</h4>
+    ${row("Output gap",youEnd.US.Y,actEnd.US.Y,"%")}${row("Unemployment",youEnd.US.U,actEnd.US.U,"%")}${row("Inflation",youEnd.US.pi,actEnd.US.pi,"%")}${row("Policy rate",youEnd.US.r,actEnd.US.r,"%")}</div>`;
+  const euCard=`<div class="cmpcard"><h4>\u{1F1EA}\u{1F1FA} Euro area — end 2021</h4>
+    ${row("Output gap",youEnd.EU.Y,actEnd.EU.Y,"%")}${row("Unemployment",youEnd.EU.U,actEnd.EU.U,"%")}${row("Inflation",youEnd.EU.pi,actEnd.EU.pi,"%")}${row("Policy rate",youEnd.EU.r,actEnd.EU.r,"%")}</div>`;
+  const sc=scoreFromHist(G.hist);
+  const roleNames={Fed:"Federal Reserve",ECB:"European Central Bank",USGov:"US Government",EUGov:"Euro-area Governments"};
+  $("debrief").innerHTML=`<h2>Debrief — your two years vs. what actually happened</h2>
+    <p style="font-size:13px;color:var(--muted)">Your final-quarter outcomes against the real 2021 Q4 figures the engine is calibrated to.</p>
+    <div class="cmp">${usCard}${euCard}</div>
+    <div class="scorebar">
+      <div class="bigscore"><div class="k">Stabilisation score</div><div class="v">${sc.teamScore}<small>/100</small></div></div>
+      <div class="rolescores">
+        <div class="k">Mandate best served — <span style="font-weight:400;font-style:italic">outcomes are jointly produced, so treat as a discussion prompt</span></div>
+        <div class="rsrow">${["Fed","ECB","USGov","EUGov"].map(r=>`<span class="rs ${r===sc.bestRole?'best':''}">${roleNames[r]}: <b>${sc.roleScore[r]}</b>${r===sc.bestRole?' \u2605':''}</span>`).join("")}</div>
+        <div class="scorewhy">${explainScores(sc,G.hist)}</div>
+      </div>
+    </div>
+    <div class="cmpcharts">
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.US.U,"US \u2014 unemployment","%",US_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.EU.U,"Euro area \u2014 unemployment","%",EU_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.US.pi,"US \u2014 inflation","%",US_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.EU.pi,"Euro area \u2014 inflation","%",EU_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.US.debt,"US \u2014 government debt","% of GDP",US_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.EU.debt,"Euro area \u2014 government debt","% of GDP",EU_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.SPX,"US \u2014 S&amp;P 500","100 = pre-COVID",US_C)}
+      ${compareChart(G.hist,ACTUAL_HIST,h=>h.STOXX,"Euro area \u2014 STOXX 50","100 = pre-COVID",EU_C)}
+    </div>
+    <p class="cmplegend"><b>Reading these:</b> the dashed grey line is what actually happened in 2020\u201321. Your team\u2019s line is <span style="color:#B0492F;font-weight:700">red for the US seats</span> (Fed and US Government) and <span style="color:#2C5F8A;font-weight:700">blue for the euro-area seats</span> (ECB and Euro-area Governments). You are scored on stabilisation, not on tracking the grey line.</p>
+    ${equityExplainer()}
+    ${coherenceSummary()}
+    ${actualCritique()}
+    <div class="assess" id="assessBody">Assessing\u2026</div>
+    <div class="export">
+      <input id="teamName" placeholder="Team name (e.g. Table 3)" />
+      <button class="btn" id="exportBtn">Export team JSON &darr;</button>
+      <span class="exhint">Hand the file to the facilitator to compare teams in the League Table.</span>
+    </div>
+    <div class="fwd">
+      <h3>2022 &mdash; the tail of your choices</h3>
+      <p class="fwdp">Your decisions stopped at end-2021, but the inflation they set in motion has not. The stimulus and money from 2020&ndash;21 are still feeding through, and a new energy shock is hitting Europe. One decision is left, the one the game built toward: <b>how hard do you tighten in 2022?</b> Move the slider across its full range before you settle: too little and inflation persists, too much and you buy a recession to beat it. The band that produces a soft landing is real but narrow, and where it sits depends on the inflation you inherited from your own 2020\u201321 decisions.</p>
+      <div class="fwdctrl">
+        <label>2022 tightening stance <span id="vTight">firm</span></label>
+        <input type="range" id="tight" min="0" max="10" step="1" value="5">
+        <button class="btn" id="runFwd">Run 2022 &rarr;</button>
+      </div>
+      <div id="fwdResult"></div>
+    </div>`;
+  $("debrief").style.display="block";
+  $("exportBtn").onclick=exportJSON;
+  const tightLabel=v=>v<=2?"hold steady":v<=5?"firm":v<=8?"aggressive":"shock therapy";
+  $("tight").addEventListener("input",e=>$("vTight").textContent=tightLabel(+e.target.value));
+  $("vTight").textContent=tightLabel(+$("tight").value);
+  $("runFwd").onclick=()=>renderFwd(+$("tight").value);
+  $("tight").addEventListener("input",()=>{ if($("fwdResult").innerHTML.trim()) renderFwd(+$("tight").value); });
+  try{ $("debrief").scrollIntoView({behavior:"smooth"}); }catch(e){}
+  debriefAI();
+}
+function forwardRun(stance){
+  const g=JSON.parse(JSON.stringify(G));   // copy end-2021 state (no funcs in G)
+  const startUSr=g.US.r, startEUr=g.EU.r;
+  const peakUS=0.5+0.55*stance, peakEU=0.0+0.40*stance;   // ECB hikes less than the Fed
+  const qt=-0.5-0.25*stance;
+  const path=[];
+  for(let k=0;k<4;k++){
+    const rUS=+(startUSr+(peakUS-startUSr)*(k+1)/4).toFixed(2);
+    const rEU=+(startEUr+(peakEU-startEUr)*(k+1)/4).toFixed(2);
+    resolveQuarter(g,{r:rUS,qe:qt,stim:0.3,mix:{cheques:20,retention:10,liquidity:10,health:5,infra:55}},
+                     {r:rEU,qe:qt,stim:0.3,mix:{cheques:10,retention:30,liquidity:10,health:5,infra:45}});
+    path.push({q:"2022 Q"+(k+1),US:{...g.US},EU:{...g.EU}});
+  }
+  return {path,end:path[3],peakUS,peakEU};
+}
+function renderFwd(stance){
+  const f=forwardRun(stance), e=f.end;
+  let verdict, vcls;
+  if(e.US.pi>=5){ verdict="Inflation persists. You stayed too loose \u2014 prices are still running near "+e.US.pi.toFixed(1)+"%, and the longer it sits the harder (and costlier) the eventual fight."; vcls="warn"; }
+  else if(e.US.pi<2 && e.US.U>=4.6){ verdict="Overcooked. You crushed inflation to "+e.US.pi.toFixed(1)+"%, but US unemployment climbed to "+e.US.U.toFixed(1)+"% and output is stalling \u2014 a self-inflicted recession to win the inflation battle."; vcls="warn"; }
+  else if(e.US.pi<=4 && e.US.U<4.6){ verdict="Soft landing. You brought US inflation down to "+e.US.pi.toFixed(1)+"% while keeping unemployment at "+e.US.U.toFixed(1)+"% \u2014 the outcome every central banker wants and few achieve."; vcls="good"; }
+  else { verdict="Partial progress. Inflation is easing to "+e.US.pi.toFixed(1)+"% at a modest cost to jobs ("+e.US.U.toFixed(1)+"%) \u2014 on the path, not yet landed."; vcls=""; }
+  const euNote="The euro area is a different problem: its 2022 inflation is energy-driven (the war shock), so even hard tightening leaves it near "+e.EU.pi.toFixed(1)+"% \u2014 the ECB can&rsquo;t hike away a supply shock the way the Fed can cool demand.";
+  const qlab=["2021 Q4","2022 Q1","2022 Q2","2022 Q3","2022 Q4"];
+  const usPi=[G.hist[7].US.pi,...f.path.map(p=>p.US.pi)];
+  const usU =[G.hist[7].US.U ,...f.path.map(p=>p.US.U )];
+  const euPi=[G.hist[7].EU.pi,...f.path.map(p=>p.EU.pi)];
+  const euU =[G.hist[7].EU.U ,...f.path.map(p=>p.EU.U )];
+  function lineChart(series){
+    const all=series.flatMap(s=>s.v);
+    const mn=Math.min(...all,0), mx=Math.max(...all), rng=(mx-mn)||1;
+    const W=520,H=155,L=34,R=10,T=12,B=24, pw=W-L-R, ph=H-T-B;
+    const X=i=>L+(i/(qlab.length-1))*pw, Y=v=>T+ph-((v-mn)/rng)*ph;
+    let g=`<svg viewBox="0 0 ${W} ${H}" class="fwdchart">`;
+    [0,0.5,1].forEach(fr=>{ const yy=T+ph-fr*ph, val=(mn+fr*rng).toFixed(0);
+      g+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#C9BFAD" stroke-width="0.7"/>`
+       + `<text x="${L-6}" y="${yy+3}" font-size="9" fill="#5E726F" text-anchor="end" font-family="Calibri">${val}</text>`; });
+    qlab.forEach((lab,i)=>{ g+=`<text x="${X(i)}" y="${H-7}" font-size="8.5" fill="#5E726F" text-anchor="middle" font-family="Calibri">${lab}</text>`; });
+    series.forEach(s=>{
+      const d=s.v.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+      g+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2.2" stroke-linejoin="round"/>`;
+      s.v.forEach((v,i)=>{ g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i===s.v.length-1?3.4:2}" fill="${s.c}"/>`; });
+      const ly=Y(s.v[s.v.length-1]) + (s.dy||0);
+      g+=`<text x="${(X(s.v.length-1)-5).toFixed(1)}" y="${(ly-6).toFixed(1)}" font-size="9" font-weight="700" fill="${s.c}" text-anchor="end" font-family="Calibri">${s.n}</text>`;
+    });
+    return g+`</svg>`;
+  }
+  const fwdChart = lineChart([
+    {n:"US inflation", v:usPi, c:"#B0492F"},
+    {n:"EU inflation", v:euPi, c:"#C6A553"},
+    {n:"US unemployment", v:usU, c:"#193C3F"},
+    {n:"EU unemployment", v:euU, c:"#5C8A6B"},
+  ]);
+  $("fwdResult").innerHTML=`
+    <div class="fwdchartwrap"><div class="fwdcharttitle">The path through 2022 \u2014 what happens quarter by quarter, not just where it ends</div>${fwdChart}</div>
+    <div class="fwdcards">
+      <div class="fwdcard"><div class="fl">\u{1F1FA}\u{1F1F8} US, end 2022</div>
+        <div class="fr">inflation <b>${e.US.pi.toFixed(1)}%</b> · unemployment <b>${e.US.U.toFixed(1)}%</b> · output gap <b>${e.US.Y.toFixed(1)}%</b> · rate reached <b>${f.peakUS.toFixed(1)}%</b></div></div>
+      <div class="fwdcard"><div class="fl">\u{1F1EA}\u{1F1FA} Euro area, end 2022</div>
+        <div class="fr">inflation <b>${e.EU.pi.toFixed(1)}%</b> · unemployment <b>${e.EU.U.toFixed(1)}%</b> · output gap <b>${e.EU.Y.toFixed(1)}%</b> · rate reached <b>${f.peakEU.toFixed(1)}%</b></div></div>
+    </div>
+    <div class="fwdverdict ${vcls}">${verdict}</div>
+    <div class="fwdnote">${euNote}</div>`;
+}
+function exportJSON(){
+  const team=($("teamName").value||"").trim()||"Unnamed team";
+  const data={ game:"pandemic-policy-room", version:1, team, playedAt:new Date().toISOString(),
+    quarters:G.hist.map((h,i)=>({ q:h.q,
+      decisions:{ Fed:{r:G.decisions[i].US.r,qe:G.decisions[i].US.qe},
+        ECB:{r:G.decisions[i].EU.r,qe:G.decisions[i].EU.qe},
+        USGov:{stim:G.decisions[i].US.stim,mix:G.decisions[i].US.mix},
+        EUGov:{stim:G.decisions[i].EU.stim,mix:G.decisions[i].EU.mix} },
+      gauges:{US:h.US,EU:h.EU,SPX:h.SPX,FX:h.FX,stress:h.stress,spread:h.spread} })),
+    score:scoreFromHist(G.hist) };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="policy-room-"+team.replace(/[^a-z0-9]+/gi,"_")+".json"; document.body.appendChild(a); a.click(); a.remove();
+}
+// Why the two stock indices did what they did in THIS game — read off the model's own
+// equity equation (liquidity, output, stress, and for Europe the spread).
+// Whole-game coherence summary for the debrief.
+function coherenceSummary(){
+  let bad=[], good=0, tagged=0;
+  for(let t=0;t<G.decisions.length;t++){
+    const f=coherenceFlags(t);
+    f.forEach(x=>{ tagged++; if(x.ok) good++; else bad.push({q:QLABEL[t],...x}); });
+  }
+  if(!tagged) return `<h3 class="crith">Coherence of reasoning</h3><div class="eqwhy"><p>No seat recorded a reason this game, so there is nothing to check. Next time, tag why you decided \u2014 it is the only way to tell a good call from a lucky one.</p></div>`;
+  const rate=Math.round(100*good/tagged);
+  let s=`<h3 class="crith">Coherence of reasoning</h3><div class="eqwhy">`;
+  s+=`<p><b>${good} of ${tagged}</b> recorded reasons matched the action taken (<b>${rate}%</b>). This measures something the score does not: whether you did what you said you were doing.</p>`;
+  if(bad.length){
+    s+=`<p><b>Where intent and action diverged:</b></p><ul class="cohlist">`;
+    bad.slice(0,8).forEach(x=>{ s+=`<li><b>${x.q} \u00b7 ${x.seat}</b> ${x.msg}</li>`; });
+    s+=`</ul>`;
+    s+=`<p>Each of these is worth one question in the debrief: had you changed your mind, were you overruled by another seat, or did the tag simply not keep up with the decision? All three answers are interesting; only the third is a problem.</p>`;
+  } else {
+    s+=`<p>Every stated reason matched the action taken. That is rarer than it sounds \u2014 under time pressure, seats often keep a tag from the previous quarter after the situation has moved on.</p>`;
+  }
+  s+=`<p class="cohcaveat">Note: coherence carries <b>no weight in your score</b>, which is purely about outcomes. A team can be perfectly coherent and still stabilise badly, or incoherent and score well. It is shown because a good decision made for the wrong reason will not repeat.</p>`;
+  return s+`</div>`;
+}
+// COHERENCE: does the decision match the reason the seat gave for it?
+// This is different from reasoning-vs-result. A seat can be coherent and unlucky,
+// or incoherent and lucky. We flag the mismatch between stated intent and action.
+function coherenceFlags(t){
+  const d=G.decisions[t], h=G.hist[t], prev=t>0?G.decisions[t-1]:null, out=[];
+  const seats=[
+    {k:"Fed",   label:"Fed",         side:"US", which:"cb"},
+    {k:"ECB",   label:"ECB",         side:"EU", which:"cb"},
+    {k:"USGov", label:"US Gov",      side:"US", which:"gov"},
+    {k:"EUGov", label:"EU Govs",     side:"EU", which:"gov"},
+  ];
+  seats.forEach(s=>{
+    const R=d[s.side].rationale && d[s.side].rationale[s.which];
+    if(!R||!R.tags||!R.tags.length) return;
+    const dec=d[s.side], pdec=prev?prev[s.side]:null;
+    const isCB=s.which==="cb";
+    const easing = isCB ? (dec.r < (pdec?pdec.r:dec.r) || dec.qe>3) : (dec.stim>3);
+    const tightening = isCB ? (dec.r > (pdec?pdec.r:dec.r) || dec.qe<=0.5) : (dec.stim<=1);
+    R.tags.forEach(tag=>{
+      if(tag==="Fear overheating" && easing)
+        out.push({seat:s.label, ok:false, msg:`said <b>fear overheating</b> but ${isCB?`kept policy loose (rate ${dec.r}%, QE ${qeLabel(dec.qe)})`:`still spent ${dec.stim}% of GDP`}.`});
+      if(tag==="Fear overheating" && tightening)
+        out.push({seat:s.label, ok:true, msg:`said <b>fear overheating</b> and acted on it.`});
+      if(tag==="Fight the downturn" && tightening)
+        out.push({seat:s.label, ok:false, msg:`said <b>fight the downturn</b> but ${isCB?`tightened (rate ${dec.r}%, QE ${qeLabel(dec.qe)})`:`spent only ${dec.stim}% of GDP`}.`});
+      if(tag==="Fight the downturn" && easing)
+        out.push({seat:s.label, ok:true, msg:`said <b>fight the downturn</b> and supported demand.`});
+      if(tag==="Defend the spread" && dec.qe<=1 && s.k==="ECB")
+        out.push({seat:s.label, ok:false, msg:`said <b>defend the spread</b> but bought almost nothing (QE ${qeLabel(dec.qe)}) \u2014 QE is the tool that compresses it.`});
+      if(tag==="Defend the spread" && dec.qe>3 && s.k==="ECB")
+        out.push({seat:s.label, ok:true, msg:`said <b>defend the spread</b> and used QE to do it.`});
+      if(tag==="Save fiscal space" && dec.stim>5 && !isCB)
+        out.push({seat:s.label, ok:false, msg:`said <b>save fiscal space</b> while spending ${dec.stim}% of GDP.`});
+      if(tag==="Save fiscal space" && dec.stim<=2 && !isCB)
+        out.push({seat:s.label, ok:true, msg:`said <b>save fiscal space</b> and held spending down.`});
+      if(tag==="Protect financial system" && dec.qe<=1 && h.stress>25)
+        out.push({seat:s.label, ok:false, msg:`said <b>protect the financial system</b> with stress at ${Math.round(h.stress)} but no QE.`});
+    });
+  });
+  return out;
+}
+function coherenceHTML(t){
+  const f=coherenceFlags(t);
+  if(!f.length) return "";
+  const bad=f.filter(x=>!x.ok), good=f.filter(x=>x.ok);
+  let s=`<div class="coh"><div class="cohh">Coherence check \u2014 did the action match the stated reason?</div>`;
+  bad.forEach(x=>s+=`<div class="cohrow bad"><span class="cohseat">${x.seat}</span> ${x.msg}</div>`);
+  good.forEach(x=>s+=`<div class="cohrow ok"><span class="cohseat">${x.seat}</span> ${x.msg}</div>`);
+  if(bad.length) s+=`<div class="cohnote">A mismatch is not automatically an error \u2014 you may have changed your mind for good cause. But say so, rather than leaving the reason and the action pointing in different directions.</div>`;
+  return s+`</div>`;
+}
+// Full record of what each seat did, and why, quarter by quarter.
+function renderLog(){
+  const body=document.getElementById("logBody");
+  if(!G.decisions.length){ body.innerHTML='<p style="font-size:13px;color:#5E726F">No quarters resolved yet.</p>'; return; }
+  const rowsHtml=G.decisions.map((d,i)=>{
+    const h=G.hist[i];
+    const mixTop=m=>{let b="cheques",bv=-1;ARCH_KEYS.forEach(k=>{if(m[k]>bv){bv=m[k];b=k;}});return ARCH[b].label;};
+    const rat=(side,which)=>{
+      const R=d[side].rationale&&d[side].rationale[which];
+      if(!R||!R.tags||!R.tags.length) return '<span class="lnone">no reason recorded</span>';
+      return R.tags.map(t=>`<span class="ltag">${t}</span>`).join("")+(R.note?` <i>\u201c${R.note}\u201d</i>`:"");
+    };
+    return `<div class="logq">
+      <div class="lqh">${QLABEL[i]} <span class="lqres">\u2192 US: unemployment ${h.US.U.toFixed(1)}%, inflation ${h.US.pi.toFixed(1)}% \u00b7 EU: unemployment ${h.EU.U.toFixed(1)}%, inflation ${h.EU.pi.toFixed(1)}% \u00b7 spread ${h.spread}pp</span></div>
+      <table class="logt">
+        <tr><td class="lrole">Federal Reserve</td><td>rate <b>${d.US.r}%</b>, QE <b>${qeLabel(d.US.qe)}</b></td><td class="lwhy">${rat("US","cb")}</td></tr>
+        <tr><td class="lrole">ECB</td><td>rate <b>${d.EU.r}%</b>, QE <b>${qeLabel(d.EU.qe)}</b></td><td class="lwhy">${rat("EU","cb")}</td></tr>
+        <tr><td class="lrole">US Government</td><td>fiscal <b>${d.US.stim}% GDP</b>, mostly <b>${mixTop(d.US.mix)}</b></td><td class="lwhy">${rat("US","gov")}</td></tr>
+        <tr><td class="lrole">Euro-area Governments</td><td>fiscal <b>${d.EU.stim}% GDP</b>, mostly <b>${mixTop(d.EU.mix)}</b></td><td class="lwhy">${rat("EU","gov")}</td></tr>
+      </table></div>`;
+  }).join("");
+  body.innerHTML=rowsHtml;
+}
+function equityExplainer(){
+  const h=G.hist, n=h.length, e=h[n-1], f=x=>x.toFixed(0), f1=x=>x.toFixed(1);
+  const trough=h.reduce((m,x)=>x.SPX<m.SPX?x:m,h[0]);
+  const troughE=h.reduce((m,x)=>x.STOXX<m.STOXX?x:m,h[0]);
+  const totalQE=G.decisions.reduce((a,d)=>a+Math.max(0,d.US.qe)+Math.max(0,d.EU.qe),0);
+  const peakStress=Math.max(...h.map(x=>x.stress));
+  const peakSpread=Math.max(...h.map(x=>x.spread));
+  const gap=e.SPX-e.STOXX;
+  const euYend=e.EU.Y, usYend=e.US.Y;
+  const spreadDrag=h.reduce((a,x)=>a+1.2*Math.max(0,x.spread-1),0);
+  let why=[];
+  why.push(`<b>What moved them.</b> In the model, both indices are pushed up by central-bank liquidity and by their own economy's output, and pushed down by financial stress. Europe carries one extra drag: a widening periphery spread. So equities are not a separate story \u2014 they are a summary of the other four gauges.`);
+  why.push(`<b>The crash.</b> The S&amp;P bottomed at <b>${f(trough.SPX)}</b> and the STOXX at <b>${f(troughE.STOXX)}</b>, when financial stress peaked at <b>${f(peakStress)}</b>. Nothing about the virus itself put those numbers there \u2014 stress did, and stress is what QE buys down.`);
+  why.push(`<b>The recovery.</b> Your two central banks bought a cumulative <b>\u20ac${f(totalQE*50)}bn</b> of assets. That is the single largest term lifting both indices: liquidity first calmed stress, then supported prices well before output had recovered. This is why markets rose while unemployment was still high \u2014 a fact many found jarring in 2020, and which the model reproduces mechanically.`);
+  if(gap>8){
+    why.push(`<b>Why Europe lagged (gap of ${f(gap)} points).</b> Two reasons, both visible in your own numbers. First, the euro-area output gap ended at <b>${f1(euYend)}%</b> against the US at <b>${f1(usYend)}%</b> \u2014 furlough protects jobs but generates less demand, so European earnings recovered more slowly. ${peakSpread>1.1?`Second, your periphery spread peaked at <b>${f1(peakSpread)}pp</b>, which subtracted roughly <b>${f1(spreadDrag)}</b> index points from the STOXX over the game \u2014 fragmentation is an equity story, not only a bond story.`:`Second, the spread stayed contained, so fragmentation cost Europe little here \u2014 the gap is almost entirely the output difference.`}`);
+  } else if(gap<-8){
+    why.push(`<b>Europe outperformed by ${f(-gap)} points</b> \u2014 unusual, and worth noting. It happens when the euro area runs the stronger policy mix: sustained ECB QE, a contained spread (yours peaked at ${f1(peakSpread)}pp), and enough fiscal support to close the output gap (${f1(euYend)}%). Nothing in the model forces Europe to trail; your policy mix decided it.`);
+  } else {
+    why.push(`<b>The two blocs finished close</b> (${f(Math.abs(gap))} points apart), which means your euro-area output recovery roughly matched the US and the spread stayed under control (peak ${f1(peakSpread)}pp).`);
+  }
+  why.push(`<b>The question to sit with.</b> Equities ended at ${f(e.SPX)} and ${f(e.STOXX)} while inflation ran at ${f1(e.US.pi)}% and ${f1(e.EU.pi)}%. Asset prices recovered faster than the real economy because liquidity reaches markets immediately and reaches wages and prices with a lag. Who benefits from that gap, and for how long, is a distributional question the model can pose but not settle.`);
+  return `<h3 class="crith">Why the stock markets did what they did</h3><div class="eqwhy">${why.map(p=>`<p>${p}</p>`).join("")}</div>`;
+}
+// Team-line colours: red for the US seats (Fed + US Government), blue for the
+// euro-area seats (ECB + Euro-area Governments). Grey dashed is always the record.
+const US_C="#B0492F", EU_C="#2C5F8A";
+// Your path against what actually happened, 2020 Q1 - 2021 Q4.
+function compareChart(yourHist, actualHist, pick, title, unit, teamColor){
+  const you=chartHist(yourHist).map(pick), act=chartHist(actualHist).map(pick);
+  const labs=["2019 Q4",...QLABEL];
+  const all=[...you,...act];
+  const mn=Math.min(...all), mx=Math.max(...all), rng=(mx-mn)||1;
+  const W=520,H=170,L=36,R=12,T=16,B=26,pw=W-L-R,ph=H-T-B;
+  const X=i=>L+(i/(you.length-1))*pw, Y=v=>T+ph-((v-mn)/rng)*ph;
+  let g=`<svg viewBox="0 0 ${W} ${H}" class="fwdchart">`;
+  [0,0.5,1].forEach(fr=>{const yy=T+ph-fr*ph;
+    g+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#C9BFAD" stroke-width="0.7"/>`
+     + `<text x="${L-6}" y="${yy+3}" font-size="9" fill="#5E726F" text-anchor="end" font-family="Calibri">${(mn+fr*rng).toFixed(1)}</text>`;});
+  labs.forEach((lb,i)=>{ if(i%2===0) g+=`<text x="${X(i)}" y="${H-8}" font-size="8" fill="#5E726F" text-anchor="middle" font-family="Calibri">${lb}</text>`; });
+  const line=(vals,color,dash)=>{
+    const d=vals.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+    let o=`<path d="${d}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round"${dash?` stroke-dasharray="5 4"`:``}/>`;
+    o+=`<circle cx="${X(vals.length-1).toFixed(1)}" cy="${Y(vals[vals.length-1]).toFixed(1)}" r="3.2" fill="${color}"/>`;
+    return o;
+  };
+  const tc = teamColor || "#B0492F";
+  g+=line(act,"#8FA09D",true)+line(you,tc,false);
+  g+=`<text x="${W-R}" y="${T+8}" font-size="9.5" font-weight="700" fill="${tc}" text-anchor="end" font-family="Calibri">your game</text>`;
+  g+=`<text x="${W-R}" y="${T+20}" font-size="9.5" font-weight="700" fill="#8FA09D" text-anchor="end" font-family="Calibri">what actually happened</text>`;
+  return `<div class="cmpchart"><div class="fwdcharttitle">${title}${unit?" ("+unit+")":""}</div>${g}</svg></div>`;
+}
+// What the real policymakers did, and the fair critique of each - so teams can judge
+// their own choices against the record rather than against an abstract ideal.
+function actualCritique(){
+  return `
+  <h3 class="crith">What the real policymakers did \u2014 and the case against each</h3>
+  <div class="critgrid">
+    <div class="critcard"><div class="crole">Federal Reserve</div>
+      <div class="cdid"><b>Did:</b> cut to near zero in March 2020, bought roughly $120bn of assets a month, and promised to stay loose. Held that stance through 2021 while calling inflation \u201Ctransitory\u201D. First hike came only in March 2022.</div>
+      <div class="ccrit"><b>The critique:</b> the diagnosis of supply-driven inflation was defensible; the delay was not. By late 2021 demand-driven inflation was visible and the Fed was still buying bonds. Waiting meant a much steeper hiking cycle later \u2014 the classic cost of acting after the gauges confirm rather than before.</div>
+      <div class="cdef"><b>In fairness:</b> tightening into an incomplete recovery, with employment still below pre-COVID, risked killing the rebound. Nobody knew in mid-2021 how persistent the supply shock would be.</div></div>
+    <div class="critcard"><div class="crole">European Central Bank</div>
+      <div class="cdid"><b>Did:</b> launched PEPP in March 2020 (\u20ac750bn, later \u20ac1.85tn) explicitly to stop fragmentation, kept rates negative, and hiked only in July 2022 \u2014 months after the Fed.</div>
+      <div class="ccrit"><b>The critique:</b> even slower than the Fed, and with a weaker excuse by 2022 once energy prices were feeding into core inflation. The ECB also under-communicated: Lagarde\u2019s March 2020 remark that the ECB was \u201Cnot here to close spreads\u201D briefly widened them sharply.</div>
+      <div class="cdef"><b>In fairness:</b> PEPP did what it was built to do \u2014 the periphery spread stayed contained through the worst of the crisis, and no euro-area sovereign lost market access. On its own fragmentation mandate the ECB largely succeeded.</div></div>
+    <div class="critcard"><div class="crole">US Government</div>
+      <div class="cdid"><b>Did:</b> roughly $5tn across CARES (March 2020), the December 2020 package and the American Rescue Plan (March 2021) \u2014 heavily weighted toward direct household transfers and enhanced unemployment benefits.</div>
+      <div class="ccrit"><b>The critique:</b> the March 2021 package was the contested one \u2014 large, late, and delivered into an economy already recovering, with vaccines rolling out. Choosing transfers over job retention also let unemployment spike to about 15%, with the scarring that follows.</div>
+      <div class="cdef"><b>In fairness:</b> transfers reached people outside formal employment, and the US recovered its output faster than Europe. Speed of delivery was a genuine achievement given the administrative constraints.</div></div>
+    <div class="critcard"><div class="crole">Euro-area Governments</div>
+      <div class="cdid"><b>Did:</b> extended and expanded existing short-time work schemes (Kurzarbeit, ch\u00f4mage partiel, cassa integrazione), backed by the EU\u2019s SURE loans, plus the \u20ac750bn Next Generation EU recovery fund agreed in July 2020.</div>
+      <div class="ccrit"><b>The critique:</b> too small and too slow. Next Generation EU money largely arrived from 2021 onward, well after the trough, and total fiscal support was roughly half the US effort. The euro area regained its pre-COVID output level far later.</div>
+      <div class="cdef"><b>In fairness:</b> the furlough choice held measured unemployment near 8% instead of 15%, preserved firm\u2013worker matches, and produced a cooler inflation path. And a joint EU borrowing instrument was a genuine institutional breakthrough.</div></div>
+  </div>
+  <p class="critfoot">Judge your own game against this record \u2014 but remember the scoring rule: you are graded on stabilisation, not on matching what they did. Several of these decisions are, with hindsight, exactly what you should have avoided.</p>`;
+}
+// Why each role scored what it scored — the drivers, in plain language.
+function explainScores(sc, hist){
+  const n=hist.length, last=hist[n-1];
+  const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const NATL={US:4.0,EU:7.2}, DEBT0L={US:108,EU:84};
+  const m={};
+  for(const e of ["US","EU"]) m[e]={
+    infl:avg(hist.map(h=>Math.abs(h[e].pi-2))),
+    u:avg(hist.map(h=>Math.max(0,h[e].U-NATL[e]))),
+    ygap:Math.abs(last[e].Y), endPi:last[e].pi,
+    debt:Math.max(0,last[e].debt-DEBT0L[e])
+  };
+  const avgStress=avg(hist.map(h=>h.stress)), peak=Math.max(...hist.map(h=>h.spread));
+  const f=x=>x.toFixed(1);
+  const drv=[];
+  drv.push(`<b>How unemployment is judged.</b> Never as a raw level, always as the distance above each economy\u2019s own normal rate \u2014 <b>4.0% in the US, 7.2% in the euro area</b>. Over this game US unemployment averaged <b>${f(m.US.u)}pp above</b> its normal level and euro-area unemployment <b>${f(m.EU.u)}pp above</b> its own. ${m.EU.u<m.US.u?`So even though the euro area ends with the higher headline number, it did <i>better</i> on the measure that counts: 6\u20137% is ordinary in Europe, while the same figure would be a crisis in America. This is usually why the ECB out-scores the Fed on jobs.`:`Here the US held closer to its own normal level than the euro area did to its.`}`);
+  drv.push(`<b>Federal Reserve (${sc.roleScore.Fed})</b> \u2014 graded on US inflation and unemployment: average inflation sat ${f(m.US.infl)}pp from the 2% target, and unemployment averaged ${f(m.US.u)}pp above its natural rate. ${m.US.infl>2.5?"The inflation miss is what costs here \u2014 leaning earlier against the fiscal impulse was the available move.":"Inflation control was reasonable."}`);
+  drv.push(`<b>ECB (${sc.roleScore.ECB})</b> \u2014 graded on euro-area inflation <i>and</i> the periphery spread: inflation averaged ${f(m.EU.infl)}pp off target, and the spread peaked at ${peak.toFixed(2)}pp. ${peak>1.6?"The spread is the failure here \u2014 QE was the tool and it was under-used.":"Holding the spread near 1pp is the ECB's clearest win."} <i>Read this score carefully in two respects. First, low euro-area inflation can mean skilful control \u2014 or a starved economy; check it against EU unemployment before crediting it. Second, the ECB seat carries unemployment at roughly a third of the weight the Fed does, because its treaty mandate is price stability first, while the Fed has a dual mandate for prices <b>and</b> employment. That asymmetry is deliberate and faithful to the institutions \u2014 but it means an ECB can score well while euro-area jobs suffer. Worth arguing about.</i>`);
+  drv.push(`<b>US Government (${sc.roleScore.USGov})</b> \u2014 graded on recovery without overheating or excess debt: the output gap ended at ${f(m.US.ygap)}%, inflation at ${f(m.US.endPi)}%${m.US.endPi>3?" (above the 3% line where the overheating penalty starts)":""}, and debt rose ${f(m.US.debt)}pp of GDP. ${m.US.debt>15?`Debt does cost points, but it is the <i>least</i> heavily weighted item in this seat\u2019s score: closing the output gap and getting people back to work each count more than three times as much as the debt increase. In other words, borrowing heavily to fund a fast recovery is rewarded on balance; borrowing heavily and <i>still</i> ending with a weak economy is what gets punished.`:"Debt stayed in a defensible range."}`);
+  drv.push(`<b>Euro-area Governments (${sc.roleScore.EUGov})</b> \u2014 graded on recovery plus spread discipline: the output gap ended at ${f(m.EU.ygap)}%, unemployment averaged ${f(m.EU.u)}pp above natural, and debt rose ${f(m.EU.debt)}pp. ${m.EU.u>2?"A slow recovery is the cost of caution \u2014 the furlough shield protects jobs but does not, on its own, create demand.":"The recovery was reasonably paced."}`);
+  drv.push(`<b>Team (${sc.teamScore}/100)</b> \u2014 the stabilisation loss sums both economies' inflation and unemployment gaps across <i>every</i> quarter (not just the end), plus average financial stress of ${Math.round(avgStress)} and any spread above 1pp. ${sc.teamScore>=70?"A well-stabilised game.":sc.teamScore>=45?"Middling \u2014 look for the one decision that moved it most.":"Far from target \u2014 usually a missed exit, or roles that never co-ordinated."}`);
+  return drv.join("<br><br>");
+}
+async function debriefAI(){
+  const you=G.hist[7], act=ACTUAL_HIST[7];
+  const path=G.hist.map(h=>`${h.q}: US gap ${h.US.Y} U ${h.US.U} pi ${h.US.pi} | EU gap ${h.EU.Y} U ${h.EU.U} pi ${h.EU.pi}`).join("\n");
+  const prompt=`You are debriefing players of a 2020-21 pandemic policy game (roles: Fed, ECB, US & EU governments). Their quarter-by-quarter outcomes:
+${path}
+Real end-2021 outcomes: US unemployment ~3.9%, inflation ~7%; euro area unemployment ~7%, inflation ~5%.
+Their end-2021: US U ${you.US.U}% pi ${you.US.pi}%; EU U ${you.EU.U}% pi ${you.EU.pi}%.
+Write a short debrief (4-6 sentences, plain prose, no lists): how their path compares to the real one, the single biggest difference their decisions made, the clearest US-vs-EU lesson their game shows, and one thing to take home about fiscal-monetary timing and lags. Be specific and constructive.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok)throw 0;
+    const data=await res.json(); const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+    $("assessBody").textContent=txt||fallbackDebrief(you,act);
+  }catch(e){ $("assessBody").textContent=fallbackDebrief(you,act); }
+}
+function fallbackDebrief(you,act){
+  let s="";
+  s+=`You ended 2021 with US unemployment ${you.US.U}% and inflation ${you.US.pi}% (actual: ~3.9% and ~7%), and euro-area unemployment ${you.EU.U}% and inflation ${you.EU.pi}% (actual: ~7% and ~5%). `;
+  if(you.US.pi<act.US.pi-1) s+="You kept US inflation below the real outcome — likely smaller or better-targeted stimulus, or earlier tightening. ";
+  else if(you.US.pi>act.US.pi+1) s+="You ran hotter than reality — more demand poured in, surfacing as inflation with a lag. ";
+  if(you.US.U-you.EU.U>1) s+="Your game reproduces the core contrast: the US absorbing the shock through unemployment, Europe through furlough. ";
+  s+="The take-home: fiscal and money decisions in 2020 set the 2021 inflation you had to clean up — the lag is the lesson.";
+  return s;
+}
+
+/* init — resume a saved session if one exists */
+(async function boot(){
+  const s = await loadState();
+  if(s && s.G && s.G.hist.length>0 && s.G.hist.length<8){
+    const bar=document.createElement("div");
+    bar.className="resumebar";
+    bar.innerHTML=`<span>A saved game was found \u2014 <b>${s.G.hist.length}</b> of 8 quarters played`
+      + (s.savedAt?` (saved ${new Date(s.savedAt).toLocaleString()})`:``)
+      + `.</span> <button class="btn" id="resumeYes">Resume</button> <button class="btn ghost" id="resumeNo">Start fresh</button>`;
+    const wrap=document.querySelector(".wrap");
+    wrap.insertBefore(bar, wrap.children[1]);
+    document.getElementById("resumeYes").onclick=()=>{ applyState(s); bar.remove(); renderQuarter(); };
+    document.getElementById("resumeNo").onclick=async()=>{ await clearState(); bar.remove(); renderQuarter(); };
+    return;
+  }
+  if(s && s.G && s.G.hist.length>=8){ await clearState(); }
+  renderQuarter();
+})();
+</script>
+</body>
+</html>
