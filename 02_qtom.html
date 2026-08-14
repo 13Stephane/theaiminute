@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<!-- Inflation / quantity theory + under-the-hood tab — rev 20260814-1719 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inflation — Stimulus, the Output Gap &amp; Money</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F;
+    --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6;
+    --ink:#15302E; --muted:#5E726F;
+    --fill:#4E7E78; --overflow:#C6A553; --supply:#B05F45; --base:#9AA79F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.5;padding:clamp(16px,3vw,40px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto}
+  .eyebrow{font:600 13px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(27px,4.4vw,42px);line-height:1.08;letter-spacing:-.01em}
+  .lede{max-width:66ch;margin-top:14px;color:#D9D3C6;font-size:clamp(15px,1.7vw,17px)}
+  .lede b{color:var(--gold-soft);font-weight:600}
+
+  .facts{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 4px}
+  .fact{background:rgba(244,240,233,.07);border:1px solid rgba(244,240,233,.14);border-radius:10px;padding:9px 14px;font-size:12.5px;color:#CBD6D4}
+  .fact b{color:var(--gold-soft);font-weight:700}
+
+  .layout{display:grid;grid-template-columns:1fr 1.25fr;gap:22px;margin-top:18px}
+  @media(max-width:860px){.layout{grid-template-columns:1fr}}
+  .panel{background:var(--cream);color:var(--ink);border-radius:16px;padding:clamp(18px,2.4vw,28px);box-shadow:0 18px 40px rgba(0,0,0,.28)}
+  .panel h2{font-family:Georgia,serif;font-size:18px;color:var(--teal);margin-bottom:14px}
+
+  .ctrl{margin-bottom:20px}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;font:600 13.5px "Calibri";color:var(--teal);margin-bottom:6px}
+  .ctrl label .v{font-variant-numeric:tabular-nums;font-weight:700}
+  .ctrl.s label .v{color:var(--overflow)} .ctrl.g label .v{color:var(--fill)} .ctrl.p label .v{color:var(--supply)}
+  .ctrl .desc{font-size:11.5px;color:var(--muted);margin-bottom:9px}
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:999px;background:var(--cream2)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer}
+  .ctrl.s input::-webkit-slider-thumb{background:var(--overflow)} .ctrl.g input::-webkit-slider-thumb{background:var(--fill)} .ctrl.p input::-webkit-slider-thumb{background:var(--supply)}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--gold);border:3px solid #fff;cursor:pointer}
+
+  .presets{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+  .preset{background:transparent;border:1px solid #CDBfA8;color:var(--teal);font:600 12.5px "Calibri";padding:9px 13px;border-radius:9px;cursor:pointer;transition:.15s;text-align:left}
+  .preset:hover{border-color:var(--gold);background:rgba(198,165,83,.12)}
+  .preset small{display:block;font-weight:400;color:var(--muted);margin-top:1px}
+
+  .vizwrap{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start}
+  @media(max-width:540px){.vizwrap{grid-template-columns:1fr}}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .beaker-cap{text-align:center;font-size:11.5px;color:var(--muted);margin-top:6px}
+
+  .readouts{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+  .rd{background:var(--cream2);border-radius:11px;padding:12px 14px}
+  .rd .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .rd .val{font-family:Georgia,serif;font-size:clamp(20px,2.6vw,26px);font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;color:var(--teal)}
+  .rd.peak{background:#F6E9E2}.rd.peak .val{color:var(--supply)}
+
+  .decomp{margin-bottom:6px}
+  .decomp .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin-bottom:7px}
+  .dbar{position:relative;height:34px;border-radius:8px;overflow:hidden;display:flex;background:#EDE7DA}
+  .dbar div{display:flex;align-items:center;justify-content:center;color:#fff;font:700 12px "Calibri";transition:width .4s ease;min-width:0;overflow:hidden;white-space:nowrap}
+  .seg-base{background:var(--base)} .seg-dp{background:var(--overflow);color:var(--teal)} .seg-sup{background:var(--supply)}
+  .marker{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+  .marker span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;font:600 10px "Calibri";color:var(--ink)}
+  .dlegend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:9px}
+  .dlegend span{display:inline-flex;align-items:center;gap:5px}.sw{width:11px;height:11px;border-radius:3px}
+
+  .note{margin-top:16px;border-left:4px solid var(--gold);padding:11px 0 11px 15px;background:linear-gradient(90deg,rgba(198,165,83,.10),transparent);border-radius:0 8px 8px 0;font-size:13.5px;color:var(--ink)}
+  .note b{color:var(--supply)}
+
+  .footnote{margin-top:24px;color:#A9B7B5;font-size:12px;max-width:80ch}
+  .footnote b{color:var(--gold-soft)}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin:22px 0 4px;border-bottom:1px solid rgba(244,240,233,.18);flex-wrap:wrap}
+  .tab{background:transparent;border:none;color:#A9B7B5;font:600 14px "Calibri";padding:11px 18px;cursor:pointer;border-bottom:3px solid transparent;transition:.15s}
+  .tab:hover{color:var(--cream)}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+  /* under the hood */
+  .mblock{background:var(--cream);color:var(--ink);border-radius:14px;padding:clamp(18px,2.4vw,26px);margin-top:16px}
+  .mblock h2{font-family:Georgia,serif;font-size:19px;color:var(--teal);margin-bottom:10px}
+  .mblock p{font-size:14px;margin-bottom:10px;max-width:88ch}
+  .mblock p.small{font-size:12.5px;color:var(--muted)}
+  .mblock b{color:var(--teal)}
+  .eq{font-family:Georgia,serif;font-size:24px;font-weight:700;color:var(--teal);background:var(--cream2);border-radius:10px;padding:15px 18px;text-align:center;margin:6px 0 13px;letter-spacing:.02em}
+  .eq.small-eq{font-size:15.5px;line-height:1.6;text-align:left}
+  .mono{font-family:Consolas,monospace;background:var(--cream2);padding:1px 6px;border-radius:5px;font-size:13px}
+  .callout{border-left:4px solid var(--gold);background:linear-gradient(90deg,rgba(198,165,83,.14),transparent);border-radius:0 9px 9px 0;padding:12px 15px;font-size:13.5px;color:var(--ink);margin-top:12px}
+  .callout.warn{border-left-color:var(--supply);background:linear-gradient(90deg,rgba(176,95,69,.13),transparent)}
+  .mt{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 10px}
+  .mt th{text-align:left;font:700 11px "Calibri";text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:7px 9px;border-bottom:2px solid #DBD2C2}
+  .mt td{padding:7px 9px;border-bottom:1px solid #E6DFD0}
+  .mt tr.hl td{background:rgba(198,165,83,.13)}
+  .mt td b{color:var(--teal);font-variant-numeric:tabular-nums}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+  @media(max-width:720px){.two{grid-template-columns:1fr}}
+  .mcard{background:var(--cream2);border-radius:11px;padding:15px 17px;border-top:4px solid var(--muted)}
+  .mcard.c2008{border-top-color:#6E8FA6} .mcard.c2020{border-top-color:var(--supply)}
+  .mcard h4{font-family:Georgia,serif;font-size:15px;color:var(--teal);margin-bottom:8px}
+  .mcard ol{margin:0 0 9px 17px;font-size:13px} .mcard li{margin-bottom:4px}
+  .mcard .verdict{font-size:13px;color:var(--ink);border-top:1px solid #D6CCB9;padding-top:8px;margin:0}
+  .live{background:var(--cream2);border-radius:10px;padding:14px 16px;font-size:14px;color:var(--ink);margin:4px 0 10px}
+  .live .lrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #D6CCB9}
+  .live .lrow:last-child{border-bottom:none;border-top:2px solid var(--teal);margin-top:5px;padding-top:8px;font-weight:700}
+  .live .lrow b{font-variant-numeric:tabular-nums;color:var(--teal)}
+  .lim{margin:4px 0 0 18px;font-size:13.5px} .lim li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Managerial Economics · Money &amp; Inflation</div>
+  <h1>Inflation is mostly about money</h1>
+  <p class="lede">Stimulus poured into an economy with <b>slack</b> fills the output gap and lifts real output. Poured into an economy that is <b>already near potential</b>, it overflows into prices. The post-COVID wave is the case study: pour the stimulus into the hole and watch how much overflows. Friedman&rsquo;s line still bites &mdash; and the Fed financed most of the money.</p>
+
+  <div class="tabs">
+    <button class="tab active" data-t="sim">Simulator</button>
+    <button class="tab" data-t="math">Under the hood &mdash; assumptions &amp; MV=PY</button>
+  </div>
+
+  <div id="tab-sim">
+  <div class="facts">
+    <div class="fact"><b>M2 +41%</b> over 2020&ndash;21 (peak 26.9% YoY, Feb 2021)</div>
+    <div class="fact">Fed financed <b>$4.8T</b> of the $6.3T money growth</div>
+    <div class="fact">CPI peaked <b>9.1%</b>, Jun 2022</div>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <h2>Pour it in</h2>
+      <div class="ctrl s">
+        <label>Fiscal stimulus poured in <span class="v" id="vS">$5.0T</span></label>
+        <div class="desc">CARES $2.2T + Dec $0.9T + ARP $1.9T &asymp; $5T, 2020&ndash;21.</div>
+        <input type="range" id="S" min="0" max="6" value="5" step="0.1">
+      </div>
+      <div class="ctrl g">
+        <label>Output gap — the hole to fill <span class="v" id="vG">$0.7T</span></label>
+        <div class="desc">Slack remaining by early 2021. The 2020 collapse was far deeper, but earlier stimulus had largely refilled it.</div>
+        <input type="range" id="G" min="0.2" max="4" value="0.7" step="0.1">
+      </div>
+      <div class="ctrl p">
+        <label>Supply disruption <span class="v" id="vP">3.5 pp</span></label>
+        <div class="desc">Supply chains, ports, goods-vs-services skew, energy &amp; the 2022 Ukraine shock.</div>
+        <input type="range" id="P" min="0" max="6" value="3.5" step="0.1">
+      </div>
+      <div class="presets">
+        <button class="preset" data-s="2.2" data-g="2.2" data-p="0.5">2020 — deep hole<small>CARES into a collapsed economy → little inflation</small></button>
+        <button class="preset" data-s="5" data-g="0.7" data-p="3.5">2021&ndash;23 — actual<small>Hole nearly full, stimulus kept coming → 9%</small></button>
+        <button class="preset" data-s="1.5" data-g="0.7" data-p="3.5">Matched to the gap<small>Summers&rsquo; counterfactual: smaller demand-pull</small></button>
+        <button class="preset" data-s="5" data-g="0.7" data-p="0">Money &amp; stimulus only<small>Strip out supply shocks → pure demand-pull</small></button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>What overflows becomes inflation</h2>
+      <div class="vizwrap">
+        <div>
+          <svg id="beaker" viewBox="0 0 200 250" role="img" aria-label="Stimulus poured into the output gap, overflow as inflation"></svg>
+          <div class="beaker-cap" id="bCap"></div>
+        </div>
+        <div>
+          <div class="readouts">
+            <div class="rd peak"><div class="k">Peak inflation</div><div class="val" id="rPeak">9.0%</div></div>
+            <div class="rd"><div class="k">Stimulus ÷ gap</div><div class="val" id="rOver">7×</div></div>
+            <div class="rd"><div class="k">Output gap closed</div><div class="val" id="rClosed">100%</div></div>
+            <div class="rd"><div class="k">Demand-pull</div><div class="val" id="rDP">+3.5pp</div></div>
+          </div>
+          <div class="decomp">
+            <div class="k">Where the inflation comes from</div>
+            <div class="dbar" id="dbar"></div>
+            <div class="dlegend">
+              <span><i class="sw seg-base"></i>Baseline (2%)</span>
+              <span><i class="sw seg-dp"></i>Demand-pull (excess stimulus)</span>
+              <span><i class="sw seg-sup"></i>Supply shock</span>
+            </div>
+          </div>
+          <div class="note" id="note"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote"><b>The spine, and the debate.</b> Money is a good; flood the economy with it and its purchasing power (1/P) falls &mdash; that fall is inflation, and most of the $6.3T money growth was the Fed financing the stimulus. The <b>demand-pull</b> view (Summers, Blanchard): ~$5T poured into a ~$0.7T hole had to overflow into prices once the economy hit potential. The <b>supply</b> view (Bivens/EPI): the gap stayed negative into late 2021, yet COVID skewed demand to goods and broke supply chains, with energy and the 2022 Ukraine shock on top. The decomposition lets you weigh both. Calibrated to the U.S. episode (M2 +41%; ARP $1.9T; early-2021 output gap &asymp; $0.7T per CBO/Brookings; SF Fed est. fiscal added ~3pp to core; CPI peak 9.1% Jun 2022; ~18-month money-to-inflation lag). <span style="color:#8FA09D">Stylised for teaching, not an econometric forecast.</span></p>
+  </div><!-- /tab-sim -->
+
+  <div id="tab-math" style="display:none">
+
+    <div class="mblock">
+      <h2>1 &middot; MV = PY is an identity, not a theory</h2>
+      <div class="eq">M &times; V &nbsp;=&nbsp; P &times; Y</div>
+      <p>Velocity is never measured. It is <b>defined</b> as a residual: <span class="mono">V = PY / M</span> &mdash; nominal GDP divided by the money stock. That is exactly how the published M2 velocity series is constructed. So the equation is true <i>by construction</i> and cannot be falsified by any data.</p>
+      <p>The economic claim &mdash; the part that can be wrong &mdash; is the added assumption that <b>V is stable</b> and <b>Y is set by real factors</b>. Only then does more M mean higher P. When velocity moves, the identity still holds perfectly while the theory quietly stops predicting anything. That is the whole story of 2008 versus 2020.</p>
+      <div class="callout">Teaching point: an unfalsifiable accounting identity is doing the rhetorical work of an economic law. Ask which part of &ldquo;inflation is always and everywhere a monetary phenomenon&rdquo; is definition and which is claim.</div>
+    </div>
+
+    <div class="mblock">
+      <h2>2 &middot; Velocity in the two episodes</h2>
+      <p>V derived as nominal GDP &divide; M2, approximate and rounded. Two different shapes: a decade-long <b>drift</b> after 2008, a sharp <b>collapse and partial rebound</b> after 2020.</p>
+      <table class="mt">
+        <tr><th>Year</th><th>Nominal GDP</th><th>M2</th><th>V = GDP/M2</th><th>What happened</th></tr>
+        <tr><td>2007</td><td>$14.5T</td><td>$7.4T</td><td><b>1.96</b></td><td>Pre-crisis normal</td></tr>
+        <tr><td>2009</td><td>$14.4T</td><td>$8.5T</td><td><b>1.69</b></td><td>QE1 &mdash; money up, spending flat</td></tr>
+        <tr><td>2014</td><td>$17.6T</td><td>$11.6T</td><td><b>1.52</b></td><td>Still sliding &mdash; no rebound</td></tr>
+        <tr><td>2019</td><td>$21.5T</td><td>$15.4T</td><td><b>1.40</b></td><td>A decade lower, never recovered</td></tr>
+        <tr class="hl"><td>2021</td><td>$23.7T</td><td>$21.5T</td><td><b>1.10</b></td><td>M2 +41% &mdash; sharp collapse in V</td></tr>
+        <tr class="hl"><td>2023</td><td>$27.7T</td><td>$20.9T</td><td><b>1.33</b></td><td>Spending caught up &mdash; V rebounds</td></tr>
+      </table>
+      <p class="small">Read it as the identity demands: in 2009 M rose and V fell almost one-for-one, so PY barely moved &mdash; no inflation. In 2021&ndash;23 M rose <i>and then V rebounded</i> while Y was capped by capacity, so P had to absorb it.</p>
+    </div>
+
+    <div class="mblock">
+      <h2>3 &middot; Where the money came from &mdash; and in what form</h2>
+      <p>The decisive difference is not <i>how much</i> money was created but <b>whose account it landed in</b>. Both episodes were called &ldquo;money printing&rdquo;; only one put spendable purchasing power in households&rsquo; hands.</p>
+      <div class="two">
+        <div class="mcard c2008">
+          <h4>2008 &mdash; QE creates <i>reserves</i></h4>
+          <ol>
+            <li>Fed buys Treasuries &amp; MBS from banks</li>
+            <li>Banks receive <b>reserves</b> held at the Fed</li>
+            <li>Reserves are <b>not part of M2</b> &mdash; they cannot be spent in the shops</li>
+            <li>Deleveraging, weak loan demand and interest paid on reserves kept them parked</li>
+          </ol>
+          <p class="verdict">An <b>asset swap</b>: the composition of bank balance sheets changed, household purchasing power did not. M2 grew modestly, V fell, P barely moved.</p>
+        </div>
+        <div class="mcard c2020">
+          <h4>2020 &mdash; deficits create <i>deposits</i></h4>
+          <ol>
+            <li>Treasury borrows and sends transfers, top-ups and PPP</li>
+            <li>Money appears directly as <b>deposits in household and firm accounts</b></li>
+            <li>Deposits <b>are M2</b> &mdash; immediately spendable</li>
+            <li>The Fed bought roughly a matching quantity of Treasuries, so the deficit was in effect <b>money-financed</b></li>
+          </ol>
+          <p class="verdict">New purchasing power in the hands of people who spent it &mdash; Friedman&rsquo;s <b>helicopter money</b>, literally. M2 +41%, and once V rebounded, P followed.</p>
+        </div>
+      </div>
+      <div class="callout">The form of M matters as much as the quantity. &ldquo;The Fed printed money&rdquo; describes both years and explains neither. Reserves circulate between banks; deposits circulate through the economy.</div>
+    </div>
+
+    <div class="mblock">
+      <h2>4 &middot; How the peak is calculated</h2>
+      <p>The simulator is deliberately simple and additive &mdash; three components, no dynamics:</p>
+      <div class="eq small-eq">peak inflation &nbsp;=&nbsp; baseline (2.0%) &nbsp;+&nbsp; 0.81 &times; max(0, stimulus &minus; gap) &nbsp;+&nbsp; supply shock</div>
+      <div class="live" id="liveCalc"></div>
+      <p class="small">Only stimulus <i>in excess of the gap</i> creates demand-pull &mdash; money poured into slack becomes real output, not prices. That is the beaker: below the rim it fills the hole, above the rim it overflows.</p>
+      <div class="callout warn"><b>Honest caveat on the coefficient.</b> The 0.81pp per $T is <b>calibrated, not estimated</b> &mdash; chosen so the actual 2021&ndash;23 settings reproduce the observed peak, anchored to the SF Fed&rsquo;s finding that fiscal support added roughly 3pp to core inflation. It is a teaching parameter that encodes a contested empirical claim, not an independent measurement. A student who disputes the demand-pull share should dispute this number.</div>
+    </div>
+
+    <div class="mblock">
+      <h2>5 &middot; MV = PY across the scenarios</h2>
+      <p>How each preset plays out through the identity. Y is real output (capped by potential), P the price level, V the residual that makes the arithmetic close.</p>
+      <table class="mt">
+        <tr><th>Scenario</th><th>M</th><th>V</th><th>Y (real)</th><th>P</th><th>Reading</th></tr>
+        <tr><td><b>2008 QE</b></td><td>&uarr;&uarr; reserves</td><td>&darr;&darr;</td><td>&rarr; flat</td><td>&rarr; flat</td><td>V offsets M &mdash; the identity absorbs it, no inflation</td></tr>
+        <tr><td><b>2020 &mdash; deep hole</b></td><td>&uarr;&uarr; deposits</td><td>&darr;</td><td>&uarr; gap closes</td><td>&rarr; near 2%</td><td>Money becomes <i>output</i>: slack absorbs the stimulus</td></tr>
+        <tr class="hl"><td><b>2021&ndash;23 &mdash; actual</b></td><td>&uarr;&uarr; deposits</td><td>&uarr; rebound</td><td>capped at potential</td><td>&uarr;&uarr; 9%</td><td>Y can&rsquo;t rise, so P must &mdash; plus the supply shock</td></tr>
+        <tr><td><b>Matched to the gap</b></td><td>&uarr; modest</td><td>&uarr;</td><td>&uarr; gap closes</td><td>&uarr; supply only</td><td>Demand-pull &asymp; 0; the residual inflation is supply</td></tr>
+      </table>
+      <p class="small">Notice the mechanism in row three: with Y at its ceiling and V recovering, the identity leaves P as the only variable free to move. That is the whole quantity-theory intuition in one line &mdash; and why the same M growth in 2009 did nothing.</p>
+    </div>
+
+    <div class="mblock">
+      <h2>6 &middot; What this model does not do</h2>
+      <ul class="lim">
+        <li><b>No dynamics or lags.</b> The real money-to-inflation lag ran roughly 18 months; here everything resolves instantly.</li>
+        <li><b>No expectations.</b> Anchored expectations are a large part of why this ended without a 1970s spiral. Absent here.</li>
+        <li><b>Additive, not interactive.</b> Demand and supply shocks are summed; in reality they interact (excess demand makes broken supply chains bite harder).</li>
+        <li><b>The gap is an input, not an outcome.</b> You set the hole; a real model would let stimulus, potential and the gap co-evolve.</li>
+        <li><b>Velocity is not modelled at all</b> in the simulator &mdash; it is the residual discussed above, which is precisely why the money story needs the caveats on this page.</li>
+      </ul>
+      <div class="callout">Use the limits as the discussion: each one is a place where a confident claim about 2021 inflation depends on an assumption rather than a measurement.</div>
+    </div>
+
+  </div><!-- /tab-math -->
+</div>
+
+<script>
+const baseline=2.0, cd=0.81;
+const S=document.getElementById("S"),G=document.getElementById("G"),P=document.getElementById("P");
+const NS="http://www.w3.org/2000/svg";
+function el(t,at){const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e;}
+
+function drawBeaker(s,g){
+  const svg=document.getElementById("beaker");svg.innerHTML="";
+  const bx=46,bw=108, yRim=96, yBot=236;       // glass: rim (=potential) fixed near top
+  const innerH=yBot-yRim;                        // glass inner height
+  const k=24;                                    // px per $T
+  const px=v=>v*k;
+
+  const hGap=Math.min(innerH, px(g));            // headroom below the rim = output gap
+  const yGapBottom=yRim+hGap;                    // bottom of the gap band
+  const greenH=Math.min(hGap, px(Math.min(s,g)));// stimulus that fills the gap (productive)
+  const overflow=Math.max(0,s-g);
+  const ovH=Math.min(yRim-8, px(overflow));      // gold column above the rim (clamped to space)
+  const clamped=px(overflow)>yRim-8;
+
+  // "already producing" — existing output below the gap (light)
+  svg.appendChild(el("rect",{x:bx+2,y:yGapBottom,width:bw-4,height:yBot-yGapBottom,fill:"var(--fill)","fill-opacity":.22}));
+  // green: stimulus filling the gap (closing it -> real output)
+  svg.appendChild(el("rect",{x:bx+2,y:yGapBottom-greenH,width:bw-4,height:greenH,fill:"var(--fill)","fill-opacity":.92}));
+
+  // overflow above the rim -> prices
+  if(overflow>0.01){
+    svg.appendChild(el("rect",{x:bx+2,y:yRim-ovH,width:bw-4,height:ovH,fill:"var(--overflow)"}));
+    // spill tongues over both lips at the rim
+    svg.appendChild(el("path",{d:`M ${bx+2} ${yRim} q -13 3 -15 20 l 8 0 q 2 -13 9 -15 Z`,fill:"var(--overflow)"}));
+    svg.appendChild(el("path",{d:`M ${bx+bw-2} ${yRim} q 13 3 15 20 l -8 0 q -2 -13 -9 -15 Z`,fill:"var(--overflow)"}));
+    let o=el("text",{x:bx+bw/2,y:Math.max(14,yRim-ovH-6),fill:"#8A6E26","font-size":10.5,"font-weight":700,"text-anchor":"middle","font-family":"Calibri"});
+    o.textContent=(clamped?"\u2191 ":"")+"overflow \u2192 prices";svg.appendChild(o);
+  }
+
+  // glass walls on top
+  svg.appendChild(el("path",{d:`M ${bx} ${yRim-2} L ${bx} ${yBot} L ${bx+bw} ${yBot} L ${bx+bw} ${yRim-2}`,fill:"none",stroke:"#C4BBA8","stroke-width":2.5,"stroke-linejoin":"round"}));
+  // rim = potential output (fixed)
+  svg.appendChild(el("line",{x1:bx-7,y1:yRim,x2:bx+bw+7,y2:yRim,stroke:"#7A5A2E","stroke-width":1.6,"stroke-dasharray":"5 4"}));
+  let rl=el("text",{x:bx+bw/2,y:yRim-5,fill:"#7A5A2E","font-size":9.5,"font-weight":700,"text-anchor":"middle","font-family":"Calibri","opacity":overflow>0.01?0:1});
+  rl.textContent="potential output";svg.appendChild(rl);
+  // gap caption inside
+  if(hGap>16){let gp=el("text",{x:bx+bw/2,y:yGapBottom-greenH-4>yRim+10?yGapBottom-greenH-4:yRim+12,fill:greenH>=hGap-1?"#fff":"#5E726F","font-size":9,"text-anchor":"middle","font-family":"Calibri"});gp.textContent="gap";svg.appendChild(gp);}
+}
+
+function render(){
+  const s=+S.value,g=+G.value,p=+P.value;
+  document.getElementById("vS").textContent="$"+s.toFixed(1)+"T";
+  document.getElementById("vG").textContent="$"+g.toFixed(1)+"T";
+  document.getElementById("vP").textContent=p.toFixed(1)+" pp";
+
+  const dp=cd*Math.max(0,s-g);
+  const total=baseline+dp+p;
+  const overshoot=g>0? s/g : 99;
+  const closed=Math.min(100,Math.round(Math.min(s,g)/g*100));
+
+  drawBeaker(s,g);
+  document.getElementById("bCap").innerHTML=`Poured <b>$${s.toFixed(1)}T</b> into a <b>$${g.toFixed(1)}T</b> hole`;
+
+  document.getElementById("rPeak").textContent=total.toFixed(1)+"%";
+  document.getElementById("rOver").textContent=(overshoot>=10?Math.round(overshoot):overshoot.toFixed(1))+"\u00D7";
+  document.getElementById("rClosed").textContent=closed+"%";
+  document.getElementById("rDP").textContent="+"+dp.toFixed(1)+"pp";
+
+  // decomposition bar scaled to 12% max
+  const scale=12;
+  const dbar=document.getElementById("dbar");
+  const seg=(cls,val,lbl)=>`<div class="${cls}" style="width:${(val/scale)*100}%">${val>=1.1?lbl:""}</div>`;
+  dbar.innerHTML=seg("seg-base",baseline,baseline.toFixed(0)+"%")+seg("seg-dp",dp,"+"+dp.toFixed(1))+seg("seg-sup",p,"+"+p.toFixed(1));
+  // actual-peak marker at 9.1
+  const mk=document.createElement("div");mk.className="marker";mk.style.left=(9.1/scale)*100+"%";
+  mk.innerHTML="<span>actual peak 9.1%</span>";dbar.appendChild(mk);
+
+  // narrative
+  let note="";
+  if(s<=g+0.05){
+    note=`Stimulus fits inside the hole &mdash; it becomes <b>real output</b>, not prices. Demand-pull \u2248 0; any inflation here is supply-driven. This is 2020: a huge gap absorbed the money.`;
+  } else if(p>=2 && dp>=2){
+    note=`Both engines firing: ~$${(s-g).toFixed(1)}T of stimulus overflowed a nearly-full hole (<b>${overshoot.toFixed(1)}\u00D7</b> the gap) <i>and</i> supply broke. Demand-pull +${dp.toFixed(1)}pp, supply +${p.toFixed(1)}pp &mdash; the actual 2021&ndash;23 mix.`;
+  } else if(dp>=2 && p<2){
+    note=`Almost all demand-pull: $${(s-g).toFixed(1)}T overflowed the hole and pushed prices up <b>+${dp.toFixed(1)}pp</b> with little supply help. The Summers/Friedman reading.`;
+  } else if(p>=2 && dp<2){
+    note=`Mostly supply: the gap absorbed the stimulus, but broken supply chains and energy still lifted prices <b>+${p.toFixed(1)}pp</b>. The Bivens/EPI reading.`;
+  } else {
+    note=`Money and output roughly balanced and supply calm &mdash; inflation near the 2% baseline.`;
+  }
+  document.getElementById("note").innerHTML=note;
+}
+[S,G,P].forEach(x=>x.addEventListener("input",render));
+document.querySelectorAll(".preset").forEach(b=>b.onclick=()=>{S.value=b.dataset.s;G.value=b.dataset.g;P.value=b.dataset.p;render();});
+
+// tabs
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
+    const isSim=t.dataset.t==="sim";
+    document.getElementById("tab-sim").style.display=isSim?"block":"none";
+    document.getElementById("tab-math").style.display=isSim?"none":"block";
+    if(!isSim) renderLive();
+  };
+});
+
+// live arithmetic mirroring the current slider settings
+function renderLive(){
+  const s=+S.value,g=+G.value,p=+P.value;
+  const excess=Math.max(0,s-g), dp=cd*excess, total=baseline+dp+p;
+  document.getElementById("liveCalc").innerHTML=
+    `<div class="lrow"><span>Baseline inflation</span><b>${baseline.toFixed(1)}%</b></div>`+
+    `<div class="lrow"><span>Stimulus $${s.toFixed(1)}T &minus; gap $${g.toFixed(1)}T = excess $${excess.toFixed(1)}T</span><b>&times; 0.81 = +${dp.toFixed(1)}pp</b></div>`+
+    `<div class="lrow"><span>Supply shock</span><b>+${p.toFixed(1)}pp</b></div>`+
+    `<div class="lrow"><span>Peak inflation${Math.abs(total-9.1)<0.4?" &mdash; against the actual 9.1% peak":""}</span><b>${total.toFixed(1)}%</b></div>`;
+}
+render();renderLive();
+</script>
+</body>
+</html>
