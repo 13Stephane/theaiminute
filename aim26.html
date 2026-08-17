@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIM 2026 · Your cold prior</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+:root{--bg:#193C3F;--ink:#F4F0E9;--dim:rgba(244,240,233,.62);--faint:rgba(244,240,233,.32);--gold:#C6A553;--line:rgba(244,240,233,.14);--bad:#C46A5A;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Fraunces',Georgia,serif;line-height:1.5;font-size:16px;-webkit-font-smoothing:antialiased;}
+.page{max-width:560px;margin:0 auto;padding:28px 20px 80px;}
+.mark{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
+h1{font-weight:400;font-size:27px;letter-spacing:-.01em;margin-bottom:4px;}
+.sub{font-style:italic;color:var(--dim);font-size:14.5px;margin-bottom:22px;}
+.panel{border:1px solid var(--line);padding:18px;margin-bottom:16px;}
+.q{font-size:17px;margin-bottom:6px;}
+.hint{font-size:13.5px;color:var(--dim);font-style:italic;margin-bottom:12px;}
+label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px;}
+input[type=text],textarea{width:100%;background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:15px;padding:10px;border-radius:2px;}
+textarea{min-height:84px;resize:vertical;}
+input:focus,textarea:focus{outline:none;border-color:var(--gold);}
+.seg{display:flex;gap:8px;}
+.seg button{flex:1;background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--dim);font-family:'Fraunces',Georgia,serif;font-size:14.5px;padding:11px 8px;border-radius:2px;cursor:pointer;}
+.seg button.on{border-color:var(--gold);color:var(--ink);background:rgba(198,165,83,.14);}
+.consent{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.55;margin:16px 0 14px;}
+.submit{width:100%;background:var(--gold);border:none;color:var(--bg);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:14px;border-radius:2px;cursor:pointer;font-weight:500;}
+.submit:disabled{opacity:.45;cursor:default;}
+.status{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:10px;color:var(--dim);min-height:16px;}
+.done{border-left:2px solid var(--gold);background:rgba(244,240,233,.03);padding:16px 18px;}
+.done .big{font-size:17px;margin-bottom:6px;}
+.done .placement{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.06em;}
+.fail{border-left:3px solid var(--bad);background:rgba(196,106,90,.10);padding:14px 16px;font-size:14px;margin-bottom:16px;}
+.fail b{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bad);display:block;margin-bottom:6px;font-weight:500;}
+.lobby{padding:34px 0;text-align:center;color:var(--dim);font-style:italic;font-size:16px;}
+.footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.08em;color:var(--faint);line-height:1.7;}
+.hide{display:none;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="mark">
+    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#C6A553" stroke-width="1"/><circle cx="13" cy="13" r="7" fill="none" stroke="#C6A553" stroke-width="1"/><circle cx="13" cy="13" r="2.4" fill="#C6A553"/></svg>
+    <div class="eyebrow">AIM 2026 · Málaga · Live session</div>
+  </div>
+
+  <h1>Your cold prior</h1>
+  <div class="sub">Independent elicitation before aggregation — no one sees the room until everyone has answered.</div>
+
+  <div id="failbox" class="fail hide"><b>Not connected</b><span id="failmsg"></span></div>
+
+  <!-- LOBBY -->
+  <div id="v-lobby" class="lobby hide">The session opens shortly. Keep this page open — it advances on its own.</div>
+
+  <!-- PHASE 1 · PRIOR -->
+  <div id="v-prior" class="hide">
+    <div class="panel">
+      <div class="q" id="q-text"></div>
+      <div class="hint" id="q-hint"></div>
+      <label for="f-shift">The shift</label>
+      <textarea id="f-shift" maxlength="240" placeholder="One or two sentences."></textarea>
+      <label id="x-q"></label>
+      <div class="seg" id="x-seg"></div>
+      <label id="y-q"></label>
+      <div class="seg" id="y-seg"></div>
+      <label for="f-name">First name · optional</label>
+      <input type="text" id="f-name" maxlength="40" placeholder="never published">
+      <div class="consent" id="consent-line"></div>
+      <button class="submit" id="btn-prior">Submit</button>
+      <div class="status" id="st-prior"></div>
+    </div>
+  </div>
+  <div id="v-prior-done" class="done hide">
+    <div class="big">Recorded.</div>
+    <div class="placement" id="prior-placement"></div>
+    <p style="margin-top:10px;font-size:14px;color:var(--dim);">Hold on to your reasoning — you will need it once more before the end.</p>
+  </div>
+
+  <!-- PHASE 2 · FALSIFIER -->
+  <div id="v-fals" class="hide">
+    <div class="panel">
+      <div class="q" id="fals-prompt"></div>
+      <div class="hint" id="fals-echo"></div>
+      <label for="f-fals">The condition</label>
+      <textarea id="f-fals" maxlength="280" placeholder="If … , my placement was wrong."></textarea>
+      <button class="submit" id="btn-fals">Submit falsifier</button>
+      <div class="status" id="st-fals"></div>
+    </div>
+  </div>
+  <div id="v-fals-done" class="done hide">
+    <div class="big">Falsifier recorded.</div>
+    <div class="placement" id="fals-mode"></div>
+    <p style="margin-top:10px;font-size:14px;color:var(--dim);">It is the one field no model fills for you.</p>
+  </div>
+
+  <!-- PHASE 3 · CLOSED -->
+  <div id="v-closed" class="lobby hide">Submissions are closed. The session record will be published at this address.</div>
+
+  <div class="footer">
+    Guerraz &amp; Välikangas · From AI Anxiety to AI Progress · AIM 2026<br>
+    theaiminute.blog/aim26.html
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="aim26_frame.js"></script>
+<script>
+// ============================================================================
+//  Participant page · phases: 0 lobby · 1 prior · 2 falsifier · 3 closed
+//  Writes to course_priors. No AI in the critical path. Failure is loud (D1).
+// ============================================================================
+(function () {
+  "use strict";
+
+  // ── config guard ──────────────────────────────────────────────────────────
+  function fail(msg) {
+    var f = document.getElementById("failbox");
+    document.getElementById("failmsg").textContent = msg;
+    f.classList.remove("hide");
+  }
+  function clearFail() { document.getElementById("failbox").classList.add("hide"); }
+  if (typeof SUPABASE_URL === "undefined" || typeof SUPABASE_ANON === "undefined") {
+    fail("config.js did not load or is missing SUPABASE_URL / SUPABASE_ANON. Nothing will be recorded.");
+    return;
+  }
+  if (typeof AIM26 === "undefined") {
+    fail("aim26_frame.js did not load. Nothing will be recorded.");
+    return;
+  }
+
+  var H = { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON, "Content-Type": "application/json" };
+  var S = AIM26.session;
+
+  // ── tiny storage (graceful when localStorage is unavailable) ──────────────
+  var mem = {};
+  function put(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} }
+  function get(k) { try { var v = localStorage.getItem(k); if (v !== null) return v; } catch (e) {} return mem[k] || null; }
+
+  // ── frame text into the DOM (single source, D2) ───────────────────────────
+  document.getElementById("q-text").textContent = AIM26.question;
+  document.getElementById("q-hint").textContent = AIM26.place_hint;
+  document.getElementById("consent-line").textContent = AIM26.consent;
+  document.getElementById("fals-prompt").textContent = AIM26.falsifier_prompt;
+  document.getElementById("x-q").textContent = AIM26.axes.x.q;
+  document.getElementById("y-q").textContent = AIM26.axes.y.q;
+
+  var picked = { x: null, y: null };
+  function buildSeg(axis, holderId) {
+    var holder = document.getElementById(holderId);
+    AIM26.axes[axis].opts.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = o.label;
+      b.onclick = function () {
+        picked[axis] = o.v;
+        Array.prototype.forEach.call(holder.children, function (c) { c.classList.remove("on"); });
+        b.classList.add("on");
+      };
+      holder.appendChild(b);
+    });
+  }
+  buildSeg("x", "x-seg");
+  buildSeg("y", "y-seg");
+
+  function axisLabel(axis, v) {
+    var o = AIM26.axes[axis].opts.filter(function (x) { return x.v === v; })[0];
+    return o ? o.label : "?";
+  }
+
+  // ── view switching ────────────────────────────────────────────────────────
+  var views = ["v-lobby", "v-prior", "v-prior-done", "v-fals", "v-fals-done", "v-closed"];
+  function show(id) {
+    views.forEach(function (v) { document.getElementById(v).classList.add("hide"); });
+    document.getElementById(id).classList.remove("hide");
+  }
+
+  function render(phase) {
+    if (phase === 1) {
+      if (get("aim26_prior_id")) {
+        document.getElementById("prior-placement").textContent =
+          axisLabel("x", Number(get("aim26_x"))) + " · " + axisLabel("y", Number(get("aim26_y")));
+        show("v-prior-done");
+      } else show("v-prior");
+    } else if (phase === 2) {
+      if (get("aim26_fals_done")) {
+        document.getElementById("fals-mode").textContent = get("aim26_fals_mode") || "";
+        show("v-fals-done");
+      } else {
+        var echo = get("aim26_shift");
+        document.getElementById("fals-echo").textContent = echo ? "Your shift: " + echo : "";
+        show("v-fals");
+      }
+    } else if (phase >= 3) show("v-closed");
+    else show("v-lobby");
+  }
+
+  // ── phase poll ────────────────────────────────────────────────────────────
+  var phase = -1;
+  function pollPhase() {
+    fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S + "&select=phase", { headers: H })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        if (!rows.length) throw new Error("session '" + S + "' not found — seed the session row");
+        clearFail();
+        if (rows[0].phase !== phase) { phase = rows[0].phase; render(phase); }
+      })
+      .catch(function (e) { fail("phase check failed: " + e.message); });
+  }
+  pollPhase();
+  setInterval(pollPhase, 5000);
+
+  // ── phase 1 submit ────────────────────────────────────────────────────────
+  document.getElementById("btn-prior").onclick = function () {
+    var st = document.getElementById("st-prior");
+    var shift = document.getElementById("f-shift").value.trim();
+    if (!shift) { st.textContent = "The shift is required."; return; }
+    if (picked.x === null || picked.y === null) { st.textContent = "Place it on both axes."; return; }
+    var name = document.getElementById("f-name").value.trim() || "anon";
+    var btn = this; btn.disabled = true; st.textContent = "recording…";
+    fetch(SUPABASE_URL + "/rest/v1/course_priors", {
+      method: "POST",
+      headers: Object.assign({ "Prefer": "return=representation" }, H),
+      body: JSON.stringify({ session_id: S, name: name, thesis: shift, lens: "prior", x: picked.x, y: picked.y, placed_by: "self" })
+    })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        if (!rows.length || !rows[0].id) throw new Error("no row returned");
+        put("aim26_prior_id", rows[0].id);
+        put("aim26_shift", shift);
+        put("aim26_x", String(picked.x));
+        put("aim26_y", String(picked.y));
+        render(1);
+      })
+      .catch(function (e) { btn.disabled = false; st.textContent = "failed: " + e.message + " — nothing recorded, try again"; });
+  };
+
+  // ── phase 2 submit: PATCH own prior; loud fallback INSERT if unlinked ─────
+  document.getElementById("btn-fals").onclick = function () {
+    var st = document.getElementById("st-fals");
+    var text = document.getElementById("f-fals").value.trim();
+    if (!text) { st.textContent = "The condition is required."; return; }
+    var btn = this; btn.disabled = true; st.textContent = "recording…";
+    var priorId = get("aim26_prior_id");
+
+    function fallbackInsert() {
+      return fetch(SUPABASE_URL + "/rest/v1/course_priors", {
+        method: "POST",
+        headers: Object.assign({ "Prefer": "return=representation" }, H),
+        body: JSON.stringify({ session_id: S, name: get("aim26_name") || "anon", thesis: text, lens: "falsifier", placed_by: "self" })
+      }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (rows) { if (!rows.length) throw new Error("no row returned"); return "recorded as a new entry"; });
+    }
+
+    var flow;
+    if (priorId) {
+      flow = fetch(SUPABASE_URL + "/rest/v1/course_priors?id=eq." + priorId + "&session_id=eq." + S, {
+        method: "PATCH",
+        headers: Object.assign({ "Prefer": "return=representation" }, H),
+        body: JSON.stringify({ justification: text })
+      }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (rows) { if (rows.length) return "linked to your prior"; return fallbackInsert(); });
+    } else flow = fallbackInsert();
+
+    flow.then(function (mode) {
+      put("aim26_fals_done", "1");
+      put("aim26_fals_mode", mode);
+      render(2);
+    }).catch(function (e) { btn.disabled = false; st.textContent = "failed: " + e.message + " — nothing recorded, try again"; });
+  };
+})();
+</script>
+</body>
+</html>

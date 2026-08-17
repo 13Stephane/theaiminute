@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIM 2026 · The room, mapped</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+:root{--bg:#193C3F;--ink:#F4F0E9;--dim:rgba(244,240,233,.62);--faint:rgba(244,240,233,.32);--gold:#C6A553;--line:rgba(244,240,233,.14);--bad:#C46A5A;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Fraunces',Georgia,serif;line-height:1.4;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1500px;margin:0 auto;padding:26px 34px 30px;}
+.top{display:flex;align-items:baseline;gap:18px;margin-bottom:6px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);}
+h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
+.strip{display:flex;gap:22px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint);margin:8px 0 18px;}
+.strip .dot{width:9px;height:9px;border-radius:50%;background:var(--faint);display:inline-block;margin-right:6px;}
+.strip .dot.ok{background:#7FA86A;} .strip .dot.bad{background:var(--bad);}
+.strip button{background:none;border:1px solid var(--line);color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;cursor:pointer;border-radius:2px;}
+.strip button.on{border-color:var(--gold);color:var(--gold);}
+.fail{border-left:4px solid var(--bad);background:rgba(196,106,90,.12);padding:16px 20px;font-size:18px;margin:0 0 18px;}
+.fail b{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--bad);display:block;margin-bottom:6px;font-weight:500;}
+.notloaded{padding:60px 0;text-align:center;color:var(--faint);font-style:italic;font-size:20px;}
+.hide{display:none;}
+/* quadrant field */
+.fieldwrap{display:grid;grid-template-columns:34px 1fr;grid-template-rows:1fr 34px;gap:0;}
+.ylab{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;justify-content:space-around;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.xlab{grid-column:2;display:flex;justify-content:space-around;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;min-height:66vh;}
+.cell{border:1px solid var(--line);padding:16px 20px;display:flex;flex-direction:column;min-height:0;}
+.cell .head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px;}
+.cell .posture{font-size:17px;color:var(--ink);}
+.cell .qname{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+.cell .count{font-family:'Fraunces',Georgia,serif;font-size:88px;line-height:1;color:var(--gold);font-weight:300;}
+.cell .items{overflow-y:auto;flex:1;margin-top:4px;}
+.cell .it{font-size:14.5px;color:var(--dim);padding:5px 0;border-bottom:1px solid rgba(244,240,233,.06);}
+/* falsifier register */
+.reg{columns:2;column-gap:26px;}
+.reg .it{break-inside:avoid;border-left:2px solid var(--gold);padding:10px 14px;margin-bottom:12px;background:rgba(244,240,233,.03);font-size:16.5px;}
+.reg .it .who{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint);letter-spacing:.1em;margin-top:6px;}
+.foot{margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--faint);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <svg width="30" height="30" viewBox="0 0 26 26" style="align-self:center"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#C6A553" stroke-width="1"/><circle cx="13" cy="13" r="7" fill="none" stroke="#C6A553" stroke-width="1"/><circle cx="13" cy="13" r="2.4" fill="#C6A553"/></svg>
+    <div>
+      <div class="eyebrow">AIM 2026 · Málaga · Live</div>
+      <h1>The room, mapped</h1>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span><span class="dot" id="conn"></span><span id="connlab">not loaded</span></span>
+    <span id="phaselab">phase —</span>
+    <span id="countlab">— submissions</span>
+    <span id="fetchedlab"></span>
+    <button id="btn-reload">Reload</button>
+    <button id="btn-auto" class="on">Auto 4s</button>
+    <span style="flex:1"></span>
+    <button id="tab-priors" class="on">Priors</button>
+    <button id="tab-fals">Falsifiers</button>
+  </div>
+
+  <div id="failbox" class="fail hide"><b>Live load failed — projecting nothing</b><span id="failmsg"></span></div>
+  <div id="notloaded" class="notloaded">Not loaded. Nothing is projected until a live load succeeds.</div>
+
+  <!-- PRIORS VIEW -->
+  <div id="v-priors" class="hide">
+    <div class="fieldwrap">
+      <div class="ylab" id="ylab"></div>
+      <div class="grid" id="grid"></div>
+      <div></div>
+      <div class="xlab" id="xlab"></div>
+    </div>
+  </div>
+
+  <!-- FALSIFIER VIEW -->
+  <div id="v-fals" class="hide">
+    <div class="reg" id="reg"></div>
+  </div>
+
+  <div class="foot">session <span id="sesslab"></span> · no demo data on this page: empty means empty, failure is announced (D3)</div>
+</div>
+
+<script src="config.js"></script>
+<script src="aim26_frame.js"></script>
+<script>
+// ============================================================================
+//  Facilitator projection · reads course_priors live for session aim26.
+//  Doctrine: D3 no fabricated data — before the first successful load the page
+//  says "not loaded"; on failure it announces the reason. Never demo teams.
+// ============================================================================
+(function () {
+  "use strict";
+
+  function fail(msg) {
+    document.getElementById("failmsg").textContent = " " + msg;
+    document.getElementById("failbox").classList.remove("hide");
+    setConn(false, "load failed");
+  }
+  function clearFail() { document.getElementById("failbox").classList.add("hide"); }
+  function setConn(ok, lab) {
+    var d = document.getElementById("conn");
+    d.className = "dot " + (ok ? "ok" : "bad");
+    document.getElementById("connlab").textContent = lab;
+  }
+
+  if (typeof SUPABASE_URL === "undefined" || typeof SUPABASE_ANON === "undefined") { fail("config.js missing or incomplete"); return; }
+  if (typeof AIM26 === "undefined") { fail("aim26_frame.js did not load"); return; }
+
+  var H = { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON };
+  var S = AIM26.session;
+  document.getElementById("sesslab").textContent = S;
+
+  // axis edge labels from the frame (D2 — single source)
+  document.getElementById("xlab").innerHTML =
+    "<span>" + AIM26.axes.x.opts[0].label + "</span><span>" + AIM26.axes.x.opts[1].label + "</span>";
+  document.getElementById("ylab").innerHTML =
+    "<span>" + AIM26.axes.y.opts[1].label + "</span><span>" + AIM26.axes.y.opts[0].label + "</span>";
+
+  // build the four cells in frame order (TL TR BL BR)
+  var grid = document.getElementById("grid");
+  AIM26.quadrants.forEach(function (q, i) {
+    var c = document.createElement("div");
+    c.className = "cell";
+    c.innerHTML =
+      '<div class="head"><div><div class="qname">' + q.name + '</div><div class="posture">' + q.posture + '</div></div>' +
+      '<div class="count" id="cnt-' + i + '">·</div></div>' +
+      '<div class="items" id="items-' + i + '"></div>';
+    grid.appendChild(c);
+  });
+
+  var loadedOnce = false, auto = true, timer = null;
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+
+  function render(rows, phase) {
+    document.getElementById("notloaded").classList.add("hide");
+    document.getElementById("phaselab").textContent = "phase " + phase + " · " + (AIM26.phases[phase] || "?");
+
+    var priors = rows.filter(function (r) { return r.lens !== "falsifier"; });
+    var falsRows = rows.filter(function (r) { return r.lens === "falsifier"; })
+      .map(function (r) { return { text: r.thesis, who: r.name, linked: false }; })
+      .concat(priors.filter(function (r) { return r.justification && r.justification.trim(); })
+        .map(function (r) { return { text: r.justification, who: r.name, linked: true }; }));
+
+    document.getElementById("countlab").textContent = priors.length + " priors · " + falsRows.length + " falsifiers";
+
+    // quadrant counts + shift lists
+    AIM26.quadrants.forEach(function (q, i) {
+      var inCell = priors.filter(function (r) { return Number(r.x) === q.x && Number(r.y) === q.y; });
+      document.getElementById("cnt-" + i).textContent = String(inCell.length);
+      document.getElementById("items-" + i).innerHTML = inCell.map(function (r) {
+        var t = (r.thesis || "").slice(0, 120);
+        return '<div class="it">' + esc(t) + '</div>';
+      }).join("");
+    });
+
+    // falsifier register
+    document.getElementById("reg").innerHTML = falsRows.map(function (f) {
+      return '<div class="it">' + esc(f.text) +
+        '<div class="who">' + (f.linked ? "linked to a prior" : "standalone entry") + '</div></div>';
+    }).join("") || '<div style="color:var(--faint);font-style:italic;">No falsifiers yet.</div>';
+  }
+
+  function load() {
+    Promise.all([
+      fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S + "&select=phase", { headers: H })
+        .then(function (r) { if (!r.ok) throw new Error("sessions HTTP " + r.status); return r.json(); }),
+      fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S + "&select=name,thesis,lens,x,y,justification,created_at&order=created_at.desc&limit=500", { headers: H })
+        .then(function (r) { if (!r.ok) throw new Error("priors HTTP " + r.status); return r.json(); })
+    ]).then(function (res) {
+      if (!res[0].length) throw new Error("session '" + S + "' not found — seed the session row");
+      clearFail();
+      loadedOnce = true;
+      setConn(true, "live");
+      document.getElementById("fetchedlab").textContent = "fetched " + new Date().toLocaleTimeString();
+      render(res[1], res[0][0].phase);
+    }).catch(function (e) {
+      fail(e.message + (loadedOnce ? " — showing last successful load" : ""));
+    });
+  }
+
+  // tabs
+  function tab(which) {
+    document.getElementById("v-priors").classList.toggle("hide", which !== "priors");
+    document.getElementById("v-fals").classList.toggle("hide", which !== "fals");
+    document.getElementById("tab-priors").classList.toggle("on", which === "priors");
+    document.getElementById("tab-fals").classList.toggle("on", which === "fals");
+  }
+  document.getElementById("tab-priors").onclick = function () { tab("priors"); };
+  document.getElementById("tab-fals").onclick = function () { tab("fals"); };
+  tab("priors");
+  document.getElementById("v-priors").classList.remove("hide"); // container visible; cells fill on load
+
+  // controls
+  document.getElementById("btn-reload").onclick = load;
+  document.getElementById("btn-auto").onclick = function () {
+    auto = !auto;
+    this.classList.toggle("on", auto);
+    if (auto) { timer = setInterval(load, 4000); } else { clearInterval(timer); }
+  };
+
+  load();
+  timer = setInterval(load, 4000);
+})();
+</script>
+</body>
+</html>
