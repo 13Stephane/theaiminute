@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIM 2026 · Control</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+:root{--bg:#193C3F;--ink:#F4F0E9;--dim:rgba(244,240,233,.62);--faint:rgba(244,240,233,.32);--gold:#C6A553;--line:rgba(244,240,233,.14);--bad:#C46A5A;--ok:#7FA86A;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Fraunces',Georgia,serif;line-height:1.5;font-size:16px;-webkit-font-smoothing:antialiased;}
+.page{max-width:620px;margin:0 auto;padding:26px 20px 80px;}
+.mark{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
+h1{font-weight:400;font-size:26px;margin-bottom:18px;}
+h2{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:26px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+.phasebig{font-size:64px;font-weight:300;color:var(--gold);line-height:1;}
+.phasename{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:4px;}
+.pbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.pbtns button{background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:15px;padding:16px 10px;border-radius:2px;cursor:pointer;text-align:left;}
+.pbtns button .n{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--gold);display:block;margin-bottom:4px;}
+.pbtns button.on{border-color:var(--gold);background:rgba(198,165,83,.14);}
+.pbtns button:disabled{opacity:.5;cursor:default;}
+.status{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:10px;color:var(--dim);min-height:16px;}
+.fail{border-left:3px solid var(--bad);background:rgba(196,106,90,.10);padding:12px 14px;font-size:14px;margin:12px 0;}
+.fail b{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bad);display:block;margin-bottom:4px;font-weight:500;}
+.hide{display:none;}
+.hc{list-style:none;}
+.hc li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(244,240,233,.06);font-size:14.5px;}
+.hc .st{font-family:'IBM Plex Mono',monospace;font-size:11px;width:44px;flex:none;}
+.hc .ok{color:var(--ok);} .hc .bad{color:var(--bad);} .hc .pend{color:var(--faint);}
+.hc .msg{color:var(--dim);font-size:12.5px;}
+.counts{display:flex;gap:26px;font-size:15px;}
+.counts b{color:var(--gold);font-weight:500;font-size:26px;display:block;}
+.whom{width:100%;border-collapse:collapse;font-size:13.5px;}
+.whom td{padding:7px 8px;border-bottom:1px solid rgba(244,240,233,.06);vertical-align:top;}
+.whom td:first-child{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);white-space:nowrap;}
+.whom a{color:var(--ink);}
+input[type=text]{width:100%;background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:10px;border-radius:2px;}
+.danger{width:100%;background:none;border:1px solid var(--bad);color:var(--bad);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:12px;border-radius:2px;cursor:pointer;margin-top:10px;}
+button.small{background:none;border:1px solid var(--line);color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;cursor:pointer;border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="mark">
+    <svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11.5" fill="none" stroke="#C6A553" stroke-width="1"/><circle cx="13" cy="13" r="7" fill="none" stroke="#C6A553" stroke-width="1"/><circle cx="13" cy="13" r="2.4" fill="#C6A553"/></svg>
+    <div class="eyebrow">AIM 2026 · Málaga · Facilitator</div>
+  </div>
+  <h1>Session control · aim26</h1>
+
+  <div id="failbox" class="fail hide"><b>Problem</b><span id="failmsg"></span></div>
+
+  <h2>Phase</h2>
+  <div class="phasebig" id="phasenum">–</div>
+  <div class="phasename" id="phasename">loading…</div>
+  <div class="pbtns" id="pbtns"></div>
+  <div class="status" id="st-phase"></div>
+
+  <h2>Who opens what</h2>
+  <table class="whom">
+    <tr><td>Participants</td><td><a href="aim26.html" target="_blank">aim26.html</a> — the QR target; auto-advances with phase</td></tr>
+    <tr><td>Projected</td><td><a href="show-aim26.html" target="_blank">show-aim26.html</a> — Priors tab for slide 10, Falsifiers tab for slide 13</td></tr>
+    <tr><td>You</td><td>this page, on the phone</td></tr>
+  </table>
+
+  <h2>Live counts</h2>
+  <div class="counts">
+    <div><b id="c-priors">–</b>priors</div>
+    <div><b id="c-fals">–</b>falsifiers</div>
+    <div style="align-self:flex-end"><button class="small" id="btn-refresh">Refresh</button></div>
+  </div>
+
+  <h2>Health check · T6</h2>
+  <ul class="hc" id="hc"></ul>
+  <div style="margin-top:10px"><button class="small" id="btn-health">Run health check</button></div>
+
+  <h2>Reset · dry-run wipe</h2>
+  <p style="font-size:13.5px;color:var(--dim);margin-bottom:8px;">Deletes every <i>aim26</i> row in course_priors and sets phase 0. Type RESET to arm. Requires the anon delete policy; if it fails, run the reset SQL in the Supabase editor instead.</p>
+  <input type="text" id="resetword" placeholder="type RESET to arm">
+  <button class="danger" id="btn-reset" disabled>Wipe aim26 session</button>
+  <div class="status" id="st-reset"></div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="aim26_frame.js"></script>
+<script>
+// ============================================================================
+//  Facilitator cockpit for session aim26. Phase writes are PATCHes on
+//  course_sessions (anon update policy, as in June). Failure is loud (D1).
+// ============================================================================
+(function () {
+  "use strict";
+
+  function fail(msg) {
+    document.getElementById("failmsg").textContent = " " + msg;
+    document.getElementById("failbox").classList.remove("hide");
+  }
+  function clearFail() { document.getElementById("failbox").classList.add("hide"); }
+  if (typeof SUPABASE_URL === "undefined" || typeof SUPABASE_ANON === "undefined") { fail("config.js missing or incomplete"); return; }
+  if (typeof AIM26 === "undefined") { fail("aim26_frame.js did not load"); return; }
+
+  var H = { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON, "Content-Type": "application/json" };
+  var S = AIM26.session;
+  var PHASES = [
+    { n: 0, name: "Lobby", desc: "closed · page says opens shortly" },
+    { n: 1, name: "Cold prior", desc: "slide 3 · form open, 90 seconds" },
+    { n: 2, name: "Falsifier", desc: "slide 13 · one minute" },
+    { n: 3, name: "Closed", desc: "end of session" }
+  ];
+  var current = null;
+
+  // phase buttons
+  var holder = document.getElementById("pbtns");
+  PHASES.forEach(function (p) {
+    var b = document.createElement("button");
+    b.id = "pb-" + p.n;
+    b.innerHTML = '<span class="n">Phase ' + p.n + "</span>" + p.name + '<div style="font-size:12px;color:var(--faint);margin-top:2px;">' + p.desc + "</div>";
+    b.onclick = function () { setPhase(p.n); };
+    holder.appendChild(b);
+  });
+
+  function paintPhase(n) {
+    current = n;
+    document.getElementById("phasenum").textContent = n;
+    var p = PHASES.filter(function (x) { return x.n === n; })[0];
+    document.getElementById("phasename").textContent = p ? p.name : "unknown phase";
+    PHASES.forEach(function (x) {
+      document.getElementById("pb-" + x.n).classList.toggle("on", x.n === n);
+    });
+  }
+
+  function setPhase(n) {
+    var st = document.getElementById("st-phase");
+    st.textContent = "setting phase " + n + "…";
+    fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S, {
+      method: "PATCH", headers: Object.assign({ "Prefer": "return=representation" }, H),
+      body: JSON.stringify({ phase: n })
+    }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        if (!rows.length) throw new Error("no row updated — update policy missing? use the SQL editor line");
+        clearFail(); paintPhase(rows[0].phase);
+        st.textContent = "phase " + rows[0].phase + " set · participant pages follow within 5s";
+      })
+      .catch(function (e) { st.textContent = ""; fail("phase change failed: " + e.message); });
+  }
+
+  function loadState() {
+    fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S + "&select=phase", { headers: H })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        if (!rows.length) throw new Error("session '" + S + "' not found — run the seed SQL");
+        clearFail(); paintPhase(rows[0].phase);
+      }).catch(function (e) { fail(e.message); });
+    fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S + "&select=lens,justification", { headers: H })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        var priors = rows.filter(function (r) { return r.lens !== "falsifier"; });
+        var fals = rows.filter(function (r) { return r.lens === "falsifier"; }).length +
+                   priors.filter(function (r) { return r.justification && r.justification.trim(); }).length;
+        document.getElementById("c-priors").textContent = priors.length;
+        document.getElementById("c-fals").textContent = fals;
+      }).catch(function () { /* count failure already surfaces via session fetch */ });
+  }
+  document.getElementById("btn-refresh").onclick = loadState;
+  loadState();
+  setInterval(loadState, 8000);
+
+  // ── health check ──────────────────────────────────────────────────────────
+  var CHECKS = [
+    { id: "cfg",   label: "config.js loaded (URL + anon key)" },
+    { id: "frame", label: "aim26_frame.js loaded · session id parity" },
+    { id: "db",    label: "Supabase reachable" },
+    { id: "sess",  label: "session row 'aim26' exists · phase readable" },
+    { id: "write", label: "write path · insert + delete probe row" },
+    { id: "pages", label: "aim26.html and show-aim26.html resolve on this host" }
+  ];
+  function hcPaint(results) {
+    document.getElementById("hc").innerHTML = CHECKS.map(function (c) {
+      var r = results[c.id] || { st: "pend", msg: "" };
+      var lab = r.st === "ok" ? "PASS" : (r.st === "bad" ? "FAIL" : "·");
+      return '<li><span class="st ' + r.st + '">' + lab + '</span><span>' + c.label +
+        (r.msg ? ' <span class="msg">— ' + r.msg + "</span>" : "") + "</span></li>";
+    }).join("");
+  }
+  hcPaint({});
+  document.getElementById("btn-health").onclick = function () {
+    var R = {};
+    function done(id, ok, msg) { R[id] = { st: ok ? "ok" : "bad", msg: msg || "" }; hcPaint(R); }
+    done("cfg", typeof SUPABASE_URL !== "undefined" && typeof SUPABASE_ANON !== "undefined" && SUPABASE_URL.indexOf("https://") === 0);
+    done("frame", typeof AIM26 !== "undefined" && AIM26.session === "aim26", typeof AIM26 !== "undefined" ? "session=" + AIM26.session : "not loaded");
+    fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S + "&select=phase", { headers: H })
+      .then(function (r) { done("db", r.ok, "HTTP " + r.status); if (!r.ok) throw 0; return r.json(); })
+      .then(function (rows) { done("sess", rows.length === 1, rows.length ? "phase " + rows[0].phase : "row missing — seed SQL"); })
+      .catch(function () { done("sess", false, "unreachable"); });
+    // write probe: insert a marked row, then delete it; delete failure is reported, not hidden
+    fetch(SUPABASE_URL + "/rest/v1/course_priors", {
+      method: "POST", headers: Object.assign({ "Prefer": "return=representation" }, H),
+      body: JSON.stringify({ session_id: S, name: "healthcheck", thesis: "healthcheck probe — safe to delete", lens: "healthcheck", placed_by: "healthcheck" })
+    }).then(function (r) { if (!r.ok) throw new Error("insert HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        return fetch(SUPABASE_URL + "/rest/v1/course_priors?id=eq." + rows[0].id, { method: "DELETE", headers: H })
+          .then(function (r2) {
+            if (r2.ok) done("write", true, "insert + delete ok");
+            else done("write", true, "insert ok · delete blocked (HTTP " + r2.status + ") — probe row left, wipe via SQL");
+          });
+      }).catch(function (e) { done("write", false, e.message); });
+    ["aim26.html", "show-aim26.html"].forEach(function (p, i, arr) {
+      // sequential-ish: just fire both, fail if either 404s
+      fetch(p, { method: "HEAD" }).then(function (r) {
+        if (!r.ok) done("pages", false, p + " HTTP " + r.status);
+        else if (i === arr.length - 1 && !R.pages) done("pages", true);
+      }).catch(function () { done("pages", false, p + " unreachable"); });
+    });
+  };
+
+  // ── guarded reset ─────────────────────────────────────────────────────────
+  var word = document.getElementById("resetword"), btnR = document.getElementById("btn-reset");
+  word.oninput = function () { btnR.disabled = word.value.trim() !== "RESET"; };
+  btnR.onclick = function () {
+    var st = document.getElementById("st-reset");
+    st.textContent = "wiping…";
+    fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S, { method: "DELETE", headers: H })
+      .then(function (r) {
+        if (!r.ok) throw new Error("delete HTTP " + r.status + " — run the reset SQL in the Supabase editor");
+        return fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S, {
+          method: "PATCH", headers: H, body: JSON.stringify({ phase: 0 })
+        });
+      })
+      .then(function (r) { if (!r.ok) throw new Error("phase reset HTTP " + r.status); })
+      .then(function () { clearFail(); st.textContent = "wiped · phase 0"; word.value = ""; btnR.disabled = true; loadState(); })
+      .catch(function (e) { st.textContent = ""; fail("reset failed: " + e.message); });
+  };
+})();
+</script>
+</body>
+</html>
