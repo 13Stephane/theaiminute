@@ -9,7 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
   <!-- Quill rich text editor -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
+  <!-- pdf.js: renders PDF pages to images in the browser for carousel upload -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
+    /* ── UPLOAD CONTROLS ── */
+    .input-with-upload{display:flex;gap:.5rem;align-items:stretch;}
+    .input-with-upload input{flex:1;min-width:0;}
+    .upload-btn{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:0 .9rem;border-radius:10px;border:1px dashed rgba(190,123,80,.5);background:rgba(190,123,80,.08);color:var(--gold);cursor:pointer;white-space:nowrap;transition:all .2s;}
+    .upload-btn:hover{background:rgba(190,123,80,.18);border-style:solid;}
+    .upload-btn[disabled]{opacity:.5;cursor:wait;}
+    .upload-progress{font-size:.72rem;color:var(--muted);margin-top:.35rem;min-height:1rem;font-style:italic;}
+    .upload-progress.err{color:var(--red);font-style:normal;}
+    .carousel-builder-header .hdr-actions{display:flex;gap:.4rem;flex-wrap:wrap;}
+    .carousel-thumb{width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,.2);}
+    .video-preview{margin-top:.5rem;max-height:160px;border-radius:8px;border:1px solid var(--border);display:block;}
+    input[type=file].hidden-file{display:none;}
     :root{
       --teal:rgb(25,60,63);--teal-mid:rgb(35,80,84);--teal-light:rgb(45,100,105);
       --cream:rgb(244,240,233);--gold:rgb(190,123,80);--gold-dark:rgb(152,98,64);
@@ -236,6 +250,18 @@
         <input type="text" id="f-title" placeholder="What's the insight?">
       </div>
 
+      <div class="field-row-3">
+        <div class="field" style="grid-column:span 2">
+          <label>Series <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(optional; pick an existing one or type a new name)</span></label>
+          <input type="text" id="f-series" list="series-list" placeholder="e.g. Who Profits from AI" autocomplete="off">
+          <datalist id="series-list"></datalist>
+        </div>
+        <div class="field">
+          <label>Order in series</label>
+          <input type="number" id="f-series-order" min="1" step="1" placeholder="e.g. 3">
+        </div>
+      </div>
+
       <!-- MERGED: single rich text field for single-author posts -->
       <div id="draft-single">
         <div class="field">
@@ -285,8 +311,13 @@
       </div>
 
       <div class="field">
-        <label>Image URL <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(upload to /images/ in your repo, or paste any public URL)</span></label>
-        <input type="url" id="f-image-url" placeholder="https://www.theaiminute.blog/images/your-image.png">
+        <label>Image <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(upload a file, or paste any public URL)</span></label>
+        <div class="input-with-upload">
+          <input type="url" id="f-image-url" placeholder="https://…">
+          <button class="upload-btn" type="button" id="image-upload-btn" onclick="document.getElementById('image-file').click()">Upload</button>
+          <input type="file" id="image-file" class="hidden-file" accept="image/*" onchange="uploadImageFile(this)">
+        </div>
+        <div class="upload-progress" id="image-upload-progress"></div>
       </div>
 
       <div class="field" id="image-caption-field" style="display:none">
@@ -299,12 +330,30 @@
         <div class="carousel-builder">
           <div class="carousel-builder-header">
             <span id="carousel-slide-count">0 slides</span>
-            <button class="btn btn-ghost btn-sm" type="button" onclick="addCarouselSlide()">+ Add Slide</button>
+            <div class="hdr-actions">
+              <button class="upload-btn" type="button" id="pdf-upload-btn" onclick="document.getElementById('pdf-file').click()">Upload PDF</button>
+              <input type="file" id="pdf-file" class="hidden-file" accept="application/pdf" onchange="uploadPdfAsSlides(this)">
+              <button class="upload-btn" type="button" id="slides-upload-btn" onclick="document.getElementById('slides-files').click()">Upload images</button>
+              <input type="file" id="slides-files" class="hidden-file" accept="image/*" multiple onchange="uploadImagesAsSlides(this)">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="addCarouselSlide()">+ Add Slide</button>
+            </div>
           </div>
           <div id="carousel-slide-list" class="carousel-slide-list">
-            <div class="carousel-empty" id="carousel-empty-msg">No slides yet — click Add Slide to start.</div>
+            <div class="carousel-empty" id="carousel-empty-msg">No slides yet — upload a PDF, upload images, or add a slide.</div>
           </div>
         </div>
+        <div class="upload-progress" id="carousel-upload-progress"></div>
+      </div>
+
+      <div class="field">
+        <label>Video file <span style="font-size:.63rem;opacity:.5;text-transform:none;letter-spacing:0">(MP4, up to 50 MB; for longer pieces use the Vimeo ID below)</span></label>
+        <div class="input-with-upload">
+          <input type="url" id="f-video-url" placeholder="https://…">
+          <button class="upload-btn" type="button" id="video-upload-btn" onclick="document.getElementById('video-file').click()">Upload</button>
+          <input type="file" id="video-file" class="hidden-file" accept="video/mp4,video/webm,video/quicktime" onchange="uploadVideoFile(this)">
+        </div>
+        <div class="upload-progress" id="video-upload-progress"></div>
+        <video id="video-preview" class="video-preview" controls preload="metadata" style="display:none"></video>
       </div>
 
       <script>
@@ -632,6 +681,128 @@ Respond ONLY with JSON, no markdown:
     return res.status===204 ? null : res.json();
   }
 
+  /* ══ SUPABASE STORAGE ══
+     Bucket "media" (public read). Files land under images/, carousels/, videos/.
+     Public URL pattern: {SUPABASE_URL}/storage/v1/object/public/media/{path} */
+  const MEDIA_BUCKET = 'media';
+  const MAX_VIDEO_MB = 50;
+
+  function slugify(name) {
+    return name.toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'file';
+  }
+  function stamp() { return new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Date.now().toString(36); }
+
+  async function uploadToStorage(path, blob, contentType) {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path}`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_SERVICE,
+        Authorization: `Bearer ${SUPABASE_SERVICE}`,
+        'Content-Type': contentType || blob.type || 'application/octet-stream',
+        'x-upsert': 'true',
+        'Cache-Control': 'max-age=31536000'
+      },
+      body: blob
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return `${SUPABASE_URL}/storage/v1/object/public/${MEDIA_BUCKET}/${path}`;
+  }
+
+  function setProgress(id, msg, isErr=false) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.classList.toggle('err', isErr);
+  }
+
+  /* Single post image */
+  async function uploadImageFile(input) {
+    const file = input.files[0]; if (!file) return;
+    const btn = document.getElementById('image-upload-btn'); btn.disabled = true;
+    setProgress('image-upload-progress', `Uploading ${file.name}…`);
+    try {
+      const ext = (file.name.match(/\.[a-z0-9]+$/i) || ['.jpg'])[0].toLowerCase();
+      const url = await uploadToStorage(`images/${stamp()}-${slugify(file.name)}${ext}`, file);
+      const urlInput = document.getElementById('f-image-url');
+      urlInput.value = url; urlInput.dispatchEvent(new Event('input'));
+      setProgress('image-upload-progress', 'Uploaded ✓');
+    } catch(e) { console.error(e); setProgress('image-upload-progress', 'Upload failed: ' + e.message.slice(0,120), true); }
+    finally { btn.disabled = false; input.value = ''; }
+  }
+
+  /* Video file */
+  async function uploadVideoFile(input) {
+    const file = input.files[0]; if (!file) return;
+    if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
+      setProgress('video-upload-progress', `File is ${(file.size/1048576).toFixed(0)} MB. Limit is ${MAX_VIDEO_MB} MB; use Vimeo for this one.`, true);
+      input.value = ''; return;
+    }
+    const btn = document.getElementById('video-upload-btn'); btn.disabled = true;
+    setProgress('video-upload-progress', `Uploading ${file.name} (${(file.size/1048576).toFixed(1)} MB)…`);
+    try {
+      const ext = (file.name.match(/\.[a-z0-9]+$/i) || ['.mp4'])[0].toLowerCase();
+      const url = await uploadToStorage(`videos/${stamp()}-${slugify(file.name)}${ext}`, file);
+      document.getElementById('f-video-url').value = url;
+      showVideoPreview(url);
+      setProgress('video-upload-progress', 'Uploaded ✓');
+    } catch(e) { console.error(e); setProgress('video-upload-progress', 'Upload failed: ' + e.message.slice(0,120), true); }
+    finally { btn.disabled = false; input.value = ''; }
+  }
+
+  function showVideoPreview(url) {
+    const v = document.getElementById('video-preview');
+    if (url) { v.src = url; v.style.display = 'block'; } else { v.removeAttribute('src'); v.style.display = 'none'; }
+  }
+
+  /* Carousel: PDF → one JPEG per page → one slide per page */
+  async function uploadPdfAsSlides(input) {
+    const file = input.files[0]; if (!file) return;
+    const btn = document.getElementById('pdf-upload-btn'); btn.disabled = true;
+    const prog = 'carousel-upload-progress';
+    try {
+      if (!window.pdfjsLib) throw new Error('pdf.js not loaded');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      setProgress(prog, 'Reading PDF…');
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+      const folder = `carousels/${stamp()}-${slugify(file.name)}`;
+      const TARGET_W = 1080; // matches LinkedIn carousel width; sharp on retina at 540px display
+      for (let n = 1; n <= pdf.numPages; n++) {
+        setProgress(prog, `Rendering page ${n} of ${pdf.numPages}…`);
+        const page = await pdf.getPage(n);
+        const base = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: TARGET_W / base.width });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.88));
+        setProgress(prog, `Uploading page ${n} of ${pdf.numPages}…`);
+        const url = await uploadToStorage(`${folder}/p${String(n).padStart(2,'0')}.jpg`, blob, 'image/jpeg');
+        carouselSlides.push({ image_url: url, caption: '', body: '' });
+        renderCarouselSlides();
+      }
+      setProgress(prog, `${pdf.numPages} slides added ✓`);
+    } catch(e) { console.error(e); setProgress(prog, 'PDF upload failed: ' + e.message.slice(0,120), true); }
+    finally { btn.disabled = false; input.value = ''; }
+  }
+
+  /* Carousel: several images → slides, in the order picked */
+  async function uploadImagesAsSlides(input) {
+    const files = [...input.files]; if (!files.length) return;
+    const btn = document.getElementById('slides-upload-btn'); btn.disabled = true;
+    const prog = 'carousel-upload-progress';
+    const folder = `carousels/${stamp()}`;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        setProgress(prog, `Uploading ${i+1} of ${files.length}: ${f.name}…`);
+        const ext = (f.name.match(/\.[a-z0-9]+$/i) || ['.jpg'])[0].toLowerCase();
+        const url = await uploadToStorage(`${folder}/s${String(i+1).padStart(2,'0')}-${slugify(f.name)}${ext}`, f);
+        carouselSlides.push({ image_url: url, caption: '', body: '' });
+        renderCarouselSlides();
+      }
+      setProgress(prog, `${files.length} slides added ✓`);
+    } catch(e) { console.error(e); setProgress(prog, 'Upload failed: ' + e.message.slice(0,120), true); }
+    finally { btn.disabled = false; input.value = ''; }
+  }
+
   let carouselSlides = []; // [{image_url, caption, body}]
 
   function renderCarouselSlides() {
@@ -646,6 +817,7 @@ Respond ONLY with JSON, no markdown:
     list.innerHTML = carouselSlides.map((s, i) => `
       <div class="carousel-slide-item" id="carousel-item-${i}">
         <span class="carousel-slide-num">${i+1}</span>
+        ${s.image_url ? `<img class="carousel-thumb" src="${s.image_url}" alt="">` : ''}
         <div class="carousel-slide-fields">
           <input type="url" placeholder="Image URL (https://...)" value="${s.image_url||''}"
             oninput="carouselSlides[${i}].image_url=this.value">
@@ -697,6 +869,9 @@ Respond ONLY with JSON, no markdown:
       linkedin_draft: bodyPlain, // plain text for copy-to-clipboard
       hashtags: currentHashtags,
       vimeo_id: vimeo||null,
+      video_url: document.getElementById('f-video-url').value.trim()||null,
+      series: document.getElementById('f-series').value.trim()||null,
+      series_order: parseInt(document.getElementById('f-series-order').value,10)||null,
       linkedin_post_url: liPostUrl||null,
       artifact_url: document.getElementById('f-artifact-url').value.trim()||null,
       artifact_caption: document.getElementById('f-artifact-caption').value.trim()||null,
@@ -738,6 +913,10 @@ Respond ONLY with JSON, no markdown:
     editingId = post.id;
     document.getElementById('f-title').value   = post.title||'';
     document.getElementById('f-vimeo').value   = post.vimeo_id||'';
+    document.getElementById('f-video-url').value = post.video_url||'';
+    document.getElementById('f-series').value = post.series||'';
+    document.getElementById('f-series-order').value = post.series_order||'';
+    showVideoPreview(post.video_url||'');
     document.getElementById('f-li-url').value        = post.linkedin_post_url||'';
     document.getElementById('f-artifact-url').value     = post.artifact_url||'';
     document.getElementById('f-artifact-caption').value = post.artifact_caption||'';
@@ -791,6 +970,11 @@ Respond ONLY with JSON, no markdown:
     editingId=null;
     document.getElementById('f-title').value='';
     document.getElementById('f-vimeo').value='';
+    document.getElementById('f-video-url').value='';
+    document.getElementById('f-series').value='';
+    document.getElementById('f-series-order').value='';
+    showVideoPreview('');
+    ['image-upload-progress','video-upload-progress','carousel-upload-progress'].forEach(id=>setProgress(id,''));
     document.getElementById('f-li-url').value='';
     document.getElementById('f-status').value='draft';
     document.getElementById('f-scheduled-at').value='';
@@ -817,6 +1001,9 @@ Respond ONLY with JSON, no markdown:
       const posts = await sbFetch('posts?order=created_at.desc');
       allPosts = posts;
       renderPostList();
+      // Series autocomplete from existing posts
+      const names = [...new Set(posts.map(p=>p.series).filter(Boolean))].sort();
+      document.getElementById('series-list').innerHTML = names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">`).join('');
     } catch(e) {
       document.getElementById('post-list').innerHTML='<p style="color:var(--muted);font-size:.83rem">Could not load — check Supabase config.</p>';
     }
@@ -867,11 +1054,12 @@ Respond ONLY with JSON, no markdown:
             <span class="status-dot ${p.status}"></span>
             <span class="status-label">${p.status}</span>
             ${p.archived?'<span class="status-label">· archived</span>':''}
-            ${p.vimeo_id?'<span class="status-label">· ▶</span>':''}
+            ${(p.vimeo_id||p.video_url)?'<span class="status-label">· ▶</span>':''}
             ${p.linkedin_post_url?'<span class="status-label">· LI</span>':''}
             ${p.artifact_url?'<span class="status-label">· ✦ Artifact</span>':''}
             ${p.image_url?'<span class="status-label">· 🖼 Image</span>':''}
             ${(p.carousel_slides&&p.carousel_slides.length)?`<span class="status-label">· ◈ ${p.carousel_slides.length}-slide carousel</span>`:''}
+            ${p.series?`<span class="status-label" style="color:var(--gold)">· ${p.series}${p.series_order?' #'+p.series_order:''}</span>`:''}
             <span class="status-label">· ${date}</span>
           </div>
           <div style="margin-top:.5rem;display:flex;gap:.4rem;flex-wrap:wrap">

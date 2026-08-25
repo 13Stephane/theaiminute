@@ -128,6 +128,41 @@
     .carousel-dot.active{background:var(--gold);transform:scale(1.3);}
     .carousel-count{position:absolute;top:.6rem;right:.75rem;background:rgba(25,60,63,.7);border:1px solid rgba(244,240,233,.14);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.63rem;letter-spacing:.08em;padding:.18rem .55rem;border-radius:40px;backdrop-filter:blur(4px);z-index:5;}
 
+    /* Native video (uploaded mp4) */
+    .video-native{width:100%;max-height:560px;border-radius:14px;display:block;background:#000;border:1px solid var(--border);}
+
+    /* ── MONTH MARKER (inside a page, when the month changes) ── */
+    .month-marker{display:flex;align-items:center;gap:.75rem;margin:1.75rem 0 1.25rem;font-family:'DM Sans',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
+    .month-marker::after{content:'';flex:1;height:1px;background:var(--border);}
+    .month-marker:first-child{margin-top:0;}
+
+    /* ── PAGER ── */
+    .pager{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:1rem;}
+    .pager-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;}
+    .pager-pages{display:flex;gap:.4rem;flex-wrap:wrap;align-items:flex-end;}
+    .pager-page{display:flex;flex-direction:column;align-items:center;gap:.15rem;min-width:52px;padding:.4rem .55rem;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none;}
+    .pager-page:hover{border-color:rgba(190,123,80,.4);color:var(--cream);}
+    .pager-page.active{border-color:var(--gold);color:var(--cream);background:rgba(190,123,80,.1);}
+    .pager-page .pp-num{font-size:.8rem;font-weight:600;line-height:1;}
+    .pager-page .pp-range{font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;line-height:1.2;white-space:nowrap;opacity:.75;}
+    .pager-gap{color:var(--muted);align-self:center;padding:0 .2rem;}
+    .pager-nav{display:flex;gap:.5rem;}
+    .pager-nav .btn[disabled]{opacity:.35;cursor:default;pointer-events:none;}
+    .pager-jump{display:flex;align-items:center;gap:.6rem;font-family:'DM Sans',sans-serif;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+    .pager-jump select{background:rgba(244,240,233,.06);border:1px solid var(--border);border-radius:40px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:.75rem;padding:.35rem .9rem;outline:none;cursor:pointer;}
+    .pager-jump select:focus{border-color:rgba(190,123,80,.5);}
+    .pager-jump select option{background:var(--teal-mid);color:var(--cream);}
+    .pager-status{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--muted);letter-spacing:.04em;}
+
+    /* ── SERIES ── */
+    .series-tag{font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)!important;text-decoration:none;border-bottom:1px solid rgba(190,123,80,.35);padding-bottom:1px;transition:border-color .2s;}
+    .series-tag:hover{border-color:var(--gold);}
+    .series-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;padding:1.1rem 1.4rem;border:1px solid rgba(190,123,80,.3);border-radius:14px;background:rgba(190,123,80,.06);}
+    .series-head-eyebrow{font-family:'DM Sans',sans-serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);}
+    .series-head h3{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--cream);line-height:1.2;}
+    .series-head-count{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted);margin-top:.15rem;}
+    .series-head a.btn{align-self:center;}
+
     /* Hashtags */
     .hashtags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.2rem;}
     .hashtag{font-size:.73rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
@@ -226,6 +261,7 @@
       <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
     </div>
   </div>
+  <div id="pager"></div>
 
   <div class="newsletter" id="newsletter">
     <div class="newsletter-text">
@@ -259,17 +295,203 @@
     joint:    { name: 'Guerraz & Breddam', photo: null,           li: null              }
   };
 
-  async function loadPosts() {
+  /* ══ PAGINATION ══
+     One cheap query fetches every published date (a few bytes per post).
+     From it we derive page boundaries, month labels, the month index,
+     and the page that holds a deep-linked post. Only the visible page
+     fetches full rows. */
+  const PAGE_SIZE = 8;
+  const SB_HEADERS = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
+  let pageIndex = [];   // [{page, from, to, label}] newest first
+  let currentPage = 1;
+  let currentSeries = null;   // active series filter, or null
+  let seriesNames = [];       // all series across published posts
+
+  function seriesQuery() {
+    // Series view reads oldest first so the argument unfolds in order.
+    return currentSeries
+      ? `&series=eq.${encodeURIComponent(currentSeries)}&order=series_order.asc.nullslast,published_at.asc`
+      : `&order=published_at.desc`;
+  }
+
+  const monthShort = d => d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  const monthKey   = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+
+  function rangeLabel(from, to) {
+    if (from < to) [from, to] = [to, from]; // series view runs oldest first
+    // from is newer than to. Same month: "Aug 2026". Else "Aug – Jun 2026" or "Jan 2027 – Nov 2026".
+    if (monthKey(from) === monthKey(to)) return monthShort(from);
+    if (from.getFullYear() === to.getFullYear()) {
+      return `${from.toLocaleDateString('en-GB',{month:'short'})} – ${monthShort(to)}`;
+    }
+    return `${monthShort(from)} – ${monthShort(to)}`;
+  }
+
+  async function buildPageIndex() {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/posts?select=id,published_at,series&status=eq.published${seriesQuery()}`,
+      { headers: SB_HEADERS }
+    );
+    const rows = await res.json();
+    if (!currentSeries) seriesNames = [...new Set(rows.map(r => r.series).filter(Boolean))].sort();
+    const dates = rows.map(r => ({ id: r.id, d: new Date(r.published_at) }));
+    pageIndex = [];
+    for (let i = 0; i < dates.length; i += PAGE_SIZE) {
+      const chunk = dates.slice(i, i + PAGE_SIZE);
+      pageIndex.push({
+        page: pageIndex.length + 1,
+        from: chunk[0].d,
+        to: chunk[chunk.length - 1].d,
+        ids: chunk.map(c => c.id),
+        label: rangeLabel(chunk[0].d, chunk[chunk.length - 1].d)
+      });
+    }
+    return dates;
+  }
+
+  function pageForPostId(id) {
+    const p = pageIndex.find(pg => pg.ids.includes(id));
+    return p ? p.page : 1;
+  }
+
+  function pageForMonth(key) {
+    // First page whose range touches the month; ranges are newest-first.
+    for (const pg of pageIndex) {
+      if (monthKey(pg.from) >= key && monthKey(pg.to) <= key) return pg.page;
+    }
+    // Month has no posts: land on the nearest older page.
+    const older = pageIndex.find(pg => monthKey(pg.from) < key);
+    return older ? older.page : pageIndex.length || 1;
+  }
+
+  async function loadPosts(page, opts = {}) {
+    const c = document.getElementById('posts-container');
     try {
+      const urlSeries = new URLSearchParams(location.search).get('series');
+      if (opts.series !== undefined) currentSeries = opts.series;
+      else if (!pageIndex.length) currentSeries = urlSeries || null;
+      if (!pageIndex.length) await buildPageIndex();
+      const total = pageIndex.length;
+
+      // Resolve target page: explicit, deep link, or URL state.
+      const hashId = (location.hash.match(/^#post-(.+)$/) || [])[1];
+      if (!page) {
+        const urlPage = parseInt(new URLSearchParams(location.search).get('page'), 10);
+        page = hashId ? pageForPostId(hashId) : (urlPage || 1);
+      }
+      page = Math.min(Math.max(1, page), Math.max(1, total));
+      currentPage = page;
+
+      if (!total) { renderPosts([]); renderPager(); return; }
+
+      c.innerHTML = '<div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
+      const offset = (page - 1) * PAGE_SIZE;
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/posts?status=eq.published&order=published_at.desc`,
-        { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+        `${SUPABASE_URL}/rest/v1/posts?status=eq.published${seriesQuery()}&limit=${PAGE_SIZE}&offset=${offset}`,
+        { headers: SB_HEADERS }
       );
       renderPosts(await res.json());
+      renderPager();
+
+      // URL state: keep ?page= in sync, preserve any hash.
+      const url = new URL(location.href);
+      if (page === 1) url.searchParams.delete('page'); else url.searchParams.set('page', page);
+      if (currentSeries) url.searchParams.set('series', currentSeries); else url.searchParams.delete('series');
+      document.querySelector('#posts .section-label').textContent = currentSeries ? 'Series' : 'Latest';
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+
+      if (opts.scroll) {
+        document.getElementById('posts').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (hashId) {
+        const el = document.getElementById(`post-${hashId}`);
+        if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+      }
     } catch(e) {
-      document.getElementById('posts-container').innerHTML =
-        '<p style="color:var(--muted);font-size:.85rem;padding:2rem 0">Could not load posts.</p>';
+      console.error(e);
+      c.innerHTML = '<p style="color:var(--muted);font-size:.85rem;padding:2rem 0">Could not load posts.</p>';
     }
+  }
+
+  function goPage(page) {
+    if (page === currentPage) return;
+    // Drop a stale post hash when navigating by page.
+    if (location.hash.startsWith('#post-')) history.replaceState(null, '', location.pathname + location.search);
+    loadPosts(page, { scroll: true });
+  }
+
+  function setSeries(name) {
+    if (location.hash.startsWith('#post-')) history.replaceState(null, '', location.pathname + location.search);
+    pageIndex = [];
+    loadPosts(1, { scroll: true, series: name || null });
+  }
+
+  function jumpToMonth(key) {
+    if (!key) return;
+    goPage(pageForMonth(key));
+  }
+
+  function renderPager() {
+    const el = document.getElementById('pager');
+    const total = pageIndex.length;
+    const seriesSelect = seriesNames.length ? `
+      <label class="pager-jump">Series
+        <select onchange="setSeries(this.value)">
+          <option value=""${currentSeries?'':' selected'}>All posts</option>
+          ${seriesNames.map(n=>`<option value="${n.replace(/"/g,'&quot;')}"${n===currentSeries?' selected':''}>${n}</option>`).join('')}
+        </select>
+      </label>` : '';
+    if (total <= 1) {
+      el.innerHTML = seriesSelect ? `<div class="pager"><div class="pager-row"><span></span>${seriesSelect}</div></div>` : '';
+      return;
+    }
+
+    // Page buttons: first, last, current ±1, ellipsis between.
+    const show = new Set([1, total, currentPage - 1, currentPage, currentPage + 1].filter(n => n >= 1 && n <= total));
+    let pagesHtml = '', prev = 0;
+    [...show].sort((a,b)=>a-b).forEach(n => {
+      if (n - prev > 1) pagesHtml += '<span class="pager-gap">…</span>';
+      const pg = pageIndex[n - 1];
+      pagesHtml += `<button class="pager-page${n===currentPage?' active':''}" onclick="goPage(${n})" aria-label="Page ${n}, ${pg.label}">
+        <span class="pp-num">${n}</span><span class="pp-range">${pg.label}</span></button>`;
+      prev = n;
+    });
+
+    // Month index: every month from newest to oldest post.
+    const months = [];
+    const seen = new Set();
+    pageIndex.forEach(pg => [pg.from, pg.to].forEach(d => {
+      const k = monthKey(d); if (!seen.has(k)) { seen.add(k); months.push({ k, d }); }
+    }));
+    // Fill intermediate months so the list reads as a calendar.
+    const first = months[0].d, last = months[months.length-1].d;
+    const cal = [];
+    for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d >= new Date(last.getFullYear(), last.getMonth(), 1); d.setMonth(d.getMonth()-1)) {
+      cal.push({ k: monthKey(d), label: monthShort(d), has: seen.has(monthKey(d)) });
+    }
+    const cur = pageIndex[currentPage - 1];
+    const options = cal.map(m => `<option value="${m.k}"${m.has?'':' disabled'}>${m.label}${m.has?'':' ·'}</option>`).join('');
+
+    el.innerHTML = `
+      <div class="pager">
+        <div class="pager-row">
+          <span class="pager-status">Page ${currentPage} of ${total} · ${cur.label}</span>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            ${seriesSelect}
+            <label class="pager-jump">Jump to
+              <select onchange="jumpToMonth(this.value)">
+                <option value="">month…</option>${options}
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="pager-row">
+          <div class="pager-pages">${pagesHtml}</div>
+          <div class="pager-nav">
+            <button class="btn btn-ghost" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← ${currentSeries?'Earlier':'Newer'}</button>
+            <button class="btn btn-ghost" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>${currentSeries?'Later':'Older'} →</button>
+          </div>
+        </div>
+      </div>`;
   }
 
   function bylineHtml(author) {
@@ -351,8 +573,27 @@
       c.innerHTML = '<p style="color:var(--muted);font-size:.85rem;padding:2rem 0">No posts yet — check back soon.</p>';
       return;
     }
-    c.innerHTML = posts.map((p, i) => {
-      const date = new Date(p.published_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    let lastMonth = null;
+    const seriesTotal = pageIndex.reduce((n, pg) => n + pg.ids.length, 0);
+    const seriesHead = currentSeries ? `
+      <div class="series-head">
+        <div>
+          <div class="series-head-eyebrow">Series</div>
+          <h3>${currentSeries}</h3>
+          <div class="series-head-count">${seriesTotal} post${seriesTotal===1?'':'s'}, in reading order</div>
+        </div>
+        <a class="btn btn-ghost" href="?" onclick="setSeries(null);return false;">All posts</a>
+      </div>` : '';
+    c.innerHTML = seriesHead + posts.map((p, i) => {
+      const pd = new Date(p.published_at);
+      const date = pd.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      // Month marker whenever the month changes within the page.
+      const mk = monthKey(pd);
+      const marker = (mk !== lastMonth && !currentSeries) ? `<div class="month-marker">${monthShort(pd)}</div>` : '';
+      const seriesTag = p.series
+        ? `<a class="series-tag" href="?series=${encodeURIComponent(p.series)}" onclick="setSeries(${JSON.stringify(p.series)});return false;">${p.series}${p.series_order?' · '+p.series_order:''}</a>`
+        : '';
+      lastMonth = mk;
       const tags = (p.hashtags||[]).map(h=>`<span class="hashtag">${h.startsWith('#')?h:'#'+h}</span>`).join('');
       const shareUrl   = encodeURIComponent(`${SITE_URL}/#post-${p.id}`);
       const shareTitle = encodeURIComponent(p.title);
@@ -360,7 +601,12 @@
         <div class="video-wrap"><div class="video-phone">
           <iframe src="https://player.vimeo.com/video/${p.vimeo_id}?autoplay=0&title=0&byline=0&portrait=0"
                   allowfullscreen loading="lazy"></iframe>
-        </div></div>` : '';
+        </div></div>`
+        : p.video_url ? `
+        <div class="video-wrap" style="display:block">
+          <video class="video-native" controls preload="metadata" playsinline src="${p.video_url}"></video>
+        </div>` : '';
+      const hasVideo = !!(p.vimeo_id || p.video_url);
 
       const artifactHtml = p.artifact_url ? `
         <div class="artifact-wrap">
@@ -409,11 +655,12 @@
         ? `<button class="btn btn-ghost" onclick="copyDraft(${JSON.stringify(p.linkedin_draft_hanne||p.linkedin_draft||'')},${JSON.stringify(`${SITE_URL}/#post-${p.id}`)})">Copy Draft (Hanne)</button>`
         : `<button class="btn btn-ghost" onclick="copyDraft(${JSON.stringify(p.linkedin_draft||'')},${JSON.stringify(`${SITE_URL}/#post-${p.id}`)})">Copy Draft</button>`;
 
-      return `
+      return marker + `
         <article class="post-card" id="post-${p.id}" style="animation-delay:${i*.07}s">
           <div class="post-meta">
-            <span class="badge ${p.vimeo_id?'badge-video':(p.carousel_slides&&p.carousel_slides.length?'badge-carousel':'badge-insight')}">${p.vimeo_id?'▶ Video':(p.carousel_slides&&p.carousel_slides.length?'◈ Carousel':'Insight')}</span>
+            <span class="badge ${hasVideo?'badge-video':(p.carousel_slides&&p.carousel_slides.length?'badge-carousel':'badge-insight')}">${hasVideo?'▶ Video':(p.carousel_slides&&p.carousel_slides.length?'◈ Carousel':'Insight')}</span>
             <span class="post-date">${date}</span>
+            ${seriesTag}
           </div>
           ${bylineHtml(p.author||'stephane')}
           <h2>${p.title}</h2>
@@ -460,6 +707,15 @@
         if (f.contentWindow === e.source) f.style.height = Math.ceil(d.height) + 'px';
       });
     }
+  });
+
+  // A post link opened while already on the site may live on another page.
+  window.addEventListener('hashchange', () => {
+    const id = (location.hash.match(/^#post-(.+)$/) || [])[1];
+    if (!id) return;
+    const target = pageForPostId(id);
+    if (target !== currentPage) loadPosts(target);
+    else { const el = document.getElementById(`post-${id}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   });
 
   loadPosts();
