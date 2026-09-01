@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pandemic Policy Room — 2020–2021</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F; --teal3:#2C615F;
+    --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6;
+    --ink:#15302E; --muted:#5E726F;
+    --green:#3E8E5A; --red:#B0492F; --blue:#3F6E8C;
+    --fed:#C6A553; --ecb:#5C8FB0; --usg:#C97A4A; --eug:#6FA083;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.45;padding:clamp(12px,2vw,28px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .eyebrow{font:600 12px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(22px,3.2vw,32px);line-height:1.05;margin-top:4px}
+  .qbadge{text-align:right}
+  .qbadge .ql{font-family:Georgia,serif;font-size:clamp(20px,2.8vw,30px);font-weight:700;color:var(--gold)}
+  .qbadge .qp{font-size:12px;color:#A9B7B5}
+  .qdots{display:flex;gap:5px;justify-content:flex-end;margin-top:5px}
+  .qdots i{width:9px;height:9px;border-radius:50%;background:rgba(244,240,233,.22)}
+  .qdots i.done{background:var(--green)} .qdots i.now{background:var(--gold)}
+
+  .news{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-left:4px solid var(--gold);border-radius:10px;padding:13px 16px;margin-bottom:16px}
+  .news .h{font:700 11px "Calibri";letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+  .news .body{font-size:14px;color:#E4DFD4}
+  .news .hint{margin-top:8px;font-size:12.5px;color:#AFC3BC;font-style:italic}
+  .news .hint b{color:var(--gold-soft);font-style:normal}
+
+  /* gauges */
+  .gauges{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  @media(max-width:760px){.gauges{grid-template-columns:1fr}}
+  .econ{background:var(--cream);color:var(--ink);border-radius:13px;padding:14px 16px}
+  .econ h3{font-family:Georgia,serif;font-size:16px;color:var(--teal);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .flag{font-size:18px}
+  .grow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+  .g{background:var(--cream2);border-radius:9px;padding:8px 10px}
+  .g .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  .g .v{font-family:Georgia,serif;font-size:19px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+  .g .v small{font-size:11px;font-weight:400}
+  .g .t{font-size:10.5px;font-weight:700;margin-top:1px}
+  .up{color:var(--red)} .down{color:var(--green)} .flat{color:var(--muted)}
+  .spark{display:block;margin-top:3px}
+
+  .shared{display:flex;gap:10px;flex-wrap:wrap;background:var(--cream);color:var(--ink);border-radius:13px;padding:12px 16px;margin-bottom:18px;justify-content:space-around}
+  .sg{text-align:center;min-width:90px}
+  .sg .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  .sg .v{font-family:Georgia,serif;font-size:20px;font-weight:700;color:var(--teal);margin-top:2px}
+
+  /* decisions */
+  .decis{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
+  @media(max-width:760px){.decis{grid-template-columns:1fr}}
+  .panel{background:var(--cream);color:var(--ink);border-radius:13px;padding:15px 17px;border-top:4px solid var(--gold)}
+  .panel.fed{border-top-color:var(--fed)} .panel.ecb{border-top-color:var(--ecb)} .panel.usg{border-top-color:var(--usg)} .panel.eug{border-top-color:var(--eug)}
+  .panel .role{font-family:Georgia,serif;font-size:16px;font-weight:700;color:var(--teal)}
+  .panel .mandate{font-size:11px;color:var(--muted);margin-bottom:11px}
+  .dec{margin-bottom:12px}
+  .dec label{display:flex;justify-content:space-between;font:600 12.5px "Calibri";color:var(--teal);margin-bottom:5px}
+  .dec label .v{color:var(--red);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:999px;background:var(--cream2)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid #fff;cursor:pointer}
+  .mix{margin-top:6px}
+  .mix .mh{font:600 11.5px "Calibri";color:var(--teal);margin-bottom:6px;display:flex;justify-content:space-between}
+  .mix .mh .tot{color:var(--muted);font-weight:400}
+  .mixrow{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .mixrow .nm{font-size:11px;color:var(--ink);width:118px;flex:none}
+  .mixrow input{flex:1}
+  .mixrow .pc{font-size:11px;color:var(--muted);width:34px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .resolve{display:flex;justify-content:center;margin:16px 0 6px}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:11px;padding:14px 30px;font:700 16px "Calibri";cursor:pointer;transition:.15s}
+  .btn:hover{background:#D4B868}
+  .btn.ghost{background:transparent;color:var(--cream);border:1px solid rgba(244,240,233,.35)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .briefing{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-radius:12px;padding:16px 18px;margin-top:14px;display:none}
+  .briefing .h{font:700 11px "Calibri";letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .briefing .body{font-size:13.5px;color:#E4DFD4;white-space:pre-wrap}
+  .briefing .status{font-size:12px;color:var(--gold-soft)}
+
+  .debrief{background:var(--cream);color:var(--ink);border-radius:14px;padding:22px 24px;margin-top:16px;display:none}
+  .debrief h2{font-family:Georgia,serif;font-size:22px;color:var(--teal);margin-bottom:6px}
+  .debrief .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:680px){.debrief .cmp{grid-template-columns:1fr}}
+  .cmpcard{background:var(--cream2);border-radius:10px;padding:13px 15px}
+  .cmpcard h4{font-family:Georgia,serif;font-size:14px;color:var(--teal);margin-bottom:8px}
+  .cmprow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px solid #DBD2C2}
+  .cmprow:last-child{border-bottom:none}
+  .cmprow .you{font-weight:700;color:var(--ink)} .cmprow .act{color:var(--muted)}
+  .assess{font-size:13.5px;color:var(--ink);white-space:pre-wrap;margin-top:8px;line-height:1.5}
+  .scorebar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:14px 0;padding:13px 16px;background:var(--cream2);border-radius:11px}
+  .bigscore{text-align:center} .bigscore .k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .bigscore .v{font-family:Georgia,serif;font-size:34px;font-weight:700;color:var(--teal)} .bigscore .v small{font-size:14px;color:var(--muted)}
+  .rolescores{flex:1;min-width:240px} .rolescores .k{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .rsrow{display:flex;gap:8px;flex-wrap:wrap} .rs{font-size:12px;background:var(--cream);border-radius:7px;padding:5px 9px;color:var(--ink)} .rs b{color:var(--teal)} .rs.best{background:var(--gold);color:var(--teal)} .rs.best b{color:var(--teal)}
+  .export{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .export input{flex:none;width:220px;padding:9px 11px;border:1px solid #CDBfA8;border-radius:8px;font:400 13px Calibri;color:var(--ink)}
+  .export .exhint{font-size:11.5px;color:var(--muted);font-style:italic}
+  .fwd{margin-top:18px;border-top:1px solid #DBD2C2;padding-top:16px}
+  .fwd h3{font-family:Georgia,serif;font-size:17px;color:var(--teal);margin-bottom:6px}
+  .fwdp{font-size:13px;color:var(--ink);max-width:78ch;margin-bottom:12px} .fwdp b{color:var(--red)}
+  .fwdctrl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--cream2);border-radius:10px;padding:12px 15px}
+  .fwdctrl label{font:600 13px Calibri;color:var(--teal);display:flex;gap:7px;align-items:center;flex:none}
+  .fwdctrl label span{color:var(--red)} .fwdctrl input[type=range]{flex:1;min-width:160px}
+  .fwdcards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:680px){.fwdcards{grid-template-columns:1fr}}
+  .fwdcard{background:var(--cream2);border-radius:10px;padding:11px 14px}
+  .fwdcard .fl{font-family:Georgia,serif;font-weight:700;font-size:13.5px;color:var(--teal);margin-bottom:4px}
+  .fwdcard .fr{font-size:12.5px;color:var(--ink)} .fwdcard .fr b{color:var(--teal)}
+  .fwdverdict{margin-top:12px;border-left:4px solid var(--gold);padding:10px 0 10px 14px;background:linear-gradient(90deg,rgba(198,165,83,.12),transparent);border-radius:0 8px 8px 0;font-size:13.5px;color:var(--ink)}
+  .fwdverdict.good{border-left-color:var(--green);background:linear-gradient(90deg,rgba(62,142,90,.12),transparent)}
+  .fwdverdict.warn{border-left-color:var(--red);background:linear-gradient(90deg,rgba(176,73,47,.12),transparent)}
+  .fwdnote{margin-top:9px;font-size:12.5px;color:var(--muted);font-style:italic;max-width:80ch}
+
+  .footnote{margin-top:20px;color:#9FB0AD;font-size:11.5px;max-width:90ch}
+  .footnote b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">Future-Back Finance · Policy Simulation</div>
+      <h1>The Pandemic Policy Room</h1>
+    </div>
+    <div class="qbadge">
+      <div class="ql" id="qLabel">2020 Q1</div>
+      <div class="qp" id="qPhase">Decisions due</div>
+      <div class="qdots" id="qDots"></div>
+    </div>
+  </div>
+
+  <div class="news">
+    <div class="h">Situation report — what you know now</div>
+    <div class="body" id="newsBody"></div>
+    <div class="hint" id="newsHint"></div>
+  </div>
+
+  <!-- gauges -->
+  <div class="gauges">
+    <div class="econ" id="econUS"></div>
+    <div class="econ" id="econEU"></div>
+  </div>
+  <div class="shared" id="shared"></div>
+
+  <!-- decisions -->
+  <div class="decis">
+    <div class="panel fed" id="pFed"></div>
+    <div class="panel ecb" id="pEcb"></div>
+    <div class="panel usg" id="pUsg"></div>
+    <div class="panel eug" id="pEug"></div>
+  </div>
+
+  <div class="resolve" id="resolveRow">
+    <button class="btn" id="resolveBtn">Resolve quarter &rarr;</button>
+  </div>
+
+  <div class="briefing" id="briefing">
+    <div class="h">AI briefing — last quarter</div>
+    <div class="status" id="briefStatus"></div>
+    <div class="body" id="briefBody"></div>
+    <div class="resolve" id="nextRow" style="display:none"><button class="btn" id="nextBtn">Next quarter &rarr;</button></div>
+  </div>
+
+  <div class="debrief" id="debrief"></div>
+
+  <p class="footnote"><b>How calibrated.</b> Real Q1-2020 starting conditions for both blocs; under roughly the actual decisions the engine reproduces the real divergence (US unemployment spiking to double digits on layoffs while Europe&rsquo;s furlough schemes hold it near 8%, and US inflation arriving earlier). It is a <b>stylised reduced-form engine</b> (IS / Phillips / Okun with a money, FX and fragmentation channel and explicit lags), not a forecast — the debrief lays your path against what actually happened so the differences are the lesson. Information is point-in-time: you see only what was knowable that quarter, with leading half-hints and lagged headline gauges.</p>
+</div>
+
+<script>
+/* =================== ENGINE (validated) =================== */
+const QLABEL=["2020 Q1","2020 Q2","2020 Q3","2020 Q4","2021 Q1","2021 Q2","2021 Q3","2021 Q4"];
+const PANDEMIC={US:[-2.5,-11,-4,-3.5,-2,-1,-1.2,-0.5,-0.2,0,0,0],EU:[-2.5,-13,-3,-5.5,-4,-2,-1.2,-1.0,-0.2,0,0,0]};
+const SUPPLY={US:[0,0,0,0.3,0.5,1.2,2.0,2.4,2.0,1.2,0.6,0.2],EU:[0,0,0,0.1,0.2,0.6,1.1,2.2,3.0,3.2,2.0,1.0]};
+const NAT={US:4.0,EU:7.2};
+const ARCH={
+  cheques:  {dem:1.0,infl:0.9,cap:0.0,shield:0.0,health:0,label:"Household transfers"},
+  retention:{dem:0.6,infl:0.3,cap:0.3,shield:1.0,health:0,label:"Job retention (furlough)"},
+  liquidity:{dem:0.4,infl:0.2,cap:1.0,shield:0.3,health:0,label:"Business liquidity"},
+  health:   {dem:0.3,infl:0.1,cap:0.3,shield:0.1,health:1,label:"Health & vaccines"},
+  infra:    {dem:0.5,infl:0.4,cap:0.2,shield:0.2,health:0,label:"Investment / infrastructure"}
+};
+const ARCH_KEYS=["cheques","retention","liquidity","health","infra"];
+
+function newGame(){
+  return {
+    t:0,
+    US:{Y:0.5,U:3.5,pi:2.3,r:1.6,debt:108},
+    EU:{Y:0.2,U:7.4,pi:1.2,r:0.0,debt:84},
+    SPX:100,FX:1.11,stress:16,spread:1.3,
+    pipe:{US:[],EU:[]}, prevFiscal:{US:0,EU:0},
+    hist:[], decisions:[]
+  };
+}
+function mixShares(mixRaw){ // normalise 5 raw weights to shares
+  let tot=0; ARCH_KEYS.forEach(k=>tot+=mixRaw[k]); if(tot<=0)tot=1;
+  const s={}; ARCH_KEYS.forEach(k=>s[k]=mixRaw[k]/tot); return s;
+}
+function stepEconomy(g,e,dec,t,otherStartY){
+  const s=g[e]; const mix=mixShares(dec.mix); const stim=dec.stim;
+  let dem=0,infl=0,cap=0,shield=0,health=0;
+  ARCH_KEYS.forEach(k=>{const a=ARCH[k];dem+=mix[k]*a.dem;infl+=mix[k]*a.infl;cap+=mix[k]*a.cap;shield+=mix[k]*a.shield;health+=mix[k]*a.health;});
+  const fiscalRaw=stim*dem;
+  const fiscal=0.25*fiscalRaw+0.60*g.prevFiscal[e]; g.prevFiscal[e]=fiscalRaw;
+  const pand=PANDEMIC[e][t]*(1-0.5*Math.min(1,health*stim/3));
+  const realRate=s.r-s.pi, qe=dec.qe, spill=0.15*otherStartY;
+  let Y=0.40*s.Y+pand+0.60*fiscal-0.30*(realRate-(e==="US"?-0.5:-1.0))+0.10*qe+spill;
+  Y=14*Math.tanh(Y/14);
+  const eShield=Math.min(0.93,1.4*shield), dY=Y-s.Y;
+  let U=s.U-1.5*dY*(1-eShield); U=U+0.18*(NAT[e]-U); U=Math.max(NAT[e]-0.6,U);
+  const scarring=Math.max(0,(-pand)-6)*(1-cap)*0.12;
+  g.pipe[e].push({dem:fiscal+0.15*qe,t});
+  let lag=0; g.pipe[e].forEach(x=>{const a=t-x.t;if(a>=3&&a<=6)lag+=0.05*x.dem;});
+  let pi=0.55*s.pi+0.45*2+0.09*s.Y+lag+SUPPLY[e][t]+scarring-0.55*Math.max(0,dec.r-2);
+  return {Y:+Y.toFixed(2),U:+U.toFixed(2),pi:+pi.toFixed(2),r:dec.r,debt:Math.round(s.debt+stim*0.8)};
+}
+function resolveQuarter(g,dUS,dEU){
+  const t=g.t, startUS=g.US.Y, startEU=g.EU.Y;
+  const nUS=stepEconomy(g,"US",dUS,t,startEU);
+  const nEU=stepEconomy(g,"EU",dEU,t,startUS);
+  const liq=dUS.qe+dEU.qe, risk=(-PANDEMIC.US[t]-PANDEMIC.EU[t]), prevStress=g.stress;
+  g.stress=Math.max(4,0.45*g.stress+0.7*risk-0.5*liq+(t===0?34:0));
+  g.SPX=Math.max(60,g.SPX+2.2*liq+1.6*nUS.Y-0.7*(g.stress-prevStress)-(t===0?28:0)-0.35*g.stress);
+  g.FX=Math.max(1.04,Math.min(1.25,g.FX+0.006*dUS.qe-0.004*(nUS.Y-nEU.Y)-0.003*(g.stress>25?1:0)));
+  g.spread=Math.max(0.4,0.6*g.spread+0.05*(nEU.debt-90)-0.22*dEU.qe+(t===0?1.8:0));
+  g.US=nUS; g.EU=nEU;
+  g.decisions.push({US:JSON.parse(JSON.stringify(dUS)),EU:JSON.parse(JSON.stringify(dEU))});
+  g.hist.push({q:QLABEL[t],US:{...nUS},EU:{...nEU},SPX:Math.round(g.SPX),FX:+g.FX.toFixed(3),stress:Math.round(g.stress),spread:+g.spread.toFixed(2)});
+  g.t++;
+}
+
+/* ~Actual decisions for the debrief comparison */
+const ACTUAL={
+  US:{r:[0.25,0.1,0.1,0.1,0.1,0.1,0.1,0.15],qe:[6,9,4,3,2,2,1,-1],stim:[1,8,3,2,7,3,1,1],
+    mix:i=> i>=6?{cheques:25,retention:5,liquidity:10,health:5,infra:55}:{cheques:65,retention:10,liquidity:15,health:10,infra:0}},
+  EU:{r:[0,0,0,0,0,0,0,0],qe:[5,8,4,4,3,3,2,1],stim:[1,4,3,3,3,3,2,2],
+    mix:i=> i>=5?{cheques:10,retention:45,liquidity:10,health:5,infra:30}:{cheques:10,retention:65,liquidity:15,health:10,infra:0}}
+};
+function actualRun(){
+  const g=newGame();
+  for(let t=0;t<8;t++){
+    resolveQuarter(g,
+      {r:ACTUAL.US.r[t],qe:ACTUAL.US.qe[t],stim:ACTUAL.US.stim[t],mix:ACTUAL.US.mix(t)},
+      {r:ACTUAL.EU.r[t],qe:ACTUAL.EU.qe[t],stim:ACTUAL.EU.stim[t],mix:ACTUAL.EU.mix(t)});
+  }
+  return g.hist;
+}
+
+/* =================== SCORING (shared rubric) =================== */
+const NATURAL_S={US:4.0,EU:7.2}, DEBT0={US:108,EU:84};
+function scoreFromHist(hist){
+  const n=hist.length, avg=a=>a.reduce((x,y)=>x+y,0)/a.length, m={};
+  for(const e of ["US","EU"]){
+    m[e]={ avgInflGap:avg(hist.map(h=>Math.abs(h[e].pi-2))),
+      uGap:Math.max(0,hist[n-1][e].U-NATURAL_S[e]), endYgap:Math.abs(hist[n-1][e].Y),
+      endInfl:hist[n-1][e].pi, debtSurge:Math.max(0,hist[n-1][e].debt-DEBT0[e]) };
+  }
+  const avgStress=avg(hist.map(h=>h.stress)), peakSpread=Math.max(...hist.map(h=>h.spread));
+  let L=0; for(const e of ["US","EU"]) L+=1.0*m[e].avgInflGap+0.7*m[e].uGap+0.5*m[e].endYgap;
+  L+=0.3*(avgStress/10)+0.6*Math.max(0,peakSpread-1);
+  const teamScore=Math.max(0,Math.min(100,Math.round(100-7*L)));
+  const roleLoss={
+    Fed:1.0*m.US.avgInflGap+0.8*m.US.uGap+0.2*(avgStress/10),
+    ECB:1.2*m.EU.avgInflGap+0.9*Math.max(0,peakSpread-1)+0.3*m.EU.uGap,
+    USGov:0.8*m.US.endYgap+0.8*m.US.uGap+0.5*Math.max(0,m.US.endInfl-3)+0.25*(m.US.debtSurge/10),
+    EUGov:0.8*m.EU.endYgap+0.8*m.EU.uGap+0.6*Math.max(0,peakSpread-1)+0.25*(m.EU.debtSurge/10)
+  };
+  const roleScore={}; for(const k in roleLoss) roleScore[k]=Math.max(0,Math.min(100,Math.round(100-12*roleLoss[k])));
+  let bestRole="Fed",bv=-1; for(const k in roleScore) if(roleScore[k]>bv){bv=roleScore[k];bestRole=k;}
+  return {teamScore,roleScore,bestRole,L:+L.toFixed(2),avgStress:Math.round(avgStress),peakSpread:+peakSpread.toFixed(2)};
+}
+
+/* =================== CONTENT (point-in-time) =================== */
+const NEWS=[
+ {b:"A new virus is spreading fast; Italy and Spain lock down and the US declares an emergency. Equity markets are in free-fall — the worst week since 2008 — and an oil-price war adds to the stress. No one knows how deep or how long this goes.",
+  h:"Jobless claims just starting to spike; activity surveys collapsing; credit markets freezing."},
+ {b:"Near-total lockdowns. Output is collapsing at a pace never recorded; US jobless claims run into the tens of millions. There is no vaccine and no clear reopening date.",
+  h:"Layoffs landing in real time; mobility near zero; the first hints of supply disruption."},
+ {b:"Economies reopen partially and a sharp rebound begins. Infections resurge over the summer. Vaccine trials look promising but remain unproven.",
+  h:"Goods demand surging while services lag; housing hot; shipping costs beginning to climb."},
+ {b:"A harsh second wave forces winter lockdowns, hardest in Europe. But vaccines report success in November and approvals begin — a path out is visible at last.",
+  h:"Markets rallying on reopening hopes; freight and input costs rising; household savings piling up."},
+ {b:"Vaccination campaigns ramp up. The US passes a large new stimulus package. Europe&rsquo;s rollout is slower and new variants worry policymakers. The recovery is diverging across the Atlantic.",
+  h:"Used-car and commodity prices jumping; bottlenecks widening; early wage pressure in surveys."},
+ {b:"Reopening accelerates as vaccinations spread. Demand is booming and supply cannot keep up. US inflation prints are climbing, and a debate opens over whether it is &lsquo;transitory.&rsquo;",
+  h:"Price rises broadening beyond used cars; rents firming; labour shortages widely reported."},
+ {b:"The Delta variant slows momentum. Global supply chains are badly snarled — ports, chips, freight — and energy prices climb into the autumn, especially in Europe.",
+  h:"Inflation proving sticky; longer-term expectations drifting up; wage growth accelerating."},
+ {b:"Inflation hits multi-decade highs. &lsquo;Transitory&rsquo; is quietly retired. Europe&rsquo;s inflation is high too but seen as more energy-driven. A new variant, Omicron, emerges as you weigh how fast to tighten.",
+  h:"Markets now pricing rate hikes; the question is how to tighten without choking a young recovery."}
+];
+
+
+
+/* ---- a prompt any model can answer, for offline / other-LLM use ---- */
+function llmPromptDebrief(){
+  const path=G.hist.map(h=>`${h.q}: US gap ${h.US.Y} U ${h.US.U} inflation ${h.US.pi} rate ${h.US.r} | EU gap ${h.EU.Y} U ${h.EU.U} inflation ${h.EU.pi} rate ${h.EU.r} | equities ${h.SPX} stress ${h.stress} EU spread ${h.spread}`).join("\n");
+  const dec=G.decisions.map((d,i)=>{
+    const top=m=>{let b="cheques",v=-1;for(const k in m){if(m[k]>v){v=m[k];b=k;}}return b;};
+    return `${QLABEL[i]}: Fed rate ${d.US.r}% QE ${qeLabel(d.US.qe)} | US fiscal ${d.US.stim}% GDP mostly ${top(d.US.mix)} | ECB rate ${d.EU.r}% QE ${qeLabel(d.EU.qe)} | EU fiscal ${d.EU.stim}% GDP mostly ${top(d.EU.mix)}`;
+  }).join("\n");
+  const e=G.hist[G.hist.length-1];
+  return `You are debriefing a policy simulation of the 2020-21 pandemic. Four roles were played: the Federal Reserve and the ECB set policy rates and QE; the US and euro-area governments set fiscal stimulus and its composition across household transfers, job-retention schemes, business liquidity, health spending and investment.
+
+The engine is a stylised reduced-form model (IS / Phillips / Okun with money, FX and a euro-area fragmentation channel, and explicit lags: fiscal reaches demand in one to two quarters, rates reach inflation in four to six, QE moves markets the same quarter). It is calibrated so that roughly the actual decisions reproduce the real divergence: US unemployment spiking into double digits on layoffs while European furlough schemes held it near 8%, and US inflation arriving earlier and higher.
+
+DECISIONS TAKEN
+${dec}
+
+RESULTING PATH
+${path}
+
+REAL OUTCOMES for comparison: US unemployment ended 2021 near 3.9% with inflation near 7%; euro-area unemployment near 7% with inflation near 5%. US CPI peaked at 9.1% in June 2022.
+THIS TEAM ENDED AT: US unemployment ${e.US.U}% inflation ${e.US.pi}%; euro-area unemployment ${e.EU.U}% inflation ${e.EU.pi}%.
+
+Write a debrief of 5-7 sentences in plain prose. No lists, no preamble. Cover: how this path differs from the real one and why; the single decision that mattered most; what the US and euro-area contrast in this run shows about cheques versus furlough; and one lesson about the lag between a fiscal decision and the inflation it produces. Be specific and use their numbers. If they stabilised better than reality did, say what they gave up to get it.`;
+}
+/* ---- call budget: 6 per hour per open instance, in memory only ---- */
+const CALLS=[], CALL_LIMIT=6, CALL_WINDOW=3600000;
+function callsLeft(){const t=Date.now();while(CALLS.length&&t-CALLS[0]>CALL_WINDOW)CALLS.shift();return CALL_LIMIT-CALLS.length;}
+function nextFreeIn(){if(!CALLS.length)return 0;return Math.ceil((CALL_WINDOW-(Date.now()-CALLS[0]))/60000);}
+function takeCall(){if(callsLeft()<=0)return false;CALLS.push(Date.now());return true;}
+
+/* =================== STATE & UI =================== */
+let G=newGame();
+let ACTUAL_HIST=actualRun();
+// default decisions (carried & editable). Start neutral.
+function defaultDecision(role){
+  if(role==="US") return {r:1.5,qe:0,stim:0,mix:{cheques:30,retention:30,liquidity:20,health:20,infra:0}};
+  return {r:0.0,qe:0,stim:0,mix:{cheques:15,retention:45,liquidity:20,health:20,infra:0}};
+}
+let curUS=defaultDecision("US"), curEU=defaultDecision("EU");
+
+const $=id=>document.getElementById(id);
+function fmt(v,d){return (v>=0?"":"")+v.toFixed(d===undefined?1:d);}
+
+function gaugeHTML(eco,prevHist){
+  const trend=(now,prev,inv)=>{ if(prev===undefined)return ['flat','·'];
+    const d=now-prev; const cls=d>0.05?(inv?'down':'up'):d<-0.05?(inv?'up':'down'):'flat';
+    return [cls, d>0.05?'\u25b2':d<-0.05?'\u25bc':'\u2192']; };
+  const prev=prevHist?prevHist[eco]:undefined;
+  const cur=G[eco];
+  function cell(k,val,unit,prevVal,inv,prelim){
+    const [tc,ta]=trend(val,prevVal,inv);
+    return `<div class="g"><div class="k">${k}</div><div class="v">${val.toFixed(1)}<small>${unit}</small></div><div class="t ${tc}">${ta} ${prelim?'prelim':''}</div></div>`;
+  }
+  return cell("Output gap",cur.Y,"%",prev&&prev.Y,false,true)
+       + cell("Unemployment",cur.U,"%",prev&&prev.U,false,false)
+       + cell("Inflation",cur.pi,"%",prev&&prev.pi,false,true)
+       + cell("Policy rate",cur.r,"%",prev&&prev.r,false,false)
+       + cell("Debt/GDP",cur.debt,"%",prev&&prev.debt,false,false)
+       + `<div class="g"><div class="k">&nbsp;</div><div class="v" style="font-size:12px;color:var(--muted);font-family:Calibri">${eco==='US'?'United States':'Euro area'}</div></div>`;
+}
+function renderGauges(){
+  const prev=G.hist.length>1?G.hist[G.hist.length-2]:undefined;
+  $("econUS").innerHTML=`<h3><span class="flag">\u{1F1FA}\u{1F1F8}</span> United States</h3><div class="grow">${gaugeHTML("US",prev)}</div>`;
+  $("econEU").innerHTML=`<h3><span class="flag">\u{1F1EA}\u{1F1FA}</span> Euro area</h3><div class="grow">${gaugeHTML("EU",prev)}</div>`;
+  $("shared").innerHTML=
+     `<div class="sg"><div class="k">Equities (100=pre-COVID)</div><div class="v">${Math.round(G.SPX)}</div></div>`
+   + `<div class="sg"><div class="k">EUR / USD</div><div class="v">${G.FX.toFixed(3)}</div></div>`
+   + `<div class="sg"><div class="k">Financial stress</div><div class="v">${Math.round(G.stress)}</div></div>`
+   + `<div class="sg"><div class="k">EU periphery spread</div><div class="v">${G.spread.toFixed(2)}<span style="font-size:11px">pp</span></div></div>`;
+}
+
+function mixUI(role,dec){
+  let rows=ARCH_KEYS.map(k=>{
+    const tot=ARCH_KEYS.reduce((a,x)=>a+dec.mix[x],0)||1;
+    const pc=Math.round(100*dec.mix[k]/tot);
+    return `<div class="mixrow"><span class="nm">${ARCH[k].label}</span>
+      <input type="range" min="0" max="100" value="${dec.mix[k]}" data-role="${role}" data-mix="${k}">
+      <span class="pc" id="pc-${role}-${k}">${pc}%</span></div>`;
+  }).join("");
+  return `<div class="mix"><div class="mh"><span>Stimulus composition</span><span class="tot">shares</span></div>${rows}</div>`;
+}
+function panelGov(role,dec,cls,name,flag,mandate){
+  $(role==="US"?"pUsg":"pEug").className="panel "+cls;
+  $(role==="US"?"pUsg":"pEug").innerHTML=
+    `<div class="role">${flag} ${name}</div><div class="mandate">${mandate}</div>
+     <div class="dec"><label>Fiscal stimulus this quarter <span class="v" id="v-${role}-stim">${dec.stim.toFixed(1)}% GDP</span></label>
+       <input type="range" min="0" max="12" step="0.5" value="${dec.stim}" data-role="${role}" data-field="stim"></div>
+     ${mixUI(role,dec)}`;
+}
+function panelCB(role,dec,cls,name,flag,mandate){
+  $(role==="US"?"pFed":"pEcb").className="panel "+cls;
+  $(role==="US"?"pFed":"pEcb").innerHTML=
+    `<div class="role">${flag} ${name}</div><div class="mandate">${mandate}</div>
+     <div class="dec"><label>Policy rate <span class="v" id="v-${role}-r">${dec.r.toFixed(2)}%</span></label>
+       <input type="range" min="0" max="3" step="0.25" value="${dec.r}" data-role="${role}" data-field="r"></div>
+     <div class="dec"><label>QE / balance-sheet pace <span class="v" id="v-${role}-qe">${qeLabel(dec.qe)}</span></label>
+       <input type="range" min="0" max="12" step="0.5" value="${dec.qe}" data-role="${role}" data-field="qe"></div>`;
+}
+function qeLabel(q){return q<=0.5?"none":q<3?"light":q<6?"moderate":q<9?"heavy":"massive";}
+
+function renderPanels(){
+  panelCB("US",curUS,"fed","Federal Reserve","\u{1F1FA}\u{1F1F8}","Mandate: maximum employment & price stability.");
+  panelCB("EU",curEU,"ecb","European Central Bank","\u{1F1EA}\u{1F1FA}","Mandate: price stability for the whole euro area.");
+  panelGov("US",curUS,"usg","US Government","\u{1F1FA}\u{1F1F8}","Fiscal authority: one Treasury, one budget.");
+  panelGov("EU",curEU,"eug","Euro-area Governments","\u{1F1EA}\u{1F1FA}","Many treasuries, one currency — watch the spread.");
+}
+
+document.addEventListener("input",e=>{
+  const el=e.target; if(el.tagName!=="INPUT")return;
+  const role=el.dataset.role; if(!role)return;
+  const dec=role==="US"?curUS:curEU;
+  if(el.dataset.field){ dec[el.dataset.field]=+el.value;
+    if(el.dataset.field==="r")$(`v-${role}-r`).textContent=(+el.value).toFixed(2)+"%";
+    if(el.dataset.field==="qe")$(`v-${role}-qe`).textContent=qeLabel(+el.value);
+    if(el.dataset.field==="stim")$(`v-${role}-stim`).textContent=(+el.value).toFixed(1)+"% GDP";
+  }
+  if(el.dataset.mix){ dec.mix[el.dataset.mix]=+el.value;
+    const tot=ARCH_KEYS.reduce((a,x)=>a+dec.mix[x],0)||1;
+    ARCH_KEYS.forEach(k=>{const p=$(`pc-${role}-${k}`); if(p)p.textContent=Math.round(100*dec.mix[k]/tot)+"%";});
+  }
+});
+
+function renderNews(){
+  const n=NEWS[Math.min(G.t,7)];
+  $("newsBody").innerHTML=n.b;
+  $("newsHint").innerHTML="<b>Leading signals:</b> "+n.h;
+}
+function renderQuarter(){
+  $("qLabel").textContent=QLABEL[Math.min(G.t,7)];
+  $("qPhase").textContent=G.t>=8?"Complete":"Decisions due";
+  $("qDots").innerHTML=QLABEL.map((_,i)=>`<i class="${i<G.t?'done':i===G.t?'now':''}"></i>`).join("");
+  renderNews(); renderGauges(); renderPanels();
+}
+
+/* ============ resolve & briefing ============ */
+$("resolveBtn").onclick=async ()=>{
+  const t=G.t;
+  const dUS={r:curUS.r,qe:curUS.qe,stim:curUS.stim,mix:{...curUS.mix}};
+  const dEU={r:curEU.r,qe:curEU.qe,stim:curEU.stim,mix:{...curEU.mix}};
+  resolveQuarter(G,dUS,dEU);
+  renderGauges(); 
+  $("qDots").innerHTML=QLABEL.map((_,i)=>`<i class="${i<G.t?'done':i===G.t?'now':''}"></i>`).join("");
+  $("resolveRow").style.display="none";
+  $("briefing").style.display="block";
+  await briefing(t);
+};
+async function briefing(t){
+  const r=G.hist[t];
+  $("briefStatus").textContent="Reading the quarter\u2026"; $("briefBody").textContent=""; $("nextRow").style.display="none";
+  const dUS=G.decisions[t].US, dEU=G.decisions[t].EU;
+  const topMix=d=>{let best="cheques",bv=-1;ARCH_KEYS.forEach(k=>{if(d.mix[k]>bv){bv=d.mix[k];best=k;}});return ARCH[best].label;};
+  const prompt=`You are an economic advisor debriefing a policy game on the 2020-21 pandemic. Quarter just resolved: ${QLABEL[t]}.
+Decisions — Fed: rate ${dUS.r}%, QE ${qeLabel(dUS.qe)}; US fiscal ${dUS.stim}% GDP, mostly ${topMix(dUS)}. ECB: rate ${dEU.r}%, QE ${qeLabel(dEU.qe)}; EU fiscal ${dEU.stim}% GDP, mostly ${topMix(dEU)}.
+Resulting gauges — US: output gap ${r.US.Y}%, unemployment ${r.US.U}%, inflation ${r.US.pi}%. EU: output gap ${r.EU.Y}%, unemployment ${r.EU.U}%, inflation ${r.EU.pi}%. Equities ${r.SPX}, EUR/USD ${r.FX}, financial stress ${r.stress}, EU spread ${r.spread}pp.
+In 3-4 sentences, plain and concrete: what these decisions did this quarter, the key US-vs-EU contrast, and what is building with a lag that they should watch. No preamble, no lists.`;
+  try{
+    if(callsLeft()<=1) throw 0;              // keep one in reserve for the debrief
+    if(!takeCall()) throw 0;
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok)throw 0;
+    const data=await res.json();
+    const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+    if(!txt)throw 0;
+    $("briefStatus").textContent=`AI briefing \u00b7 ${callsLeft()} of ${CALL_LIMIT} calls left this hour`;
+    $("briefBody").textContent=txt;
+  }catch(e){
+    $("briefStatus").textContent="(offline summary)";
+    $("briefBody").textContent=fallbackBrief(t,r,dUS,dEU);
+  }
+  if(G.t>=8){ $("nextRow").innerHTML='<button class="btn" id="toDebrief">See the debrief &rarr;</button>';
+    $("nextRow").style.display="flex"; $("toDebrief").onclick=showDebrief; }
+  else { $("nextRow").style.display="flex";
+    $("nextBtn").onclick=()=>{ $("briefing").style.display="none"; $("resolveRow").style.display="flex"; renderQuarter(); window.scrollTo({top:0,behavior:"smooth"}); }; }
+}
+function fallbackBrief(t,r,dUS,dEU){
+  let s=`US output gap ${r.US.Y}% with unemployment ${r.US.U}%; euro area ${r.EU.Y}% with unemployment ${r.EU.U}%. `;
+  if(r.US.U-r.EU.U>1.5) s+="The US is taking the hit through layoffs while Europe's job-retention holds employment up. ";
+  else if(r.EU.U-r.US.U>1) s+="Europe's measured unemployment now runs above the US. ";
+  if(r.US.pi>4||r.EU.pi>4) s+=`Inflation is building (US ${r.US.pi}%, EU ${r.EU.pi}%) — the lagged result of earlier stimulus and money growth meeting supply limits. `;
+  else s+="Inflation is still quiet, but demand poured in now shows up in prices only in 4-6 quarters. ";
+  s+=`Markets: equities ${r.SPX}, stress ${r.stress}, EU spread ${r.spread}pp.`;
+  return s;
+}
+
+/* ============ debrief ============ */
+function showDebrief(){
+  $("briefing").style.display="none";
+  const youEnd=G.hist[7], actEnd=ACTUAL_HIST[7];
+  const row=(lbl,y,a,u)=>`<div class="cmprow"><span>${lbl}</span><span><span class="you">${y}${u||''}</span> &nbsp;<span class="act">vs ${a}${u||''} actual</span></span></div>`;
+  const usCard=`<div class="cmpcard"><h4>\u{1F1FA}\u{1F1F8} United States — end 2021</h4>
+    ${row("Output gap",youEnd.US.Y,actEnd.US.Y,"%")}${row("Unemployment",youEnd.US.U,actEnd.US.U,"%")}${row("Inflation",youEnd.US.pi,actEnd.US.pi,"%")}${row("Policy rate",youEnd.US.r,actEnd.US.r,"%")}</div>`;
+  const euCard=`<div class="cmpcard"><h4>\u{1F1EA}\u{1F1FA} Euro area — end 2021</h4>
+    ${row("Output gap",youEnd.EU.Y,actEnd.EU.Y,"%")}${row("Unemployment",youEnd.EU.U,actEnd.EU.U,"%")}${row("Inflation",youEnd.EU.pi,actEnd.EU.pi,"%")}${row("Policy rate",youEnd.EU.r,actEnd.EU.r,"%")}</div>`;
+  const sc=scoreFromHist(G.hist);
+  const roleNames={Fed:"Federal Reserve",ECB:"European Central Bank",USGov:"US Government",EUGov:"Euro-area Governments"};
+  $("debrief").innerHTML=`<h2>Debrief — your two years vs. what actually happened</h2>
+    <p style="font-size:13px;color:var(--muted)">Your final-quarter outcomes against the real 2021 Q4 figures the engine is calibrated to.</p>
+    <div class="cmp">${usCard}${euCard}</div>
+    <div class="scorebar">
+      <div class="bigscore"><div class="k">Stabilisation score</div><div class="v">${sc.teamScore}<small>/100</small></div></div>
+      <div class="rolescores">
+        <div class="k">Mandate best served — <span style="font-weight:400;font-style:italic">outcomes are jointly produced, so treat as a discussion prompt</span></div>
+        <div class="rsrow">${["Fed","ECB","USGov","EUGov"].map(r=>`<span class="rs ${r===sc.bestRole?'best':''}">${roleNames[r]}: <b>${sc.roleScore[r]}</b>${r===sc.bestRole?' \u2605':''}</span>`).join("")}</div>
+      </div>
+    </div>
+    <div class="assess" id="assessBody">Assessing\u2026</div>
+    <div class="export">
+      <input id="teamName" placeholder="Team name (e.g. Table 3)" />
+      <button class="btn" id="exportBtn">Export team JSON &darr;</button>
+      <button class="btn" id="promptBtn" style="background:transparent;border:1px solid #CFC6B5;color:var(--teal)">Copy a prompt for any AI</button>
+      <span class="exhint">Hand the file to the facilitator to compare teams in the League Table.</span>
+    </div>
+    <div class="fwd">
+      <h3>2022 &mdash; the tail of your choices</h3>
+      <p class="fwdp">Your decisions stopped at end-2021, but the inflation they set in motion has not. The stimulus and money from 2020&ndash;21 are still feeding through, and a new energy shock is hitting Europe. One decision is left, the one the game built toward: <b>how hard do you tighten in 2022?</b></p>
+      <div class="fwdctrl">
+        <label>2022 tightening stance <span id="vTight">firm</span></label>
+        <input type="range" id="tight" min="0" max="10" step="1" value="5">
+        <button class="btn" id="runFwd">Run 2022 &rarr;</button>
+      </div>
+      <div id="fwdResult"></div>
+    </div>`;
+  $("debrief").style.display="block";
+  $("exportBtn").onclick=exportJSON;
+  $("promptBtn").onclick=()=>{navigator.clipboard.writeText(llmPromptDebrief()).then(()=>{
+    $("promptBtn").textContent="prompt copied \u2014 paste into any assistant";
+    setTimeout(()=>{$("promptBtn").textContent="Copy a prompt for any AI";},3000);});};
+  const tightLabel=v=>v<=2?"hold steady":v<=5?"firm":v<=8?"aggressive":"shock therapy";
+  $("tight").addEventListener("input",e=>$("vTight").textContent=tightLabel(+e.target.value));
+  $("vTight").textContent=tightLabel(+$("tight").value);
+  $("runFwd").onclick=()=>renderFwd(+$("tight").value);
+  try{ $("debrief").scrollIntoView({behavior:"smooth"}); }catch(e){}
+  debriefAI();
+}
+function forwardRun(stance){
+  const g=JSON.parse(JSON.stringify(G));   // copy end-2021 state (no funcs in G)
+  const startUSr=g.US.r, startEUr=g.EU.r;
+  const peakUS=0.5+0.55*stance, peakEU=0.0+0.40*stance;   // ECB hikes less than the Fed
+  const qt=-0.5-0.25*stance;
+  const path=[];
+  for(let k=0;k<4;k++){
+    const rUS=+(startUSr+(peakUS-startUSr)*(k+1)/4).toFixed(2);
+    const rEU=+(startEUr+(peakEU-startEUr)*(k+1)/4).toFixed(2);
+    resolveQuarter(g,{r:rUS,qe:qt,stim:0.3,mix:{cheques:20,retention:10,liquidity:10,health:5,infra:55}},
+                     {r:rEU,qe:qt,stim:0.3,mix:{cheques:10,retention:30,liquidity:10,health:5,infra:45}});
+    path.push({q:"2022 Q"+(k+1),US:{...g.US},EU:{...g.EU}});
+  }
+  return {path,end:path[3],peakUS,peakEU};
+}
+function renderFwd(stance){
+  const f=forwardRun(stance), e=f.end;
+  let verdict, vcls;
+  if(e.US.pi>=5){ verdict="Inflation persists. You stayed too loose \u2014 prices are still running near "+e.US.pi.toFixed(1)+"%, and the longer it sits the harder (and costlier) the eventual fight."; vcls="warn"; }
+  else if(e.US.pi<2 && e.US.U>=4.6){ verdict="Overcooked. You crushed inflation to "+e.US.pi.toFixed(1)+"%, but US unemployment climbed to "+e.US.U.toFixed(1)+"% and output is stalling \u2014 a self-inflicted recession to win the inflation battle."; vcls="warn"; }
+  else if(e.US.pi<=4 && e.US.U<4.6){ verdict="Soft landing. You brought US inflation down to "+e.US.pi.toFixed(1)+"% while keeping unemployment at "+e.US.U.toFixed(1)+"% \u2014 the outcome every central banker wants and few achieve."; vcls="good"; }
+  else { verdict="Partial progress. Inflation is easing to "+e.US.pi.toFixed(1)+"% at a modest cost to jobs ("+e.US.U.toFixed(1)+"%) \u2014 on the path, not yet landed."; vcls=""; }
+  const euNote="The euro area is a different problem: its 2022 inflation is energy-driven (the war shock), so even hard tightening leaves it near "+e.EU.pi.toFixed(1)+"% \u2014 the ECB can&rsquo;t hike away a supply shock the way the Fed can cool demand.";
+  $("fwdResult").innerHTML=`
+    <div class="fwdcards">
+      <div class="fwdcard"><div class="fl">\u{1F1FA}\u{1F1F8} US, end 2022</div>
+        <div class="fr">inflation <b>${e.US.pi.toFixed(1)}%</b> · unemployment <b>${e.US.U.toFixed(1)}%</b> · output gap <b>${e.US.Y.toFixed(1)}%</b> · rate reached <b>${f.peakUS.toFixed(1)}%</b></div></div>
+      <div class="fwdcard"><div class="fl">\u{1F1EA}\u{1F1FA} Euro area, end 2022</div>
+        <div class="fr">inflation <b>${e.EU.pi.toFixed(1)}%</b> · unemployment <b>${e.EU.U.toFixed(1)}%</b> · output gap <b>${e.EU.Y.toFixed(1)}%</b> · rate reached <b>${f.peakEU.toFixed(1)}%</b></div></div>
+    </div>
+    <div class="fwdverdict ${vcls}">${verdict}</div>
+    <div class="fwdnote">${euNote}</div>`;
+}
+function exportJSON(){
+  const team=($("teamName").value||"").trim()||"Unnamed team";
+  const data={ game:"pandemic-policy-room", version:1, team, playedAt:new Date().toISOString(),
+    quarters:G.hist.map((h,i)=>({ q:h.q,
+      decisions:{ Fed:{r:G.decisions[i].US.r,qe:G.decisions[i].US.qe},
+        ECB:{r:G.decisions[i].EU.r,qe:G.decisions[i].EU.qe},
+        USGov:{stim:G.decisions[i].US.stim,mix:G.decisions[i].US.mix},
+        EUGov:{stim:G.decisions[i].EU.stim,mix:G.decisions[i].EU.mix} },
+      gauges:{US:h.US,EU:h.EU,SPX:h.SPX,FX:h.FX,stress:h.stress,spread:h.spread} })),
+    score:scoreFromHist(G.hist) };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="policy-room-"+team.replace(/[^a-z0-9]+/gi,"_")+".json"; document.body.appendChild(a); a.click(); a.remove();
+}
+async function debriefAI(){
+  const you=G.hist[7], act=ACTUAL_HIST[7];
+  const path=G.hist.map(h=>`${h.q}: US gap ${h.US.Y} U ${h.US.U} pi ${h.US.pi} | EU gap ${h.EU.Y} U ${h.EU.U} pi ${h.EU.pi}`).join("\n");
+  const prompt=`You are debriefing players of a 2020-21 pandemic policy game (roles: Fed, ECB, US & EU governments). Their quarter-by-quarter outcomes:
+${path}
+Real end-2021 outcomes: US unemployment ~3.9%, inflation ~7%; euro area unemployment ~7%, inflation ~5%.
+Their end-2021: US U ${you.US.U}% pi ${you.US.pi}%; EU U ${you.EU.U}% pi ${you.EU.pi}%.
+Write a short debrief (4-6 sentences, plain prose, no lists): how their path compares to the real one, the single biggest difference their decisions made, the clearest US-vs-EU lesson their game shows, and one thing to take home about fiscal-monetary timing and lags. Be specific and constructive.`;
+  try{
+    if(!takeCall()) throw 0;
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok)throw 0;
+    const data=await res.json(); const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+    $("assessBody").textContent=txt||fallbackDebrief(you,act);
+  }catch(e){ $("assessBody").textContent=fallbackDebrief(you,act); }
+}
+function fallbackDebrief(you,act){
+  let s="";
+  s+=`You ended 2021 with US unemployment ${you.US.U}% and inflation ${you.US.pi}% (actual: ~3.9% and ~7%), and euro-area unemployment ${you.EU.U}% and inflation ${you.EU.pi}% (actual: ~7% and ~5%). `;
+  if(you.US.pi<act.US.pi-1) s+="You kept US inflation below the real outcome — likely smaller or better-targeted stimulus, or earlier tightening. ";
+  else if(you.US.pi>act.US.pi+1) s+="You ran hotter than reality — more demand poured in, surfacing as inflation with a lag. ";
+  if(you.US.U-you.EU.U>1) s+="Your game reproduces the core contrast: the US absorbing the shock through unemployment, Europe through furlough. ";
+  s+="The take-home: fiscal and money decisions in 2020 set the 2021 inflation you had to clean up — the lag is the lesson.";
+  return s;
+}
+
+/* init */
+renderQuarter();
+</script>
+</body>
+</html>

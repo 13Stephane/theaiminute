@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Policy Room — League Table</title>
+<style>
+  :root{--teal:#193C3F;--teal2:#21504F;--cream:#F4F0E9;--cream2:#E9E2D4;--gold:#C6A553;--gold-soft:#E7D6A6;--ink:#15302E;--muted:#5E726F;--green:#3E8E5A;--red:#B0492F}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.45;padding:clamp(14px,2.5vw,34px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font:600 12px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(24px,3.4vw,36px);margin-top:5px}
+  .lede{max-width:72ch;margin-top:12px;color:#D9D3C6;font-size:15px}
+  .lede b{color:var(--gold-soft)}
+
+  .drop{margin:20px 0;border:2px dashed rgba(244,240,233,.3);border-radius:14px;padding:24px;text-align:center;transition:.15s;cursor:pointer}
+  .drop.over{border-color:var(--gold);background:rgba(198,165,83,.08)}
+  .drop .big{font-family:Georgia,serif;font-size:17px;color:var(--gold-soft)}
+  .drop .sub{font-size:12.5px;color:#A9B7B5;margin-top:5px}
+  .drop input{display:none}
+  .toolbar{display:flex;gap:10px;justify-content:flex-end;margin-bottom:10px}
+  .tbtn{background:transparent;border:1px solid rgba(244,240,233,.3);color:var(--cream);font:600 12px Calibri;padding:7px 13px;border-radius:8px;cursor:pointer}
+  .tbtn:hover{border-color:var(--gold)}
+
+  .team{background:var(--cream);color:var(--ink);border-radius:14px;padding:16px 20px;margin-bottom:14px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+  .team .head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .rank{font-family:Georgia,serif;font-size:30px;font-weight:700;color:var(--gold);min-width:42px}
+  .rank.r1{color:#B8902F}
+  .tname{font-family:Georgia,serif;font-size:19px;font-weight:700;color:var(--teal);flex:1;min-width:120px}
+  .tscore{text-align:right}
+  .tscore .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  .tscore .v{font-family:Georgia,serif;font-size:26px;font-weight:700;color:var(--teal)} .tscore .v small{font-size:13px;color:var(--muted)}
+  .strategy{font-size:12.5px;color:var(--muted);margin:8px 0 12px;font-style:italic}
+
+  .roles{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:6px}
+  @media(max-width:680px){.roles{grid-template-columns:1fr 1fr}}
+  .rcard{background:var(--cream2);border-radius:9px;padding:9px 11px;position:relative}
+  .rcard.best{background:var(--gold);}
+  .rcard .rn{font-size:11px;font-weight:700;color:var(--teal)} .rcard.best .rn{color:var(--teal)}
+  .rcard .rs{font-family:Georgia,serif;font-size:20px;font-weight:700;color:var(--teal)}
+  .rcard .bar{height:5px;border-radius:3px;background:rgba(25,60,63,.15);margin-top:5px;overflow:hidden}
+  .rcard .bar i{display:block;height:100%;background:var(--teal)}
+  .rcard.best .bar{background:rgba(25,60,63,.25)} .star{position:absolute;top:7px;right:9px;color:var(--teal);font-size:13px}
+
+  .outcomes{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink)}
+  .outcomes span b{color:var(--teal)}
+
+  .note{margin-top:18px;color:#9FB0AD;font-size:12px;max-width:84ch}
+  .note b{color:var(--gold-soft)}
+  .empty{text-align:center;color:#8FA09D;font-size:14px;padding:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Future-Back Finance · Policy Simulation</div>
+  <h1>League Table — comparing the teams</h1>
+  <p class="lede">Load each team&rsquo;s exported file from the Pandemic Policy Room. Teams are ranked by <b>stabilisation quality</b> &mdash; how close they kept both economies to 2% inflation and full employment, with penalties for financial stress and a blown euro-area spread. Within each team, the role whose <b>mandate was best served</b> is marked. Outcomes are jointly produced, so read the within-team mark as a discussion prompt, not a verdict on individual skill.</p>
+
+  <div class="drop" id="drop">
+    <div class="big">Drop team .json files here, or click to choose</div>
+    <div class="sub">Exported from the policy game&rsquo;s debrief. Load as many as you like.</div>
+    <input type="file" id="file" accept=".json,application/json" multiple>
+  </div>
+  <div class="toolbar" id="toolbar" style="display:none"><button class="tbtn" id="clearBtn">Clear all</button></div>
+
+  <div id="board"><div class="empty">No teams loaded yet.</div></div>
+
+  <p class="note"><b>How the score works.</b> Team stabilisation loss = average inflation gap from 2% + end-of-game unemployment above natural + output-gap distance, for both blocs, plus penalties for average financial stress and any euro-area spread above 1pp; mapped to 0&ndash;100. Each role is scored against its own mandate (Fed: US inflation + unemployment; ECB: euro-area inflation + the spread; US Gov: recovery without overheating or excess debt; EU Govs: recovery + spread discipline). Scored against <i>stabilisation</i>, never against matching what actually happened &mdash; reality wasn&rsquo;t optimal. A rigorous individual-contribution measure (counterfactual re-runs) can be added if you want true attribution.</p>
+</div>
+
+<script>
+/* ===== same rubric as the game ===== */
+const NATURAL_S={US:4.0,EU:7.2}, DEBT0={US:108,EU:84};
+function scoreFromHist(hist){
+  const n=hist.length, avg=a=>a.reduce((x,y)=>x+y,0)/a.length, m={};
+  for(const e of ["US","EU"]){
+    m[e]={ avgInflGap:avg(hist.map(h=>Math.abs(h[e].pi-2))),
+      uGap:Math.max(0,hist[n-1][e].U-NATURAL_S[e]), endYgap:Math.abs(hist[n-1][e].Y),
+      endInfl:hist[n-1][e].pi, debtSurge:Math.max(0,hist[n-1][e].debt-DEBT0[e]) };
+  }
+  const avgStress=avg(hist.map(h=>h.stress)), peakSpread=Math.max(...hist.map(h=>h.spread));
+  let L=0; for(const e of ["US","EU"]) L+=1.0*m[e].avgInflGap+0.7*m[e].uGap+0.5*m[e].endYgap;
+  L+=0.3*(avgStress/10)+0.6*Math.max(0,peakSpread-1);
+  const teamScore=Math.max(0,Math.min(100,Math.round(100-7*L)));
+  const roleLoss={
+    Fed:1.0*m.US.avgInflGap+0.8*m.US.uGap+0.2*(avgStress/10),
+    ECB:1.2*m.EU.avgInflGap+0.9*Math.max(0,peakSpread-1)+0.3*m.EU.uGap,
+    USGov:0.8*m.US.endYgap+0.8*m.US.uGap+0.5*Math.max(0,m.US.endInfl-3)+0.25*(m.US.debtSurge/10),
+    EUGov:0.8*m.EU.endYgap+0.8*m.EU.uGap+0.6*Math.max(0,peakSpread-1)+0.25*(m.EU.debtSurge/10)
+  };
+  const roleScore={}; for(const k in roleLoss) roleScore[k]=Math.max(0,Math.min(100,Math.round(100-12*roleLoss[k])));
+  let bestRole="Fed",bv=-1; for(const k in roleScore) if(roleScore[k]>bv){bv=roleScore[k];bestRole=k;}
+  return {teamScore,roleScore,bestRole,peakSpread:+peakSpread.toFixed(2)};
+}
+const ROLE_NAMES={Fed:"Federal Reserve",ECB:"ECB",USGov:"US Government",EUGov:"EU Governments"};
+
+function histFromFile(j){
+  return j.quarters.map(q=>({q:q.q,US:q.gauges.US,EU:q.gauges.EU,SPX:q.gauges.SPX,FX:q.gauges.FX,stress:q.gauges.stress,spread:q.gauges.spread}));
+}
+function strategyLine(j){
+  const usStim=j.quarters.reduce((a,q)=>a+(q.decisions.USGov.stim||0),0);
+  const euStim=j.quarters.reduce((a,q)=>a+(q.decisions.EUGov.stim||0),0);
+  const usQE=Math.max(...j.quarters.map(q=>q.decisions.Fed.qe||0));
+  const dom=(role)=>{const sum={};j.quarters.forEach(q=>{const mx=q.decisions[role].mix||{};for(const k in mx)sum[k]=(sum[k]||0)+mx[k];});let b="",bv=-1;for(const k in sum)if(sum[k]>bv){bv=sum[k];b=k;}return b;};
+  const lab={cheques:"transfers-led",retention:"furlough-led",liquidity:"liquidity-led",health:"health-led",infra:"investment-led"};
+  return `US: ${usStim.toFixed(0)} cumulative fiscal, peak QE ${usQE}, ${lab[dom("USGov")]||""}. EU: ${euStim.toFixed(0)} fiscal, ${lab[dom("EUGov")]||""}.`;
+}
+
+let TEAMS=[]; // {name, hist, score, strategy}
+function addFile(text,fname){
+  let j; try{ j=JSON.parse(text);}catch(e){ alert("Could not parse "+fname); return; }
+  if(j.game!=="pandemic-policy-room"||!j.quarters){ alert(fname+" is not a Policy Room export."); return; }
+  const hist=histFromFile(j); const score=scoreFromHist(hist);
+  TEAMS.push({name:j.team||fname.replace(/\.json$/i,""), hist, score, strategy:strategyLine(j), end:hist[hist.length-1]});
+  render();
+}
+function render(){
+  const board=document.getElementById("board");
+  document.getElementById("toolbar").style.display=TEAMS.length?"flex":"none";
+  if(!TEAMS.length){ board.innerHTML='<div class="empty">No teams loaded yet.</div>'; return; }
+  const sorted=[...TEAMS].sort((a,b)=>b.score.teamScore-a.score.teamScore);
+  board.innerHTML=sorted.map((t,i)=>{
+    const roles=["Fed","ECB","USGov","EUGov"].map(r=>{
+      const best=r===t.score.bestRole;
+      return `<div class="rcard ${best?'best':''}"><div class="rn">${ROLE_NAMES[r]}</div><div class="rs">${t.score.roleScore[r]}</div>
+        <div class="bar"><i style="width:${t.score.roleScore[r]}%"></i></div>${best?'<span class="star">\u2605</span>':''}</div>`;
+    }).join("");
+    return `<div class="team">
+      <div class="head"><div class="rank ${i===0?'r1':''}">${i+1}</div>
+        <div class="tname">${t.name}</div>
+        <div class="tscore"><div class="k">Stabilisation</div><div class="v">${t.score.teamScore}<small>/100</small></div></div></div>
+      <div class="strategy">${t.strategy}</div>
+      <div class="roles">${roles}</div>
+      <div class="outcomes">
+        <span>US end: inflation <b>${t.end.US.pi.toFixed(1)}%</b>, unemployment <b>${t.end.US.U.toFixed(1)}%</b></span>
+        <span>EU end: inflation <b>${t.end.EU.pi.toFixed(1)}%</b>, unemployment <b>${t.end.EU.U.toFixed(1)}%</b></span>
+        <span>Peak EU spread <b>${t.score.peakSpread}pp</b></span>
+      </div></div>`;
+  }).join("");
+}
+
+const drop=document.getElementById("drop"), fileInput=document.getElementById("file");
+drop.onclick=()=>fileInput.click();
+fileInput.onchange=e=>{ [...e.target.files].forEach(f=>{const r=new FileReader();r.onload=()=>addFile(r.result,f.name);r.readAsText(f);}); fileInput.value=""; };
+drop.ondragover=e=>{e.preventDefault();drop.classList.add("over");};
+drop.ondragleave=()=>drop.classList.remove("over");
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over"); [...e.dataTransfer.files].forEach(f=>{const r=new FileReader();r.onload=()=>addFile(r.result,f.name);r.readAsText(f);}); };
+document.getElementById("clearBtn").onclick=()=>{TEAMS=[];render();};
+</script>
+</body>
+</html>

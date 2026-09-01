@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!-- Capturing value / escaping the margin — rev 2026-08-07 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escaping the Margin — Capturing Value</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F;
+    --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6;
+    --ink:#15302E; --muted:#5E726F;
+    --capture:#C6A553; --cs:#5C8A6B; --mc:#B05F45; --dwl:#9A9486;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.5;padding:clamp(16px,3vw,40px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto}
+  .eyebrow{font:600 13px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(28px,4.6vw,44px);line-height:1.08;letter-spacing:-.01em}
+  .lede{max-width:66ch;margin-top:14px;color:#D9D3C6;font-size:clamp(15px,1.7vw,17px)}
+  .lede b{color:var(--gold-soft);font-weight:600}
+
+  .layout{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;margin-top:24px}
+  @media(max-width:840px){.layout{grid-template-columns:1fr}}
+  .panel{background:var(--cream);color:var(--ink);border-radius:16px;padding:clamp(18px,2.4vw,28px);box-shadow:0 18px 40px rgba(0,0,0,.28)}
+  .panel h2{font-family:Georgia,serif;font-size:18px;color:var(--teal);margin-bottom:6px}
+  .panel .hint{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px}
+
+  /* levers */
+  .lever{display:flex;align-items:flex-start;gap:13px;padding:13px 0;border-bottom:1px solid #DBD2C2}
+  .lever:last-child{border-bottom:none}
+  .switch{flex:none;width:46px;height:26px;border-radius:999px;background:#CFC6B5;position:relative;cursor:pointer;transition:.2s;margin-top:2px}
+  .switch.broken{background:var(--gold)}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .switch.broken::after{left:23px}
+  .lever .body .cond{font-weight:700;font-size:14px;color:var(--teal)}
+  .lever .body .state{font-size:12px;color:var(--muted)}
+  .lever .body .move{font-size:12.5px;color:var(--mc);margin-top:3px;font-weight:600;display:none}
+  .lever.on .body .move{display:block}
+  .lever .body .move b{color:var(--teal)}
+
+  .verdict{margin-top:14px;background:var(--cream2);border-radius:12px;padding:15px 17px}
+  .verdict .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  .verdict .v{font-family:Georgia,serif;font-size:19px;font-weight:700;color:var(--teal);margin:3px 0 6px}
+  .verdict .cap{font-size:13px;color:var(--ink)}
+  .verdict .cap b{color:var(--gold);background:rgba(198,165,83,.16);padding:1px 7px;border-radius:6px}
+
+  .ai{margin-top:22px;background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-radius:16px;padding:clamp(18px,2.4vw,26px)}
+  .ai h2{font-family:Georgia,serif;font-size:20px;color:var(--cream);margin-bottom:4px}
+  .ai p.sub{color:#C6D2D0;font-size:14px;margin-bottom:14px}
+  .ai .row{display:flex;gap:10px;flex-wrap:wrap}
+  #biz{flex:1;min-width:240px;background:var(--cream);border:none;border-radius:11px;padding:13px 15px;font:500 15px "Calibri";color:var(--ink)}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:11px;padding:13px 20px;font:700 15px "Calibri";cursor:pointer;transition:.15s;white-space:nowrap}
+  .btn:hover{background:#D4B868}.btn:disabled{opacity:.55;cursor:wait}
+  .ai .status{font-size:13px;color:var(--gold-soft);min-height:18px;margin-top:10px}
+  .ai .status.err{color:#E3B6A6}
+  .ai .answer{margin-top:14px;display:none;gap:12px;grid-template-columns:1fr 1fr}
+  @media(max-width:620px){.ai .answer{grid-template-columns:1fr}}
+  .acard{background:var(--cream);color:var(--ink);border-radius:12px;padding:14px 15px;border-top:4px solid var(--gold)}
+  .acard .k{font:700 11px "Calibri";letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .acard .t{font-size:14px;margin-top:5px;line-height:1.45}
+  .acard .t b{color:var(--teal)}
+
+  .footnote{margin-top:24px;color:#A9B7B5;font-size:12.5px;max-width:78ch}
+  .footnote b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Microeconomics · Pricing Power &amp; Strategy</div>
+  <h1>Escaping the margin</h1>
+  <p class="lede">Competition drags price down to the marginal cost of the last unit &mdash; that is commoditization, the marginal-pricing mechanism working <i>on you</i>. Price detaches from cost and climbs toward total worth only when you break one of three conditions: <b>fungibility, arbitrage, or free entry.</b> Break a lever and watch your captured value rise.</p>
+
+  <div class="layout">
+    <!-- chart -->
+    <div class="panel">
+      <h2>Where the value goes</h2>
+      <div class="hint">Demand vs. a constant marginal cost. The shaded gold is value <b>you</b> capture above cost.</div>
+      <svg id="chart" viewBox="0 0 520 350" role="img" aria-label="Demand and marginal cost with captured surplus"></svg>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--capture)"></i>Captured by you</span>
+        <span><i class="sw" style="background:var(--cs)"></i>Left to buyers</span>
+        <span><i class="sw" style="background:var(--dwl)"></i>Deadweight (lost)</span>
+        <span><i class="sw" style="background:var(--mc)"></i>Marginal cost</span>
+      </div>
+    </div>
+
+    <!-- levers -->
+    <div class="panel">
+      <h2>Pull a lever</h2>
+      <div class="hint">Each switch breaks one condition that pins price to cost.</div>
+
+      <div class="lever" id="lev-fung">
+        <div class="switch" data-k="fung"></div>
+        <div class="body">
+          <div class="cond">Fungibility</div>
+          <div class="state">Units are identical &amp; substitutable</div>
+          <div class="move"><b>Differentiate</b> &mdash; make your unit non-substitutable</div>
+        </div>
+      </div>
+      <div class="lever" id="lev-arb">
+        <div class="switch" data-k="arb"></div>
+        <div class="body">
+          <div class="cond">Arbitrage</div>
+          <div class="state">Buyers can compare &amp; resell freely</div>
+          <div class="move"><b>Segment &amp; price-discriminate</b> &mdash; block resale and comparison</div>
+        </div>
+      </div>
+      <div class="lever" id="lev-entry">
+        <div class="switch" data-k="entry"></div>
+        <div class="body">
+          <div class="cond">Free entry</div>
+          <div class="state">Rivals can enter and copy you</div>
+          <div class="move"><b>Own a scarce position</b> &mdash; the scarce complement, IP, network, location</div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="k">Your position</div>
+        <div class="v" id="vName">Commodity</div>
+        <div class="cap" id="vCap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI exercise -->
+  <div class="ai">
+    <h2>Diagnose your own business</h2>
+    <p class="sub">Name your business or product. Claude will say which condition currently pins you to the margin, and which lever is most credible to pull &mdash; with the cost.</p>
+    <div class="row">
+      <input id="biz" type="text" placeholder="e.g. a regional cloud-hosting provider" autocomplete="off">
+      <button class="btn" id="ask">Ask Claude</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="answer" id="answer">
+      <div class="acard"><div class="k">What pins you to the margin</div><div class="t" id="aDiag"></div></div>
+      <div class="acard"><div class="k">Lever to pull</div><div class="t" id="aLever"></div></div>
+      <div class="acard"><div class="k">The move</div><div class="t" id="aMove"></div></div>
+      <div class="acard"><div class="k">What it costs</div><div class="t" id="aCost"></div></div>
+    </div>
+  </div>
+
+  <p class="footnote"><b>The AI edge.</b> AI pushes the marginal cost of cognitive work toward zero &mdash; so any business whose output AI can replicate is being commoditized, hard. The escape is unchanged: stop being a fungible, arbitrageable, freely-entered good. In an AI world the most durable of the three levers is owning the <b>scarce complement</b> &mdash; the data, distribution, trust, or relationship the cheap model still needs. <span style="color:#8FA09D">Model is stylised for teaching, not a pricing optimiser.</span></p>
+</div>
+
+<script>
+const a=100,b=1,MC=20;            // demand P=a-bQ, constant marginal cost
+const state={fung:false,arb:false,entry:false};
+const WEIGHT={fung:.30,arb:.30,entry:.40};
+const $=id=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+function el(t,at){const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e;}
+
+function capFactor(){return (state.fung?WEIGHT.fung:0)+(state.arb?WEIGHT.arb:0)+(state.entry?WEIGHT.entry:0);}
+
+function render(){
+  const f=capFactor();
+  const P=MC+(a-MC)*f;            // price climbs from MC toward choke
+  const Q=a-P;                    // quantity along demand at single price
+  const Qpc=a-MC;                 // competitive quantity
+
+  // chart geometry
+  const W=520,H=350,L=46,R=16,T=14,B=40,pw=W-L-R,ph=H-T-B;
+  const X=q=>L+(q/100)*pw, Y=p=>T+ph-(p/100)*ph;
+  const svg=$("chart");svg.innerHTML="";
+  // axes
+  svg.appendChild(el("line",{x1:L,y1:T+ph,x2:L+pw,y2:T+ph,stroke:"#C9BFAD","stroke-width":1.2}));
+  svg.appendChild(el("line",{x1:L,y1:T,x2:L,y2:T+ph,stroke:"#C9BFAD","stroke-width":1.2}));
+  let yl=el("text",{x:-(T+ph/2),y:13,transform:"rotate(-90)",fill:"#5E726F","font-size":11,"text-anchor":"middle"});yl.textContent="Price";svg.appendChild(yl);
+  let xl=el("text",{x:L+pw/2,y:H-4,fill:"#5E726F","font-size":11,"text-anchor":"middle"});xl.textContent="Quantity";svg.appendChild(xl);
+
+  const discrim = state.arb===true; // arbitrage broken -> price discrimination
+
+  if(discrim){
+    // capture = whole area between demand and MC up to Qpc (toward perfect extraction)
+    svg.appendChild(el("path",{d:`M ${X(0)} ${Y(a)} L ${X(Qpc)} ${Y(MC)} L ${X(0)} ${Y(MC)} Z`,fill:"var(--capture)","fill-opacity":.85}));
+  } else {
+    // single price: capture rectangle (P-MC)*Q ; consumer surplus triangle above P ; deadweight triangle
+    svg.appendChild(el("rect",{x:X(0),y:Y(P),width:X(Q)-X(0),height:Y(MC)-Y(P),fill:"var(--capture)","fill-opacity":.85}));
+    // consumer surplus (above price, under demand, 0..Q)
+    svg.appendChild(el("path",{d:`M ${X(0)} ${Y(a)} L ${X(Q)} ${Y(P)} L ${X(0)} ${Y(P)} Z`,fill:"var(--cs)","fill-opacity":.8}));
+    // deadweight (Q..Qpc between demand and MC)
+    if(Qpc-Q>0.5) svg.appendChild(el("path",{d:`M ${X(Q)} ${Y(P)} L ${X(Qpc)} ${Y(MC)} L ${X(Q)} ${Y(MC)} Z`,fill:"var(--dwl)","fill-opacity":.55}));
+  }
+
+  // demand line
+  svg.appendChild(el("line",{x1:X(0),y1:Y(a),x2:X(a),y2:Y(0),stroke:"var(--teal)","stroke-width":2.4}));
+  let dl=el("text",{x:X(a)-2,y:Y(0)-6,fill:"var(--teal)","font-size":11,"text-anchor":"end","font-weight":700});dl.textContent="Demand";svg.appendChild(dl);
+  // MC line
+  svg.appendChild(el("line",{x1:X(0),y1:Y(MC),x2:X(100),y2:Y(MC),stroke:"var(--mc)","stroke-width":2,"stroke-dasharray":"6 4"}));
+  let ml=el("text",{x:X(100),y:Y(MC)-5,fill:"var(--mc)","font-size":10.5,"text-anchor":"end","font-weight":700});ml.textContent="Marginal cost";svg.appendChild(ml);
+  // price marker
+  if(!discrim){
+    svg.appendChild(el("line",{x1:L,y1:Y(P),x2:X(Q),y2:Y(P),stroke:"#7A5A2E","stroke-width":1.4,"stroke-dasharray":"4 3"}));
+    svg.appendChild(el("circle",{cx:X(Q),cy:Y(P),r:5,fill:"var(--gold)",stroke:"#fff","stroke-width":2}));
+    let pl=el("text",{x:L+4,y:Y(P)-5,fill:"#7A5A2E","font-size":11,"font-weight":700});pl.textContent="Price";svg.appendChild(pl);
+  }
+
+  // capture % of total available surplus (triangle a-MC base)
+  const totalAvail=0.5*Qpc*(a-MC);
+  let capture;
+  if(discrim) capture=totalAvail*0.96;            // near-full extraction
+  else capture=(P-MC)*Q;
+  const pct=Math.round((capture/totalAvail)*100);
+
+  // verdict
+  $("lev-fung").classList.toggle("on",state.fung);
+  $("lev-arb").classList.toggle("on",state.arb);
+  $("lev-entry").classList.toggle("on",state.entry);
+
+  let name, cap;
+  const broken=[state.fung&&"differentiated",state.arb&&"segmented",state.entry&&"scarce"].filter(Boolean);
+  if(broken.length===0){name="Commodity";cap="Price is pinned to marginal cost. Economic profit \u2248 0. You are the mechanism\u2019s victim.";}
+  else{
+    const map={differentiated:"Differentiated",segmented:"Segmented",scarce:"Scarce position"};
+    name=broken.map(x=>map[x]).join(" + ");
+    const bits=[];
+    if(state.fung)bits.push("units no longer substitutable");
+    if(state.arb)bits.push("surplus captured by price discrimination");
+    if(state.entry)bits.push("rivals cannot compete it away");
+    cap="Price has detached from cost \u2014 "+bits.join(", ")+".";
+  }
+  $("vName").textContent=name;
+  $("vCap").innerHTML=cap+` <b>You now capture \u2248 ${pct}% of the available value.</b>`;
+}
+
+document.querySelectorAll(".switch").forEach(s=>{
+  s.onclick=()=>{const k=s.dataset.k;state[k]=!state[k];s.classList.toggle("broken",state[k]);render();};
+});
+render();
+
+// ---------- Ask Claude ----------
+async function ask(){
+  const biz=$("biz").value.trim();
+  if(!biz){$("status").textContent="Name a business or product first.";return;}
+  $("status").className="status";$("status").textContent="Asking Claude\u2026";
+  $("ask").disabled=true;$("answer").style.display="none";
+  const prompt=`You are teaching microeconomic strategy. A business: "${biz}". Three conditions force a price down to marginal cost: fungibility (units substitutable), arbitrage (buyers compare/resell freely), and free entry (rivals can copy). A business escapes marginal pricing only by breaking one. For this business, return ONLY a JSON object, no prose, no markdown fences: {"diagnosis": which condition most pins them to the margin and why (max 22 words), "lever": one of "Differentiate"|"Segment & price-discriminate"|"Own a scarce position", "move": the single most credible concrete move (max 22 words), "cost": the main cost or risk of that move (max 18 words)}.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    let txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim().replace(/```json|```/g,"").trim();
+    const o=JSON.parse(txt);
+    $("aDiag").innerHTML=esc(o.diagnosis||"");
+    $("aLever").innerHTML="<b>"+esc(o.lever||"")+"</b>";
+    $("aMove").innerHTML=esc(o.move||"");
+    $("aCost").innerHTML=esc(o.cost||"");
+    $("answer").style.display="grid";
+    $("status").textContent="Claude\u2019s read \u2014 now pressure-test it against the levers above.";
+  }catch(e){
+    $("status").className="status err";
+    $("status").innerHTML="Couldn\u2019t reach Claude live. Open this as a published Claude artifact to run the diagnosis, or reason it through with the levers above.";
+  }finally{$("ask").disabled=false;}
+}
+function esc(s){return (s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
+$("ask").onclick=ask;
+$("biz").addEventListener("keydown",e=>{if(e.key==="Enter")ask();});
+</script>
+</body>
+</html>

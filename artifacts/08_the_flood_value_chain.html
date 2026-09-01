@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<!-- The Flood — value-chain simulator (self-contained) rev 1 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Flood — where AI takes your margin</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F; --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6; --ink:#15302E; --muted:#5E726F;
+    --flood:#7FA0A6; --rock:#4E7E78; --bind:#C6A553; --water:#3E6E78;
+    --warn:#B05F45;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.5;padding:clamp(14px,2.5vw,34px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto}
+  .eyebrow{font:600 12.5px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(26px,4.2vw,40px);line-height:1.08}
+  .lede{max-width:70ch;margin-top:12px;color:#D9D3C6;font-size:clamp(14px,1.6vw,16px)}
+  .lede b{color:var(--gold-soft);font-weight:600}
+  h2{font-family:Georgia,serif;font-size:19px;color:var(--gold-soft);margin-bottom:4px}
+  .sub{font-size:12.5px;color:#A9B7B5;margin-bottom:12px}
+
+  .panel{background:var(--cream);color:var(--ink);border-radius:15px;padding:clamp(16px,2.2vw,24px);margin-top:18px;box-shadow:0 14px 32px rgba(0,0,0,.22)}
+  .panel h2{color:var(--teal)}
+  .panel .sub{color:var(--muted)}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=text]{flex:1;min-width:190px;background:#fff;border:1px solid #CFC6B5;border-radius:9px;padding:10px 12px;font:500 14px "Calibri";color:var(--ink)}
+  input[type=text]::placeholder{color:#9AA6A3}
+
+  .stages{display:grid;gap:10px;margin-top:12px}
+  .stage{display:grid;grid-template-columns:1.5fr 2fr auto;gap:12px;align-items:center;background:var(--cream2);border-radius:11px;padding:11px 13px}
+  @media(max-width:720px){.stage{grid-template-columns:1fr}}
+  .stage .nm input{width:100%;background:#fff;border:1px solid #CFC6B5;border-radius:8px;padding:8px 10px;font:600 13px "Calibri";color:var(--ink)}
+  .stage .ht label{display:flex;justify-content:space-between;font:600 11px "Calibri";color:var(--muted);margin-bottom:3px}
+  .stage .ht label b{color:var(--teal);font-variant-numeric:tabular-nums}
+  .mine{display:flex;align-items:center;gap:6px;font:600 11.5px "Calibri";color:var(--teal);white-space:nowrap;cursor:pointer}
+  .mine input{width:15px;height:15px;accent-color:var(--gold);cursor:pointer}
+  .del{background:transparent;border:none;color:#B0958F;font-size:17px;cursor:pointer;line-height:1;padding:2px 5px}
+  .del:hover{color:var(--warn)}
+  .addbtn{background:transparent;border:1px dashed #BDB3A0;color:var(--muted);border-radius:9px;padding:9px 14px;font:600 12.5px "Calibri";cursor:pointer;margin-top:10px}
+  .addbtn:hover{border-color:var(--gold);color:var(--teal)}
+  .addbtn:disabled{opacity:.4;cursor:not-allowed}
+
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:999px;background:#D6CCB9;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:3px solid #fff}
+
+  .waterctl{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  @media(max-width:620px){.waterctl{grid-template-columns:1fr}}
+  .waterctl .wl label{display:flex;justify-content:space-between;font:600 12.5px "Calibri";color:var(--teal);margin-bottom:4px}
+  .waterctl .wl label b{color:var(--water)}
+  .waterctl .hint{font-size:11px;color:var(--muted);margin-top:3px}
+
+  svg{width:100%;height:auto;display:block;margin-top:6px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px}
+
+  .read{display:grid;gap:10px;margin-top:6px}
+  .rcard{border-radius:11px;padding:12px 14px;background:var(--cream2);border-left:5px solid var(--muted)}
+  .rcard.flood{border-left-color:var(--flood)}
+  .rcard.soon{border-left-color:var(--warn)}
+  .rcard.rock{border-left-color:var(--rock)}
+  .rcard.bind{border-left-color:var(--bind);background:#F3EAD3}
+  .rcard .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .rcard .nm{font-family:Georgia,serif;font-weight:700;font-size:15px;color:var(--teal)}
+  .rcard .tag{font:700 10px "Calibri";letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:#DCE3E0;color:var(--teal)}
+  .rcard.bind .tag{background:var(--gold);color:var(--teal)}
+  .rcard .body{font-size:12.5px;color:var(--ink);margin-top:5px}
+  .rcard .body b{color:var(--teal)}
+  .youare{display:inline-block;font:700 10px "Calibri";letter-spacing:.05em;text-transform:uppercase;background:var(--teal);color:var(--cream);padding:3px 9px;border-radius:999px;margin-left:6px}
+
+  .esc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px}
+  @media(max-width:720px){.esc{grid-template-columns:1fr}}
+  .esc label{display:block;font:600 12px "Calibri";color:var(--teal);margin-bottom:5px}
+  .esc select{width:100%;background:#fff;border:1px solid #CFC6B5;border-radius:9px;padding:9px 10px;font:500 13px "Calibri";color:var(--ink);cursor:pointer}
+  .verdict{margin-top:13px;border-left:4px solid var(--gold);background:linear-gradient(90deg,rgba(198,165,83,.16),transparent);border-radius:0 10px 10px 0;padding:12px 15px}
+  .verdict .k{font:700 10.5px "Calibri";letter-spacing:.06em;text-transform:uppercase;color:#8A6E26}
+  .verdict .v{font-family:Georgia,serif;font-size:16px;font-weight:700;color:var(--teal);margin:3px 0 5px}
+  .verdict .t{font-size:12.5px;color:var(--ink)}
+
+  .claim{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.16);border-radius:15px;padding:clamp(16px,2.2vw,24px);margin-top:18px}
+  .claim .sentence{font-family:Georgia,serif;font-size:clamp(15px,2vw,18px);line-height:1.6;color:var(--cream);background:rgba(25,60,63,.35);border-radius:11px;padding:15px 17px;margin-top:6px}
+  .claim .sentence b{color:var(--gold)}
+  .claim textarea{width:100%;margin-top:12px;background:var(--cream);border:none;border-radius:10px;padding:11px 13px;font:400 13.5px "Calibri";color:var(--ink);min-height:64px;resize:vertical}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:10px;padding:12px 20px;font:700 14px "Calibri";cursor:pointer;margin-top:12px}
+  .btn:hover{background:#D4B868}
+  .copied{font-size:12px;color:var(--gold-soft);margin-left:10px}
+
+  .foot{margin-top:22px;color:#9FB0AD;font-size:12px;max-width:80ch}
+  .foot b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Managerial Economics · Day 2 · Team exercise</div>
+  <h1>The flood</h1>
+  <p class="lede">Take the company from your strategy project. Break its value chain into <b>three or four stages</b>, judge how hard each is for AI to do, then raise the water. Whatever the water covers stops being scarce &mdash; and stops being paid for. What is left standing is where the value goes.</p>
+
+  <!-- 1. the chain -->
+  <div class="panel">
+    <h2>1 &middot; Draw the chain</h2>
+    <div class="sub">Three or four stages, from raw input to the customer. The chain that delivers the value &mdash; not the org chart. Mark the stage your company actually stands on.</div>
+    <div class="row"><input type="text" id="co" placeholder="Company from your strategy project"></div>
+    <div class="stages" id="stages"></div>
+    <button class="addbtn" id="add">+ add a stage</button>
+  </div>
+
+  <!-- 2. dam heights + water -->
+  <div class="panel">
+    <h2>2 &middot; Height each dam, then raise the water</h2>
+    <div class="sub">Height 0&ndash;100 = how hard the stage is for AI. Low: pattern recognition, drafting, analysis, coordination. High: physical assets, regulated licence, accountability, trust, proprietary data, real-world experiment.</div>
+    <div class="waterctl">
+      <div class="wl">
+        <label>AI capability today <b id="vW">35</b></label>
+        <input type="range" id="w" min="0" max="100" value="35">
+        <div class="hint">How much of the work can AI already do to a standard your customers accept?</div>
+      </div>
+      <div class="wl">
+        <label>Rise over three years <b id="vR">+20</b></label>
+        <input type="range" id="r" min="0" max="50" value="20">
+        <div class="hint">Be honest, and say why. This number is the argument.</div>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 900 380" role="img" aria-label="Value chain stages as dams against a rising waterline"></svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--flood)"></i>under water</span>
+      <span><i class="sw" style="background:var(--warn)"></i>goes under within three years</span>
+      <span><i class="sw" style="background:var(--rock)"></i>bedrock</span>
+      <span><i class="sw" style="background:var(--bind)"></i>the value dam (you mark it)</span>
+    </div>
+  </div>
+
+  <!-- 3. the reading -->
+  <div class="panel">
+    <h2>3 &middot; Read the economics</h2>
+    <div class="sub">Every stage is a small market. Same machinery, applied stage by stage.</div>
+    <div class="read" id="read"></div>
+  </div>
+
+  <!-- 4. the escapes -->
+  <div class="panel">
+    <h2>4 &middot; Can your stage escape the margin?</h2>
+    <div class="sub">Score the three conditions <i>at the stage you stand on</i>. Price detaches from marginal cost only where one of them is broken.</div>
+    <div class="esc">
+      <div><label>Our output vs. rivals&rsquo;
+        <select id="q-fung">
+          <option value="open">Interchangeable &mdash; buyers can&rsquo;t tell us apart</option>
+          <option value="partial">Somewhat differentiated</option>
+          <option value="broken">Strongly differentiated / branded</option>
+        </select></label></div>
+      <div><label>Buyers comparing &amp; switching
+        <select id="q-arb">
+          <option value="open">Freely &mdash; one market price</option>
+          <option value="partial">Some friction</option>
+          <option value="broken">Well segmented &mdash; we price by buyer</option>
+        </select></label></div>
+      <div><label>Rivals entering &amp; copying
+        <select id="q-entry">
+          <option value="open">Easily</option>
+          <option value="partial">With real effort</option>
+          <option value="broken">Barred &mdash; we hold a scarce position</option>
+        </select></label></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <!-- 5. the claim -->
+  <div class="claim">
+    <h2>5 &middot; The claim you would defend</h2>
+    <div class="sub" style="color:#A9B7B5">One sentence, and the thing that would prove you wrong.</div>
+    <div class="sentence" id="sentence"></div>
+    <textarea id="fals" placeholder="Falsifier — what would show our dam is lower than we drew it? (e.g. a competitor ships this stage AI-only at half price; our best client stops paying for it; the regulator accepts a model-generated submission)"></textarea>
+    <button class="btn" id="copy">Copy the team summary</button><span class="copied" id="copied"></span>
+  </div>
+
+  <p class="foot"><b>How to argue with it.</b> The heights are judgements, not measurements &mdash; that is the point of doing this in a team. Two disciplines: name what a dam is actually made of (an asset, a licence, an accountability, a dataset), and say what would lower it. A dam you cannot describe is usually not there. <span style="color:#8FA09D">Stylised for teaching. Every number here is a claim someone should be able to defend.</span></p>
+</div>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+let stages=[
+  {n:"",h:35,mine:false,bind:false},
+  {n:"",h:60,mine:true,bind:true},
+  {n:"",h:78,mine:false,bind:false}
+];
+const PLACE=["e.g. Research & design","e.g. Production","e.g. Sales & delivery","e.g. Service & renewal"];
+
+function renderStages(){
+  const el=$("stages"); el.innerHTML="";
+  stages.forEach((s,i)=>{
+    const d=document.createElement("div"); d.className="stage";
+    d.innerHTML=`<div class="nm"><input type="text" value="${esc(s.n)}" placeholder="${PLACE[i]||"Stage "+(i+1)}" data-i="${i}" data-f="n"></div>
+      <div class="ht"><label><span>How hard for AI</span><b id="h-${i}">${s.h}</b></label>
+        <input type="range" min="0" max="100" value="${s.h}" data-i="${i}" data-f="h"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label class="mine"><input type="radio" name="mine" ${s.mine?"checked":""} data-i="${i}" data-f="mine"> we&rsquo;re here</label>
+        <label class="mine"><input type="radio" name="bind" ${s.bind?"checked":""} data-i="${i}" data-f="bind"> value dam</label>
+        ${stages.length>3?`<button class="del" data-i="${i}" data-f="del" title="remove">&times;</button>`:""}
+      </div>`;
+    el.appendChild(d);
+  });
+  $("add").disabled = stages.length>=4;
+}
+document.addEventListener("input",e=>{
+  const t=e.target, i=t.dataset.i, f=t.dataset.f;
+  if(i===undefined||!f) { if(t.id==="w"||t.id==="r"||t.id==="fals") draw(); return; }
+  if(f==="n") stages[+i].n=t.value;
+  if(f==="h"){ stages[+i].h=+t.value; const lab=$("h-"+i); if(lab)lab.textContent=t.value; }
+  draw();
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.f==="mine"){ stages.forEach((s,k)=>s.mine=(k===+t.dataset.i)); draw(); }
+  if(t.dataset.f==="bind"){ stages.forEach((s,k)=>s.bind=(k===+t.dataset.i)); draw(); }
+  if(t.id&&t.id.startsWith("q-")) draw();
+});
+document.addEventListener("click",e=>{
+  const t=e.target;
+  if(t.dataset.f==="del"){ stages.splice(+t.dataset.i,1); if(!stages.some(s=>s.mine))stages[0].mine=true; if(!stages.some(s=>s.bind))stages[0].bind=true; renderStages(); draw(); }
+});
+$("add").onclick=()=>{ if(stages.length<4){ stages.push({n:"",h:50,mine:false,bind:false}); renderStages(); draw(); } };
+$("w").addEventListener("input",e=>$("vW").textContent=e.target.value);
+$("r").addEventListener("input",e=>$("vR").textContent="+"+e.target.value);
+
+function statusOf(h,w,w3){
+  if(h<=w) return "flood";
+  if(h<=w3) return "soon";
+  return "rock";
+}
+function label(i){ return stages[i].n.trim() || "Stage "+(i+1); }
+
+function draw(){
+  const w=+$("w").value, r=+$("r").value, w3=Math.min(100,w+r);
+  // the value dam is a judgement the team makes; the next to fall is arithmetic
+  let bind=stages.findIndex(s=>s.bind);
+  let next=-1, nv=999;
+  stages.forEach((s,i)=>{ if(s.h>w && s.h<nv){nv=s.h;next=i;} });
+
+  /* ---- chart ---- */
+  const W=900,H=380,L=48,R=28,T=54,B=44, pw=W-L-R, ph=H-T-B;
+  const svg=$("chart"); svg.innerHTML="";
+  const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  const yOf=v=>T+ph-(v/100)*ph;
+  // water body
+  svg.appendChild(el("rect",{x:L,y:yOf(w),width:pw,height:T+ph-yOf(w),fill:"var(--water)","fill-opacity":.30}));
+  svg.appendChild(el("rect",{x:L,y:yOf(w3),width:pw,height:yOf(w)-yOf(w3),fill:"var(--water)","fill-opacity":.13}));
+  // bars
+  const n=stages.length, slot=pw/n, bw=Math.min(120,slot*0.52);
+  stages.forEach((s,i)=>{
+    const cx=L+slot*i+slot/2, y=yOf(s.h), st=statusOf(s.h,w,w3);
+    const col = i===bind ? "var(--bind)" : st==="flood" ? "var(--flood)" : st==="soon" ? "var(--warn)" : "var(--rock)";
+    svg.appendChild(el("rect",{x:cx-bw/2,y,width:bw,height:T+ph-y,fill:col,rx:3}));
+    const t1=el("text",{x:cx,y:T-24,"text-anchor":"middle",fill:"#15302E","font-size":14,"font-weight":700,"font-family":"Georgia,serif"});
+    t1.textContent=label(i); svg.appendChild(t1);
+    const t2=el("text",{x:cx,y:T-8,"text-anchor":"middle",fill:"#5E726F","font-size":11.5});
+    t2.textContent=s.h; svg.appendChild(t2);
+    if(i===bind){ const t3=el("text",{x:cx,y:y-7,"text-anchor":"middle",fill:"#8A6E26","font-size":11,"font-weight":700});
+      t3.textContent="the value dam"; svg.appendChild(t3); }
+    if(i===next&&i!==bind){ const t4=el("text",{x:cx,y:y-7,"text-anchor":"middle",fill:"#8A3B24","font-size":10.5,"font-weight":700});
+      t4.textContent="next to fall"; svg.appendChild(t4); }
+  });
+  // waterlines
+  svg.appendChild(el("line",{x1:L,y1:yOf(w),x2:L+pw,y2:yOf(w),stroke:"var(--water)","stroke-width":3}));
+  const lt=el("text",{x:L+4,y:yOf(w)-7,fill:"var(--water)","font-size":11.5,"font-weight":700}); lt.textContent="AI today"; svg.appendChild(lt);
+  svg.appendChild(el("line",{x1:L,y1:yOf(w3),x2:L+pw,y2:yOf(w3),stroke:"var(--water)","stroke-width":2,"stroke-dasharray":"7 5"}));
+  const l3=el("text",{x:L+4,y:yOf(w3)-7,fill:"var(--water)","font-size":11.5,"font-weight":700}); l3.textContent="in three years"; svg.appendChild(l3);
+  svg.appendChild(el("line",{x1:L,y1:T+ph,x2:L+pw,y2:T+ph,stroke:"#C9BFAD","stroke-width":1.2}));
+
+  /* ---- readings ---- */
+  const rd=$("read"); rd.innerHTML="";
+  const TXT={
+    flood:["Under water","<b>Fungibility breaks.</b> The output becomes interchangeable, so price here falls toward marginal cost \u2014 and the marginal cost of cognition is near zero. Any rent earned here is going, and the surplus passes to buyers and to whoever owns the stage still standing."],
+    soon:["Goes under within three years","<b>On the waterline.</b> Still scarce today, priced above cost \u2014 but on current trajectory the water covers it inside the planning horizon. Whatever you earn here is a lease, not a freehold. Decide now what you do with the runway."],
+    rock:["Bedrock","<b>Still scarce.</b> As everything around it cheapens, this stage takes a larger share of the surplus \u2014 but only for whoever <i>owns</i> it. Name what it is made of: an asset, a licence, an accountability, a dataset. Then ask what would erode it."]
+  };
+  stages.forEach((s,i)=>{
+    const st=statusOf(s.h,w,w3), isBind=i===bind;
+    const d=document.createElement("div"); d.className="rcard "+(isBind?"bind":st);
+    d.innerHTML=`<div class="hd"><span class="nm">${esc(label(i))}${s.mine?'&nbsp;<span class="youare">you are here</span>':""}</span>
+      <span class="tag">${isBind?"the value dam":TXT[st][0]}</span></div>
+      <div class="body">${TXT[st][1]}${isBind?" <b>You have called this the value dam</b> \u2014 the stage that gates the chain and collects the rent. Defend it: name the cospecialised asset it holds, and who owns it. If you cannot name the asset, this is not the dam.":""}${(i===next&&i!==bind)?" <b>This is the next to fall</b> \u2014 the lowest stage still above water. Not necessarily where the rent is, but the first thing that changes.":""}</div>`;
+    rd.appendChild(d);
+  });
+
+  /* ---- escapes ---- */
+  const v={fung:$("q-fung").value,arb:$("q-arb").value,entry:$("q-entry").value};
+  const NAME={fung:"fungibility",arb:"arbitrage",entry:"free entry"};
+  const LEV={
+    entry:["Own a scarce position","Control what rivals cannot replicate \u2014 proprietary data, a licence, capacity, a network, the customer relationship. Slowest to build, hardest to lose."],
+    fung:["Break fungibility","Make your output non-substitutable \u2014 brand, judgement, accountability, a bundled outcome. Holds only while buyers still perceive the difference."],
+    arb:["Block arbitrage","Fence buyers apart so each pays closer to their own willingness to pay. Amplifies what you have; it creates nothing on its own."]
+  };
+  const open=Object.keys(v).filter(k=>v[k]==="open"), part=Object.keys(v).filter(k=>v[k]==="partial");
+  const cand=[...open,...part];
+  let rec=null; ["entry","fung","arb"].forEach(k=>{ if(!rec&&cand.includes(k))rec=k; });
+  const mineIdx=stages.findIndex(s=>s.mine), mineSt=mineIdx>=0?statusOf(stages[mineIdx].h,w,w3):"rock";
+  let vh="";
+  if(!cand.length){
+    vh=`<div class="k">Your position</div><div class="v">All three conditions broken</div>
+      <div class="t">Nothing currently pins you to marginal cost. The task is defence: name which condition is most likely to re-form, and watch it.</div>`;
+  } else {
+    const L2=LEV[rec];
+    vh=`<div class="k">Open against you: ${cand.map(k=>NAME[k]).join(", ")}</div>
+      <div class="v">${L2[0]}</div><div class="t">${L2[1]}</div>`;
+  }
+  if(mineSt==="flood"){
+    vh+=`<div class="t" style="margin-top:8px;color:#8A3B24"><b>But note where you stand.</b> Your own stage is already under water. Differentiation there is a claim buyers may not accept for much longer \u2014 the credible escapes are the ones that reach <i>outside</i> the flooded stage: the data it runs on, the relationship it serves, the distribution it passes through.</div>`;
+  } else if(mineSt==="soon"){
+    vh+=`<div class="t" style="margin-top:8px;color:#8A3B24"><b>Your stage is on the waterline.</b> Whatever you build must outrun the rise \u2014 count the years, not the quarters.</div>`;
+  }
+  $("verdict").innerHTML=vh;
+
+  /* ---- claim ---- */
+  const co=$("co").value.trim()||"our company";
+  const floodNames=stages.filter(s=>statusOf(s.h,w,w3)==="flood").map(s=>label(stages.indexOf(s)));
+  const soonNames=stages.filter(s=>statusOf(s.h,w,w3)==="soon").map(s=>label(stages.indexOf(s)));
+  const dest = bind>=0 ? label(bind) : null;
+  const destSt = bind>=0 ? statusOf(stages[bind].h,w,w3) : null;
+  const owns = (bind>=0 && stages[bind].mine) ? "which we own" : "which we do not own";
+  const fp = floodNames.length ? `<b>${esc(floodNames.join(" and "))}</b>` : "<b>no stage yet</b>";
+  const sp = soonNames.length ? `, with <b>${esc(soonNames.join(" and "))}</b> following inside three years` : "";
+  let tail;
+  if(!dest){
+    tail = `and there is <b>nothing left in this chain</b> for the value to migrate to \u2014 which is the finding, and it is a serious one.`;
+  } else if(destSt==="flood"){
+    tail = `and the dam we named \u2014 <b>${esc(dest)}</b> \u2014 <b>is itself under water</b>. The rent has already moved past it. Name the stage it moved to, or accept that it left the chain.`;
+  } else {
+    tail = `and the value migrates to <b>${esc(dest)}</b>${destSt==="soon"?" <b>\u2014 but only until the water reaches it too</b>":""} \u2014 <b>${owns}</b>.`;
+  }
+  $("sentence").innerHTML = `In ${esc(co)}, AI floods ${fp}${sp}, so price there falls toward <b>marginal cost</b>, ${tail}`;
+}
+
+$("co").addEventListener("input",draw);
+$("copy").onclick=()=>{
+  const w=+$("w").value,r=+$("r").value;
+  let t="THE FLOOD \u2014 "+($("co").value.trim()||"our company")+"\n\n";
+  t+="Waterline today: "+w+"   |   in three years: "+Math.min(100,w+r)+"\n\n";
+  stages.forEach((s,i)=>{ t+="  "+label(i)+"  \u2014 dam "+s.h+(s.mine?"  (we are here)":"")+"\n"; });
+  t+="\n"+$("sentence").textContent+"\n\nMost credible escape: "+($("verdict").querySelector(".v")?.textContent||"")+"\n";
+  const f=$("fals").value.trim(); if(f) t+="\nFalsifier: "+f+"\n";
+  navigator.clipboard.writeText(t).then(()=>{ $("copied").textContent="copied"; setTimeout(()=>$("copied").textContent="",2000); })
+    .catch(()=>{ $("copied").textContent="press \u2318/Ctrl-C"; });
+};
+
+renderStages(); draw();
+</script>
+</body>
+</html>

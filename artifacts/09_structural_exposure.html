@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<!-- Structural exposure v4 — six questions, one named position -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The six questions — country or company</title>
+<style>
+  :root{--teal:#193C3F;--cream:#F4F0E9;--cream2:#E9E2D4;--gold:#C6A553;--gold-soft:#E7D6A6;
+        --ink:#15302E;--muted:#5E726F;--warn:#B05F45;--ok:#4E7E78;--mid:#8A7E5F}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;
+       line-height:1.5;padding:clamp(14px,2.4vw,30px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto}
+  .eyebrow{font:600 12px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(24px,3.8vw,36px);line-height:1.08}
+  .lede{max-width:80ch;margin-top:10px;color:#D9D3C6;font-size:14.5px}
+  .lede b{color:var(--gold-soft)}
+  .tabs{display:flex;gap:8px;margin-top:20px}
+  .tab{flex:1;background:rgba(244,240,233,.07);border:1px solid rgba(244,240,233,.14);border-bottom:none;
+       border-radius:12px 12px 0 0;padding:12px 16px;cursor:pointer}
+  .tab.on{background:var(--cream);border-color:var(--cream)}
+  .tab .n{font:700 10px "Calibri";letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+  .tab.on .n{color:var(--muted)}
+  .tab .t{font-family:Georgia,serif;font-size:16px;font-weight:700;color:var(--cream);margin-top:1px}
+  .tab.on .t{color:var(--teal)}
+  .panel{background:var(--cream);color:var(--ink);border-radius:0 0 14px 14px;padding:clamp(15px,2.1vw,22px)}
+  .stage{display:none}.stage.on{display:block}
+  .q{margin-top:16px;padding-top:13px;border-top:1px solid #DFD7C7}
+  .qh{display:flex;gap:10px;align-items:baseline;margin-bottom:3px}
+  .qn{position:relative;width:22px;height:22px;border-radius:6px;background:var(--gold);color:var(--teal);flex:none;
+      font:700 12px Georgia;display:flex;align-items:center;justify-content:center}
+  .qt{font-family:Georgia,serif;font-size:16px;font-weight:700;color:var(--teal)}
+  .qa{font-size:11.5px;color:var(--muted);margin:0 0 8px 32px}
+  .qa b{color:var(--ink)}
+  .qb{margin-left:32px}
+  input[type=text],select,textarea{background:#fff;border:1px solid #CFC6B5;border-radius:8px;
+    padding:8px 10px;font:500 13px "Calibri";color:var(--ink);width:100%}
+  input.bad,textarea.bad{border-color:var(--warn);background:#FFF8F6}
+  textarea{min-height:42px;resize:vertical;font-weight:400}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  label.f{display:block;font:600 11px "Calibri";color:var(--teal);margin-bottom:3px}
+  .mini{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3}
+  .tc{margin-top:5px;font-size:11.5px;line-height:1.4;padding:7px 10px;border-radius:0 7px 7px 0;
+      border-left:3px solid var(--warn);background:#F9EDEA;display:none}
+  .tc.on{display:block}.tc b{color:var(--warn)}
+  .tc .eg{display:block;margin-top:3px;color:var(--muted);font-style:italic}
+  .who{display:inline-block;font:600 9.5px "Calibri";letter-spacing:.05em;text-transform:uppercase;
+    color:var(--gold);background:rgba(198,165,83,.16);padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:2px}
+  .qn.req:after{content:"*";position:absolute;top:-5px;right:-6px;color:var(--warn);
+    font:700 15px Georgia;line-height:1}
+  .reqkey{font-size:11px;color:var(--muted);margin-top:7px}
+  .reqkey b{color:var(--warn)}
+  .core{display:inline-block;font:700 9px "Calibri";letter-spacing:.05em;text-transform:uppercase;
+    color:var(--teal);background:var(--gold);padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:2px}
+  .startbar{background:var(--cream2);border-radius:10px;padding:11px 14px;margin-bottom:4px;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .startbar .t{font-size:12px;color:var(--ink);flex:1;min-width:230px}
+  .startbar .t b{color:var(--teal)}
+  .exbtn{background:#fff;border:1px solid var(--gold);color:var(--teal);border-radius:8px;
+    padding:6px 12px;font:600 11.5px "Calibri";cursor:pointer}
+  .exbtn:hover{background:var(--gold)}
+  .advt{font:600 11px "Calibri";color:var(--muted);display:flex;gap:6px;align-items:center;
+    cursor:pointer;margin-top:7px}
+  .advt input{width:14px;accent-color:var(--gold)}
+  table:not(.adv) th:nth-child(3),table:not(.adv) td:nth-child(3),
+  table:not(.adv) th:nth-child(7),table:not(.adv) td:nth-child(7),
+  table:not(.adv) th:nth-child(8),table:not(.adv) td:nth-child(8){display:none}
+  details.ex{display:inline;margin-left:5px}
+  details.ex summary{display:inline;cursor:pointer;color:var(--gold);font-weight:600;list-style:none}
+  details.ex summary::-webkit-details-marker{display:none}
+  details.ex[open]{display:block;margin:5px 0 0 0;background:#fff;border-radius:7px;padding:7px 10px;
+    font-size:10.5px;color:var(--muted);line-height:1.45}
+
+  /* the ladder */
+  .lad{background:var(--cream2);border-radius:10px;padding:11px 13px;margin-top:10px}
+  .lrow{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #DBD2C2}
+  .lrow:last-child{border-bottom:none}
+  .lrow .lq{font:600 12.5px "Calibri";color:var(--ink)}
+  .lrow .lh{font-size:10.5px;color:var(--muted);line-height:1.3}
+  .yn{display:flex;gap:5px}
+  .yn button{flex:1;border:1px solid #CFC6B5;background:#fff;border-radius:7px;padding:6px 0;
+    font:600 11.5px "Calibri";color:var(--muted);cursor:pointer}
+  .yn button.on{background:var(--teal);border-color:var(--teal);color:var(--cream)}
+
+  .guides{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  @media(max-width:760px){.guides{grid-template-columns:1fr}}
+  .gg{background:var(--cream2);border-radius:9px;padding:8px 10px}
+  .gg .hd{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+  .gg .ltr{width:21px;height:21px;border-radius:5px;background:var(--gold);color:var(--teal);
+     font:700 11px Georgia;display:flex;align-items:center;justify-content:center;flex:none}
+  .gg .nm{font:700 11.5px "Calibri";color:var(--teal)}
+  .gg .pair{margin-top:6px;padding-top:6px;border-top:1px dashed #CFC6B5}
+  .gg .pl{font:600 10px "Calibri";color:var(--muted);margin-bottom:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;font:700 9.5px "Calibri";text-transform:uppercase;letter-spacing:.05em;
+     color:var(--muted);padding:5px 4px;border-bottom:2px solid #DBD2C2}
+  td{padding:4px;border-bottom:1px solid #E6DFD0;text-align:left}
+  td select,td input{padding:5px 6px;font-size:11.5px}
+  td.ck{text-align:center}
+  .del{background:none;border:none;color:#B0958F;font-size:15px;cursor:pointer}
+  .addbtn{background:transparent;border:1px dashed #BDB3A0;color:var(--muted);border-radius:8px;
+    padding:7px 12px;font:600 11.5px "Calibri";cursor:pointer;margin-top:8px}
+  .risk{display:inline-block;font:700 9px "Calibri";text-transform:uppercase;padding:2px 7px;border-radius:999px}
+  .risk.hi{background:var(--warn);color:#fff}.risk.md{background:var(--mid);color:#fff}.risk.lo{background:var(--ok);color:#fff}
+
+  /* verdict */
+  .verd{margin-top:18px;background:var(--teal);color:var(--cream);border-radius:12px;padding:16px 18px}
+  .verd .k{font:700 9.5px "Calibri";letter-spacing:.09em;text-transform:uppercase;color:var(--gold)}
+  .verd .v{font-family:Georgia,serif;font-size:24px;font-weight:700;margin:3px 0 7px;line-height:1.15}
+  .verd .s{font-size:13.5px;color:#E4DFD4;line-height:1.5}
+  .verd .s b{color:var(--gold-soft)}
+  .contra{margin-top:12px}
+  .cx{border-left:4px solid var(--warn);background:#F6EAE6;border-radius:0 9px 9px 0;
+      padding:9px 12px;font-size:12.5px;margin-bottom:7px;line-height:1.4;color:var(--ink)}
+  .cx b{color:var(--warn)}
+  .cx.ok{border-left-color:var(--ok);background:#E7EFEC}.cx.ok b{color:var(--ok)}
+  details{margin-top:11px;background:var(--cream2);border-radius:10px;padding:9px 13px}
+  details summary{cursor:pointer;font:600 12px "Calibri";color:var(--teal);list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary:before{content:"▸ ";color:var(--gold)}
+  details[open] summary:before{content:"▾ "}
+  .dr{display:grid;grid-template-columns:150px 1fr;border-top:1px solid #E0D8C8;font-size:12px}
+  @media(max-width:620px){.dr{grid-template-columns:1fr}}
+  .dr .l{padding:6px 4px;font:700 10.5px "Calibri";color:var(--muted)}
+  .dr .v{padding:6px 4px}
+  .dr .v .none{color:#A9A9A7;font-style:italic}
+  .scen{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  @media(max-width:680px){.scen{grid-template-columns:1fr}}
+  .sc{background:#fff;border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:8px 11px}
+  .sc .h{font:700 11px "Calibri";color:var(--teal)}
+  .sc .b{font-size:11px;color:#3B4A46;line-height:1.3;margin-top:2px}
+  .chal{margin-top:14px;background:rgba(25,60,63,.06);border:1px solid #DBD2C2;border-radius:11px;padding:13px 15px}
+  .chal .k{font:700 9.5px "Calibri";letter-spacing:.09em;text-transform:uppercase;color:var(--warn);margin-bottom:4px}
+  .chal .body{font-size:13px;color:var(--ink);white-space:pre-wrap;line-height:1.5}
+  .chal .st{font-size:11.5px;color:var(--muted)}
+  .up{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:9px}
+  .up input[type=file]{display:none}
+  .uplab{background:transparent;border:1px dashed #BDB3A0;color:var(--muted);border-radius:8px;
+    padding:7px 12px;font:600 11.5px "Calibri";cursor:pointer}
+  .upname{font-size:11.5px;color:var(--muted)}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:9px;padding:10px 18px;
+    font:700 13px "Calibri";cursor:pointer;margin-top:11px}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .btn.ghost{background:transparent;border:1px solid #CFC6B5;color:var(--teal)}
+  .copied{font-size:11.5px;color:var(--muted);margin-left:8px}
+  .foot{margin-top:18px;color:#9FB0AD;font-size:11.5px;max-width:84ch}
+  .foot b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Managerial Economics · the geopolitics framework</div>
+  <h1>The six questions</h1>
+  <p class="lede">One map, six questions, run on a <b>country</b> or a <b>company</b>. The answer is a single named position, one consequence, and only the judgements that contradict each other. Everything else stays folded away — a framework earns its keep by ruling things <b>out</b>.</p>
+
+  <div class="tabs">
+    <div class="tab on" data-s="a"><div class="n">Level one</div><div class="t">A country</div></div>
+    <div class="tab" data-s="b"><div class="n">Level two</div><div class="t">A company</div></div>
+  </div>
+
+  <div class="panel">
+  <!-- ================= COUNTRY ================= -->
+  <div class="stage on" id="sa">
+    <div class="startbar"><div class="t"><b>A first pass is question 1 and question 2 — three clicks and three lines.</b> That gives you the position. Questions 3 to 6 tell you why nothing changes and when it breaks.<div class="reqkey"><b>*</b> the two questions the tool needs before it will say anything.</div></div>
+      <button class="exbtn" id="Aload">Load Taiwan as a worked example</button></div>
+    <div><label class="f">Country</label><input type="text" id="Aname" placeholder="e.g. Taiwan"></div>
+
+    <div class="q" style="border-top:none;padding-top:12px"><div class="qh"><div class="qn req">1</div><div class="qt">What position does it hold?<span class="who">Strange</span><span class="core">core</span></div></div>
+      <div class="qa">First the map — the four structures. Then three judgements that decide what the position actually is. <b>Criticality and command are not the same thing.</b></div>
+      <div class="qb"><div class="g4" id="Astruct"></div>
+        <div class="lad" id="Alad"></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn req">2</div><div class="qt">What does it run on, and what does it run through?<span class="who">Thompson</span><span class="core">core</span></div></div>
+      <div class="qa">Things with a supplier and a price. <b>Inputs</b> it buys, and <b>outputs</b> it can only sell through. Tick <b>reach</b> where a third country's export rules bind the trade without being party to it.
+        <details class="ex"><summary>examples</summary>imported LNG · EUV lithography tools · photoresist chemicals · EDA software licences · dollar clearing · export permits · a single export market · one payer or distributor</details></div>
+      <div class="qb"><div style="overflow-x:auto"><table><thead><tr>
+        <th style="min-width:112px">Input or output</th><th>Side</th><th>Structure</th><th>Jurisdiction</th><th>Sources</th>
+        <th>Substitute in</th><th>Stopped first by</th><th>Reach</th><th>Risk</th><th></th></tr></thead>
+        <tbody id="Arows"></tbody></table></div>
+        <button class="addbtn" id="Aadd">+ add a line</button><label class="advt"><input type="checkbox" id="Aadv"> show structure, stopped-first-by and reach <span style="color:#A9A9A7">— the three columns that need the framework</span></label><div class="tc" id="Atc2"></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">3</div><div class="qt">How would it be stopped, first?<span class="who">Tooze</span></div></div>
+      <div class="qa">You set <b>stopped first by</b> on each line above. Now the shared point of failure: what single thing, if it stopped, takes out more than one line at the same moment?
+   <details class="ex"><summary>examples</summary>all three routes pass one strait · two suppliers clear through the same bank · one regulator approves both · a single undersea cable · the same insurer</details></div>
+      <div class="qb">
+        <label class="f">The common factor across the lines above</label>
+        <textarea id="Acorr" placeholder="e.g. all three routes pass one strait; two clear through the same bank"></textarea><div class="tc" id="Atc3"></div>
+      </div></div>
+
+    <div class="q"><div class="qh"><div class="qn">4</div><div class="qt">What phase is the technology in?<span class="who">Perez</span></div></div>
+      <div class="qb g2"><div><label class="f">Phase</label><select id="Aphase"></select></div>
+        <div><label class="f">Evidence about standards</label><textarea id="Aphw" placeholder="settled or still moving?"></textarea></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">5</div><div class="qt">Who blocks the fix?<span class="who">Olson</span></div></div>
+      <div class="qa" id="Aq5a">Reducing the dependency you name above costs someone <b>inside</b> something. A rival or a threat belongs in question 1.</div>
+      <div class="qb g3">
+        <div><label class="f">The fix would be</label><input type="text" id="Afix" placeholder="e.g. build reclaimed-water capacity; qualify a second toolmaker"><div class="mini">name the action, then say who pays for it</div></div>
+        <div><label class="f">Who loses if you do it</label><input type="text" id="Ablock" placeholder="e.g. the constituency defending domestic capacity"><div class="tc" id="Atc5"></div></div>
+        <div><label class="f">In the room?</label><select id="Ablockin"><option>Yes — and holds a veto</option><option>Yes — but can be overruled</option><option>No</option></select></div>
+      </div></div>
+
+    <div class="q"><div class="qh"><div class="qn">6</div><div class="qt">What is the internal clock?<span class="who">Turchin</span></div></div>
+      <div class="qa">A pressure <b>inside</b> that runs whatever anyone else does. Be specific enough to be measurable.</div>
+      <div class="qb g2">
+        <div><label class="f">The pressure</label><input type="text" id="Aclock" placeholder="e.g. aquifer depletion in the fab districts"><div class="tc" id="Atc6"></div></div>
+        <div><label class="f">Horizon</label><select id="Ahoriz"><option>Under 3 years</option><option selected>3–10 years</option><option>Over 10 years</option></select></div>
+      </div></div>
+
+    <div class="q"><div class="qh"><div class="qn" style="background:#BFBFBD;font-size:13px">○</div><div class="qt">Also — where is it in the cycle?</div></div>
+      <div class="qa">From your GUIDES prep. This sits <b>after</b> the structural questions on purpose: the cycle is where a country is this year, structure is what it can do about it. Reading the cycle first is exactly the mistake the framework corrects.<br>Each letter carries its second reading, and <b>the disagreements are the finding</b>, not the levels.</div>
+      <div class="qb"><div class="guides" id="guides"></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">7</div><div class="qt">The two variables you would watch</div></div>
+      <div class="qb g2"><div><label class="f">Variable A</label><select id="AaxA"></select></div>
+        <div><label class="f">Variable B</label><select id="AaxB"></select></div></div></div>
+
+    <div id="Aout"></div>
+    <div class="chal" id="Achal" style="display:none"><div class="k">Challenge</div>
+      <div class="st" id="Achst"></div><div class="body" id="Achbody"></div></div>
+    <button class="btn" id="AchalBtn">Challenge this analysis</button>
+    <button class="btn ghost" id="ApromptBtn">Copy a prompt for any AI</button><button class="btn ghost" id="AcopyBtn">Copy summary</button><span class="copied" id="Acopied"></span>
+  </div>
+
+  <!-- ================= COMPANY ================= -->
+  <div class="stage" id="sb">
+    <div class="startbar"><div class="t"><b>A first pass is question 1 and question 2 — three clicks and three lines.</b> That gives you the position. Questions 3 to 6 tell you why nothing changes and when it breaks.<div class="reqkey"><b>*</b> the two questions the tool needs before it will say anything.</div></div>
+      <button class="exbtn" id="Bload">Load Novo Nordisk as a worked example</button></div>
+    <div><label class="f">Company</label><input type="text" id="Bname" placeholder="e.g. the company from your strategy project"></div>
+
+    <div class="q" style="border-top:none;padding-top:12px"><div class="qh"><div class="qn req">1</div><div class="qt">What position does it hold?<span class="who">Strange</span><span class="core">core</span></div></div>
+      <div class="qa">The four structures, then the three judgements. Being indispensable and being able to set terms are <b>different things</b>, and the difference decides everything.</div>
+      <div class="qb"><div class="g4" id="Bstruct"></div>
+        <div class="lad" id="Blad"></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">2</div><div class="qt">What does it run on?</div></div>
+      <div class="qa">Not only what it buys. An <b>output</b> line is a route to the customer it cannot replace — a payer, a distributor, an app store, a single market. Tick <b>reach</b> where a third country's export rules bind the trade without being party to it.
+   <details class="ex"><summary>examples</summary>inputs: EUV tools · photoresist · EDA licences · rare-earth magnets · dollar clearing<br>outputs: one payer or reimbursement regime · a single distributor · one app store · an export market that could close</details></div>
+      <div class="qb"><div style="overflow-x:auto"><table><thead><tr>
+        <th style="min-width:112px">Input or output</th><th>Side</th><th>Structure</th><th>Jurisdiction</th><th>Sources</th>
+        <th>Substitute in</th><th>Stopped first by</th><th>Reach</th><th>Risk</th><th></th></tr></thead>
+        <tbody id="Brows"></tbody></table></div>
+        <button class="addbtn" id="Badd">+ add a line</button><label class="advt"><input type="checkbox" id="Badv"> show structure, stopped-first-by and reach <span style="color:#A9A9A7">— the three columns that need the framework</span></label><div class="tc" id="Btc2"></div><div class="tc" id="Btc3b"></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">3</div><div class="qt">What do the exposures share?</div></div>
+      <div class="qa">A shared point of failure. An alliance is not one; a single approval body is.</div>
+      <div class="qb"><textarea id="Bcorr" placeholder="e.g. two suppliers clear through the same bank; three ship through one port"></textarea><div class="tc" id="Btc3"></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">4</div><div class="qt">What phase is the technology in?<span class="who">Perez</span></div></div>
+      <div class="qb g2"><div><label class="f">Phase</label><select id="Bphase"></select></div>
+        <div><label class="f">Evidence about standards</label><textarea id="Bphw" placeholder="settled or still moving?"></textarea></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">5</div><div class="qt">Who blocks the fix?<span class="who">Olson</span></div></div>
+      <div class="qa" id="Bq5a">Second-sourcing or requalifying the input above costs someone <b>inside</b> something. A competitor or a government belongs in question 1.</div>
+      <div class="qb g3">
+        <div><label class="f">The fix would be</label><input type="text" id="Bfix" placeholder="e.g. qualify a second supplier; move a line; redesign around it"><div class="mini">name the action, then say who pays for it</div></div>
+        <div><label class="f">Who loses if you do it</label><input type="text" id="Bblock" placeholder="e.g. the division owning the installed base"><div class="tc" id="Btc5"></div></div>
+        <div><label class="f">In the room?</label><select id="Bblockin"><option>Yes — and holds a veto</option><option>Yes — but can be overruled</option><option>No</option></select></div>
+      </div></div>
+
+    <div class="q"><div class="qh"><div class="qn">6</div><div class="qt">What is the internal clock?<span class="who">Turchin</span></div></div>
+      <div class="qa">Patent expiry, engineer supply, the capex treadmill, succession.</div>
+      <div class="qb g2"><div><label class="f">The pressure</label><input type="text" id="Bclock" placeholder="e.g. node capex doubling each generation"><div class="tc" id="Btc6"></div></div>
+        <div><label class="f">Horizon</label><select id="Bhoriz"><option>Under 3 years</option><option selected>3–10 years</option><option>Over 10 years</option></select></div></div></div>
+
+    <div class="q"><div class="qh"><div class="qn">7</div><div class="qt">The two variables you would watch</div></div>
+      <div class="qb g2"><div><label class="f">Variable A</label><select id="BaxA"></select></div>
+        <div><label class="f">Variable B</label><select id="BaxB"></select></div></div></div>
+
+    <div id="Bout"></div>
+    <div class="up"><label class="uplab" for="Bfile">Attach an annual report (PDF)</label>
+      <input type="file" id="Bfile" accept="application/pdf">
+      <span class="upname" id="Bfname">optional — the risk-factors section is the company's own list of chokepoints</span></div>
+    <div class="chal" id="Bchal" style="display:none"><div class="k">Challenge</div>
+      <div class="st" id="Bchst"></div><div class="body" id="Bchbody"></div></div>
+    <button class="btn" id="BchalBtn">Challenge this analysis</button>
+    <button class="btn ghost" id="BpromptBtn">Copy a prompt for any AI</button><button class="btn ghost" id="BcopyBtn">Copy summary</button><span class="copied" id="Bcopied"></span>
+  </div>
+  </div>
+
+  <p class="foot"><b>Two layers.</b> The checks run offline for everyone. <i>Challenge</i> calls Claude to argue with the substance and read an attached report — that needs the tool open inside Claude, and falls back to the questions worth asking yourself. <span style="color:#8FA09D">It does not forecast, and it cannot catch a conceptual miscategorisation that reads fluently. That is what the challenge is for.</span></p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const NONE='<span class="none">—</span>';
+const val=id=>{const e=$(id);return e?e.value.trim():"";};
+document.querySelectorAll(".tab").forEach(t=>{t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  $("sa").classList.toggle("on",t.dataset.s==="a");$("sb").classList.toggle("on",t.dataset.s==="b");};});
+
+const S4=[["Security","who protects, and who relies"],["Production","what it makes others cannot"],
+          ["Finance","whose currency, whose clearing"],["Knowledge","standards, IP, permission"]];
+const POS=["Depends on others","Participates","Holds it"];
+const CHAN=["Physical supply","Payments & clearing","Financing","Licensing & legal","Insurance & routing"];
+const PHASE=[["inst","Installation — standards unsettled"],["turn","Turning point — rules being rewritten"],
+             ["depl","Deployment — architecture settled"]];
+const AXES=[["Energy price or route","cheap and open","expensive or blocked"],
+            ["Funding & clearing access","open","restricted"],["Technology phase","installing","deploying"],
+            ["Political or internal will","the fix passes","coalitions block it"],
+            ["Cohesion of the holder","holds","fractures"],["External demand","strong","weak"]];
+/* structure → the channel you would expect. Divergence is the finding. */
+const EXPECT=[3,0,1,3];
+
+function LADQ(subject){return [
+  ["atCon",`Does ${subject} sit at a stage the chain must pass through?`,
+   "The chain is the sequence of stages from raw input to paying customer — the same one you drew in the flood exercise. Being at the constraint means the work cannot get to the customer without passing through this stage. If the stage is abundant, nothing below matters."],
+  ["canEx",`Can ${subject} keep others out of that stage?`,
+   "By patent, licence, scale, network, physical asset or accumulated data. Being good at something is not the same as being able to exclude others from it."],
+  ["canSet",`Can ${subject} dictate the terms others must accept?`,
+   "Not can it refuse — anyone can refuse. Can it set conditions others must operate inside? Or does someone set those conditions for it?"]];}
+const lad={A:{atCon:1,canEx:1,canSet:0},B:{atCon:1,canEx:1,canSet:0}};
+
+function drawLad(p){
+  const subj=(val(p+"name")||(p==="A"?"this country":"this company"));
+  $(p+"lad").innerHTML=LADQ(esc(subj)).map(q=>`<div class="lrow">
+    <div><div class="lq">${q[1]}</div><div class="lh">${q[2]}</div></div>
+    <div class="yn"><button data-p="${p}" data-l="${q[0]}" data-v="1" class="${lad[p][q[0]]?"on":""}">Yes</button>
+      <button data-p="${p}" data-l="${q[0]}" data-v="0" class="${lad[p][q[0]]?"":"on"}">No</button></div></div>`).join("");
+}
+function position(p){
+  const L=lad[p];
+  if(!L.atCon && !L.canEx) return ["Commodity position",
+    "Not at the constraint and unable to exclude. Price sits at marginal cost and any rent is temporary. The strategic question is not how to defend this, it is how to leave it."];
+  if(!L.atCon && L.canEx) return ["Excludable, but not binding",
+    "It owns something others cannot copy — and the chain does not have to pass through it. This is EMI with the CT scanner: a genuine asset, and the value accrues to whoever holds the stage that actually gates delivery. <b>Find out who that is, because they are collecting your rent.</b>"];
+  if(L.atCon && !L.canEx) return ["A bottleneck someone else monetises",
+    "The chain passes through it and it cannot keep anyone out. It is doing the work at the binding stage without owning it — an integrator rather than a holder. <b>Rent flows past, to whoever can exclude.</b>"];
+  if(L.atCon && L.canEx && !L.canSet) return ["A chokepoint without command",
+    "Indispensable, and unable to set terms. This is the position that earns commercial rent and attracts intervention: the more critical it becomes, the more worth controlling it is. <b>Criticality without command invites capture, not deference</b> — and neither the internal clock nor the technology phase will see that coming, because the threat is external and political."];
+  return ["Structural power",
+    "At the constraint, able to exclude, and able to set the terms others operate within. Strange's full case. <b>The risk is complacency: using a structure as an instrument teaches everyone else to route around it.</b>"];
+}
+</script>
+<script>
+/* ---- continued (kept separate so a syntax slip in one block is visible) ---- */
+["A","B"].forEach(p=>{
+  $(p+"struct").innerHTML=S4.map((s,i)=>`<div class="gg"><div class="hd"><div class="nm">${s[0]}</div></div>
+    <select data-p="${p}" data-s4="${i}">${POS.map((o,k)=>`<option value="${k}" ${k===1?"selected":""}>${o}</option>`).join("")}</select>
+    <div class="mini">${s[1]}</div></div>`).join("");
+  const ch=$(p+"chan"); if(ch) ch.innerHTML=CHAN.map((c,i)=>`<option value="${i}">${c}</option>`).join("");
+  $(p+"phase").innerHTML=PHASE.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("");
+  [["axA",0],["axB",1]].forEach(([k,def])=>{$(p+k).innerHTML=AXES.map((a,i)=>
+    `<option value="${i}" ${i===def?"selected":""}>${a[0]}</option>`).join("");});
+  drawLad(p);
+});
+document.addEventListener("click",e=>{
+  const b=e.target; if(b.dataset&&b.dataset.l){lad[b.dataset.p][b.dataset.l]=+b.dataset.v;drawLad(b.dataset.p);render();}
+  const d=b.dataset&&b.dataset.del; if(d!==undefined){const pp=b.dataset.delp;R[pp].splice(+d,1);drawRows(pp);render();}
+});
+
+/* GUIDES with paired second readings */
+const G=[["G","Growth","contracting","below trend","at trend","above trend",null],
+  ["U","Unemployment","far above normal","above","at normal","below normal",null],
+  ["I","Inflation","well below target","below","at target","above target",["Policy rate","deeply negative in real terms","below neutral","around neutral","restrictive"]],
+  ["D","Deficits","large deficit","moderate","near balance","surplus",["Debt stock","very high","high","moderate","low"]],
+  ["E","External balance","large deficit","deficit","balanced","surplus",["Currency","depreciating fast","softening","stable","firm"]],
+  ["S","Sentiment","fearful","cautious","steady","confident",null]];
+$("guides").innerHTML=G.map((g,i)=>`<div class="gg"><div class="hd"><div class="ltr">${g[0]}</div><div class="nm">${g[1]}</div></div>
+  <select data-g="${i}"><option value="-2">${g[2]}</option><option value="-1">${g[3]}</option>
+  <option value="0" selected>${g[4]}</option><option value="1">${g[5]}</option></select>
+  ${g[6]?`<div class="pair"><div class="pl">${g[6][0]}</div>
+    <select data-g2="${i}"><option value="-2">${g[6][1]}</option><option value="-1">${g[6][2]}</option>
+    <option value="0" selected>${g[6][3]}</option><option value="1">${g[6][4]}</option></select></div>`:""}
+  </div>`).join("");
+
+const STR=["Security","Production","Finance","Knowledge"];
+const JUR=["Home / allied","Neutral","Rival or contested","Single foreign jurisdiction"];
+const SUP=["Many","A few","Two or three","One"];
+const LEAD=["Weeks","Months","1–2 yrs","3+ yrs"];
+const SIDE=["Input — we buy it","Output — we sell through it"];
+const mk=(n,s_,side)=>({n:n||"",s:s_===undefined?1:s_,j:0,p:0,l:0,c:0,x:0,d:side||0});
+let R={A:[mk("Energy",1),mk("Compute / semiconductors",3),mk("",1),mk("",2)],
+       B:[mk("Energy",1),mk("Compute / semiconductors",3),mk("",1),mk("",0,1)]};
+let rows=R.B;
+const riskOf=r=>{const k=r.p+r.j+r.l+(r.x?2:0);return k>=7?["hi","critical"]:k>=4?["md","watch"]:["lo","tolerable"];};
+function drawRows(p){
+  if(p===undefined){drawRows("A");drawRows("B");return;}
+  const rs=R[p];
+  $(p+"rows").innerHTML=rs.map((r,i)=>{
+    const [c,l]=riskOf(r);
+    const sel=(arr,key)=>`<select data-p="${p}" data-i="${i}" data-k="${key}">${arr.map((o,k)=>`<option value="${k}" ${r[key]===k?"selected":""}>${o}</option>`).join("")}</select>`;
+    return `<tr><td><input type="text" data-p="${p}" data-i="${i}" data-k="n" value="${esc(r.n)}" placeholder="e.g. EUV lithography tools"></td>
+      <td>${sel(SIDE,"d")}</td><td>${sel(STR,"s")}</td><td>${sel(JUR,"j")}</td><td>${sel(SUP,"p")}</td><td>${sel(LEAD,"l")}</td>
+      <td>${sel(CHAN,"c")}</td>
+      <td class="ck"><input type="checkbox" data-p="${p}" data-i="${i}" data-k="x" ${r.x?"checked":""} style="width:14px;accent-color:#B05F45"></td>
+      <td><span class="risk ${c}">${l}</span></td>
+      <td>${rs.length>3?`<button class="del" data-delp="${p}" data-del="${i}">&times;</button>`:""}</td></tr>`;}).join("");
+}
+["A","B"].forEach(p=>{$(p+"add").onclick=()=>{if(R[p].length<8){R[p].push(mk(""));drawRows(p);render();}};});
+
+/* type checks */
+const EXTERNAL=["china","chinese","russia","usa","u.s.","united states","america","american","eu","european union",
+  "brussels","beijing","washington","moscow","taiwan","japan","korea","india","germany","france","uk","britain",
+  "government","regulator","competitor","rival","enemy","adversary","tariff","sanction"];
+const ABSTRACT=["political stability","stability","peace","trust","goodwill","confidence","reputation","demand",
+  "the economy","growth","culture","morale","brand","innovation","luck","time","money","capital"];
+const RELATION=["ally","allies","alliance","partner","partnership","friend","enemy","adversary","relationship","protection"];
+const MECHANICAL=["bank","port","strait","canal","insurer","insurance","jurisdiction","regulator","cable","route",
+  "supplier","approval","currency","clearing","licence","license","grid","pipeline","fab","carrier","exchange","customs"];
+const hit=(t,l)=>{const s=(t||"").toLowerCase();return l.find(w=>s.includes(w));};
+function tcheck(id,txt,kind){
+  const box=$(id); if(!box) return false; let m=null;
+  if(txt){
+    if(kind==="input"){const a=hit(txt,ABSTRACT); if(a) m=[`\u201C${a}\u201D is a condition, not an input.`,
+      "An input has a supplier and a price. You cannot procure a second source of stability. Name the thing that stops arriving when the condition fails.",
+      "e.g. EUV tools \u00b7 photoresist \u00b7 EDA licences \u00b7 export permits \u00b7 dollar clearing"];}
+    if(kind==="blocker"){const e=hit(txt,EXTERNAL); if(e) m=[`\u201C${e}\u201D is an external actor, not a blocker.`,
+      "This is about someone <i>inside</i> who loses if the exposure is reduced \u2014 the reason a known problem stays open. External threats are question 1.",
+      "e.g. the division owning the installed base \u00b7 the constituency defending domestic capacity"];}
+    if(kind==="clock"){const e=hit(txt,EXTERNAL); if(e) m=[`\u201C${e}\u201D is an external threat, not an internal clock.`,
+      "The clock runs whatever anyone else does, which is why it sets the timetable rather than responding to one.",
+      "e.g. aquifer depletion in the fab districts \u00b7 fertility and workforce contraction \u00b7 patent expiry"];}
+    if(kind==="corr"){const r=hit(txt,RELATION); if(r&&!hit(txt,MECHANICAL)) m=[`\u201C${r}\u201D is a relationship, not a shared point of failure.`,
+      "Mechanical question: what single thing, if it stopped, takes out more than one exposure at the same moment?",
+      "e.g. all three clear through one bank \u00b7 two routes pass the same strait \u00b7 one regulator approves both"];}
+  }
+  if(m){box.className="tc on";box.innerHTML=`<b>${m[0]}</b> ${m[1]}<span class="eg">${m[2]}</span>`;return true;}
+  box.className="tc";box.innerHTML="";return false;
+}
+
+function structLine(p){
+  const v=[...document.querySelectorAll(`[data-p="${p}"][data-s4]`)].map(s=>+s.value);
+  const holds=S4.filter((s,i)=>v[i]===2).map(s=>s[0]), deps=S4.filter((s,i)=>v[i]===0).map(s=>s[0]);
+  return {v,holds,deps,
+    t:(holds.length?`holds ${holds.join(" and ")}`:"holds none outright")+(deps.length?`, depends for ${deps.join(" and ")}`:", depends outright on none")};
+}
+function scen(p){
+  const A=AXES[+$(p+"axA").value],B=AXES[+$(p+"axB").value];
+  const nm=["Benign","Squeeze","Strain","Rupture"],cc=[[1,1],[1,2],[2,1],[2,2]];
+  const sy=["Stays latent — and nobody funds the mitigation.","One turns. Single channel, survivable, expensive. The likeliest.",
+    "The other turns. Different channel, different part of the organisation caught out.",
+    "Both at once. Your substitution time is the first thing to fail."];
+  return `<div class="scen">`+cc.map((c,i)=>`<div class="sc"><div class="h">${nm[i]} — ${A[0]} <i>${A[c[0]]}</i>, ${B[0]} <i>${B[c[1]]}</i></div>
+    <div class="b">${sy[i]}</div></div>`).join("")+`</div>`;
+}
+const dr=(l,v)=>`<div class="dr"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+
+function render(){
+  const bad={};
+  bad.Ainput=false;
+  bad.Ablock=tcheck("Atc5",val("Ablock"),"blocker");
+  bad.Aclock=tcheck("Atc6",val("Aclock"),"clock");
+  bad.Acorr=tcheck("Atc3",val("Acorr"),"corr");
+  bad.Bblock=tcheck("Btc5",val("Bblock"),"blocker");
+  bad.Bclock=tcheck("Btc6",val("Bclock"),"clock");
+  bad.Bcorr=tcheck("Btc3",val("Bcorr"),"corr");
+  ["Ainput","Ablock","Aclock","Bblock","Bclock","Acorr","Bcorr"].forEach(k=>{const e=$(k);if(e)e.className=bad[k]?"bad":"";});
+  const abs=[...R.A,...R.B].filter(r=>r.n.trim()&&hit(r.n,ABSTRACT));
+  if(abs.length){$("Btc2").className="tc on";$("Btc2").innerHTML=`<b>\u201C${esc(abs[0].n)}\u201D is a condition, not an input.</b> The risk score is computed from supplier count, jurisdiction and substitution time \u2014 none of which mean anything for something you cannot buy.<span class="eg">e.g. EUV tools \u00b7 photoresist \u00b7 EDA licences \u00b7 export permits \u00b7 skilled process engineers</span>`;}
+  else {$("Btc2").className="tc";$("Btc2").innerHTML="";}
+
+  const aRows=R.A.filter(r=>r.n.trim());
+  const aDep=aRows.length?aRows[0].n:"";
+  $("Aq5a").innerHTML=(val("Afix")
+    ? `You would fix it by <b>${esc(val("Afix"))}</b>. Doing that costs someone <b>inside</b> a margin, a budget or an expertise \u2014 which is usually why it has not happened. Name them.`
+    : (aDep?`Reducing dependence on <b>${esc(aDep)}</b> requires a specific action. Name the action, then name who pays for it.`
+          :`Name the action that would reduce the exposure above, then who inside loses if it happens.`))
+    +` A rival or a threat is question 1, not this one.`;
+  const bw=[...R.B].filter(r=>r.n.trim()).sort((a,b)=>(b.p+b.j+b.l)-(a.p+a.j+a.l))[0];
+  $("Bq5a").innerHTML=(val("Bfix")
+    ? `You would fix it by <b>${esc(val("Bfix"))}</b>. Doing that costs someone <b>inside</b> a margin, a budget or an expertise \u2014 which is usually why it has not happened. Name them.`
+    : (bw?`Reducing dependence on <b>${esc(bw.n)}</b> requires a specific action \u2014 second-source it, move it, requalify it, design around it. Name the action, then who pays for it.`
+        :`Name the action that would reduce the exposure above, then who inside loses if it happens.`))
+    +` A competitor or a government is question 1, not this one.`;
+
+  ["A","B"].forEach(p=>{
+    const S=structLine(p), P=position(p);
+    const bwp=[...R[p]].filter(r=>r.n.trim()).sort((a,b)=>(b.p+b.j+b.l+(b.x?2:0))-(a.p+a.j+a.l+(a.x?2:0)))[0];
+    const C=[];
+    if(p==="A"){
+      // channel divergence
+      const gv=[...document.querySelectorAll("[data-g]")].map(s=>+s.value);
+      const g2={}; document.querySelectorAll("[data-g2]").forEach(s=>{g2[+s.dataset.g2]=+s.value;});
+      if(gv[2]>=1&&g2[2]<=-1) C.push(["","<b>Inflation above target, policy still loose.</b> The two readings disagree: prices are running and the real rate is negative. Someone is choosing not to tighten, and that choice is the story."]);
+      if(gv[3]<=-1&&g2[3]<=-1) C.push(["","<b>Deficit on top of a high debt stock.</b> Flow and stock agree in the wrong direction, so this compounds. Watch the maturity profile rather than the headline."]);
+      if(gv[4]<=-1&&g2[4]>=0) C.push(["","<b>External deficit with a stable currency.</b> Something is financing the gap. Find out what, and whether it can be withdrawn."]);
+    }
+    {
+      const named=R[p].filter(r=>r.n.trim());
+      const crit=named.filter(r=>riskOf(r)[0]==="hi");
+      const div=named.filter(r=>EXPECT[r.s]!==r.c);
+      if(div.length) C.push(["ok",`<b>${div.length===1?"One input is":div.length+" inputs are"} stopped by something other than the obvious.</b> ${esc(div[0].n||"An input")} sits in ${STR[div[0].s]} and would be severed first by ${CHAN[div[0].c].toLowerCase()}. That mismatch is where the surprise lives \u2014 physical diversification does not help against a licence.`]);
+      const xr=named.filter(r=>r.x);
+      if(xr.length) C.push(["",`<b>${xr.length} input${xr.length>1?"s are":" is"} reached by a third country's export rules.</b> Jurisdiction of the supplier is then not the binding fact. Those inputs are conditionally licensed, and the licence can be withdrawn without anyone touching the goods.`]);
+      const jur={}; named.forEach(r=>{jur[r.j]=(jur[r.j]||0)+1;});
+      if((jur[3]||0)>1) C.push(["",`<b>Correlated by jurisdiction.</b> ${jur[3]} inputs sit in one foreign jurisdiction \u2014 one decision reaches them all the same morning.`]);
+      const fast=named.filter(r=>r.l<=1&&r.p>=2).length;
+      if(fast) C.push(["",`<b>${fast} input${fast>1?"s are":" is"} concentrated yet substitutable in months.</b> If a substitute were that quick, the concentration would usually have eroded. A qualification step is being left out.`]);
+      if(named.length>=4&&!crit.length) C.push(["","<b>Nothing critical.</b> What did the last real disruption cost, and how long did it take? If longer than any lead time above, the lead times are optimistic."]);
+      if(S.holds.length>=3&&!S.deps.length) C.push(["","<b>Near-total independence claimed.</b> Very rare and usually wrong. Name what could not be replaced in three years \u2014 tooling, chemicals, software licences, permits, scarce skills."]);
+      // outputs
+      const outs=named.filter(r=>r.d===1);
+      if(!outs.length&&named.length>=3) C.push(["",`<b>Every line is an input.</b> Dependence runs both ways: a route to the customer you cannot replace is an exposure too \u2014 one payer, one distributor, one store, one export market. Novo Nordisk's binding channel is reimbursement, not supply.`]);
+      const critOut=outs.filter(r=>riskOf(r)[0]==="hi");
+      if(critOut.length) C.push(["",`<b>The exposure is on the way out, not the way in.</b> ${esc(critOut[0].n)} is a route to the customer with no ready substitute. Supply-side diversification does nothing for it \u2014 and it is the side that shows up first in revenue.`]);
+      // Thompson substrate check
+      const txt=named.map(r=>r.n.toLowerCase()).join(" ");
+      const hasE=/energ|power|electric|gas|lng|oil|fuel|grid/.test(txt);
+      const hasC=/chip|semiconduct|compute|silicon|gpu|wafer|fab|lithograph/.test(txt);
+      if(named.length>=3&&(!hasE||!hasC)) C.push(["",`<b>${!hasE&&!hasC?"Neither energy nor compute appears":(!hasE?"Energy does not appear":"Compute does not appear")} in your list.</b> Thompson's argument is that everything runs on energy, and increasingly on semiconductors \u2014 they sit beneath all four structures rather than inside one. If they are genuinely not a dependency here, say why. More often they are simply invisible, because nobody procures them as a line item.`]);
+    }
+    if(bad[p+"block"]||bad[p+"clock"]||bad[p+"corr"]||(p==="B"&&abs.length))
+      C.unshift(["","<b>Fix the flagged answers first.</b> The blocker and the common factor are the two questions that distinguish this from a risk register."]);
+    if($(p+"blockin").value.indexOf("veto")>-1&&val(p+"block")&&!bad[p+"block"])
+      C.push(["","<b>The blocker holds a veto.</b> Then this is a governance problem, not a supply one, and no procurement plan solves it."]);
+    if(!C.length) C.push(["ok","<b>Nothing here contradicts anything else.</b> Either the picture is sound, or it is not specific enough to be wrong. Press Challenge."]);
+
+    $(p+"out").innerHTML=`<div class="verd"><div class="k">${esc(val(p+"name")||(p==="A"?"This country":"This company"))}</div>
+      <div class="v">${P[0]}</div><div class="s">${P[1]}</div></div>
+      <div class="contra">`+C.map(c=>`<div class="cx ${c[0]}">${c[1]}</div>`).join("")+`</div>
+      <details><summary>The full picture</summary>
+        ${dr("Four structures",S.t)}
+        ${dr("Binding line",bwp?`${esc(bwp.n)} \u2014 ${SIDE[bwp.d].split(" ")[0].toLowerCase()}, ${SUP[bwp.p].toLowerCase()}, ${JUR[bwp.j].toLowerCase()}, ${LEAD[bwp.l].toLowerCase()}`:NONE)}
+        ${dr("Stopped first by",bwp?CHAN[bwp.c]:NONE)}
+        ${dr("Shared factor",val(p+"corr")?esc(val(p+"corr")):NONE)}
+        ${dr("Phase",PHASE.find(x=>x[0]===$(p+"phase").value)[1])}
+        ${dr("Blocks the fix",val(p+"block")?esc(val(p+"block"))+" — "+esc($(p+"blockin").value):NONE)}
+        ${dr("Internal clock",val(p+"clock")?esc(val(p+"clock"))+", "+esc($(p+"horiz").value).toLowerCase():NONE)}
+        <div style="margin-top:9px">${scen(p)}</div></details>`;
+  });
+}
+
+
+
+/* ---- a prompt any model can answer, for offline / other-LLM use ---- */
+const PRIMER=`You are stress-testing a structural-power analysis. The framework, briefly:
+
+Susan Strange distinguishes RELATIONAL power (making someone do something, an event that must be repeated) from STRUCTURAL power (setting the terms others operate inside, an arrangement that works while nobody notices). Structural power runs through four structures: SECURITY (who is protected, from whom), PRODUCTION (what gets made, on what terms), FINANCE (who gets credit, in whose currency), KNOWLEDGE (what is known, and who may use it). They are convertible: strength in one can become strength in another, and conversion is where most powers fail.
+
+Five additions:
+- Thompson: every structure runs on a substrate, historically energy, now energy and semiconductors. A dependency is defined by its ROUTE, not by the resource.
+- Tooze: ask through which CHANNEL a shock would arrive (physical supply, payments, financing, licensing, insurance), and separately what the exposures have IN COMMON. Two suppliers clearing through one bank are one exposure.
+- Perez: a technology surge has an INSTALLATION half (buy optionality) and a DEPLOYMENT half (commit). Name which technology and which half.
+- Olson: a known exposure stays unfixed because someone INSIDE loses if it is fixed. Name them, and say whether they sit where the decision is made.
+- Turchin: an INTERNAL CLOCK runs whatever anyone else does. Name the pressure and a horizon in years.
+
+Position is decided by three judgements: is it at the constraint (must the chain pass through it), can it exclude others, can it set terms. At the constraint but unable to set terms is a CHOKEPOINT WITHOUT COMMAND: it earns rent and attracts intervention, because criticality without command invites capture rather than deference.
+
+Here is the analysis to test.
+
+`;
+function llmPrompt(p){
+  return PRIMER+collect(p)+`
+Now challenge it, in 5-7 sentences of plain prose. No preamble, no lists, no restating the answers back. Prioritise, in order:
+1. Any claim of independence or "holds" that is probably false. Name the specific tool, chemical, licence, standard or supplier that has been overlooked.
+2. Any answer of the wrong KIND: a blocker that is really an external threat; an input that is really a condition; a shared factor that is really a relationship; market power described as political agency.
+3. The single most important omission, especially any rule that reaches this subject from outside its own jurisdiction.
+Be concrete, and name real dependencies where you know them. If the analysis is sound, say so briefly and attack the weakest number instead.`;
+}
+
+/* ---- call budget: 6 per hour per open instance, in memory only ---- */
+const CALLS=[], CALL_LIMIT=6, CALL_WINDOW=3600000;
+function callsLeft(){const t=Date.now();while(CALLS.length&&t-CALLS[0]>CALL_WINDOW)CALLS.shift();return CALL_LIMIT-CALLS.length;}
+function nextFreeIn(){if(!CALLS.length)return 0;return Math.ceil((CALL_WINDOW-(Date.now()-CALLS[0]))/60000);}
+function takeCall(){if(callsLeft()<=0)return false;CALLS.push(Date.now());return true;}
+
+/* upload + challenge */
+let pdfB64=null;
+$("Bfile").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;
+  if(f.size>18*1024*1024){$("Bfname").textContent="too large — try the risk-factors section only";return;}
+  const r=new FileReader();r.onload=()=>{pdfB64=r.result.split(",")[1];$("Bfname").textContent=f.name+" attached";};
+  r.readAsDataURL(f);});
+
+function collect(p){
+  const S=structLine(p),P=position(p),L=lad[p];
+  let t=`Subject: ${val(p+"name")||"(unnamed)"} [${p==="A"?"country":"company"}]\nPosition: ${P[0]}\n`;
+  t+=`Ladder — at the constraint: ${L.atCon?"yes":"no"}; can exclude: ${L.canEx?"yes":"no"}; can set terms: ${L.canSet?"yes":"no"}\n`;
+  t+=`Structures — ${S.t}\n`;
+  t+="Lines:\n"+R[p].filter(r=>r.n.trim()).map(r=>`  - ${r.n} [${SIDE[r.d].split(" \u2014 ")[0]}]: ${STR[r.s]}, ${JUR[r.j]}, ${SUP[r.p]} source(s), substitute in ${LEAD[r.l]}, stopped first by ${CHAN[r.c]}${r.x?", reached by third-country export rules":""}`).join("\n")+"\n";
+  t+=`The fix: ${val(p+"fix")||"(unnamed)"}\n`;
+  t+=`Shared factor: ${val(p+"corr")||"(unanswered)"}\nPhase: ${PHASE.find(x=>x[0]===$(p+"phase").value)[1]} — ${val(p+"phw")||"no evidence"}\n`;
+  t+=`Blocks the fix: ${val(p+"block")||"(unanswered)"} — ${$(p+"blockin").value}\nInternal clock: ${val(p+"clock")||"(unanswered)"}, ${$(p+"horiz").value}\n`;
+  return t;
+}
+function FB(p){
+  const S=structLine(p), P=position(p), L=lad[p];
+  const named=R[p].filter(r=>r.n.trim());
+  const out=[];
+
+  // 1. the weakest number — the longest lead time is the load-bearing assumption
+  const slow=[...named].sort((x,y)=>y.l-x.l)[0];
+  if(slow&&slow.l>=2) out.push(`Start with the number carrying the most weight. You have said ${slow.n} would take ${LEAD[slow.l].toLowerCase()} to replace. Everything downstream rests on that figure. Is it based on a supplier's claim, on something that actually happened, or on an estimate made in this room? If nobody can source it, treat the whole assessment as provisional.`);
+  else if(named.length) out.push(`Every line here is marked substitutable within months. That is an unusually resilient picture. What did your last real disruption cost, and how long did it take to resolve? If the answer is longer than anything above, the lead times are optimistic rather than the business robust.`);
+
+  // 2. the ladder judgement least defensible
+  if(L.atCon&&L.canEx&&!L.canSet) out.push(`You have placed this at a chokepoint without command. Test the middle judgement hardest: can it really exclude others, or is it simply the best at something anyone may attempt? Being difficult to match is not the same as being able to keep others out, and the difference decides whether the rent is defensible or merely current.`);
+  else if(L.atCon&&L.canEx&&L.canSet) out.push(`You have claimed full structural power \u2014 at the constraint, able to exclude, able to set terms. That is a strong claim. Name the last occasion it actually set terms someone else had to accept, and what happened. If no example comes to mind, the third judgement is aspiration rather than observation.`);
+  else if(!L.atCon) out.push(`You have said it does not sit at the constraint. Then the interesting question is who does \u2014 which stage in this chain is the one nobody can go around? Name them, because that is where the rent you are not earning currently goes.`);
+  else out.push(`You have it at the constraint but unable to exclude. That is the integrator position: doing the work at the binding stage while somebody else collects. Name who can exclude, and what it would take to become them.`);
+
+  // 3. structures claimed without evidence
+  if(S.holds.length&&!S.deps.length) out.push(`You have marked ${S.holds.join(" and ")} as held, with no dependency anywhere. Name the single input, licence, tool or standard you could not replace within three years. If nothing comes to mind, the analysis has not yet reached the level where dependencies live \u2014 they are rarely the things bought monthly.`);
+
+  // 4. what has been left blank
+  const gaps=[];
+  if(!val(p+"corr")) gaps.push("what your exposures share");
+  if(!val(p+"fix")) gaps.push("what the fix would actually be");
+  if(!val(p+"block")) gaps.push("who loses if you do it");
+  if(!val(p+"clock")) gaps.push("the internal clock");
+  if(gaps.length) out.push(`Unanswered: ${gaps.join("; ")}. ${gaps.length>2?"Those are the questions that separate this from a supplier list.":"Answer it before you take this anywhere."}`);
+
+  // 5. the standing contradiction, named back
+  const cx=[...document.querySelectorAll(`#${p}out .cx`)].map(x=>x.querySelector("b")?x.querySelector("b").textContent.replace(/\.$/,""):"").filter(Boolean);
+  if(cx.length&&cx[0]!=="Nothing here contradicts anything else")
+    out.push(`The checks have already flagged: ${cx.slice(0,3).join("; ").toLowerCase()}. Take the first one and decide whether it is a real finding or an artefact of how you filled the form. Either answer is useful; leaving it unresolved is not.`);
+
+  return "Claude could not be reached, so here is what your own answers already imply.\n\n"+out.join("\n\n");
+}
+async function challenge(p){
+  const btn=$(p+"chalBtn"),box=$(p+"chal"),st=$(p+"chst"),body=$(p+"chbody");
+  box.style.display="block";
+  if(!takeCall()){
+    st.textContent=`call budget spent \u2014 ${CALL_LIMIT} per hour, next one free in about ${nextFreeIn()} min`;
+    body.textContent=FB(p); return;
+  }
+  btn.disabled=true;st.textContent="Arguing with it\u2026";body.textContent="";
+  const usePdf=(p==="B"&&pdfB64);
+  const prompt=`You are stress-testing a structural-power analysis built on Strange's four structures, with Thompson on energy, Tooze on transmission, Perez on phase, Olson on internal blockers, Turchin on internal clocks.
+
+${collect(p)}
+Reply in 5-7 sentences of plain prose. No preamble, no lists, no restating their answers. Prioritise:
+1. Any claim of independence or "holds" that is probably false — name the specific tool, chemical, licence, standard or supplier overlooked.
+2. Any answer of the wrong KIND: a blocker that is an external threat; an input that is a condition; a shared factor that is a relationship; market power described as political agency.
+3. The single most important omission, especially any rule that reaches this subject from outside its own jurisdiction.
+Be concrete. If the analysis is sound, say so briefly and attack the weakest number instead.${usePdf?"\n\nAn annual report is attached. Check the claims against its stated risk factors and disclosed concentrations. Quote no more than a few words at a time.":""}`;
+  const content=usePdf?[{type:"document",source:{type:"base64",media_type:"application/pdf",data:pdfB64}},{type:"text",text:prompt}]:prompt;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content}]})});
+    if(!res.ok) throw 0;
+    const d=await res.json();
+    const txt=d.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+    if(!txt) throw 0;
+    st.textContent=usePdf?"checked against the attached report":"";body.textContent=txt;
+  }catch(e){st.textContent="(offline)";body.textContent=FB(p);}
+  finally{btn.disabled=false;updateBudget();}
+}
+function updateBudget(){["A","B"].forEach(p=>{const b=$(p+"chalBtn");
+  const n=callsLeft(); b.textContent=n>=CALL_LIMIT?"Challenge this analysis":`Challenge this analysis (${n} left this hour)`;});}
+$("AchalBtn").onclick=()=>challenge("A");
+$("BchalBtn").onclick=()=>challenge("B");
+function copyOut(p){
+  let t=collect(p)+"\nContradictions:\n";
+  $(p+"out").querySelectorAll(".cx").forEach(x=>{t+="  - "+x.innerText+"\n";});
+  const c=$(p+"chbody").textContent.trim(); if(c) t+="\nChallenge:\n"+c+"\n";
+  navigator.clipboard.writeText(t).then(()=>{$(p+"copied").textContent="copied";
+    setTimeout(()=>$(p+"copied").textContent="",1800);}).catch(()=>{$(p+"copied").textContent="press \u2318/Ctrl-C";});
+}
+["A","B"].forEach(p=>{$(p+"promptBtn").onclick=()=>{
+  navigator.clipboard.writeText(llmPrompt(p)).then(()=>{
+    $(p+"copied").textContent="prompt copied \u2014 paste it into any assistant";
+    setTimeout(()=>$(p+"copied").textContent="",3000);
+  }).catch(()=>{$(p+"copied").textContent="press \u2318/Ctrl-C";});};});
+$("AcopyBtn").onclick=()=>copyOut("A");
+$("BcopyBtn").onclick=()=>copyOut("B");
+document.addEventListener("input",e=>{
+  const t=e.target,i=t.dataset.i,k=t.dataset.k,p=t.dataset.p;
+  if(i!==undefined&&k&&R[p]){R[p][+i][k]=(k==="n")?t.value:(k==="x"?(t.checked?1:0):+t.value); if(k!=="n")drawRows(p);}
+  render();});
+document.addEventListener("change",render);
+
+/* ---------- worked examples ---------- */
+const EX={
+ A:{name:"Taiwan",struct:[0,2,1,1],lad:{atCon:1,canEx:1,canSet:0},
+    rows:[["imported energy",0,1,1,1,3,0,0],
+          ["EUV lithography tools",0,3,3,3,3,3,1],
+          ["photoresist and CMP chemicals",0,1,3,2,2,0,1],
+          ["advanced logic sold to global customers",1,1,1,3,3,3,1]],
+    corr:"the same two strait approaches carry the energy and the exports, and one export-control regime covers both the tools coming in and the customers going out",
+    phase:"depl",phw:"the architecture has been stable for a decade and the ecosystem is thickening around it",
+    fix:"disperse fab capacity abroad and commission reclaimed water",
+    block:"the domestic constituency defending concentration on silicon-shield grounds",blockin:0,
+    clock:"aquifer depletion in the Hsinchu and Tainan fab districts",horiz:1,ax:[0,3],
+    guides:[1,1,0,0,1,0],g2:{2:0,3:0,4:0}},
+ B:{name:"Novo Nordisk",struct:[1,2,1,2],lad:{atCon:1,canEx:1,canSet:0},
+    rows:[["fill-finish and pen assembly capacity",0,1,0,2,3,0,0],
+          ["peptide API synthesis",0,1,0,1,2,0,0],
+          ["reimbursement and formulary access",1,2,1,2,3,3,0],
+          ["semiconductor-grade device electronics",0,3,1,1,1,0,0]],
+    corr:"one payer system governs both the price and the volume, and a single regulator gates every new presentation",
+    phase:"inst",phw:"oral against injectable is unsettled and next-generation molecules are still in trials",
+    fix:"add a second fill-finish site and shift weight toward oral formulation",
+    block:"the division owning the injectable footprint",blockin:1,
+    clock:"patent expiry, which arrived early in Canada through a lapsed maintenance fee",horiz:0,ax:[2,3],
+    guides:[0,0,0,0,0,0],g2:{2:0,3:0,4:0}}
+};
+function loadEx(p){
+  const e=EX[p];
+  $(p+"name").value=e.name;
+  document.querySelectorAll(`[data-p="${p}"][data-s4]`).forEach((sel,i)=>{sel.value=e.struct[i];});
+  lad[p]={...e.lad};
+  R[p]=e.rows.map(r=>({n:r[0],d:r[1],s:r[2],j:r[3],p:r[4],l:r[5],c:r[6],x:r[7]}));
+  $(p+"corr").value=e.corr; $(p+"phase").value=e.phase; $(p+"phw").value=e.phw;
+  $(p+"fix").value=e.fix; $(p+"block").value=e.block;
+  $(p+"blockin").selectedIndex=e.blockin; $(p+"clock").value=e.clock; $(p+"horiz").selectedIndex=e.horiz;
+  $(p+"axA").value=e.ax[0]; $(p+"axB").value=e.ax[1];
+  if(p==="A"){
+    document.querySelectorAll("[data-g]").forEach((sel,i)=>{sel.value=e.guides[i]===1?"1":(e.guides[i]===-1?"-1":"0");});
+    document.querySelectorAll("[data-g2]").forEach(sel=>{sel.value=String(e.g2[+sel.dataset.g2]||0);});
+  }
+  $(p+"adv").checked=true; $(p+"rows").closest("table").className="adv";
+  drawLad(p); drawRows(p); render();
+  $(p+"out").scrollIntoView&&$(p+"out").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+["A","B"].forEach(p=>{
+  $(p+"load").onclick=()=>loadEx(p);
+  $(p+"adv").onchange=()=>{$(p+"rows").closest("table").className=$(p+"adv").checked?"adv":"";};
+});
+
+drawRows(); render(); updateBudget();
+</script>
+</body>
+</html>
