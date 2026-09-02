@@ -95,9 +95,12 @@
   .progress i{display:block;height:2px;background:var(--gold);transition:width .3s}
   .conf{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
   /* the cheapest thing here, and the reason the room recognises its own morning */
-  .board{display:flex;align-items:center;gap:8px;margin:-12px 0 16px;
-         color:var(--gold);font-size:12px;letter-spacing:.09em}
-  .board:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  /* block, not flex: the two languages stack instead of racing each other for
+     the width of a phone */
+  .board{position:relative;padding-left:15px;margin:-12px 0 16px;
+         color:var(--gold);font-size:12px;letter-spacing:.09em;line-height:1.4}
+  .board:before{content:"";position:absolute;left:0;top:.42em;
+                width:7px;height:7px;border-radius:50%;background:var(--gold)}
   .done{font-family:Georgia,serif;font-size:22px;line-height:1.4;padding:70px 0}
   .queued{color:var(--copp);font-size:13px;margin-top:14px}
 
@@ -131,6 +134,13 @@
            padding:9px 12px;margin-bottom:14px;font-size:13px}
   .pt{color:var(--mut);font-weight:400}
   button .pt{font-size:11px;display:block;margin-top:2px;letter-spacing:.04em}
+  .en2{color:var(--mut);font-weight:400}
+  button .en2{font-size:10.5px;display:block;margin-top:3px;letter-spacing:.04em;opacity:.85}
+  .kicker .en2{margin-left:8px;opacity:.8}
+  .legend .en2{display:block;margin-top:2px;opacity:.8}
+  .done .en2{display:block;font-size:15px;margin-top:8px}
+  .board .en2{display:block;margin-top:2px;opacity:.75;letter-spacing:.06em}
+  h1 .en2{display:block;font-size:.62em;margin-top:4px;font-weight:400}
   .stamp{position:fixed;right:14px;bottom:12px;font-size:10px;letter-spacing:.18em;
          color:var(--copp);text-transform:uppercase;pointer-events:none}
   @media (max-width:900px){ .wrap{flex-direction:column} .gate{flex:1 1 auto} body{padding:18px 16px 36px} h1{font-size:23px} }
@@ -214,10 +224,12 @@ const CHOICES = [
     d:"candidata ao pôlder: a máquina poderia fazer, e podemos escolher que não faça",
     de:"a polder candidate: the machine could do it and we may choose it does not" },
 ];
-const CONF = [ {k:"sure",pt:"com certeza"}, {k:"fairly",pt:"bastante seguro"}, {k:"guess",pt:"no palpite"} ];
+const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
+               {k:"fairly",pt:"bastante seguro",en:"fairly sure"},
+               {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 6;   /* bumped whenever this file changes */
+const BUILD = 7;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -602,7 +614,8 @@ function countLine(){
   const acts = model();
   const c = { sub:0, line:0, dry:0, polder:0 };
   acts.forEach(a => c[stateOf(a, W)]++);
-  return `submersas: <b>${c.sub}</b> de ${acts.length} · na linha: <b>${c.line}</b> · pôlder: <b>${c.polder}</b> · secas: <b>${c.dry}</b>`;
+  return `submersas: <b>${c.sub}</b> de ${acts.length} · na linha: <b>${c.line}</b> · pôlder: <b>${c.polder}</b> · secas: <b>${c.dry}</b>`
+       + `<span class="en2" style="display:block;font-size:12.5px;margin-top:3px">under water ${c.sub} of ${acts.length} · at the line ${c.line} · polder ${c.polder} · dry ${c.dry}</span>`;
 }
 
 function gateHTML(){
@@ -612,9 +625,10 @@ function gateHTML(){
         <span>${esc(b.label)}${b.label_en?`<div style="color:var(--mut);font-size:11px;margin-top:2px">${esc(b.label_en)}</div>`:``}</span></div>`).join("")
     : `<div class="muted" style="font-size:13px">O muro entra no console da sala, no intervalo.</div>`;
   return `<div class="gate${OPT.arrow?" lit":""}">
-    <h2>O muro</h2>
+    <h2>O muro <span class="pt">the wall</span></h2>
     <div class="bricks">${rows}</div>
-    <div class="legend">preenchido: ligado a nós · vazio: genérico ou alugado</div>
+    <div class="legend">preenchido: ligado a nós · vazio: genérico ou alugado
+      <span class="en2">filled: bound to us · hollow: generic or rented</span></div>
   </div>`;
 }
 
@@ -648,10 +662,18 @@ function viewDoor(){
     <h1>${esc(CFG.title || "Onde a máquina deve trabalhar")}</h1>
     <div class="sub">${esc(CFG.session || "")}</div>
     <div class="doors">
-      <a href="#/triagem"><b>Sou participante</b><span>A triagem privada. Ninguém vê as suas respostas, nunca com nome.</span></a>
-      <a href="#/figura"><b>A figura</b><span>Para projetar, depois de a triagem fechar.</span></a>
-      <a href="#/almoco"><b>Modo almoço</b><span>Os seis nomes do quadro, colados às 12:00. Nada mais nesta tela.</span></a>
-      <a href="#/sala"><b>Console da sala</b><span>Facilitador: a lista completa, o muro, a fase, as contagens.</span></a>
+      <a href="#/triagem"><b>${bp("Sou participante","I am a participant")}</b>
+        <span>A triagem privada. Ninguém vê as suas respostas, nunca com nome.
+        <span class="en2">The private sort. Nobody sees your answers, never with a name.</span></span></a>
+      <a href="#/figura"><b>${bp("A figura","The figure")}</b>
+        <span>Para projetar, depois de a triagem fechar.
+        <span class="en2">To project, once the sort has closed.</span></span></a>
+      <a href="#/almoco"><b>${bp("Modo almoço","Lunch entry")}</b>
+        <span>Os seis nomes do quadro, colados às 12:00. Nada mais nesta tela.
+        <span class="en2">The six board names, pasted at 12:00. Nothing else on this screen.</span></span></a>
+      <a href="#/sala"><b>${bp("Console da sala","The room console")}</b>
+        <span>Facilitador: a lista completa, o muro, a fase, as contagens.
+        <span class="en2">Facilitator: the full list, the wall, the phase, the counts.</span></span></a>
     </div>
   </div>`;
 }
@@ -661,7 +683,9 @@ function viewTriagem(){
   const acts = acts_();
   if(CFG.phase === "setup" && sharedRoom())
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
-      <h1>Ainda não</h1><div class="sub">A triagem abre às 13:25. Deixe esta página aberta.</div></div>`;
+      <h1>Ainda não<span class="en2">Not yet</span></h1>
+      <div class="sub">A triagem abre às 13:25. Deixe esta página aberta.
+      <span class="en2">The sort opens at 13:25. Leave this page open.</span></div></div>`;
 
   const order = sortOrder();
   const answered = order.filter(a => MINE[a.id]).length;
@@ -670,35 +694,39 @@ function viewTriagem(){
   if(!next){
     const released = CFG.phase === "revelado";
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
-      ${PENDING_SEND ? `<div class="queued">Guardado neste aparelho. Será enviado assim que houver ligação.</div>` : ``}
-      <div class="done">Guardado. Só isso.<br><span class="muted" style="font-size:16px">
-      ${released ? "A sua leitura está pronta." : "Vai rever isto depois, no seu aparelho."}</span></div>
-      ${released ? `<button id="toEu">a minha leitura</button>` : ``}</div>`;
+      ${PENDING_SEND ? `<div class="queued">Guardado neste aparelho. Será enviado assim que houver ligação.
+        <span class="en2">Saved on this device. It will be sent as soon as there is a connection.</span></div>` : ``}
+      <div class="done">Guardado. Só isso.<span class="en2">Saved. That is all.</span>
+      <span class="muted" style="font-size:16px;display:block;margin-top:14px">
+      ${released ? "A sua leitura está pronta." : "Vai rever isto depois, no seu aparelho."}
+      <span class="en2" style="display:block">${released ? "Your reading is ready." : "You will see this again later, on your own device."}</span></span></div>
+      ${released ? `<button id="toEu">${bp("a minha leitura","my reading")}</button>` : ``}</div>`;
   }
 
   /* the progress is the words and nothing else, and there is no way back:
      an answer is committed at the confidence tap and stays committed */
   return `<div class="narrow">
-    <div class="kicker">${answered+1} de ${acts.length}</div>
+    <div class="kicker">${answered+1} de ${acts.length}<span class="en2">${answered+1} of ${acts.length}</span></div>
     <div class="prompt">${esc(next.label_pt)}</div>
     ${next.label_en ? `<div class="promptEn">${esc(next.label_en)}</div>` : ``}
-    ${fromBoard(next) ? `<div class="board">do quadro desta manhã</div>` : ``}
+    ${fromBoard(next) ? `<div class="board">do quadro desta manhã<span class="en2">from this morning's board</span></div>` : ``}
     ${CHOICES.map(c => `<button class="choice" data-c="${c.key}">
         <b style="color:${c.color}">${c.pt}<i>${c.en}</i></b>
         <span>${c.d}<i>${c.de}</i></span></button>`).join("")}
-    <div class="legend" style="margin-top:18px">Nada aqui mostra o que a sala respondeu. É de propósito.</div>
+    <div class="legend" style="margin-top:18px">Nada aqui mostra o que a sala respondeu. É de propósito.
+      <span class="en2">Nothing here shows what the room answered. That is deliberate.</span></div>
   </div>`;
 }
 
 function viewConf(aid){
   const a = (CFG.activities||[]).find(x=>x.id===aid);
   return `<div class="narrow">
-    <div class="kicker">opcional</div>
+    <div class="kicker">opcional<span class="en2">optional</span></div>
     <div class="prompt">Quão seguro está?<br><span class="muted" style="font-size:17px">${esc(a?a.label_pt:"")}</span></div>
     <div class="promptEn" style="margin-top:-12px">How sure are you?</div>
-    <div class="conf">${CONF.map(c=>`<button data-k="${c.k}">${c.pt}</button>`).join("")}
-      <button class="ghost" data-k="skip">saltar</button></div>
-    <div class="row"><button class="ghost" data-k="cancel">voltar</button></div>
+    <div class="conf">${CONF.map(c=>`<button data-k="${c.k}">${bp(c.pt, c.en)}</button>`).join("")}
+      <button class="ghost" data-k="skip">${bp("saltar","skip")}</button></div>
+    <div class="row"><button class="ghost" data-k="cancel">${bp("voltar","back")}</button></div>
   </div>`;
 }
 
@@ -718,8 +746,9 @@ function viewFigura(){
   }).join("");
 
   return `<div>
-    <h1>${esc(CFG.title||"")}</h1>
-    <div class="sub">${esc(CFG.subtitle||"")}</div>
+    <h1>${esc(CFG.title||"")}<span class="en2">Where the machine should do the work</span></h1>
+    <div class="sub">${esc(CFG.subtitle||"")}
+      <span class="en2">Your own reading, redrawn. Move the water.</span></div>
     <div class="wrap">
       <div class="terrain" id="fig">${figureSVG(null)}</div>
       ${gateHTML()}
@@ -734,17 +763,17 @@ function viewFigura(){
       <div class="count" id="count">${countLine()}</div>
       <div class="overrides" id="ovs">${ovs}</div>
       <div class="row">
-        <button id="snapToday"  aria-pressed="${WMODE==="today"}">hoje</button>
-        <button id="snapThree" aria-pressed="${WMODE==="three"}" ${wThree()==null?"disabled":""}>três anos</button>
+        <button id="snapToday"  aria-pressed="${WMODE==="today"}">${bp("hoje","today")}</button>
+        <button id="snapThree" aria-pressed="${WMODE==="three"}" ${wThree()==null?"disabled":""}>${bp("três anos","three years")}</button>
         <span class="muted" style="margin:0 6px">|</span>
-        <button id="bMorning" aria-pressed="${OPT.morning}">cartões da manhã</button>
-        <button id="bRead"    aria-pressed="${OPT.outside}">leitura externa</button>
-        <button id="bArrow"   aria-pressed="${OPT.arrow}">o custo cai aqui</button>
+        <button id="bMorning" aria-pressed="${OPT.morning}">${bp("cartões da manhã","the morning cards")}</button>
+        <button id="bRead"    aria-pressed="${OPT.outside}">${bp("leitura externa","the outside read")}</button>
+        <button id="bArrow"   aria-pressed="${OPT.arrow}">${bp("o custo cai aqui","cost falls here")}</button>
         <span class="muted" style="margin:0 6px">|</span>
-        <select id="ovAct"><option value="">anular a leitura em…</option>
-          ${model().map(a=>`<option value="${a.id}">${esc(a.label_pt)}</option>`).join("")}</select>
-        <input type="text" id="ovWhy" placeholder="porquê, em uma linha" size="34">
-        <button id="ovDo">anular</button>
+        <select id="ovAct"><option value="">anular a leitura em… · overrule the read on…</option>
+          ${model().map(a=>`<option value="${a.id}">${esc(a.label_pt)}${a.label_en?` · ${esc(a.label_en)}`:``}</option>`).join("")}</select>
+        <input type="text" id="ovWhy" placeholder="porquê, em uma linha · why, in one line" size="38">
+        <button id="ovDo">${bp("anular","overrule")}</button>
       </div>
       <div class="legend">${sourceLine()} · a sua leitura, esta sala, hoje ·
         <a href="#/delta" style="color:var(--mut)">divergências</a> ·
@@ -757,7 +786,9 @@ function viewFigura(){
 function viewEu(){
   if(sharedRoom() && CFG.phase !== "revelado")
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
-      <h1>Ainda não</h1><div class="sub">A sua leitura abre depois da figura.</div></div>`;
+      <h1>Ainda não<span class="en2">Not yet</span></h1>
+      <div class="sub">A sua leitura abre depois da figura.
+      <span class="en2">Your reading opens after the figure.</span></div></div>`;
   if(!Object.keys(MINE).length)
     return `<div class="narrow"><h1>Sem respostas neste aparelho</h1>
       <div class="sub">A triagem correu noutro aparelho, ou ainda não a fez.</div></div>`;
@@ -776,22 +807,25 @@ function viewEu(){
   OPT = keep;
 
   return `<div>
-    <div class="kicker">só neste aparelho · nunca no projetor, nunca com nome</div>
-    <h1>A sua leitura</h1>
-    <div class="sub">As suas três colunas, marcadas com um ponto, sobre a figura da sala.</div>
+    <div class="kicker">só neste aparelho · nunca no projetor, nunca com nome
+      <span class="en2">this device only · never projected, never with a name</span></div>
+    <h1>A sua leitura<span class="en2">Your reading</span></h1>
+    <div class="sub">As suas três colunas, marcadas com um ponto, sobre a figura da sala.
+      <span class="en2">Your three columns, dotted, over the room's figure.</span></div>
     <div class="terrain">${fig}</div>
     <div class="row" style="margin-top:6px">
       ${CHOICES.map(c=>`<span class="muted" style="font-size:12.5px">
         <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c.hex};margin-right:6px"></span>${c.pt}</span>`).join("")}
     </div>
-    <h2 style="margin-top:26px">Onde mais divergiu da sala</h2>
+    <h2 style="margin-top:26px">Onde mais divergiu da sala <span class="pt">where you diverged most</span></h2>
     ${gaps.length ? gaps.map(g => {
       const spec = CHOICES.find(c=>c.key===g.mine);
       return `<div class="card"><div class="t">${esc(g.a.label_pt)}</div>
         <div class="d">você: <b style="color:${spec.hex}">${spec.pt.toLowerCase()}</b> ·
         a sala: ${CHOICES.map(c=>`${c.pt.toLowerCase()} ${pct(g.a.sh[c.key])}`).join(" · ")}</div></div>`;
     }).join("") : `<div class="muted">Ainda sem respostas da sala.</div>`}
-    <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.</div>
+    <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.
+      <span class="en2">This does not leave this device.</span></div>
   </div>`;
 }
 
@@ -804,7 +838,9 @@ function viewEuSolo(){
     <div class="kicker">só neste aparelho · nunca no projetor, nunca com nome</div>
     <h1>A sua leitura</h1>
     <div class="sub">O que respondeu, e o que a leitura externa diz sobre o mesmo.
-      A comparação com a sala está no projetor.</div>
+      A comparação com a sala está no projetor.
+      <span class="en2">What you answered, and what the outside read says about it.
+      The comparison with the room is on the projector.</span></div>
     ${acts.map(a => {
       const m = MINE[a.id];
       if(!m) return ``;
@@ -819,7 +855,8 @@ function viewEuSolo(){
             ? `<br><span class="muted">o que a mudaria: ${esc(a.outside_read.falsifier)}</span>` : ``}</div>
       </div>`;
     }).join("")}
-    <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.</div>
+    <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.
+      <span class="en2">This does not leave this device.</span></div>
   </div>`;
 }
 
@@ -1078,6 +1115,9 @@ function viewContagem(){
 
 /* ---- 6 · the facilitator console ---- */
 const bi = (en, pt) => `${en} <span class="pt">${pt}</span>`;
+/* the console leads in English; every participant surface leads in Portuguese
+   and carries the English under it, at the same weight everywhere */
+const bp = (pt, en) => `${pt}<span class="en2">${en}</span>`;
 
 function viewSala(){
   const acts = CFG.activities || [];
@@ -1752,7 +1792,7 @@ boot();
    "verifiability": 1
   }
  ],
- "build": 6
+ "build": 7
 }
 </script>
 </html>
