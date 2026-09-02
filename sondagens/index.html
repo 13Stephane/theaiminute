@@ -760,8 +760,16 @@ function viewAlmoco(){
         ? `<button id="unlock" ${lockable()?"":"disabled"}>destrancar</button>
            ${lockable()?``:`<span class="muted" style="font-size:12px">já há respostas: a lista não muda por baixo de quem já respondeu</span>`}`
         : `<button id="lock">trancar a lista</button>`}
+      <button id="aExport" class="ghost">copiar para publicar</button>
       <button id="aBack" class="ghost">console completo</button>
       <span class="muted" id="aMsg" style="font-size:12px"></span>
+    </div>
+    <div id="aOut" hidden style="margin-top:12px">
+      <div class="muted" style="font-size:12.5px;margin-bottom:6px">
+        Isto é o <code>session.json</code> completo. Substitua o ficheiro publicado por este,
+        senão os telemóveis continuam com a lista de antes do almoço.</div>
+      <textarea id="aJson" rows="6" style="width:100%;font-size:11.5px;
+        font-family:ui-monospace,Menlo,monospace"></textarea>
     </div>
   </div>`;
 }
@@ -966,6 +974,16 @@ function wire(v){
       if(!lockable()) return;
       CFG.locked = false; await publish(); render();
     });
+    on("aExport","click", async () => {
+      const pub = { session: CFG.session, title: CFG.title, subtitle: CFG.subtitle,
+                    activities: CFG.activities, wall: CFG.wall, morning_cards: CFG.morning_cards };
+      const text = JSON.stringify(pub, null, 1);
+      const out = document.getElementById("aOut"), box = document.getElementById("aJson");
+      box.value = text; out.hidden = false; box.focus(); box.select();
+      const m = document.getElementById("aMsg");
+      try { await navigator.clipboard.writeText(text); if(m) m.textContent = "copiado"; }
+      catch(e){ if(m) m.textContent = "selecionado · copie com ⌘C"; }
+    });
     on("aBack","click", () => go("sala"));
   }
 
@@ -1109,53 +1127,295 @@ boot();
 
 <script type="application/json" id="fallback">
 {
-  "session": "sessao-2026-09-08",
-  "title": "Onde a máquina deve trabalhar",
-  "subtitle": "A sua leitura, redesenhada. Mova a água.",
-  "activities": [
-    { "id":"a1","label_pt":"Codificar o atendimento para faturamento","source":"waterline_board","outside_read":{"band":"already","drivers":["barato de conferir contra a guia","os dados existem em escala","sem barreira regulatória"],"falsifier":"auditores passam a rejeitar guias codificadas por máquina"} },
-    { "id":"a2","label_pt":"Resumir um histórico longo antes da consulta","source":"waterline_board","outside_read":{"band":"already","drivers":["o médico confere em segundos","texto clínico existe em volume","sem barreira regulatória"],"falsifier":"uma omissão do resumo entra num processo"} },
-    { "id":"a3","label_pt":"Redigir a justificativa clínica de uma autorização prévia","source":"waterline_board","outside_read":{"band":"under_3","drivers":["conferir custa menos do que redigir","cada operadora pede um formato","assinatura de um médico é exigida"],"falsifier":"a operadora passa a exigir autoria humana declarada"} },
-    { "id":"a4","label_pt":"Triar as chamadas recebidas por urgência","source":"waterline_board","outside_read":{"band":"under_3","drivers":["o erro aparece rápido","protocolos de triagem são públicos","responsabilidade se um caso grave é rebaixado"],"falsifier":"um caso rebaixado pela máquina vira evento sentinela"} },
-    { "id":"a5","label_pt":"Ler um exame de rastreamento de rotina","source":"waterline_board","outside_read":{"band":"already","drivers":["dupla leitura já é o padrão","bases de imagem enormes e rotuladas","dispositivo aprovado, laudo assinado"],"falsifier":"o conselho passa a exigir leitura humana primária"} },
-    { "id":"a6","label_pt":"Responder a uma auditoria da operadora com as evidências","source":"waterline_board","outside_read":{"band":"under_3","drivers":["a evidência está no prontuário","o formato repete-se","a resposta compromete a cooperativa"],"falsifier":"a operadora glosa uma resposta montada por máquina"} },
-    { "id":"a7","label_pt":"Agendamento e lembretes de consulta","source":"intake","outside_read":{"band":"already","drivers":["o resultado confere-se sozinho","dados operacionais em escala","sem barreira"],"falsifier":"quedas de comparecimento atribuídas ao contacto automático"} },
-    { "id":"a8","label_pt":"Registo clínico ditado durante a consulta","source":"intake","outside_read":{"band":"already","drivers":["o médico lê e assina na hora","áudio clínico em volume","consentimento de gravação"],"falsifier":"pacientes recusam a gravação em número relevante"} },
-    { "id":"a9","label_pt":"Buscar a evidência no ponto de cuidado","source":"intake","outside_read":{"band":"already","drivers":["a fonte fica visível e confere-se","literatura pública","sem barreira"],"falsifier":"uma citação inventada chega à conduta"} },
-    { "id":"a10","label_pt":"Ligar a quem faltou a duas consultas e descobrir o motivo","source":"intake","outside_read":{"band":"3_to_7","drivers":["o resultado só se vê semanas depois","poucas gravações destas conversas","sem barreira formal, muita relação"],"falsifier":"a taxa de retorno iguala a do contacto humano"} },
-    { "id":"a11","label_pt":"Estratificar risco e fazer busca ativa na carteira","source":"intake","outside_read":{"band":"under_3","drivers":["a lista confere-se contra desfechos","os dados são da cooperativa","sem barreira, mas há equidade em jogo"],"falsifier":"a estratificação reproduz um viés e é suspensa"} },
-    { "id":"a12","label_pt":"Escrever a primeira versão de um protocolo assistencial","source":"intake","outside_read":{"band":"3_to_7","drivers":["conferir custa quase o mesmo que escrever","protocolos publicados existem","a comissão técnica responde por ele"],"falsifier":"uma comissão aprova um protocolo de primeira versão automática"} },
-    { "id":"a13","label_pt":"Escolher quais contratos renegociar neste ano","source":"intake","outside_read":{"band":"resists","drivers":["o acerto só se sabe no ano seguinte","cada negociação é um caso único","a diretoria responde perante os cooperados"],"falsifier":"a carteira passa a ser priorizada por modelo e o resultado melhora"} },
-    { "id":"a14","label_pt":"A conversa com a família depois de uma notícia difícil","source":"intake","outside_read":{"band":"resists","drivers":["não há como conferir o resultado","não há dados destas conversas","é a relação, e ela é a nossa"],"falsifier":"famílias preferem receber a notícia de outro modo"} }
-  ],
-  "wall": [
-    { "id":"w1","label":"O prontuário longitudinal do cooperado","table":1,"bound":true },
-    { "id":"w2","label":"A decisão ligada ao que aconteceu depois","table":1,"bound":true },
-    { "id":"w3","label":"A relação de vinte anos com o paciente","table":2,"bound":true },
-    { "id":"w4","label":"A rede de especialistas credenciada","table":2,"bound":true },
-    { "id":"w5","label":"Os contratos com as empresas da região","table":3,"bound":true },
-    { "id":"w6","label":"A nossa marca nesta cidade","table":3,"bound":true },
-    { "id":"w7","label":"Os protocolos assistenciais próprios","table":4,"bound":true },
-    { "id":"w8","label":"A assinatura que responde pelo ato","table":4,"bound":true },
-    { "id":"w9","label":"O sistema de gestão","table":5,"bound":false },
-    { "id":"w10","label":"Os modelos de IA","table":5,"bound":false },
-    { "id":"w11","label":"Os consultórios e os equipamentos","table":6,"bound":false },
-    { "id":"w12","label":"O portal do beneficiário","table":6,"bound":false }
-  ],
-  "morning_cards": [
-    { "id":"c1","label":"Redigir a justificativa clínica de um pedido de autorização prévia","machine_votes":4,"table_votes":6,"difficulty":3,"verifiability":4 },
-    { "id":"c2","label":"Ler um exame de rastreamento de rotina","machine_votes":5,"table_votes":6,"difficulty":5,"verifiability":4 },
-    { "id":"c3","label":"Resumir um histórico de 40 páginas antes da consulta","machine_votes":6,"table_votes":6,"difficulty":2,"verifiability":5 },
-    { "id":"c4","label":"Codificar o atendimento para faturamento","machine_votes":5,"table_votes":6,"difficulty":2,"verifiability":5 },
-    { "id":"c5","label":"Ligar para um paciente que faltou a duas consultas e descobrir o motivo","machine_votes":2,"table_votes":6,"difficulty":2,"verifiability":2 },
-    { "id":"c6","label":"Decidir qual reclamação de cooperado sobe para a diretoria","machine_votes":1,"table_votes":6,"difficulty":4,"verifiability":2 },
-    { "id":"c7","label":"Escrever a primeira versão de um novo protocolo assistencial","machine_votes":3,"table_votes":6,"difficulty":5,"verifiability":3 },
-    { "id":"c8","label":"Responder a uma auditoria da operadora com as evidências","machine_votes":4,"table_votes":6,"difficulty":3,"verifiability":4 },
-    { "id":"c9","label":"Convencer um especialista a aceitar mais um caso esta semana","machine_votes":0,"table_votes":6,"difficulty":3,"verifiability":1 },
-    { "id":"c10","label":"Triar as chamadas recebidas por urgência","machine_votes":4,"table_votes":6,"difficulty":3,"verifiability":3 },
-    { "id":"c11","label":"Escolher quais contratos renegociar neste ano","machine_votes":1,"table_votes":6,"difficulty":5,"verifiability":1 },
-    { "id":"c12","label":"Conduzir a conversa com a família depois de uma notícia difícil","machine_votes":0,"table_votes":6,"difficulty":4,"verifiability":1 }
-  ]
+ "session": "sessao-2026-09-08",
+ "title": "Onde a máquina deve trabalhar",
+ "subtitle": "A sua leitura, redesenhada. Mova a água.",
+ "activities": [
+  {
+   "id": "a7",
+   "label_pt": "Agendamento e lembretes de consulta",
+   "source": "intake",
+   "outside_read": {
+    "band": "already",
+    "drivers": [
+     "o resultado confere-se sozinho",
+     "dados operacionais em escala",
+     "sem barreira"
+    ],
+    "falsifier": "quedas de comparecimento atribuídas ao contacto automático"
+   }
+  },
+  {
+   "id": "a8",
+   "label_pt": "Registo clínico ditado durante a consulta",
+   "source": "intake",
+   "outside_read": {
+    "band": "already",
+    "drivers": [
+     "o médico lê e assina na hora",
+     "áudio clínico em volume",
+     "consentimento de gravação"
+    ],
+    "falsifier": "pacientes recusam a gravação em número relevante"
+   }
+  },
+  {
+   "id": "a9",
+   "label_pt": "Buscar a evidência no ponto de cuidado",
+   "source": "intake",
+   "outside_read": {
+    "band": "already",
+    "drivers": [
+     "a fonte fica visível e confere-se",
+     "literatura pública",
+     "sem barreira"
+    ],
+    "falsifier": "uma citação inventada chega à conduta"
+   }
+  },
+  {
+   "id": "a10",
+   "label_pt": "Ligar a quem faltou a duas consultas e descobrir o motivo",
+   "source": "intake",
+   "outside_read": {
+    "band": "3_to_7",
+    "drivers": [
+     "o resultado só se vê semanas depois",
+     "poucas gravações destas conversas",
+     "sem barreira formal, muita relação"
+    ],
+    "falsifier": "a taxa de retorno iguala a do contacto humano"
+   }
+  },
+  {
+   "id": "a11",
+   "label_pt": "Estratificar risco e fazer busca ativa na carteira",
+   "source": "intake",
+   "outside_read": {
+    "band": "under_3",
+    "drivers": [
+     "a lista confere-se contra desfechos",
+     "os dados são da cooperativa",
+     "sem barreira, mas há equidade em jogo"
+    ],
+    "falsifier": "a estratificação reproduz um viés e é suspensa"
+   }
+  },
+  {
+   "id": "a12",
+   "label_pt": "Escrever a primeira versão de um protocolo assistencial",
+   "source": "intake",
+   "outside_read": {
+    "band": "3_to_7",
+    "drivers": [
+     "conferir custa quase o mesmo que escrever",
+     "protocolos publicados existem",
+     "a comissão técnica responde por ele"
+    ],
+    "falsifier": "uma comissão aprova um protocolo de primeira versão automática"
+   }
+  },
+  {
+   "id": "a13",
+   "label_pt": "Escolher quais contratos renegociar neste ano",
+   "source": "intake",
+   "outside_read": {
+    "band": "resists",
+    "drivers": [
+     "o acerto só se sabe no ano seguinte",
+     "cada negociação é um caso único",
+     "a diretoria responde perante os cooperados"
+    ],
+    "falsifier": "a carteira passa a ser priorizada por modelo e o resultado melhora"
+   }
+  },
+  {
+   "id": "a14",
+   "label_pt": "A conversa com a família depois de uma notícia difícil",
+   "source": "intake",
+   "outside_read": {
+    "band": "resists",
+    "drivers": [
+     "não há como conferir o resultado",
+     "não há dados destas conversas",
+     "é a relação, e ela é a nossa"
+    ],
+    "falsifier": "famílias preferem receber a notícia de outro modo"
+   }
+  }
+ ],
+ "wall": [
+  {
+   "id": "w1",
+   "label": "O prontuário longitudinal do cooperado",
+   "table": 1,
+   "bound": true
+  },
+  {
+   "id": "w2",
+   "label": "A decisão ligada ao que aconteceu depois",
+   "table": 1,
+   "bound": true
+  },
+  {
+   "id": "w3",
+   "label": "A relação de vinte anos com o paciente",
+   "table": 2,
+   "bound": true
+  },
+  {
+   "id": "w4",
+   "label": "A rede de especialistas credenciada",
+   "table": 2,
+   "bound": true
+  },
+  {
+   "id": "w5",
+   "label": "Os contratos com as empresas da região",
+   "table": 3,
+   "bound": true
+  },
+  {
+   "id": "w6",
+   "label": "A nossa marca nesta cidade",
+   "table": 3,
+   "bound": true
+  },
+  {
+   "id": "w7",
+   "label": "Os protocolos assistenciais próprios",
+   "table": 4,
+   "bound": true
+  },
+  {
+   "id": "w8",
+   "label": "A assinatura que responde pelo ato",
+   "table": 4,
+   "bound": true
+  },
+  {
+   "id": "w9",
+   "label": "O sistema de gestão",
+   "table": 5,
+   "bound": false
+  },
+  {
+   "id": "w10",
+   "label": "Os modelos de IA",
+   "table": 5,
+   "bound": false
+  },
+  {
+   "id": "w11",
+   "label": "Os consultórios e os equipamentos",
+   "table": 6,
+   "bound": false
+  },
+  {
+   "id": "w12",
+   "label": "O portal do beneficiário",
+   "table": 6,
+   "bound": false
+  }
+ ],
+ "morning_cards": [
+  {
+   "id": "c1",
+   "label": "Redigir a justificativa clínica de um pedido de autorização prévia",
+   "machine_votes": 4,
+   "table_votes": 6,
+   "difficulty": 3,
+   "verifiability": 4
+  },
+  {
+   "id": "c2",
+   "label": "Ler um exame de rastreamento de rotina",
+   "machine_votes": 5,
+   "table_votes": 6,
+   "difficulty": 5,
+   "verifiability": 4
+  },
+  {
+   "id": "c3",
+   "label": "Resumir um histórico de 40 páginas antes da consulta",
+   "machine_votes": 6,
+   "table_votes": 6,
+   "difficulty": 2,
+   "verifiability": 5
+  },
+  {
+   "id": "c4",
+   "label": "Codificar o atendimento para faturamento",
+   "machine_votes": 5,
+   "table_votes": 6,
+   "difficulty": 2,
+   "verifiability": 5
+  },
+  {
+   "id": "c5",
+   "label": "Ligar para um paciente que faltou a duas consultas e descobrir o motivo",
+   "machine_votes": 2,
+   "table_votes": 6,
+   "difficulty": 2,
+   "verifiability": 2
+  },
+  {
+   "id": "c6",
+   "label": "Decidir qual reclamação de cooperado sobe para a diretoria",
+   "machine_votes": 1,
+   "table_votes": 6,
+   "difficulty": 4,
+   "verifiability": 2
+  },
+  {
+   "id": "c7",
+   "label": "Escrever a primeira versão de um novo protocolo assistencial",
+   "machine_votes": 3,
+   "table_votes": 6,
+   "difficulty": 5,
+   "verifiability": 3
+  },
+  {
+   "id": "c8",
+   "label": "Responder a uma auditoria da operadora com as evidências",
+   "machine_votes": 4,
+   "table_votes": 6,
+   "difficulty": 3,
+   "verifiability": 4
+  },
+  {
+   "id": "c9",
+   "label": "Convencer um especialista a aceitar mais um caso esta semana",
+   "machine_votes": 0,
+   "table_votes": 6,
+   "difficulty": 3,
+   "verifiability": 1
+  },
+  {
+   "id": "c10",
+   "label": "Triar as chamadas recebidas por urgência",
+   "machine_votes": 4,
+   "table_votes": 6,
+   "difficulty": 3,
+   "verifiability": 3
+  },
+  {
+   "id": "c11",
+   "label": "Escolher quais contratos renegociar neste ano",
+   "machine_votes": 1,
+   "table_votes": 6,
+   "difficulty": 5,
+   "verifiability": 1
+  },
+  {
+   "id": "c12",
+   "label": "Conduzir a conversa com a família depois de uma notícia difícil",
+   "machine_votes": 0,
+   "table_votes": 6,
+   "difficulty": 4,
+   "verifiability": 1
+  }
+ ]
 }
 </script>
 </html>
