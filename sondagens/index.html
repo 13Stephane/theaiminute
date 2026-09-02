@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="pt">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Sondagens · a figura viva da maré e do muro</title>
+
+<!--
+  Course — Sondagens
+  One self-contained file, no build step. Serve the folder and open it.
+
+    #/          the door
+    #/triagem   private first pass, one activity at a time, no aggregate visible
+    #/eu        personal view, that device only, after the facilitator releases it
+    #/figura    the projected figure: terrain, water, gate, and the five controls
+    #/sala      facilitator console: the morning's six names, the wall, the phase
+
+  Code is English by convention; everything the room sees is Portuguese.
+  Room state lives in window.storage when the artifact runtime provides it, and
+  in localStorage otherwise, so a rehearsal on one laptop behaves like a room.
+-->
+
+<style>
+  :root{ --bg:#193C3F; --ink:#F4F0E9; --gold:#C6A553; --teal:#67A5AB;
+         --copp:#BE7B4F; --col:#2C5558; --mut:#9FB4B0; --panel:#14333A;
+         --line:#2C5457; --green:#7FA88C; --grey:#5E7679; }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:Calibri,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       padding:22px 24px 40px;-webkit-text-size-adjust:100%}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:28px;margin:0 0 4px;font-weight:600}
+  h2{font-size:11px;letter-spacing:.14em;color:var(--gold);margin:0 0 10px;text-transform:uppercase}
+  .sub{color:var(--mut);font-size:15px;margin-bottom:16px}
+  .kicker{font-size:11px;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;margin-bottom:9px}
+  .shell{max-width:1180px;margin:0 auto}
+  .narrow{max-width:620px;margin:0 auto}
+
+  /* ---- the figure ---- */
+  .wrap{display:flex;gap:22px;align-items:stretch}
+  .terrain{flex:1 1 auto;min-width:0}
+  .gate{flex:0 0 316px;background:var(--panel);border-radius:10px;padding:15px;
+        border:1px solid transparent;transition:border-color .4s, box-shadow .4s}
+  .gate.lit{border-color:var(--gold);box-shadow:0 0 26px rgba(198,165,83,.22)}
+  .bricks{max-height:352px;overflow:auto}
+  .brick{display:flex;gap:9px;align-items:flex-start;margin:7px 0;font-family:Georgia,serif;font-size:13px;line-height:1.3}
+  .mark{width:11px;height:11px;flex:0 0 auto;margin-top:3px}
+  .filled{background:var(--gold)}
+  .hollow{border:1px solid var(--grey)}
+  .legend{color:var(--mut);font-size:11px;margin-top:10px;line-height:1.5}
+  .count{font-family:Georgia,serif;font-size:19px;margin:12px 0 0}
+  .count b{color:var(--gold);font-weight:600}
+
+  /* ---- controls ---- */
+  .bar{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+  input[type=range]{width:100%;accent-color:var(--teal);margin:0}
+  /* the two marks can sit close together, so they get their own lines */
+  .ticks{position:relative;height:30px;margin-top:2px}
+  .ticks span{position:absolute;transform:translateX(-50%);color:var(--mut);
+              font-size:10px;letter-spacing:.12em;white-space:nowrap}
+  .ticks span:before{content:"";position:absolute;left:50%;top:-4px;width:1px;height:4px;background:var(--mut)}
+  .ticks .t2{top:15px}
+  .ticks .t2:before{top:-19px;height:19px}
+  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  button,select,input[type=text],input[type=number]{background:transparent;border:1px solid #3E6467;color:var(--ink);
+    padding:8px 13px;border-radius:3px;font-size:12.5px;letter-spacing:.06em;cursor:pointer;
+    font-family:inherit}
+  button:hover{border-color:var(--gold)}
+  button[aria-pressed=true]{border-color:var(--gold);color:var(--gold)}
+  button.ghost{border-color:var(--line);color:var(--mut)}
+  button.warn{border-color:#5A3A2A;color:var(--copp)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  input[type=text],input[type=number],select,textarea{cursor:text;background:#102b2e}
+  input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
+  input[type=number]{width:72px;text-align:right;font-variant-numeric:tabular-nums}
+  td.n{font-variant-numeric:tabular-nums;color:var(--mut)}
+  .overrides{margin-top:10px;font-size:12.5px;color:var(--copp);line-height:1.6}
+  .overrides b{color:var(--ink);font-weight:600}
+
+  /* ---- participant ---- */
+  .choice{display:block;width:100%;text-align:left;padding:16px 18px;margin:10px 0;border-radius:6px;
+          border:1px solid var(--line);background:var(--panel);cursor:pointer}
+  .choice:hover{border-color:var(--gold)}
+  .choice b{display:block;font-family:Georgia,serif;font-size:19px;margin-bottom:4px;font-weight:600}
+  .choice span{color:var(--mut);font-size:13.5px;line-height:1.45}
+  .prompt{font-family:Georgia,serif;font-size:26px;line-height:1.28;margin:6px 0 20px}
+  .progress{height:2px;background:var(--line);margin:4px 0 22px}
+  .progress i{display:block;height:2px;background:var(--gold);transition:width .3s}
+  .conf{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  /* the cheapest thing here, and the reason the room recognises its own morning */
+  .board{display:flex;align-items:center;gap:8px;margin:-12px 0 16px;
+         color:var(--gold);font-size:12px;letter-spacing:.09em}
+  .board:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .done{font-family:Georgia,serif;font-size:22px;line-height:1.4;padding:70px 0}
+
+  .card{background:var(--panel);border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .t{font-family:Georgia,serif;font-size:16px;margin-bottom:6px}
+  .card .d{color:var(--mut);font-size:13px;line-height:1.55}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--gold);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+  .muted{color:var(--mut)}
+  .doors a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+           padding:18px 20px;margin:12px 0;text-decoration:none;color:var(--ink)}
+  .doors a:hover{border-color:var(--gold)}
+  .doors b{display:block;font-family:Georgia,serif;font-size:20px;margin-bottom:3px}
+  .doors span{color:var(--mut);font-size:13.5px}
+  .stamp{position:fixed;right:14px;bottom:12px;font-size:10px;letter-spacing:.18em;
+         color:var(--copp);text-transform:uppercase;pointer-events:none}
+  @media (max-width:900px){ .wrap{flex-direction:column} .gate{flex:1 1 auto} body{padding:18px 16px 36px} h1{font-size:23px} }
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="shell" id="app"></div>
+<div class="stamp" id="stamp"></div>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------- storage */
+/* window.storage exists inside the artifact runtime; localStorage otherwise,
+   which is what makes a one-laptop rehearsal behave like a room of tabs. */
+const MEM = {};
+const S = {
+  async get(k, shared){
+    try { const r = await window.storage.get(k, shared); return r ? r.value : null; }
+    catch(e){ try { return localStorage.getItem((shared?"S::":"L::")+k); } catch(e2){ return MEM[k] ?? null; } }
+  },
+  async set(k, v, shared){
+    try { await window.storage.set(k, v, shared); }
+    catch(e){ try { localStorage.setItem((shared?"S::":"L::")+k, v); } catch(e2){ MEM[k]=v; } }
+  },
+  async del(k, shared){
+    try { await window.storage.delete(k, shared); }
+    catch(e){ try { localStorage.removeItem((shared?"S::":"L::")+k); } catch(e2){ delete MEM[k]; } }
+  },
+  async list(prefix, shared){
+    try { const l = await window.storage.list(prefix, shared); return (l && l.keys) || []; }
+    catch(e){
+      try {
+        const p = (shared?"S::":"L::")+prefix;
+        return Object.keys(localStorage).filter(k => k.indexOf(p)===0).map(k => k.slice(3));
+      } catch(e2){ return Object.keys(MEM).filter(k => k.indexOf(prefix)===0); }
+    }
+  },
+};
+
+const K_CFG = "snd:cfg";
+const K_RESP = "snd:r:";          /* + participant id */
+const K_DID = "snd:did";
+
+/* --------------------------------------------------------------- the read */
+/* A band is a band. The numbers below only exist so the tide has somewhere to
+   stop; they are never shown as percentages. */
+const BANDS = {
+  already:  { w:0.90, pt:"já inunda" },
+  under_3:  { w:0.70, pt:"menos de 3 anos" },
+  "3_to_7": { w:0.45, pt:"3 a 7 anos" },
+  resists:  { w:0.20, pt:"resiste" },
+};
+const CHOICES = [
+  { key:"automate", pt:"Automatizar", color:"var(--gold)",  hex:"#C6A553",
+    d:"a máquina faz, um humano confere o lote" },
+  { key:"augment",  pt:"Aumentar",    color:"var(--teal)",  hex:"#67A5AB",
+    d:"a máquina redige ou lê primeiro, o julgamento fica no circuito" },
+  { key:"hold",     pt:"Manter",      color:"var(--copp)",  hex:"#BE7B4F",
+    d:"candidata ao pôlder: a máquina poderia fazer, e podemos escolher que não faça" },
+];
+const CONF = [ {k:"sure",pt:"com certeza"}, {k:"fairly",pt:"bastante seguro"}, {k:"guess",pt:"no palpite"} ];
+const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
+                       return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
+const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ------------------------------------------------------------------ state */
+let CFG = null;        /* the room: activities, wall, morning cards, phase, overrides */
+let RESP = [];         /* [{pid, choices:{aid:{c,k}}, done}] */
+let DID = null;        /* this device, anonymous, never shown */
+let MINE = null;       /* this device's own answers */
+let W = 0.5;           /* the tide, 0..1 */
+let WMODE = "today";   /* today | three | free */
+let OPT = { morning:false, outside:false, arrow:false };
+let POLL = null;
+
+/* ------------------------------------------------------------------- boot */
+async function boot(){
+  DID = await S.get(K_DID, false);
+  if(!DID){ DID = uid(); await S.set(K_DID, DID, false); }
+
+  const raw = await S.get(K_CFG, true);
+  if(raw){ CFG = JSON.parse(raw); }
+  else {
+    CFG = await loadSeed();
+    CFG.phase = "setup";
+    CFG.overrides = {};
+    CFG.rehearsal = false;
+  }
+  MINE = JSON.parse(await S.get("snd:mine", false) || "{}");
+  await pull();
+  W = wToday();
+  window.addEventListener("hashchange", render);
+  render();
+  POLL = setInterval(tick, 5000);
+}
+
+/* session.json when the folder is served; the copy below when the file is
+   opened straight off the disk and fetch is refused. */
+async function loadSeed(){
+  try {
+    const r = await fetch("session.json", {cache:"no-store"});
+    if(r.ok) return await r.json();
+  } catch(e){}
+  return JSON.parse(document.getElementById("fallback").textContent);
+}
+
+async function pull(){
+  const keys = await S.list(K_RESP, true);
+  const out = [];
+  for(const k of keys){
+    const v = await S.get(k, true);
+    if(!v) continue;
+    try { out.push(JSON.parse(v)); } catch(e){}
+  }
+  RESP = out;
+}
+
+async function publish(){ await S.set(K_CFG, JSON.stringify(CFG), true); return true; }
+
+/* Everyone follows the facilitator's phase without a reload. The figure never
+   re-renders under the facilitator's hands: it repaints only when the room
+   actually changed. */
+async function tick(){
+  if(PENDING) return;                 /* never yank the confidence tap out from under a thumb */
+  const raw = await S.get(K_CFG, true);
+  let dirty = false;
+  if(raw){
+    const c = JSON.parse(raw);
+    if(JSON.stringify(c) !== JSON.stringify(CFG)){ CFG = c; dirty = true; }
+  }
+  /* counting is only live while the room is answering, or on the console */
+  const v = view();
+  if(CFG.phase === "triagem" || v === "sala"){
+    const n = RESP.length, d = respondents();
+    await pull();
+    if(RESP.length !== n || respondents() !== d) dirty = true;
+  }
+  if(dirty) render();
+}
+
+/* ------------------------------------------------------------- derivation */
+/* Two ways the room's votes arrive: one device per person, or one sheet of
+   counts typed by the facilitator. A typed row wins for that activity, because
+   somebody deliberately entered it. Everything downstream sees only shares. */
+function shares(aid){
+  const t = CFG.tally && CFG.tally[aid];
+  if(t){
+    const ta=+t[0]||0, tg=+t[1]||0, th=+t[2]||0, tn=ta+tg+th;
+    if(tn) return { automate:ta/tn, augment:tg/tn, hold:th/tn, n:tn };
+  }
+  let a=0,g=0,h=0,n=0;
+  for(const r of RESP){
+    const c = r.choices && r.choices[aid];
+    if(!c) continue;
+    n++;
+    if(c.c==="automate") a++; else if(c.c==="augment") g++; else if(c.c==="hold") h++;
+  }
+  const d = n || 1;
+  return { automate:a/d, augment:g/d, hold:h/d, n };
+}
+function model(){
+  const acts = (CFG.activities||[]).map(a => {
+    const sh = shares(a.id);
+    const reach = sh.automate + 0.5*sh.augment;
+    const band = (a.outside_read && BANDS[a.outside_read.band]) || null;
+    return { ...a, sh, reach, height: 1-reach, polder: sh.hold > 0.5, band,
+             overridden: !!(CFG.overrides && CFG.overrides[a.id]) };
+  });
+  acts.sort((p,q) => p.height - q.height || p.id.localeCompare(q.id));
+  return acts;
+}
+function wToday(){ const m = model(); return m.length ? median(m.map(a=>a.reach)) : 0.5; }
+/* Only activities that actually carry a read. A blank read is a gap the
+   facilitator chose, and coercing it to a middle band would let it vote on
+   where the tide goes in three years. Under three reads there is no median
+   worth drawing, so the mark is not drawn at all and the snap is disabled. */
+function readWs(){
+  return (CFG.activities||[])
+    .map(a => a.outside_read && BANDS[a.outside_read.band])
+    .filter(Boolean).map(b => b.w);
+}
+function wThree(){
+  const bs = readWs();
+  return bs.length >= 3 ? median(bs) : null;
+}
+function noReads(){ return (CFG.activities||[]).filter(a => !a.outside_read || !BANDS[a.outside_read.band]); }
+/* submerged / at the line / dry, with polders standing dry whatever the tide */
+function stateOf(a, w){
+  if(a.polder) return "polder";
+  if(a.height < w - BAND_W) return "sub";
+  if(a.height <= w + BAND_W) return "line";
+  return "dry";
+}
+function respondents(){ return RESP.filter(r => r.done).length; }
+
+/* Fixed random order per participant, so the room cannot converge by sequence.
+   Seeded from the device id, never Math.random: a phone that drops the page
+   mid-sort has to come back to the same order, or that person answers one
+   activity twice and another never. */
+function hash32(s){
+  let h = 2166136261 >>> 0;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h >>> 0;
+}
+function sortOrder(){
+  const a = (CFG.activities||[]).slice();
+  let s = hash32((DID||"") + "::" + (CFG.session||""));
+  const rnd = () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; }
+  return a;
+}
+const fromBoard = a => a.source === "waterline_board";
+function tallyTotal(){
+  const t = CFG.tally || {};
+  let mx = 0;
+  for(const k in t){ const r = t[k]||[]; mx = Math.max(mx, (+r[0]||0)+(+r[1]||0)+(+r[2]||0)); }
+  return mx;
+}
+/* Say where the figure's numbers came from, every time it is on screen */
+function sourceLine(){
+  const t = tallyTotal();
+  return t ? `${t} na contagem da sala` : `${respondents()} respostas`;
+}
+
+/* -------------------------------------------------------------- the figure */
+const VW = 1000, VH = 545, M = 34, TOP = 52, BASE = 372;
+const SPAN = BASE - TOP;
+
+function figureSVG(personal){
+  const acts = model();
+  if(!acts.length) return `<svg viewBox="0 0 ${VW} ${VH}" width="100%"></svg>`;
+  const n = acts.length, gap = 9;
+  const cw = (VW - 2*M - (n-1)*gap) / n;
+  const wy = BASE - W*SPAN;
+  const w3 = wThree();
+  const w3y = w3 == null ? null : BASE - w3*SPAN;
+  const dim = OPT.morning ? ' opacity=".16"' : '';
+  /* two sets of labels in one gutter would be unreadable, so the afternoon's
+     step aside while the morning's twelve cards are up */
+  const hide = OPT.morning ? ' style="display:none"' : '';
+  let g = "";
+
+  /* frame */
+  g += `<g${hide}>`
+    +  `<text x="${M}" y="${TOP-22}" fill="#9FB4B0" font-size="11" letter-spacing="2.2">ROCHA FIRME · nenhuma máquina</text>`
+    +  `<text x="${VW-M}" y="${TOP-22}" fill="#9FB4B0" font-size="11" letter-spacing="2.2" text-anchor="end">AS SUAS TAREFAS, ORDENADAS →</text></g>`;
+  g += `<text transform="translate(16,${TOP+SPAN/2}) rotate(-90)" fill="#6E8A86" font-size="10.5" letter-spacing="2" text-anchor="middle">↑ QUANTO FALTA À MÁQUINA</text>`;
+
+  /* columns */
+  let cols = "", labs = "";
+  acts.forEach((a,i) => {
+    const h = Math.max(2, a.height*SPAN), x = M + i*(cw+gap), y = BASE - h;
+    a._x = x; a._y = y; a._w = cw;
+    const above = y < wy;
+    cols += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${h.toFixed(1)}" fill="#2C5558"`
+         +  (above ? ` stroke="#F4F0E9" stroke-width="1"` : ``) + `/>`;
+    const lab = a.label_pt.length > 34 ? a.label_pt.slice(0,33)+"…" : a.label_pt;
+    labs += `<text transform="translate(${(x+cw/2).toFixed(1)},${BASE+12}) rotate(-58)" fill="#9FB4B0" `
+         +  `font-size="11.5" text-anchor="end" font-family="Georgia,serif">${esc(lab)}</text>`;
+  });
+  g += `<g${dim}>${cols}</g><g${hide}>${labs}</g>`;
+
+  /* water over the columns, so submerged reads as submerged */
+  g += `<rect x="${M-10}" y="${wy.toFixed(1)}" width="${VW-2*M+20}" height="${(BASE-wy).toFixed(1)}" fill="#67A5AB" opacity=".42"/>`;
+
+  /* polders stand dry: repaint the column, then copper dikes over the water */
+  let pol = "";
+  acts.filter(a=>a.polder).forEach(a => {
+    const top = Math.min(a._y, wy) - 7;
+    /* repaint in the column colour, not the ground colour: a polder is a column
+       the water does not reach, not a hole in the terrain */
+    pol += `<rect x="${a._x.toFixed(1)}" y="${a._y.toFixed(1)}" width="${a._w.toFixed(1)}" height="${(BASE-a._y).toFixed(1)}" fill="#2C5558"/>`;
+    pol += `<rect x="${a._x.toFixed(1)}" y="${(a._y-4).toFixed(1)}" width="${a._w.toFixed(1)}" height="3" fill="#BE7B4F"/>`;
+    [a._x-3.5, a._x+a._w+0.5].forEach(dx => {
+      pol += `<rect x="${dx.toFixed(1)}" y="${top.toFixed(1)}" width="3" height="${(BASE-top).toFixed(1)}" fill="#BE7B4F"/>`;
+    });
+  });
+  g += `<g${dim}>${pol}</g>`;
+
+  /* the tide, and where it is headed */
+  if(w3y != null){
+    g += `<line x1="${M-10}" x2="${VW-M+10}" y1="${w3y.toFixed(1)}" y2="${w3y.toFixed(1)}" stroke="#67A5AB" stroke-width="1.5" stroke-dasharray="7 6" opacity=".75"/>`;
+    /* left, under its own line: the right edge is where the polders stand */
+    g += `<text x="${M-6}" y="${(w3y+13).toFixed(1)}" fill="#67A5AB" font-size="10" letter-spacing="1.6" opacity=".85">PARA ONDE A MARÉ VAI</text>`;
+  }
+  g += `<line x1="${M-10}" x2="${VW-M+10}" y1="${wy.toFixed(1)}" y2="${wy.toFixed(1)}" stroke="#67A5AB" stroke-width="2.5"/>`;
+  const wlab = WMODE==="today" ? "LINHA D'ÁGUA · HOJE" : WMODE==="three" ? "LINHA D'ÁGUA · TRÊS ANOS" : "LINHA D'ÁGUA · E SE?";
+  g += `<text x="${M-6}" y="${(wy-7).toFixed(1)}" fill="#F4F0E9" font-size="10.5" letter-spacing="1.8">${wlab}</text>`;
+  g += `<text x="${M-6}" y="${BASE-8}" fill="#0F2A2C" font-size="11" letter-spacing="2.2" opacity=".7">SUBMERSO</text>`;
+
+  /* the outside read, one marker per column: the divergence becomes per-column */
+  if(OPT.outside){
+    let mk = "";
+    acts.forEach(a => {
+      if(!a.band) return;
+      const my = BASE - (1-a.band.w)*SPAN;
+      mk += `<line x1="${(a._x-2).toFixed(1)}" x2="${(a._x+a._w+2).toFixed(1)}" y1="${my.toFixed(1)}" y2="${my.toFixed(1)}" stroke="#C6A553" stroke-width="2.5" stroke-dasharray="4 3"/>`;
+      if(Math.abs(my - a._y) > 10){
+        mk += `<line x1="${(a._x+a._w/2).toFixed(1)}" x2="${(a._x+a._w/2).toFixed(1)}" y1="${Math.min(my,a._y).toFixed(1)}" y2="${Math.max(my,a._y).toFixed(1)}" stroke="#C6A553" stroke-width="1" stroke-dasharray="2 3" opacity=".55"/>`;
+      }
+    });
+    g += `<g${dim}>${mk}</g>`;
+    g += `<text x="${VW-M}" y="${TOP-4}" fill="#C6A553" font-size="10" letter-spacing="1.6" text-anchor="end">— — LEITURA EXTERNA · uma leitura, não um veredito</text>`;
+  }
+
+  /* the room overrules the read */
+  let ovr = "";
+  acts.filter(a=>a.overridden).forEach(a => {
+    const cx = a._x + a._w/2;
+    ovr += `<polygon points="${cx.toFixed(1)},${(a._y-14).toFixed(1)} ${(cx-5).toFixed(1)},${(a._y-6).toFixed(1)} ${(cx+5).toFixed(1)},${(a._y-6).toFixed(1)}" fill="#BE7B4F"/>`;
+    ovr += `<rect x="${(a._x-1.5).toFixed(1)}" y="${(a._y-1.5).toFixed(1)}" width="${(a._w+3).toFixed(1)}" height="${(BASE-a._y+1.5).toFixed(1)}" fill="none" stroke="#BE7B4F" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  });
+  g += `<g${dim}>${ovr}</g>`;
+
+  /* personal marks, on that device only */
+  if(personal && personal.choices){
+    let pm = "";
+    acts.forEach(a => {
+      const c = personal.choices[a.id];
+      if(!c) return;
+      const spec = CHOICES.find(x=>x.key===c.c);
+      pm += `<circle cx="${(a._x+a._w/2).toFixed(1)}" cy="${(a._y-13).toFixed(1)}" r="4.5" fill="${spec?spec.hex:"#F4F0E9"}"/>`;
+    });
+    g += pm;
+  }
+
+  /* the twelve morning cards, in grey, on the same figure */
+  if(OPT.morning){
+    const cards = [...(CFG.morning_cards||[])]
+      .map(c => ({...c, reach: (c.table_votes ? c.machine_votes/c.table_votes : 0)}))
+      .sort((p,q) => q.reach - p.reach);
+    const m = cards.length || 1, ggap = 11, gcw = (VW - 2*M - (m-1)*ggap)/m;
+    let gh = "";
+    cards.forEach((c,i) => {
+      const h = Math.max(2, (1-c.reach)*SPAN), x = M + i*(gcw+ggap), y = BASE - h;
+      gh += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${gcw.toFixed(1)}" height="${h.toFixed(1)}" fill="none" stroke="#5E7679" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+      const lab = c.label.length > 34 ? c.label.slice(0,33)+"…" : c.label;
+      gh += `<text transform="translate(${(x+gcw/2).toFixed(1)},${BASE+12}) rotate(-58)" fill="#5E7679" font-size="11" text-anchor="end" font-family="Georgia,serif">${esc(lab)}</text>`;
+    });
+    g += gh;
+    g += `<text x="${M}" y="${TOP-38}" fill="#9FB4B0" font-size="11.5" letter-spacing="1.6">OS DOZE CARTÕES DA MANHÃ · o que separaram antes de terem as suas próprias atividades diante de vocês</text>`;
+  }
+
+  /* the crossing, on the facilitator's press and not before */
+  if(OPT.arrow && !OPT.morning){
+    const subs = acts.filter(a => stateOf(a, W)==="sub");
+    const tall = subs.length ? subs.reduce((m,a)=> a.height>m.height ? a : m, subs[0]) : null;
+    if(tall){
+      const x0 = tall._x + tall._w/2, y0 = tall._y - 6;
+      const x1 = VW - 12, y1 = 132;
+      g += `<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#C6A553"/></marker></defs>`;
+      g += `<path d="M ${x0.toFixed(1)},${y0.toFixed(1)} C ${(x0+90).toFixed(1)},${(y0-90).toFixed(1)} ${(x1-160).toFixed(1)},${(y1-20).toFixed(1)} ${x1},${y1}" fill="none" stroke="#C6A553" stroke-width="2.5" marker-end="url(#ah)"/>`;
+      g += `<text x="${x0.toFixed(1)}" y="${(y0-16).toFixed(1)}" fill="#C6A553" font-size="14" font-family="Georgia,serif" text-anchor="middle">o custo cai aqui</text>`;
+      g += `<text x="${(x1-14).toFixed(1)}" y="${(y1-14).toFixed(1)}" fill="#C6A553" font-size="14" font-family="Georgia,serif" text-anchor="end">o preço decide-se ali</text>`;
+    }
+  }
+
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" role="img" aria-label="A figura da maré e do muro">${g}</svg>`;
+}
+
+function countLine(){
+  const acts = model();
+  const c = { sub:0, line:0, dry:0, polder:0 };
+  acts.forEach(a => c[stateOf(a, W)]++);
+  return `submersas: <b>${c.sub}</b> de ${acts.length} · na linha: <b>${c.line}</b> · pôlder: <b>${c.polder}</b> · secas: <b>${c.dry}</b>`;
+}
+
+function gateHTML(){
+  const wall = CFG.wall || [];
+  const rows = wall.length
+    ? wall.map(b => `<div class="brick"><span class="mark ${b.bound?"filled":"hollow"}"></span><span>${esc(b.label)}</span></div>`).join("")
+    : `<div class="muted" style="font-size:13px">O muro entra no console da sala, no intervalo.</div>`;
+  return `<div class="gate${OPT.arrow?" lit":""}">
+    <h2>O muro</h2>
+    <div class="bricks">${rows}</div>
+    <div class="legend">preenchido: ligado a nós · vazio: genérico ou alugado</div>
+  </div>`;
+}
+
+/* ------------------------------------------------------------------ views */
+function view(){
+  const h = (location.hash || "#/").replace(/^#\/?/, "");
+  return h.split("?")[0] || "door";
+}
+function go(v){ location.hash = "#/" + v; }
+
+function render(){
+  const app = document.getElementById("app");
+  document.getElementById("stamp").textContent = CFG && CFG.rehearsal ? "ensaio" : "";
+  const v = view();
+  if(v === "triagem")      app.innerHTML = viewTriagem();
+  else if(v === "eu")      app.innerHTML = viewEu();
+  else if(v === "figura")  app.innerHTML = viewFigura();
+  else if(v === "sala")    app.innerHTML = viewSala();
+  else if(v === "contagem") app.innerHTML = viewContagem();
+  else                     app.innerHTML = viewDoor();
+  wire(v);
+}
+
+/* ---- the door ---- */
+function viewDoor(){
+  return `<div class="narrow">
+    <div class="kicker">Course · Sondagens</div>
+    <h1>${esc(CFG.title || "Onde a máquina deve trabalhar")}</h1>
+    <div class="sub">${esc(CFG.session || "")}</div>
+    <div class="doors">
+      <a href="#/triagem"><b>Sou participante</b><span>A triagem privada. Ninguém vê as suas respostas, nunca com nome.</span></a>
+      <a href="#/figura"><b>A figura</b><span>Para projetar, depois de a triagem fechar.</span></a>
+      <a href="#/sala"><b>Console da sala</b><span>Facilitador: os seis nomes do quadro, o muro, a fase.</span></a>
+    </div>
+  </div>`;
+}
+
+/* ---- 1 · the private pass ---- */
+function viewTriagem(){
+  const acts = CFG.activities || [];
+  if(CFG.phase === "setup")
+    return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
+      <h1>Ainda não</h1><div class="sub">A triagem abre às 13:25. Deixe esta página aberta.</div></div>`;
+
+  const order = sortOrder();
+  const answered = order.filter(a => MINE[a.id]).length;
+  const next = order.find(a => !MINE[a.id]);
+
+  if(!next){
+    const released = CFG.phase === "revelado";
+    return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
+      <div class="done">Guardado. Só isso.<br><span class="muted" style="font-size:16px">
+      ${released ? "A sua leitura está pronta." : "Vai rever isto depois, no seu aparelho."}</span></div>
+      ${released ? `<button id="toEu">a minha leitura</button>` : ``}</div>`;
+  }
+
+  /* the progress is the words and nothing else, and there is no way back:
+     an answer is committed at the confidence tap and stays committed */
+  return `<div class="narrow">
+    <div class="kicker">${answered+1} de ${acts.length}</div>
+    <div class="prompt">${esc(next.label_pt)}</div>
+    ${fromBoard(next) ? `<div class="board">do quadro desta manhã</div>` : ``}
+    ${CHOICES.map(c => `<button class="choice" data-c="${c.key}">
+        <b style="color:${c.color}">${c.pt}</b><span>${c.d}</span></button>`).join("")}
+    <div class="legend" style="margin-top:18px">Nada aqui mostra o que a sala respondeu. É de propósito.</div>
+  </div>`;
+}
+
+function viewConf(aid){
+  const a = (CFG.activities||[]).find(x=>x.id===aid);
+  return `<div class="narrow">
+    <div class="kicker">opcional</div>
+    <div class="prompt">Quão seguro está?<br><span class="muted" style="font-size:17px">${esc(a?a.label_pt:"")}</span></div>
+    <div class="conf">${CONF.map(c=>`<button data-k="${c.k}">${c.pt}</button>`).join("")}
+      <button class="ghost" data-k="skip">saltar</button></div>
+    <div class="row"><button class="ghost" data-k="cancel">voltar</button></div>
+  </div>`;
+}
+
+/* ---- 2 · the figure ---- */
+function viewFigura(){
+  if((CFG.phase === "setup" || CFG.phase === "triagem") && !tallyTotal()){
+    const total = RESP.length;
+    return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
+      <h1>A triagem está aberta</h1>
+      <div class="sub">A figura só aparece depois de fechar. Se ela se formasse agora, a opinião prévia contaminava-se.</div>
+      <div class="count"><b>${respondents()}</b> concluíram · ${total} no aparelho</div>
+      <div class="row"><button class="ghost" id="toSala">console da sala</button></div></div>`;
+  }
+  const ovs = Object.entries(CFG.overrides||{}).map(([aid,o]) => {
+    const a = (CFG.activities||[]).find(x=>x.id===aid);
+    return `<div>a sala anula a leitura · <b>${esc(a?a.label_pt:aid)}</b> — ${esc(o.why)}</div>`;
+  }).join("");
+
+  return `<div>
+    <h1>${esc(CFG.title||"")}</h1>
+    <div class="sub">${esc(CFG.subtitle||"")}</div>
+    <div class="wrap">
+      <div class="terrain" id="fig">${figureSVG(null)}</div>
+      ${gateHTML()}
+    </div>
+    <div class="bar">
+      <input id="w" type="range" min="0" max="100" step="1" value="${(W*100).toFixed(0)}" aria-label="o nível da água">
+      <div class="ticks">
+        <span style="left:${(wToday()*100).toFixed(1)}%">HOJE</span>
+        ${wThree() == null ? `` : `<span class="t2" style="left:${(wThree()*100).toFixed(1)}%">TRÊS ANOS</span>`}
+      </div>
+      <div class="count" id="count">${countLine()}</div>
+      <div class="overrides" id="ovs">${ovs}</div>
+      <div class="row">
+        <button id="snapToday"  aria-pressed="${WMODE==="today"}">hoje</button>
+        <button id="snapThree" aria-pressed="${WMODE==="three"}" ${wThree()==null?"disabled":""}>três anos</button>
+        <span class="muted" style="margin:0 6px">|</span>
+        <button id="bMorning" aria-pressed="${OPT.morning}">cartões da manhã</button>
+        <button id="bRead"    aria-pressed="${OPT.outside}">leitura externa</button>
+        <button id="bArrow"   aria-pressed="${OPT.arrow}">o custo cai aqui</button>
+        <span class="muted" style="margin:0 6px">|</span>
+        <select id="ovAct"><option value="">anular a leitura em…</option>
+          ${model().map(a=>`<option value="${a.id}">${esc(a.label_pt)}</option>`).join("")}</select>
+        <input type="text" id="ovWhy" placeholder="porquê, em uma linha" size="34">
+        <button id="ovDo">anular</button>
+      </div>
+      <div class="legend">${sourceLine()} · a sua leitura, esta sala, hoje ·
+        <a href="#/sala" style="color:var(--mut)">console</a></div>
+    </div>
+  </div>`;
+}
+
+/* ---- 3 · the personal view, that device only ---- */
+function viewEu(){
+  if(CFG.phase !== "revelado")
+    return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
+      <h1>Ainda não</h1><div class="sub">A sua leitura abre depois da figura.</div></div>`;
+  if(!Object.keys(MINE).length)
+    return `<div class="narrow"><h1>Sem respostas neste aparelho</h1>
+      <div class="sub">A triagem correu noutro aparelho, ou ainda não a fez.</div></div>`;
+
+  const acts = model();
+  const gaps = acts.filter(a => MINE[a.id] && a.sh.n)
+    .map(a => ({ a, mine: MINE[a.id].c, agree: a.sh[MINE[a.id].c] }))
+    .sort((p,q) => p.agree - q.agree).slice(0,2);
+
+  const pct = x => Math.round(x*100) + "%";
+  /* the facilitator's toggles belong to the projector; this is somebody's phone */
+  const keep = OPT; OPT = { morning:false, outside:false, arrow:false };
+  const fig = figureSVG({choices:MINE});
+  OPT = keep;
+
+  return `<div>
+    <div class="kicker">só neste aparelho · nunca no projetor, nunca com nome</div>
+    <h1>A sua leitura</h1>
+    <div class="sub">As suas três colunas, marcadas com um ponto, sobre a figura da sala.</div>
+    <div class="terrain">${fig}</div>
+    <div class="row" style="margin-top:6px">
+      ${CHOICES.map(c=>`<span class="muted" style="font-size:12.5px">
+        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c.hex};margin-right:6px"></span>${c.pt}</span>`).join("")}
+    </div>
+    <h2 style="margin-top:26px">Onde mais divergiu da sala</h2>
+    ${gaps.length ? gaps.map(g => {
+      const spec = CHOICES.find(c=>c.key===g.mine);
+      return `<div class="card"><div class="t">${esc(g.a.label_pt)}</div>
+        <div class="d">você: <b style="color:${spec.hex}">${spec.pt.toLowerCase()}</b> ·
+        a sala: ${CHOICES.map(c=>`${c.pt.toLowerCase()} ${pct(g.a.sh[c.key])}`).join(" · ")}</div></div>`;
+    }).join("") : `<div class="muted">Ainda sem respostas da sala.</div>`}
+    <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.</div>
+  </div>`;
+}
+
+/* ---- 4 · counts, when the sort happened on paper ---- */
+/* Thirty-three phones is one way to fill the figure and often the wrong one.
+   This is the other: the room sorts on the printed list, the tables add up
+   their sheets, and one person types fourteen rows. The figure cannot tell
+   the difference, and neither can the room. */
+function viewContagem(){
+  const acts = CFG.activities || [];
+  const t = CFG.tally || {};
+  const rows = acts.map(a => {
+    const r = t[a.id] || [0,0,0];
+    const n = (+r[0]||0) + (+r[1]||0) + (+r[2]||0);
+    return `<tr><td>${esc(a.label_pt)}</td>
+      ${[0,1,2].map(i => `<td><input type="number" min="0" step="1" class="tl"
+          data-id="${a.id}" data-i="${i}" value="${+r[i]||0}"></td>`).join("")}
+      <td class="n" id="tot-${a.id}">${n}</td></tr>`;
+  }).join("");
+
+  return `<div>
+    <div class="kicker">Course · Sondagens · contagens</div>
+    <h1>A contagem da sala</h1>
+    <div class="sub">Uma linha por atividade: quantos, na sala, disseram cada coisa.
+      As linhas não têm de somar o mesmo. Enquanto houver contagens, a figura usa-as
+      e ignora os aparelhos.</div>
+    <table><thead><tr>
+      <th>atividade</th><th style="width:96px">automatizar</th><th style="width:96px">aumentar</th>
+      <th style="width:96px">manter</th><th style="width:60px">total</th>
+    </tr></thead><tbody>${rows}</tbody></table>
+    <div class="row">
+      <button id="cFig">ir para a figura</button>
+      <button id="cBack" class="ghost">voltar ao console</button>
+      <button id="cClear" class="warn">limpar as contagens</button>
+      <span class="muted" id="cMsg"></span>
+    </div>
+  </div>`;
+}
+
+/* ---- 5 · the facilitator console ---- */
+function viewSala(){
+  const acts = CFG.activities || [];
+  const six = acts.slice(0,6);
+  const phase = CFG.phase;
+  return `<div>
+    <div class="kicker">Course · Sondagens · console</div>
+    <h1>A sala</h1>
+    <div class="sub">${esc(CFG.session||"")} · <b>${respondents()}</b> concluíram · fase: <b>${phase}</b></div>
+
+    <div class="row">
+      <button id="pOpen"  aria-pressed="${phase==="triagem"}">abrir a triagem</button>
+      <button id="pClose" aria-pressed="${phase==="figura"}">fechar a triagem</button>
+      <button id="pRelease" aria-pressed="${phase==="revelado"}">libertar a visão pessoal</button>
+      <span class="muted" style="margin:0 6px">|</span>
+      <button id="toCount">entrada de contagens</button>
+      <button id="toFig">ir para a figura</button>
+    </div>
+
+    <h2 style="margin-top:26px">Os seis nomes do quadro, às 10:15</h2>
+    <div class="muted" style="font-size:13px;margin-bottom:8px">
+      São os seis primeiros itens da lista, para que a sala reconheça o trabalho da manhã no instrumento da tarde.</div>
+    ${six.map((a,i)=>`<div class="row" style="margin-top:6px">
+      <span class="muted" style="width:18px">${i+1}</span>
+      <input type="text" class="six" data-id="${a.id}" value="${esc(a.label_pt)}" size="60">
+      <select class="band" data-id="${a.id}">
+        ${Object.entries(BANDS).map(([k,b])=>`<option value="${k}"${a.outside_read&&a.outside_read.band===k?" selected":""}>${b.pt}</option>`).join("")}
+      </select></div>`).join("")}
+
+    <h2 style="margin-top:26px">O muro da manhã</h2>
+    <div class="muted" style="font-size:13px;margin-bottom:8px">
+      Os oito cartões que cada mesa afixou às 09:20. Preenchido: ligado a nós. Vazio: genérico ou alugado.</div>
+    <table><thead><tr><th>cartão</th><th style="width:70px">mesa</th><th style="width:120px">ligado a nós</th><th style="width:40px"></th></tr></thead>
+      <tbody>${(CFG.wall||[]).map(b=>`<tr>
+        <td><input type="text" class="wl" data-id="${b.id}" value="${esc(b.label)}" size="46"></td>
+        <td><input type="text" class="wt" data-id="${b.id}" value="${esc(b.table||"")}" size="3"></td>
+        <td><button class="wb" data-id="${b.id}" aria-pressed="${!!b.bound}">${b.bound?"ligado":"genérico"}</button></td>
+        <td><button class="wx ghost" data-id="${b.id}">×</button></td></tr>`).join("")}</tbody></table>
+    <div class="row"><button id="wAdd" class="ghost">+ cartão</button></div>
+
+    <h2 style="margin-top:26px">Ensaio e dados</h2>
+    <div class="row">
+      <button id="seed" class="ghost">carregar 33 respostas de ensaio</button>
+      <button id="wipe" class="warn">apagar as respostas</button>
+      <button id="reset" class="warn">recomeçar a sala</button>
+      <button id="exp" class="ghost">exportar JSON</button>
+    </div>
+    <div class="row"><textarea id="io" rows="4" style="width:100%;font-size:12px;font-family:ui-monospace,Menlo,monospace"
+      placeholder="cole aqui um session.json ou uma exportação, e carregue em importar"></textarea></div>
+    <div class="row"><button id="imp" class="ghost">importar</button><span class="muted" id="msg"></span></div>
+  </div>`;
+}
+
+/* ----------------------------------------------------------------- wiring */
+function on(id, ev, fn){ const el = document.getElementById(id); if(el) el.addEventListener(ev, fn); }
+function each(sel, ev, fn){ document.querySelectorAll(sel).forEach(el => el.addEventListener(ev, e => fn(el, e))); }
+
+let PENDING = null;   /* activity awaiting its optional confidence tap */
+
+function wire(v){
+  if(v === "triagem"){
+    each(".choice","click", async el => {
+      const next = sortOrder().find(a => !MINE[a.id]);
+      if(!next) return;
+      PENDING = { id: next.id, c: el.dataset.c };
+      document.getElementById("app").innerHTML = viewConf(next.id);
+      each("[data-k]","click", async b => {
+        if(b.dataset.k === "cancel"){ PENDING = null; render(); return; }
+        MINE[PENDING.id] = { c: PENDING.c, k: b.dataset.k==="skip" ? null : b.dataset.k, ts: new Date().toISOString() };
+        PENDING = null;
+        await saveMine();
+        render();
+      });
+    });
+    on("toEu","click", () => go("eu"));
+  }
+
+  if(v === "figura"){
+    on("toSala","click", () => go("sala"));
+    on("w","input", e => { W = e.target.value/100; WMODE = "free"; repaint(); });
+    on("snapToday","click", () => { W = wToday(); WMODE="today"; render(); });
+    on("snapThree","click", () => { const w = wThree(); if(w == null) return; W = w; WMODE="three"; render(); });
+    on("bMorning","click", () => { OPT.morning = !OPT.morning; render(); });
+    on("bRead","click",    () => { OPT.outside = !OPT.outside; render(); });
+    on("bArrow","click",   () => { OPT.arrow   = !OPT.arrow;   render(); });
+    on("ovDo","click", async () => {
+      const aid = document.getElementById("ovAct").value;
+      const why = document.getElementById("ovWhy").value.trim();
+      if(!aid || !why) return;
+      CFG.overrides = CFG.overrides || {};
+      CFG.overrides[aid] = { why, ts: new Date().toISOString() };
+      await publish(); render();
+    });
+  }
+
+  if(v === "contagem"){
+    each(".tl","change", async el => {
+      const id = el.dataset.id, i = +el.dataset.i;
+      const v = Math.max(0, Math.floor(+el.value || 0));
+      el.value = v;
+      CFG.tally = CFG.tally || {};
+      CFG.tally[id] = CFG.tally[id] || [0,0,0];
+      CFG.tally[id][i] = v;
+      const r = CFG.tally[id];
+      const tot = document.getElementById("tot-" + id);
+      if(tot) tot.textContent = (+r[0]||0) + (+r[1]||0) + (+r[2]||0);
+      const ok = await publish();
+      const m = document.getElementById("cMsg");
+      if(m) m.textContent = ok ? "" : (typeof DBNOTE !== "undefined" && DBNOTE) || "não guardou";
+    });
+    on("cFig","click", () => go("figura"));
+    on("cBack","click", () => go("sala"));
+    on("cClear","click", async () => {
+      if(!confirm("Limpar todas as contagens? A figura volta a usar os aparelhos.")) return;
+      delete CFG.tally; await publish(); render();
+    });
+  }
+
+  if(v === "sala"){
+    on("pOpen","click",    async () => { CFG.phase="triagem";  await publish(); render(); });
+    on("pClose","click",   async () => { CFG.phase="figura";   await publish(); W=wToday(); WMODE="today"; render(); });
+    on("pRelease","click", async () => { CFG.phase="revelado"; await publish(); render(); });
+    on("toFig","click", () => go("figura"));
+    on("toCount","click", () => go("contagem"));
+
+    each(".six","change", async el => {
+      const a = CFG.activities.find(x=>x.id===el.dataset.id);
+      if(a){ a.label_pt = el.value; a.source = "waterline_board"; await publish(); }
+    });
+    each(".band","change", async el => {
+      const a = CFG.activities.find(x=>x.id===el.dataset.id);
+      if(a){ a.outside_read = a.outside_read || {drivers:[],falsifier:""}; a.outside_read.band = el.value; await publish(); }
+    });
+    each(".wl","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.label=el.value; await publish(); } });
+    each(".wt","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.table=el.value; await publish(); } });
+    each(".wb","click",  async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.bound=!b.bound; await publish(); render(); } });
+    each(".wx","click",  async el => { CFG.wall = CFG.wall.filter(x=>x.id!==el.dataset.id); await publish(); render(); });
+    on("wAdd","click", async () => { CFG.wall = CFG.wall||[]; CFG.wall.push({id:"w"+uid(),label:"",table:"",bound:true}); await publish(); render(); });
+
+    on("seed","click", async () => { await seedRehearsal(); render(); });
+    on("wipe","click", async () => {
+      if(!confirm("Apagar todas as respostas da sala?")) return;
+      for(const k of await S.list(K_RESP, true)) await S.del(k, true);
+      CFG.rehearsal = false; await publish(); await pull(); render();
+    });
+    on("reset","click", async () => {
+      if(!confirm("Recomeçar a sala: apaga respostas, muro e fase. Continuar?")) return;
+      for(const k of await S.list(K_RESP, true)) await S.del(k, true);
+      await S.del(K_CFG, true); MINE = {}; await saveMine();
+      CFG = await loadSeed(); CFG.phase="setup"; CFG.overrides={}; CFG.rehearsal=false;
+      await publish(); await pull(); render();
+    });
+    on("exp","click", () => {
+      document.getElementById("io").value = JSON.stringify({ ...CFG, responses: RESP }, null, 2);
+      document.getElementById("msg").textContent = "exportado para a caixa · copie";
+    });
+    on("imp","click", async () => {
+      try {
+        const d = JSON.parse(document.getElementById("io").value);
+        if(d.responses){
+          for(const r of d.responses) await S.set(K_RESP + r.pid, JSON.stringify(r), true);
+          delete d.responses;
+        }
+        CFG = { phase:"setup", overrides:{}, rehearsal:false, ...d };
+        await publish(); await pull(); render();
+        document.getElementById("msg").textContent = "importado";
+      } catch(e){ document.getElementById("msg").textContent = "não deu para ler esse JSON"; }
+    });
+  }
+}
+
+/* The slider must answer under the hand: repaint the svg and the count, and
+   leave the rest of the page alone. */
+function repaint(){
+  const f = document.getElementById("fig");
+  if(f) f.innerHTML = figureSVG(null);
+  const c = document.getElementById("count");
+  if(c) c.innerHTML = countLine();
+}
+
+async function saveMine(){
+  await S.set("snd:mine", JSON.stringify(MINE), false);
+  const acts = CFG.activities||[];
+  const done = acts.length>0 && acts.every(a => MINE[a.id]);
+  await S.set(K_RESP + DID, JSON.stringify({ pid: DID, choices: MINE, done, ts:new Date().toISOString() }), true);
+  await pull();
+}
+
+/* A rehearsal room. Deterministic enough to be the same picture twice, and
+   loud about being fake: the figure carries an "ensaio" stamp until it is wiped. */
+/* A room of owners is more conservative than the outside read, which is the
+   whole point of the 14:05 hinge. These mixes put the median reach near 0.46,
+   so "hoje" floods about six of fourteen and "três anos" floods about ten,
+   with the two slowest bands crossing 50% hold and standing up as polders. */
+const REHEARSAL_MIX = {
+  already:  [0.45, 0.40, 0.15],
+  under_3:  [0.22, 0.48, 0.30],
+  "3_to_7": [0.08, 0.37, 0.55],
+  resists:  [0.02, 0.13, 0.85],
+};
+async function seedRehearsal(){
+  const acts = CFG.activities||[];
+  let s = 20260908;
+  const rnd = () => (s = (s*1103515245 + 12345) % 2147483648) / 2147483648;
+  for(let i=0;i<33;i++){
+    const pid = "ens-" + String(i).padStart(2,"0");
+    const choices = {};
+    acts.forEach(a => {
+      const mix = REHEARSAL_MIX[a.outside_read && a.outside_read.band] || [0.3,0.4,0.3];
+      const r = rnd();
+      const c = r < mix[0] ? "automate" : r < mix[0]+mix[1] ? "augment" : "hold";
+      choices[a.id] = { c, k: CONF[Math.floor(rnd()*3)].k, ts:new Date().toISOString() };
+    });
+    await S.set(K_RESP + pid, JSON.stringify({ pid, choices, done:true, ts:new Date().toISOString() }), true);
+  }
+  CFG.rehearsal = true; await publish(); await pull();
+  W = wToday(); WMODE = "today";
+}
+
+boot();
+</script>
+
+<script type="application/json" id="fallback">
+{
+  "session": "sessao-2026-09-08",
+  "title": "Onde a máquina deve trabalhar",
+  "subtitle": "A sua leitura, redesenhada. Mova a água.",
+  "activities": [
+    { "id":"a1","label_pt":"Codificar o atendimento para faturamento","source":"waterline_board","outside_read":{"band":"already","drivers":["barato de conferir contra a guia","os dados existem em escala","sem barreira regulatória"],"falsifier":"auditores passam a rejeitar guias codificadas por máquina"} },
+    { "id":"a2","label_pt":"Resumir um histórico longo antes da consulta","source":"waterline_board","outside_read":{"band":"already","drivers":["o médico confere em segundos","texto clínico existe em volume","sem barreira regulatória"],"falsifier":"uma omissão do resumo entra num processo"} },
+    { "id":"a3","label_pt":"Redigir a justificativa clínica de uma autorização prévia","source":"waterline_board","outside_read":{"band":"under_3","drivers":["conferir custa menos do que redigir","cada operadora pede um formato","assinatura de um médico é exigida"],"falsifier":"a operadora passa a exigir autoria humana declarada"} },
+    { "id":"a4","label_pt":"Triar as chamadas recebidas por urgência","source":"waterline_board","outside_read":{"band":"under_3","drivers":["o erro aparece rápido","protocolos de triagem são públicos","responsabilidade se um caso grave é rebaixado"],"falsifier":"um caso rebaixado pela máquina vira evento sentinela"} },
+    { "id":"a5","label_pt":"Ler um exame de rastreamento de rotina","source":"waterline_board","outside_read":{"band":"already","drivers":["dupla leitura já é o padrão","bases de imagem enormes e rotuladas","dispositivo aprovado, laudo assinado"],"falsifier":"o conselho passa a exigir leitura humana primária"} },
+    { "id":"a6","label_pt":"Responder a uma auditoria da operadora com as evidências","source":"waterline_board","outside_read":{"band":"under_3","drivers":["a evidência está no prontuário","o formato repete-se","a resposta compromete a cooperativa"],"falsifier":"a operadora glosa uma resposta montada por máquina"} },
+    { "id":"a7","label_pt":"Agendamento e lembretes de consulta","source":"intake","outside_read":{"band":"already","drivers":["o resultado confere-se sozinho","dados operacionais em escala","sem barreira"],"falsifier":"quedas de comparecimento atribuídas ao contacto automático"} },
+    { "id":"a8","label_pt":"Registo clínico ditado durante a consulta","source":"intake","outside_read":{"band":"already","drivers":["o médico lê e assina na hora","áudio clínico em volume","consentimento de gravação"],"falsifier":"pacientes recusam a gravação em número relevante"} },
+    { "id":"a9","label_pt":"Buscar a evidência no ponto de cuidado","source":"intake","outside_read":{"band":"already","drivers":["a fonte fica visível e confere-se","literatura pública","sem barreira"],"falsifier":"uma citação inventada chega à conduta"} },
+    { "id":"a10","label_pt":"Ligar a quem faltou a duas consultas e descobrir o motivo","source":"intake","outside_read":{"band":"3_to_7","drivers":["o resultado só se vê semanas depois","poucas gravações destas conversas","sem barreira formal, muita relação"],"falsifier":"a taxa de retorno iguala a do contacto humano"} },
+    { "id":"a11","label_pt":"Estratificar risco e fazer busca ativa na carteira","source":"intake","outside_read":{"band":"under_3","drivers":["a lista confere-se contra desfechos","os dados são da cooperativa","sem barreira, mas há equidade em jogo"],"falsifier":"a estratificação reproduz um viés e é suspensa"} },
+    { "id":"a12","label_pt":"Escrever a primeira versão de um protocolo assistencial","source":"intake","outside_read":{"band":"3_to_7","drivers":["conferir custa quase o mesmo que escrever","protocolos publicados existem","a comissão técnica responde por ele"],"falsifier":"uma comissão aprova um protocolo de primeira versão automática"} },
+    { "id":"a13","label_pt":"Escolher quais contratos renegociar neste ano","source":"intake","outside_read":{"band":"resists","drivers":["o acerto só se sabe no ano seguinte","cada negociação é um caso único","a diretoria responde perante os cooperados"],"falsifier":"a carteira passa a ser priorizada por modelo e o resultado melhora"} },
+    { "id":"a14","label_pt":"A conversa com a família depois de uma notícia difícil","source":"intake","outside_read":{"band":"resists","drivers":["não há como conferir o resultado","não há dados destas conversas","é a relação, e ela é a nossa"],"falsifier":"famílias preferem receber a notícia de outro modo"} }
+  ],
+  "wall": [
+    { "id":"w1","label":"O prontuário longitudinal do cooperado","table":1,"bound":true },
+    { "id":"w2","label":"A decisão ligada ao que aconteceu depois","table":1,"bound":true },
+    { "id":"w3","label":"A relação de vinte anos com o paciente","table":2,"bound":true },
+    { "id":"w4","label":"A rede de especialistas credenciada","table":2,"bound":true },
+    { "id":"w5","label":"Os contratos com as empresas da região","table":3,"bound":true },
+    { "id":"w6","label":"A nossa marca nesta cidade","table":3,"bound":true },
+    { "id":"w7","label":"Os protocolos assistenciais próprios","table":4,"bound":true },
+    { "id":"w8","label":"A assinatura que responde pelo ato","table":4,"bound":true },
+    { "id":"w9","label":"O sistema de gestão","table":5,"bound":false },
+    { "id":"w10","label":"Os modelos de IA","table":5,"bound":false },
+    { "id":"w11","label":"Os consultórios e os equipamentos","table":6,"bound":false },
+    { "id":"w12","label":"O portal do beneficiário","table":6,"bound":false }
+  ],
+  "morning_cards": [
+    { "id":"c1","label":"Redigir a justificativa clínica de um pedido de autorização prévia","machine_votes":4,"table_votes":6,"difficulty":3,"verifiability":4 },
+    { "id":"c2","label":"Ler um exame de rastreamento de rotina","machine_votes":5,"table_votes":6,"difficulty":5,"verifiability":4 },
+    { "id":"c3","label":"Resumir um histórico de 40 páginas antes da consulta","machine_votes":6,"table_votes":6,"difficulty":2,"verifiability":5 },
+    { "id":"c4","label":"Codificar o atendimento para faturamento","machine_votes":5,"table_votes":6,"difficulty":2,"verifiability":5 },
+    { "id":"c5","label":"Ligar para um paciente que faltou a duas consultas e descobrir o motivo","machine_votes":2,"table_votes":6,"difficulty":2,"verifiability":2 },
+    { "id":"c6","label":"Decidir qual reclamação de cooperado sobe para a diretoria","machine_votes":1,"table_votes":6,"difficulty":4,"verifiability":2 },
+    { "id":"c7","label":"Escrever a primeira versão de um novo protocolo assistencial","machine_votes":3,"table_votes":6,"difficulty":5,"verifiability":3 },
+    { "id":"c8","label":"Responder a uma auditoria da operadora com as evidências","machine_votes":4,"table_votes":6,"difficulty":3,"verifiability":4 },
+    { "id":"c9","label":"Convencer um especialista a aceitar mais um caso esta semana","machine_votes":0,"table_votes":6,"difficulty":3,"verifiability":1 },
+    { "id":"c10","label":"Triar as chamadas recebidas por urgência","machine_votes":4,"table_votes":6,"difficulty":3,"verifiability":3 },
+    { "id":"c11","label":"Escolher quais contratos renegociar neste ano","machine_votes":1,"table_votes":6,"difficulty":5,"verifiability":1 },
+    { "id":"c12","label":"Conduzir a conversa com a família depois de uma notícia difícil","machine_votes":0,"table_votes":6,"difficulty":4,"verifiability":1 }
+  ]
+}
+</script>
+</html>
