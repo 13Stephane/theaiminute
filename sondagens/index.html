@@ -217,6 +217,7 @@ const CHOICES = [
 const CONF = [ {k:"sure",pt:"com certeza"}, {k:"fairly",pt:"bastante seguro"}, {k:"guess",pt:"no palpite"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
+const BUILD = 6;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -239,6 +240,17 @@ async function boot(){
 
   const raw = await S.get(K_CFG, true);
   const pub = await loadSeed();
+
+  /* A phone holding an old copy of this HTML cannot be fixed by anything inside
+     the old copy, so the check has to come from outside it: session.json is
+     fetched no-store and carries the build it was published with. If it is
+     newer than the code running, reload once past the cache. Thirty-three
+     phones cannot be asked to clear their browsers at 13:22. */
+  if(pub && pub.build > BUILD && sessionStorage.getItem("snd:reloaded") !== String(pub.build)){
+    try { sessionStorage.setItem("snd:reloaded", String(pub.build)); } catch(e){}
+    location.replace(location.pathname + "?b=" + pub.build + location.hash);
+    return;
+  }
   if(raw){
     CFG = JSON.parse(raw);
     /* The published file is the list of record. Without this, a phone that opened
@@ -828,7 +840,8 @@ async function checkPublished(){
     const r = await fetch("session.json?t=" + Date.now(), { cache:"no-store" });
     if(!r.ok) throw new Error(r.status);
     const d = await r.json();
-    LIVE = { at: d.published_at || null,
+    LIVE = { build: d.build != null ? d.build : null,
+             at: d.published_at || null,
              n: (d.activities||[]).filter(a => (a.label_pt||"").trim()).length,
              board: (d.activities||[]).filter(a => a.source === "waterline_board").length };
   } catch(e){ LIVE = { error:true }; }
@@ -1149,6 +1162,8 @@ function viewSala(){
         ${bi("switch to live","ir para ao vivo")}</button>
     </div>
     <div class="row"><span class="muted" style="font-size:12px">${publishedLine()}</span></div>
+    <div class="row"><span class="muted" style="font-size:12px">this device is running build
+      <b>${BUILD}</b>${LIVE && LIVE.build != null ? ` · published build <b>${LIVE.build}</b>${LIVE.build > BUILD ? ` · <span style="color:var(--copp)">reload to catch up</span>` : ``}` : ``}</span></div>
     <div class="row"><textarea id="io" rows="4" style="width:100%;font-size:12px;font-family:ui-monospace,Menlo,monospace"
       placeholder="cole aqui um session.json ou uma exportação, e carregue em importar"></textarea></div>
     <div class="row"><button id="imp" class="ghost">importar</button><span class="muted" id="msg"></span></div>
@@ -1266,7 +1281,7 @@ function wire(v){
       CFG.dirtyList = false;
       await publish();
       const pub = { session: CFG.session, title: CFG.title, subtitle: CFG.subtitle,
-                    published_at: CFG.published_at,
+                    build: BUILD, published_at: CFG.published_at,
                     activities: CFG.activities, wall: CFG.wall, morning_cards: CFG.morning_cards };
       const text = JSON.stringify(pub, null, 1);
       const out = document.getElementById("aOut"), box = document.getElementById("aJson");
@@ -1736,7 +1751,8 @@ boot();
    "difficulty": 4,
    "verifiability": 1
   }
- ]
+ ],
+ "build": 6
 }
 </script>
 </html>
