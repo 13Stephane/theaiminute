@@ -302,6 +302,7 @@ function stateOf(a, w){
   return "dry";
 }
 function respondents(){ return RESP.filter(r => r.done).length; }
+function sharedRoom(){ return false; }
 
 /* Fixed random order per participant, so the room cannot converge by sequence.
    Seeded from the device id, never Math.random: a phone that drops the page
@@ -525,7 +526,7 @@ function viewDoor(){
 /* ---- 1 · the private pass ---- */
 function viewTriagem(){
   const acts = CFG.activities || [];
-  if(CFG.phase === "setup")
+  if(CFG.phase === "setup" && sharedRoom())
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
       <h1>Ainda não</h1><div class="sub">A triagem abre às 13:25. Deixe esta página aberta.</div></div>`;
 
@@ -615,12 +616,14 @@ function viewFigura(){
 
 /* ---- 3 · the personal view, that device only ---- */
 function viewEu(){
-  if(CFG.phase !== "revelado")
+  if(sharedRoom() && CFG.phase !== "revelado")
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
       <h1>Ainda não</h1><div class="sub">A sua leitura abre depois da figura.</div></div>`;
   if(!Object.keys(MINE).length)
     return `<div class="narrow"><h1>Sem respostas neste aparelho</h1>
       <div class="sub">A triagem correu noutro aparelho, ou ainda não a fez.</div></div>`;
+
+  if(respondents() < 5) return viewEuSolo();
 
   const acts = model();
   const gaps = acts.filter(a => MINE[a.id] && a.sh.n)
@@ -649,6 +652,34 @@ function viewEu(){
         <div class="d">você: <b style="color:${spec.hex}">${spec.pt.toLowerCase()}</b> ·
         a sala: ${CHOICES.map(c=>`${c.pt.toLowerCase()} ${pct(g.a.sh[c.key])}`).join(" · ")}</div></div>`;
     }).join("") : `<div class="muted">Ainda sem respostas da sala.</div>`}
+    <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.</div>
+  </div>`;
+}
+
+/* On a static host this device is the whole room, so there is no aggregate to
+   compare against and drawing one would be a lie told in the room's own colours.
+   Show what is honestly here: their answer, and the outside read beside it. */
+function viewEuSolo(){
+  const acts = CFG.activities || [];
+  return `<div class="narrow">
+    <div class="kicker">só neste aparelho · nunca no projetor, nunca com nome</div>
+    <h1>A sua leitura</h1>
+    <div class="sub">O que respondeu, e o que a leitura externa diz sobre o mesmo.
+      A comparação com a sala está no projetor.</div>
+    ${acts.map(a => {
+      const m = MINE[a.id];
+      if(!m) return ``;
+      const spec = CHOICES.find(c => c.key === m.c);
+      const b = a.outside_read && BANDS[a.outside_read.band];
+      return `<div class="card">
+        <div class="t">${esc(a.label_pt)}</div>
+        <div class="d">você: <b style="color:${spec.hex}">${spec.pt.toLowerCase()}</b>
+          ${m.k ? ` · ${esc((CONF.find(c=>c.k===m.k)||{}).pt || "")}` : ``}<br>
+          a leitura externa: ${b ? esc(b.pt) : `<span class="muted">sem leitura externa</span>`}
+          ${a.outside_read && a.outside_read.falsifier
+            ? `<br><span class="muted">o que a mudaria: ${esc(a.outside_read.falsifier)}</span>` : ``}</div>
+      </div>`;
+    }).join("")}
     <div class="legend" style="margin-top:18px">Isto não sai deste aparelho.</div>
   </div>`;
 }
