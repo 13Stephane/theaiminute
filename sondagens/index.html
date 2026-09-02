@@ -92,6 +92,15 @@
   .board:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold)}
   .done{font-family:Georgia,serif;font-size:22px;line-height:1.4;padding:70px 0}
 
+  /* Column-major grid: six labels get pasted in one pass and six bands in
+     another, so the DOM is ordered down the columns and Tab follows it. No
+     tabindex, because nothing else is on this screen to fight with. */
+  .lunch{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,auto);
+         grid-template-columns:58px minmax(0,1fr) 216px;gap:11px 14px;align-items:start;margin:14px 0 4px}
+  .lunch .h{color:var(--gold);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;padding-bottom:2px}
+  .lunch .mesa{font-family:Georgia,serif;font-size:16px;color:var(--mut);padding-top:8px}
+  .lunch input[type=text],.lunch select{width:100%}
+  .warn9{color:var(--copp);font-size:11px;margin-top:4px}
   .card{background:var(--panel);border-radius:8px;padding:14px 16px;margin:10px 0}
   .card .t{font-family:Georgia,serif;font-size:16px;margin-bottom:6px}
   .card .d{color:var(--mut);font-size:13px;line-height:1.55}
@@ -269,7 +278,7 @@ function shares(aid){
   return { automate:a/d, augment:g/d, hold:h/d, n };
 }
 function model(){
-  const acts = (CFG.activities||[]).map(a => {
+  const acts = acts_().map(a => {
     const sh = shares(a.id);
     const reach = sh.automate + 0.5*sh.augment;
     const band = (a.outside_read && BANDS[a.outside_read.band]) || null;
@@ -301,6 +310,33 @@ function stateOf(a, w){
   if(a.height <= w + BAND_W) return "line";
   return "dry";
 }
+/* A row with no label is a slot the facilitator has not filled, never a question
+   anybody should be asked. It is excluded everywhere the room meets the list. */
+function acts_(){ return (CFG.activities||[]).filter(a => (a.label_pt||"").trim()); }
+
+/* The six slots are keyed by table, not by position, so filling table 4 before
+   table 1 does not shuffle anybody else's row underneath them. */
+function boardSlots(){
+  const board = (CFG.activities||[]).filter(a => a.source === "waterline_board");
+  const slots = new Array(6).fill(null), rest = [];
+  board.forEach(a => {
+    const t = +a.table;
+    if(t >= 1 && t <= 6 && !slots[t-1]) slots[t-1] = a; else rest.push(a);
+  });
+  rest.forEach(a => { const k = slots.indexOf(null); if(k >= 0) slots[k] = a; });
+  return slots;
+}
+function lockable(){ return respondents() === 0 && tallyTotal() === 0; }
+/* Only ever adds a banner. The button is on the console regardless, so a session
+   id without a date, or a laptop on the wrong timezone, costs nothing. */
+function isSessionDay(){
+  const m = /(\d{4}-\d{2}-\d{2})/.exec(CFG.session || "");
+  if(!m) return false;
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return m[1] === today;
+}
+
 function respondents(){ return RESP.filter(r => r.done).length; }
 function sharedRoom(){ return false; }
 
@@ -314,7 +350,7 @@ function hash32(s){
   return h >>> 0;
 }
 function sortOrder(){
-  const a = (CFG.activities||[]).slice();
+  const a = acts_().slice();
   let s = hash32((DID||"") + "::" + (CFG.session||""));
   const rnd = () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
   for(let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; }
@@ -505,6 +541,7 @@ function render(){
   else if(v === "figura")  app.innerHTML = viewFigura();
   else if(v === "sala")    app.innerHTML = viewSala();
   else if(v === "contagem") app.innerHTML = viewContagem();
+  else if(v === "almoco")   app.innerHTML = viewAlmoco();
   else                     app.innerHTML = viewDoor();
   wire(v);
 }
@@ -518,14 +555,15 @@ function viewDoor(){
     <div class="doors">
       <a href="#/triagem"><b>Sou participante</b><span>A triagem privada. Ninguém vê as suas respostas, nunca com nome.</span></a>
       <a href="#/figura"><b>A figura</b><span>Para projetar, depois de a triagem fechar.</span></a>
-      <a href="#/sala"><b>Console da sala</b><span>Facilitador: os seis nomes do quadro, o muro, a fase.</span></a>
+      <a href="#/almoco"><b>Modo almoço</b><span>Os seis nomes do quadro, colados às 12:00. Nada mais nesta tela.</span></a>
+      <a href="#/sala"><b>Console da sala</b><span>Facilitador: a lista completa, o muro, a fase, as contagens.</span></a>
     </div>
   </div>`;
 }
 
 /* ---- 1 · the private pass ---- */
 function viewTriagem(){
-  const acts = CFG.activities || [];
+  const acts = acts_();
   if(CFG.phase === "setup" && sharedRoom())
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
       <h1>Ainda não</h1><div class="sub">A triagem abre às 13:25. Deixe esta página aberta.</div></div>`;
@@ -660,7 +698,7 @@ function viewEu(){
    compare against and drawing one would be a lie told in the room's own colours.
    Show what is honestly here: their answer, and the outside read beside it. */
 function viewEuSolo(){
-  const acts = CFG.activities || [];
+  const acts = acts_();
   return `<div class="narrow">
     <div class="kicker">só neste aparelho · nunca no projetor, nunca com nome</div>
     <h1>A sua leitura</h1>
@@ -684,13 +722,61 @@ function viewEuSolo(){
   </div>`;
 }
 
-/* ---- 4 · counts, when the sort happened on paper ---- */
+/* ---- 4 · lunch mode: the twenty minutes that decide the afternoon ---- */
+/* Twenty minutes, someone who is not the facilitator, six labels off a
+   photograph of the board. Nothing else is on this screen. */
+function viewAlmoco(){
+  const slots = boardSlots();
+  const locked = !!CFG.locked;
+  const filled = slots.filter(s => s && (s.label_pt||"").trim()).length;
+
+  const bandOpts = a => `<option value="">sem leitura externa</option>` +
+    Object.entries(BANDS).map(([k,b]) =>
+      `<option value="${k}"${a && a.outside_read && a.outside_read.band===k ? " selected" : ""}>${b.pt}</option>`).join("");
+
+  const col1 = [`<div class="h">mesa</div>`]
+    .concat(slots.map((s,i) => `<div class="mesa">${i+1}</div>`));
+  const col2 = [`<div class="h">o nome, nas palavras da mesa</div>`]
+    .concat(slots.map((s,i) => {
+      const v = s ? (s.label_pt||"") : "";
+      return `<div><input type="text" class="bl" data-i="${i}" value="${esc(v)}"
+        placeholder="cole aqui" autocomplete="off" ${locked?"disabled":""}>
+        <div class="warn9" id="w9-${i}">${wordNote(v)}</div></div>`;
+    }));
+  const col3 = [`<div class="h">leitura externa</div>`]
+    .concat(slots.map((s,i) =>
+      `<select class="bb" data-i="${i}" ${(!s || locked)?"disabled":""}>${bandOpts(s)}</select>`));
+
+  return `<div style="max-width:860px;margin:0 auto">
+    <div class="kicker">Course · Sondagens · 12:00</div>
+    <h1>Os seis do quadro</h1>
+    <div class="sub">Cole o nome de cada mesa, nas palavras dela. Depois, se houver leitura
+      externa, escolha a faixa. Deixar em branco é uma escolha legítima: a atividade entra
+      na triagem e na figura, e fica de fora da tabela de divergências.</div>
+    <div class="lunch">${col1.join("")}${col2.join("")}${col3.join("")}</div>
+    <div class="count" style="font-size:16px"><b id="lcount">${filled}</b> de 6 nomes${locked?" · lista trancada":""}</div>
+    <div class="row">
+      ${locked
+        ? `<button id="unlock" ${lockable()?"":"disabled"}>destrancar</button>
+           ${lockable()?``:`<span class="muted" style="font-size:12px">já há respostas: a lista não muda por baixo de quem já respondeu</span>`}`
+        : `<button id="lock">trancar a lista</button>`}
+      <button id="aBack" class="ghost">console completo</button>
+      <span class="muted" id="aMsg" style="font-size:12px"></span>
+    </div>
+  </div>`;
+}
+function wordNote(v){
+  const n = (v||"").trim() ? v.trim().split(/\s+/).length : 0;
+  return n > 9 ? `${n} palavras · o quadro dizia menos` : "";
+}
+
+/* ---- 5 · counts, when the sort happened on paper ---- */
 /* Thirty-three phones is one way to fill the figure and often the wrong one.
    This is the other: the room sorts on the printed list, the tables add up
    their sheets, and one person types fourteen rows. The figure cannot tell
    the difference, and neither can the room. */
 function viewContagem(){
-  const acts = CFG.activities || [];
+  const acts = acts_();
   const t = CFG.tally || {};
   const rows = acts.map(a => {
     const r = t[a.id] || [0,0,0];
@@ -720,32 +806,46 @@ function viewContagem(){
   </div>`;
 }
 
-/* ---- 5 · the facilitator console ---- */
+/* ---- 6 · the facilitator console ---- */
 function viewSala(){
   const acts = CFG.activities || [];
-  const six = acts.slice(0,6);
+  const six = boardSlots().filter(Boolean);
   const phase = CFG.phase;
   return `<div>
     <div class="kicker">Course · Sondagens · console</div>
     <h1>A sala</h1>
     <div class="sub">${esc(CFG.session||"")} · <b>${respondents()}</b> concluíram · fase: <b>${phase}</b></div>
 
+    ${isSessionDay() && !CFG.locked ? `<div class="card" style="border:1px solid var(--gold)">
+      <div class="t">É hoje, e a lista ainda está aberta.</div>
+      <div class="d">Os seis nomes do quadro entram no <a href="#/almoco" style="color:var(--gold)">modo almoço</a>,
+        que é a única entrada de dados ao vivo do dia.</div></div>` : ``}
     <div class="row">
       <button id="pOpen"  aria-pressed="${phase==="triagem"}">abrir a triagem</button>
       <button id="pClose" aria-pressed="${phase==="figura"}">fechar a triagem</button>
       <button id="pRelease" aria-pressed="${phase==="revelado"}">libertar a visão pessoal</button>
       <span class="muted" style="margin:0 6px">|</span>
+      <button id="toLunch">modo almoço</button>
       <button id="toCount">entrada de contagens</button>
       <button id="toFig">ir para a figura</button>
     </div>
+    <div class="row">
+      ${CFG.locked
+        ? `<span class="muted" style="font-size:12.5px">lista trancada · ${acts_().length} atividades</span>
+           <button id="sUnlock" ${lockable()?"":"disabled"} class="ghost">destrancar</button>`
+        : `<button id="sLock" class="ghost">trancar a lista</button>`}
+    </div>
 
-    <h2 style="margin-top:26px">Os seis nomes do quadro, às 10:15</h2>
+    <h2 style="margin-top:26px">Os seis do quadro</h2>
     <div class="muted" style="font-size:13px;margin-bottom:8px">
-      São os seis primeiros itens da lista, para que a sala reconheça o trabalho da manhã no instrumento da tarde.</div>
+      O que as mesas escreveram, marcado <i>do quadro desta manhã</i> na triagem. Entram no
+      <a href="#/almoco" style="color:var(--gold)">modo almoço</a>, que é a tela feita para os vinte minutos.
+      ${six.length ? `${six.length} de 6 preenchidos.` : `Nenhum ainda.`}</div>
     ${six.map((a,i)=>`<div class="row" style="margin-top:6px">
       <span class="muted" style="width:18px">${i+1}</span>
-      <input type="text" class="six" data-id="${a.id}" value="${esc(a.label_pt)}" size="60">
-      <select class="band" data-id="${a.id}">
+      <input type="text" class="six" data-id="${a.id}" value="${esc(a.label_pt)}" size="60" ${CFG.locked?"disabled":""}>
+      <select class="band" data-id="${a.id}" ${CFG.locked?"disabled":""}>
+        <option value=""${!a.outside_read?" selected":""}>sem leitura externa</option>
         ${Object.entries(BANDS).map(([k,b])=>`<option value="${k}"${a.outside_read&&a.outside_read.band===k?" selected":""}>${b.pt}</option>`).join("")}
       </select></div>`).join("")}
 
@@ -815,6 +915,60 @@ function wire(v){
     });
   }
 
+  if(v === "almoco"){
+    /* Never re-render on a keystroke: six labels are pasted in one pass and a
+       rebuild would throw the focus and the tab chain away every time. */
+    each(".bl","change", async el => {
+      const i = +el.dataset.i, val = el.value.trim();
+      const a = boardSlots()[i];
+      if(!a && val){
+        CFG.activities = CFG.activities || [];
+        CFG.activities.push({ id:"w"+uid(), label_pt:val, source:"waterline_board",
+                              table:i+1, outside_read:null });
+      } else if(a && !val){
+        CFG.activities = CFG.activities.filter(x => x.id !== a.id);
+      } else if(a){
+        a.label_pt = val;
+        if(!a.table) a.table = i+1;
+      } else return;
+
+      const now = boardSlots();
+      const sel = document.querySelector(`.bb[data-i="${i}"]`);
+      if(sel) sel.disabled = !now[i] || !!CFG.locked;
+      const w9 = document.getElementById("w9-" + i);
+      if(w9) w9.textContent = wordNote(val);
+      const c = document.getElementById("lcount");
+      if(c) c.textContent = now.filter(s => s && (s.label_pt||"").trim()).length;
+
+      const ok = await publish();
+      const m = document.getElementById("aMsg");
+      if(m) m.textContent = ok ? "" : ((typeof DBNOTE !== "undefined" && DBNOTE) || "não guardou");
+    });
+
+    each(".bb","change", async el => {
+      const a = boardSlots()[+el.dataset.i];
+      if(!a) return;
+      /* a blank band is a gap the facilitator chose, and is stored as one */
+      a.outside_read = el.value
+        ? Object.assign({ drivers:[], falsifier:"" }, a.outside_read || {}, { band: el.value })
+        : null;
+      const ok = await publish();
+      const m = document.getElementById("aMsg");
+      if(m) m.textContent = ok ? "" : ((typeof DBNOTE !== "undefined" && DBNOTE) || "não guardou");
+    });
+
+    on("lock","click", async () => {
+      const n = acts_().length;
+      if(!confirm(`Trancar ${n} atividades. Depois disto não se acrescenta nenhuma.`)) return;
+      CFG.locked = true; await publish(); render();
+    });
+    on("unlock","click", async () => {
+      if(!lockable()) return;
+      CFG.locked = false; await publish(); render();
+    });
+    on("aBack","click", () => go("sala"));
+  }
+
   if(v === "contagem"){
     each(".tl","change", async el => {
       const id = el.dataset.id, i = +el.dataset.i;
@@ -844,6 +998,13 @@ function wire(v){
     on("pRelease","click", async () => { CFG.phase="revelado"; await publish(); render(); });
     on("toFig","click", () => go("figura"));
     on("toCount","click", () => go("contagem"));
+    on("toLunch","click", () => go("almoco"));
+    on("sLock","click", async () => {
+      const n = acts_().length;
+      if(!confirm(`Trancar ${n} atividades. Depois disto não se acrescenta nenhuma.`)) return;
+      CFG.locked = true; await publish(); render();
+    });
+    on("sUnlock","click", async () => { if(lockable()){ CFG.locked = false; await publish(); render(); } });
 
     each(".six","change", async el => {
       const a = CFG.activities.find(x=>x.id===el.dataset.id);
@@ -851,7 +1012,11 @@ function wire(v){
     });
     each(".band","change", async el => {
       const a = CFG.activities.find(x=>x.id===el.dataset.id);
-      if(a){ a.outside_read = a.outside_read || {drivers:[],falsifier:""}; a.outside_read.band = el.value; await publish(); }
+      if(!a) return;
+      a.outside_read = el.value
+        ? Object.assign({drivers:[],falsifier:""}, a.outside_read||{}, {band: el.value})
+        : null;
+      await publish();
     });
     each(".wl","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.label=el.value; await publish(); } });
     each(".wt","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.table=el.value; await publish(); } });
