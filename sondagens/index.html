@@ -238,9 +238,17 @@ async function boot(){
   if(!DID){ DID = uid(); await S.set(K_DID, DID, false); }
 
   const raw = await S.get(K_CFG, true);
-  if(raw){ CFG = JSON.parse(raw); }
-  else {
-    CFG = await loadSeed();
+  const pub = await loadSeed();
+  if(raw){
+    CFG = JSON.parse(raw);
+    /* The published file is the list of record. Without this, a phone that opened
+       the page before lunch keeps sorting the pre-lunch list out of its own
+       storage, and at 12:25 that looks exactly like a publish that did not take.
+       It is also why an updated list can show up in Portuguese only: the stored
+       copy predates the English labels. */
+    if(adoptPublished(CFG, pub)) await S.set(K_CFG, JSON.stringify(CFG), true);
+  } else {
+    CFG = pub;
     CFG.phase = "setup";
     CFG.overrides = {};
     CFG.rehearsal = false;
@@ -251,6 +259,21 @@ async function boot(){
   window.addEventListener("hashchange", render);
   render();
   POLL = setInterval(tick, 5000);
+}
+
+/* Takes the list, the wall and the morning cards from the published file, and
+   never the phase, the overrules, the counts or the rehearsal flag: those belong
+   to the device holding them. A console with unpublished edits keeps its own. */
+function adoptPublished(cur, pub){
+  if(!pub || !pub.activities) return false;
+  if(cur.dirtyList) return false;
+  const key = o => JSON.stringify([o.activities, o.wall, o.morning_cards]);
+  if(key(cur) === key(pub)) return false;
+  cur.activities = pub.activities;
+  cur.wall = pub.wall;
+  cur.morning_cards = pub.morning_cards;
+  if(pub.published_at) cur.published_at = pub.published_at;
+  return true;
 }
 
 /* session.json when the folder is served; the copy below when the file is
@@ -1189,6 +1212,7 @@ function wire(v){
        rebuild would throw the focus and the tab chain away every time. */
     each(".bl","change", async el => {
       const i = +el.dataset.i, val = el.value.trim();
+      CFG.dirtyList = true;
       const a = boardSlots()[i];
       if(!a && val){
         CFG.activities = CFG.activities || [];
@@ -1217,6 +1241,7 @@ function wire(v){
     each(".bb","change", async el => {
       const a = boardSlots()[+el.dataset.i];
       if(!a) return;
+      CFG.dirtyList = true;
       /* a blank band is a gap the facilitator chose, and is stored as one */
       a.outside_read = el.value
         ? Object.assign({ drivers:[], falsifier:"" }, a.outside_read || {}, { band: el.value })
@@ -1238,6 +1263,7 @@ function wire(v){
     on("aExport","click", async () => {
       const now = new Date();
       CFG.published_at = now.toISOString();
+      CFG.dirtyList = false;
       await publish();
       const pub = { session: CFG.session, title: CFG.title, subtitle: CFG.subtitle,
                     published_at: CFG.published_at,
@@ -1294,21 +1320,22 @@ function wire(v){
 
     each(".six","change", async el => {
       const a = CFG.activities.find(x=>x.id===el.dataset.id);
-      if(a){ a.label_pt = el.value; a.source = "waterline_board"; await publish(); }
+      if(a){ a.label_pt = el.value; a.source = "waterline_board"; CFG.dirtyList = true; await publish(); }
     });
     each(".band","change", async el => {
       const a = CFG.activities.find(x=>x.id===el.dataset.id);
       if(!a) return;
+      CFG.dirtyList = true;
       a.outside_read = el.value
         ? Object.assign({drivers:[],falsifier:""}, a.outside_read||{}, {band: el.value})
         : null;
       await publish();
     });
-    each(".wl","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.label=el.value; await publish(); } });
-    each(".wt","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.table=el.value; await publish(); } });
-    each(".wb","click",  async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.bound=!b.bound; await publish(); render(); } });
-    each(".wx","click",  async el => { CFG.wall = CFG.wall.filter(x=>x.id!==el.dataset.id); await publish(); render(); });
-    on("wAdd","click", async () => { CFG.wall = CFG.wall||[]; CFG.wall.push({id:"w"+uid(),label:"",table:"",bound:true}); await publish(); render(); });
+    each(".wl","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.label=el.value; CFG.dirtyList=true; await publish(); } });
+    each(".wt","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.table=el.value; CFG.dirtyList=true; await publish(); } });
+    each(".wb","click",  async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.bound=!b.bound; CFG.dirtyList=true; await publish(); render(); } });
+    each(".wx","click",  async el => { CFG.wall = CFG.wall.filter(x=>x.id!==el.dataset.id); CFG.dirtyList=true; await publish(); render(); });
+    on("wAdd","click", async () => { CFG.wall = CFG.wall||[]; CFG.wall.push({id:"w"+uid(),label:"",table:"",bound:true}); CFG.dirtyList=true; await publish(); render(); });
 
     on("seed","click", async () => { await seedRehearsal(); render(); });
     on("golive","click", async () => {
