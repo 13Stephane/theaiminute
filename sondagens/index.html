@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 17;   /* bumped whenever this file changes */
+const BUILD = 18;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -402,6 +402,32 @@ function safeRender(){
    the sort closed; the room's rows need the key, so a participant never has them.
    Every failure degrades to what this device already knows rather than to a
    blank screen: a venue's wifi is not allowed to end the exercise. */
+/* One list()-backed read of the room, in one place. Called from the throttled
+   poll, and once, unconditionally, whenever a facilitator action makes a fresh
+   number worth the single extra call — closing the sort, for one, so the figure
+   opens on the real count rather than whatever the last ~20s-old poll caught. */
+async function refreshRoom(){
+  if(!KEY) return false;
+  try {
+    const d = await api(`/r?session=${encodeURIComponent(CFG.session||"")}`, { key:true });
+    if(!d) return false;
+    const before = RESP.length, doneBefore = respondents();
+    RESP = d.responses || [];
+    NET.up = true;
+    return RESP.length !== before || respondents() !== doneBefore;
+  } catch(e){
+    if(e.status === 401){
+      /* a mistyped key must not stick: leaving it in storage means every reload
+         fails the same silent way until somebody clears the browser */
+      NET.note = "a chave não foi aceite";
+      KEY = null;
+      try { localStorage.removeItem(K_KEY); } catch(e2){}
+    }
+    NET.up = false;
+    return true;   /* NET/KEY changed even though RESP did not; still worth a render */
+  }
+}
+
 async function tick(){
   if(PENDING) return;
   let dirty = false;
@@ -442,27 +468,16 @@ async function tick(){
 
     if(PENDING_SEND) await flushMine();
 
-    if(KEY){
-      try {
-        const d = await api(`/r?session=${encodeURIComponent(CFG.session||"")}`, { key:true });
-        if(d){
-          const before = RESP.length, doneBefore = respondents();
-          RESP = d.responses || [];
-          if(RESP.length !== before || respondents() !== doneBefore) dirty = true;
-          NET.up = true;
-        }
-      } catch(e){
-        if(e.status === 401){
-          /* a mistyped key must not stick: leaving it in storage means every reload
-             fails the same silent way until somebody clears the browser */
-          NET.note = "a chave não foi aceite";
-          KEY = null;
-          try { localStorage.removeItem(K_KEY); } catch(e2){}
-          dirty = true;
-        }
-        NET.up = false;
-      }
-    }
+    /* list() sits on a daily KV quota a hundredth the size of a plain read
+       (1,000 vs 100,000), and enumerating the room's rows has no non-list
+       alternative. Two guards, not one: gate on phase, since the count can only
+       change while the sort is actually open — a console tab left open all day
+       polling even once every 20s would still burn ~1,600 calls on its own,
+       over the daily cap, for no reason once nobody can submit anything new —
+       and throttle within that window, since a completion counter does not
+       need sub-ten-second precision. */
+    TICKS = (TICKS + 1) % 4;
+    if(KEY && CFG.phase === "triagem" && TICKS === 0){ if(await refreshRoom()) dirty = true; }
   } else {
     const n = RESP.length, d = respondents();
     await pull();
@@ -1585,7 +1600,7 @@ function wire(v){
   if(v === "sala"){
     if(!LIVE) checkPublished().then(() => { if(view() === "sala") render(); });
     on("pOpen","click",    async () => { await setPhase("triagem"); render(); });
-    on("pClose","click",   async () => { await setPhase("figura"); W=wToday(); WMODE="today"; render(); });
+    on("pClose","click",   async () => { await refreshRoom(); await setPhase("figura"); W=wToday(); WMODE="today"; render(); });
     on("pRelease","click", async () => { await setPhase("revelado"); render(); });
     on("toFig","click", () => go("figura"));
     on("toCount","click", () => go("contagem"));
@@ -1977,7 +1992,7 @@ boot();
   }
  ],
  "api": "https://sondagens-api.ethosalpha.workers.dev",
- "build": 17
+ "build": 18
 }
 </script>
 </html>
