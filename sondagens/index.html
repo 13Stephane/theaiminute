@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 15;   /* bumped whenever this file changes */
+const BUILD = 16;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -406,7 +406,15 @@ async function tick(){
   if(PENDING) return;
   let dirty = false;
 
-  try { if(newerBuildFound(await loadSeed())) return; } catch(e){}
+  try {
+    const pub = await loadSeed();
+    if(newerBuildFound(pub)) return;
+    /* the published list (wall, activities, the api address) only ever synced at
+       boot — a tab open since before the 12:20 publish would keep showing an
+       empty wall, or the pre-lunch activity list, forever, same shape as the
+       phase bug */
+    if(adoptPublished(CFG, pub)){ await S.set(K_CFG, JSON.stringify(CFG), true); dirty = true; }
+  } catch(e){}
 
   const raw = await S.get(K_CFG, true);
   if(raw && raw !== JSON.stringify(CFG)){ CFG = JSON.parse(raw); dirty = true; }
@@ -1968,7 +1976,7 @@ boot();
   }
  ],
  "api": "https://sondagens-api.ethosalpha.workers.dev",
- "build": 15
+ "build": 16
 }
 </script>
 </html>
