@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 12;   /* bumped whenever this file changes */
+const BUILD = 13;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -403,12 +403,20 @@ async function tick(){
     try {
       const p = await api(`/p?session=${encodeURIComponent(CFG.session||"")}`);
       NET.up = true;
-      /* the room's phase wins over this device's copy, and is written down, or the
-         next read of local storage would put it straight back */
-      if(p && p.phase && p.phase !== CFG.phase){
-        CFG.phase = p.phase;
-        await S.set(K_CFG, JSON.stringify(CFG), true);
-        dirty = true;
+      /* The room's phase wins over this device's copy, full stop — including a
+         reset back to null. p.phase is falsy exactly when the room has never been
+         opened OR was just wiped, and the old check only fired on a truthy value,
+         so a browser that had cached "triagem" from a previous test could never be
+         pulled back down by a facilitator's reset: null lost to a truthy stale
+         local value forever. Checking "p" itself (a successful response is always
+         an object) rather than "p.phase" is what lets the reset win. */
+      if(p){
+        const remote = p.phase || "setup";
+        if(remote !== CFG.phase){
+          CFG.phase = remote;
+          await S.set(K_CFG, JSON.stringify(CFG), true);
+          dirty = true;
+        }
       }
     } catch(e){ NET.up = false; }
 
@@ -2009,7 +2017,7 @@ boot();
   }
  ],
  "api": "https://sondagens-api.ethosalpha.workers.dev",
- "build": 12
+ "build": 13
 }
 </script>
 </html>
