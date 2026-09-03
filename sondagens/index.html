@@ -229,7 +229,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 8;   /* bumped whenever this file changes */
+const BUILD = 9;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -672,6 +672,13 @@ function render(){
 }
 
 /* ---- the door ---- */
+/* The door offers the sort and nothing else. Two of the other entrances are the
+   facilitator's: one shows the aggregate, which is the one thing a participant
+   must not see before the reveal, and one carries the phase controls. They stay
+   reachable by typed route and bookmark, and appear here only with ?f in the
+   address, so the facilitator can find them without the room being offered them. */
+const FACIL = /(^|[?&])f(=|&|$)/.test(location.search);
+
 function viewDoor(){
   return `<div class="narrow">
     <div class="kicker">Course · Sondagens</div>
@@ -681,6 +688,7 @@ function viewDoor(){
       <a href="#/triagem"><b>${bp("Sou participante","I am a participant")}</b>
         <span>A triagem privada. Ninguém vê as suas respostas, nunca com nome.
         <span class="en2">The private sort. Nobody sees your answers, never with a name.</span></span></a>
+      ${FACIL ? `
       <a href="#/figura"><b>${bp("A figura","The figure")}</b>
         <span>Para projetar, depois de a triagem fechar.
         <span class="en2">To project, once the sort has closed.</span></span></a>
@@ -689,7 +697,7 @@ function viewDoor(){
         <span class="en2">The six board names, pasted at 12:00. Nothing else on this screen.</span></span></a>
       <a href="#/sala"><b>${bp("Console da sala","The room console")}</b>
         <span>Facilitador: a lista completa, o muro, a fase, as contagens.
-        <span class="en2">Facilitator: the full list, the wall, the phase, the counts.</span></span></a>
+        <span class="en2">Facilitator: the full list, the wall, the phase, the counts.</span></span></a>` : ``}
     </div>
   </div>`;
 }
@@ -1808,7 +1816,7 @@ boot();
    "verifiability": 1
   }
  ],
- "build": 8
+ "build": 9
 }
 </script>
 </html>
