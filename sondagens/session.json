@@ -296,5 +296,6 @@
    "verifiability": 1
   }
  ],
- "build": 10
+ "build": 11,
+ "api": "https://sondagens-api.ethosalpha.workers.dev"
 }

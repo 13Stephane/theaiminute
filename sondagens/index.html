@@ -199,6 +199,31 @@ const S = {
 const K_CFG = "snd:cfg";
 const K_RESP = "snd:r:";          /* + participant id */
 const K_DID = "snd:did";
+const K_KEY = "snd:key";          /* facilitator key, this browser only, never published */
+const K_PEND = "snd:pending";
+
+/* The backend address ships in session.json, so switching it on or off is a data
+   change and never a code change. With no `api` field the page behaves exactly as
+   it did before there was one, and #/contagem stays the way the room is counted. */
+let API = null;
+let KEY = null;
+let NET = { up: null, note: "" };
+
+async function api(path, { method = "GET", body = null, key = false } = {}) {
+  if(!API) return null;
+  const headers = {};
+  if(body) headers["content-type"] = "application/json";
+  if(key){
+    if(!KEY) return null;
+    headers["x-key"] = KEY;
+  }
+  const r = await fetch(API + path, { method, headers,
+    body: body ? JSON.stringify(body) : undefined, cache: "no-store" });
+  if(!r.ok){
+    const e = new Error("api " + r.status); e.status = r.status; throw e;
+  }
+  return r.json();
+}
 
 /* --------------------------------------------------------------- the read */
 /* A band is a band. The numbers below only exist so the tide has somewhere to
@@ -229,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 10;   /* bumped whenever this file changes */
+const BUILD = 11;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -279,10 +304,28 @@ async function boot(){
   }
   MINE = JSON.parse(await S.get("snd:mine", false) || "{}");
   await pull();
+
+  API = (CFG.api || "").replace(/\/+$/, "") || null;
+  /* the key arrives once, in the address, and then lives in this browser only.
+     It is stripped from the URL immediately so it never survives a screenshot,
+     a shared link, or the projector. */
+  const fromUrl = (/[?&]k=([^&#]+)/.exec(location.search) || /[?&]k=([^&#]+)/.exec(location.hash) || [])[1];
+  if(fromUrl){
+    KEY = decodeURIComponent(fromUrl);
+    try { localStorage.setItem(K_KEY, KEY); } catch(e){}
+    const cleanSearch = location.search.replace(/[?&]k=[^&#]*/, "").replace(/^&/, "?");
+    const cleanHash = location.hash.replace(/[?&]k=[^&#]*/, "");
+    history.replaceState(null, "", location.pathname + cleanSearch + cleanHash);
+  } else {
+    try { KEY = localStorage.getItem(K_KEY); } catch(e){ KEY = null; }
+  }
+
   W = wToday();
   window.addEventListener("hashchange", render);
+  window.addEventListener("online", flushMine);
   render();
   POLL = setInterval(tick, 5000);
+  if(API) tick();
 }
 
 /* Takes the list, the wall and the morning cards from the published file, and
@@ -291,11 +334,12 @@ async function boot(){
 function adoptPublished(cur, pub){
   if(!pub || !pub.activities) return false;
   if(cur.dirtyList) return false;
-  const key = o => JSON.stringify([o.activities, o.wall, o.morning_cards]);
+  const key = o => JSON.stringify([o.activities, o.wall, o.morning_cards, o.api || null]);
   if(key(cur) === key(pub)) return false;
   cur.activities = pub.activities;
   cur.wall = pub.wall;
   cur.morning_cards = pub.morning_cards;
+  cur.api = pub.api;                  /* turning the backend on is a data change */
   if(pub.published_at) cur.published_at = pub.published_at;
   return true;
 }
@@ -323,25 +367,74 @@ async function pull(){
 
 async function publish(){ await S.set(K_CFG, JSON.stringify(CFG), true); return true; }
 
-/* Everyone follows the facilitator's phase without a reload. The figure never
-   re-renders under the facilitator's hands: it repaints only when the room
-   actually changed. */
+/* The phase is the one piece of room state the backend owns, because a phone has
+   to learn that the sort closed. Without a backend it stays local, which is why
+   the sort is never gated on it there. */
+async function setPhase(phase){
+  CFG.phase = phase;
+  await publish();
+  if(!API || !KEY) return true;
+  try { await api("/p", { method:"POST", key:true, body:{ session: CFG.session, phase } });
+        NET.up = true; NET.note = ""; return true; }
+  catch(e){ NET.up = false; NET.note = e.status === 401 ? "a chave não foi aceite" : "a fase não chegou à sala"; return false; }
+}
+
+/* Never repaint out from under a hand: not mid-drag on the water, not between a
+   choice and its confidence tap. Repaint as soon as the hand is off. */
+let DRAGGING = false, DIRTY_VIEW = false;
+function safeRender(){
+  if(PENDING || DRAGGING){ DIRTY_VIEW = true; return; }
+  DIRTY_VIEW = false;
+  render();
+}
+
+/* One poll for everybody. The phase is public, because a phone must know when
+   the sort closed; the room's rows need the key, so a participant never has them.
+   Every failure degrades to what this device already knows rather than to a
+   blank screen: a venue's wifi is not allowed to end the exercise. */
 async function tick(){
-  if(PENDING) return;                 /* never yank the confidence tap out from under a thumb */
-  const raw = await S.get(K_CFG, true);
+  if(PENDING) return;
   let dirty = false;
-  if(raw){
-    const c = JSON.parse(raw);
-    if(JSON.stringify(c) !== JSON.stringify(CFG)){ CFG = c; dirty = true; }
-  }
-  /* counting is only live while the room is answering, or on the console */
-  const v = view();
-  if(CFG.phase === "triagem" || v === "sala"){
+
+  const raw = await S.get(K_CFG, true);
+  if(raw && raw !== JSON.stringify(CFG)){ CFG = JSON.parse(raw); dirty = true; }
+
+  if(API){
+    try {
+      const p = await api(`/p?session=${encodeURIComponent(CFG.session||"")}`);
+      NET.up = true;
+      /* the room's phase wins over this device's copy, and is written down, or the
+         next read of local storage would put it straight back */
+      if(p && p.phase && p.phase !== CFG.phase){
+        CFG.phase = p.phase;
+        await S.set(K_CFG, JSON.stringify(CFG), true);
+        dirty = true;
+      }
+    } catch(e){ NET.up = false; }
+
+    if(PENDING_SEND) await flushMine();
+
+    if(KEY){
+      try {
+        const d = await api(`/r?session=${encodeURIComponent(CFG.session||"")}`, { key:true });
+        if(d){
+          const before = RESP.length, doneBefore = respondents();
+          RESP = d.responses || [];
+          if(RESP.length !== before || respondents() !== doneBefore) dirty = true;
+          NET.up = true;
+        }
+      } catch(e){
+        if(e.status === 401){ NET.note = "a chave não foi aceite"; KEY = null; dirty = true; }
+        NET.up = false;
+      }
+    }
+  } else {
     const n = RESP.length, d = respondents();
     await pull();
     if(RESP.length !== n || respondents() !== d) dirty = true;
   }
-  if(dirty) render();
+
+  if(dirty) safeRender();
 }
 
 /* ------------------------------------------------------------- derivation */
@@ -350,6 +443,8 @@ async function tick(){
    somebody deliberately entered it. Everything downstream sees only shares. */
 function shares(aid){
   const t = CFG.tally && CFG.tally[aid];
+  const fromRoom = (typeof aggShares === "function") ? aggShares(aid) : null;
+  if(fromRoom && !RESP.length && !t) return fromRoom;
   if(t){
     const ta=+t[0]||0, tg=+t[1]||0, th=+t[2]||0, tn=ta+tg+th;
     if(tn) return { automate:ta/tn, augment:tg/tn, hold:th/tn, n:tn };
@@ -431,7 +526,9 @@ function isSessionDay(){
 }
 
 function respondents(){ return RESP.filter(r => r.done).length; }
-function sharedRoom(){ return false; }
+/* With a backend the phase is real and the sort waits for it; without one every
+   phone is its own room and waiting would lock the whole room out at 13:22. */
+function sharedRoom(){ return !!API && NET.up !== false; }
 
 /* Fixed random order per participant, so the room cannot converge by sequence.
    Seeded from the device id, never Math.random: a phone that drops the page
@@ -807,6 +904,25 @@ function viewFigura(){
 }
 
 /* ---- 3 · the personal view, that device only ---- */
+/* Counts only, and only once the facilitator has released them, which is after
+   the room has seen the same numbers on the projector. Held in memory, never
+   stored, so nothing about the room lingers on a participant's phone. */
+let AGG = null;
+async function loadAgg(){
+  if(!API || AGG) return;
+  try {
+    const d = await api(`/agg?session=${encodeURIComponent(CFG.session||"")}`);
+    if(d && d.released){ AGG = d; render(); }
+  } catch(e){ /* the solo view is the honest fallback */ }
+}
+function aggShares(aid){
+  const c = AGG && AGG.counts && AGG.counts[aid];
+  if(!c) return null;
+  const n = (c[0]||0)+(c[1]||0)+(c[2]||0);
+  if(!n) return null;
+  return { automate:c[0]/n, augment:c[1]/n, hold:c[2]/n, n };
+}
+
 function viewEu(){
   if(sharedRoom() && CFG.phase !== "revelado")
     return `<div class="narrow"><div class="kicker">Course · Sondagens</div>
@@ -817,7 +933,7 @@ function viewEu(){
     return `<div class="narrow"><h1>Sem respostas neste aparelho</h1>
       <div class="sub">A triagem correu noutro aparelho, ou ainda não a fez.</div></div>`;
 
-  if(respondents() < 5) return viewEuSolo();
+  if(respondents() < 5 && !(AGG && AGG.n >= 5)){ loadAgg(); return viewEuSolo(); }
 
   const acts = model();
   const gaps = acts.filter(a => MINE[a.id] && a.sh.n)
@@ -912,6 +1028,20 @@ function hhmm(iso){
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
+/* What the room is joined to, said plainly, because "the counter says nought" has
+   three very different causes and the facilitator needs to know which. */
+function backendLine(){
+  if(!API) return `no shared room · counts are typed at
+    <a href="#/contagem" style="color:var(--mut)">entrada de contagens</a>
+    <span class="pt">sem sala partilhada</span>`;
+  if(!KEY) return `<span style="color:var(--copp)">shared room configured, but this browser has no key ·
+    open #/sala?k=… once <span class="pt">falta a chave</span></span>`;
+  if(NET.up === false) return `<span style="color:var(--copp)">shared room not answering${NET.note?` · ${esc(NET.note)}`:``} ·
+    fall back to <a href="#/contagem" style="color:var(--copp)">contagens</a></span>`;
+  return `shared room live · answers arrive on their own
+    <span class="pt">sala partilhada ligada</span>`;
+}
+
 function publishedLine(){
   if(!LIVE) return `<span class="muted">a verificar a lista publicada…</span>`;
   if(LIVE.error) return `<span style="color:var(--copp)">não deu para ler a lista publicada</span>`;
@@ -1236,6 +1366,7 @@ function viewSala(){
         ${bi("switch to live","ir para ao vivo")}</button>
     </div>
     <div class="row"><span class="muted" style="font-size:12px">${publishedLine()}</span></div>
+    <div class="row"><span class="muted" style="font-size:12px">${backendLine()}</span></div>
     <div class="row"><span class="muted" style="font-size:12px">this device is running build
       <b>${BUILD}</b>${LIVE && LIVE.build != null ? ` · published build <b>${LIVE.build}</b>${LIVE.build > BUILD ? ` · <span style="color:var(--copp)">reload to catch up</span>` : ``}` : ``}</span></div>
     <div class="row"><textarea id="io" rows="4" style="width:100%;font-size:12px;font-family:ui-monospace,Menlo,monospace"
@@ -1270,7 +1401,10 @@ function wire(v){
 
   if(v === "figura"){
     on("toSala","click", () => go("sala"));
-    on("w","input", e => { W = e.target.value/100; WMODE = "free"; repaint(); });
+    on("w","pointerdown", () => { DRAGGING = true; });
+    on("w","input", e => { DRAGGING = true; W = e.target.value/100; WMODE = "free"; repaint(); });
+    on("w","change", () => { DRAGGING = false; if(DIRTY_VIEW) safeRender(); });
+    on("w","pointerup", () => { DRAGGING = false; if(DIRTY_VIEW) safeRender(); });
     on("snapToday","click", () => { W = wToday(); WMODE="today"; render(); });
     on("snapThree","click", () => { const w = wThree(); if(w == null) return; W = w; WMODE="three"; render(); });
     on("bMorning","click", () => { OPT.morning = !OPT.morning; render(); });
@@ -1403,9 +1537,9 @@ function wire(v){
 
   if(v === "sala"){
     if(!LIVE) checkPublished().then(() => { if(view() === "sala") render(); });
-    on("pOpen","click",    async () => { CFG.phase="triagem";  await publish(); render(); });
-    on("pClose","click",   async () => { CFG.phase="figura";   await publish(); W=wToday(); WMODE="today"; render(); });
-    on("pRelease","click", async () => { CFG.phase="revelado"; await publish(); render(); });
+    on("pOpen","click",    async () => { await setPhase("triagem"); render(); });
+    on("pClose","click",   async () => { await setPhase("figura"); W=wToday(); WMODE="today"; render(); });
+    on("pRelease","click", async () => { await setPhase("revelado"); render(); });
     on("toFig","click", () => go("figura"));
     on("toCount","click", () => go("contagem"));
     on("toLunch","click", () => go("almoco"));
@@ -1487,16 +1621,41 @@ function repaint(){
   if(c) c.innerHTML = countLine();
 }
 
-/* Nothing to send: this build keeps the sort on the device, so a wifi drop after
-   the page has loaded costs nothing and nobody has to sort twice. */
+/* A submitted answer is written to the device first and sent second, so a wifi
+   drop mid-sort costs nothing and nobody has to sort twice. */
 let PENDING_SEND = false;
+
+async function flushMine(){
+  if(!API) return;
+  let raw = null;
+  try { raw = localStorage.getItem(K_PEND); } catch(e){}
+  if(!raw){ PENDING_SEND = false; return; }
+  try {
+    await api("/r", { method:"POST", body: JSON.parse(raw) });
+    localStorage.removeItem(K_PEND);
+    PENDING_SEND = false; NET.up = true;
+    if(view() === "triagem") render();
+  } catch(e){ NET.up = false; }
+}
 
 async function saveMine(){
   await S.set("snd:mine", JSON.stringify(MINE), false);
-  const acts = CFG.activities||[];
+  const acts = acts_();
   const done = acts.length>0 && acts.every(a => MINE[a.id]);
-  await S.set(K_RESP + DID, JSON.stringify({ pid: DID, choices: MINE, done, ts:new Date().toISOString() }), true);
+  const rec = { pid: DID, choices: MINE, done, ts:new Date().toISOString() };
+  await S.set(K_RESP + DID, JSON.stringify(rec), true);
   await pull();
+
+  if(!API) return;
+  const wire = { session: CFG.session, pid: DID, choices: MINE, done };
+  try {
+    await api("/r", { method:"POST", body: wire });
+    PENDING_SEND = false; NET.up = true;
+    try { localStorage.removeItem(K_PEND); } catch(e){}
+  } catch(e){
+    try { localStorage.setItem(K_PEND, JSON.stringify(wire)); } catch(e2){}
+    PENDING_SEND = true; NET.up = false;
+  }
 }
 
 /* A rehearsal room. Deterministic enough to be the same picture twice, and
@@ -1514,6 +1673,11 @@ const REHEARSAL_MIX = {
 async function wipeAll(){
   for(const k of await S.list(K_RESP, true)) await S.del(k, true);
   await pull();
+  if(API && KEY){
+    try { await api(`/r?session=${encodeURIComponent(CFG.session||"")}`, { method:"DELETE", key:true });
+          RESP = []; NET.up = true; }
+    catch(e){ NET.up = false; NET.note = "as respostas na sala não foram apagadas"; }
+  }
 }
 
 async function seedRehearsal(){
@@ -1837,7 +2001,8 @@ boot();
    "verifiability": 1
   }
  ],
- "build": 10
+ "api": "https://sondagens-api.ethosalpha.workers.dev",
+ "build": 11
 }
 </script>
 </html>
