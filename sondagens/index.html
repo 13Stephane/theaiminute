@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 16;   /* bumped whenever this file changes */
+const BUILD = 17;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -1671,6 +1671,7 @@ function repaint(){
 /* A submitted answer is written to the device first and sent second, so a wifi
    drop mid-sort costs nothing and nobody has to sort twice. */
 let PENDING_SEND = false;
+let TICKS = 0;   /* throttles the one poll target that still needs list() */
 
 async function flushMine(){
   if(!API) return;
@@ -1976,7 +1977,7 @@ boot();
   }
  ],
  "api": "https://sondagens-api.ethosalpha.workers.dev",
- "build": 16
+ "build": 17
 }
 </script>
 </html>
