@@ -229,7 +229,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 9;   /* bumped whenever this file changes */
+const BUILD = 10;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -1114,7 +1114,8 @@ function viewContagem(){
     const n = (+r[0]||0) + (+r[1]||0) + (+r[2]||0);
     return `<tr><td>${esc(a.label_pt)}</td>
       ${[0,1,2].map(i => `<td><input type="number" min="0" step="1" class="tl"
-          data-id="${a.id}" data-i="${i}" value="${+r[i]||0}"></td>`).join("")}
+          data-id="${a.id}" data-i="${i}" value="${+r[i]||0}"
+          ${CFG.roomN && i===1 ? `tabindex="-1" style="color:var(--mut)" title="calculado"` : ``}></td>`).join("")}
       <td class="n" id="tot-${a.id}">${n}</td></tr>`;
   }).join("");
 
@@ -1124,8 +1125,17 @@ function viewContagem(){
     <div class="sub">Uma linha por atividade: quantos, na sala, disseram cada coisa.
       As linhas não têm de somar o mesmo. Enquanto houver contagens, a figura usa-as
       e ignora os aparelhos.</div>
+    <div class="row" style="margin-bottom:4px">
+      <label class="muted" style="font-size:13px">quantos responderam
+        <span class="pt">how many answered</span></label>
+      <input type="number" min="0" step="1" id="roomN" value="${CFG.roomN||""}" placeholder="33">
+      <span class="muted" style="font-size:12.5px">${CFG.roomN
+        ? `aumentar é calculado: ${CFG.roomN} menos automatizar menos manter. Conte só duas mãos por linha.`
+        : `preencha isto e conte só duas mãos por linha: aumentar passa a ser calculado.`}</span>
+    </div>
     <table><thead><tr>
-      <th>atividade</th><th style="width:96px">automatizar</th><th style="width:96px">aumentar</th>
+      <th>atividade</th><th style="width:96px">automatizar</th>
+      <th style="width:96px">aumentar${CFG.roomN?" ·&nbsp;calc":""}</th>
       <th style="width:96px">manter</th><th style="width:60px">total</th>
     </tr></thead><tbody>${rows}</tbody></table>
     <div class="row">
@@ -1366,11 +1376,22 @@ function wire(v){
       CFG.tally[id] = CFG.tally[id] || [0,0,0];
       CFG.tally[id][i] = v;
       const r = CFG.tally[id];
+      /* with the room size known, aumentar is what is left over, so the count is
+         two shows of hands per line instead of three */
+      if(CFG.roomN && (i === 0 || i === 2)){
+        r[1] = Math.max(0, (+CFG.roomN||0) - (+r[0]||0) - (+r[2]||0));
+        const mid = document.querySelector(`.tl[data-id="${id}"][data-i="1"]`);
+        if(mid) mid.value = r[1];
+      }
       const tot = document.getElementById("tot-" + id);
       if(tot) tot.textContent = (+r[0]||0) + (+r[1]||0) + (+r[2]||0);
       const ok = await publish();
       const m = document.getElementById("cMsg");
       if(m) m.textContent = ok ? "" : (typeof DBNOTE !== "undefined" && DBNOTE) || "não guardou";
+    });
+    on("roomN","change", async e => {
+      CFG.roomN = Math.max(0, Math.floor(+e.target.value || 0)) || null;
+      await publish(); render();
     });
     on("cFig","click", () => go("figura"));
     on("cBack","click", () => go("sala"));
@@ -1816,7 +1837,7 @@ boot();
    "verifiability": 1
   }
  ],
- "build": 9
+ "build": 10
 }
 </script>
 </html>
