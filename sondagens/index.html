@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 11;   /* bumped whenever this file changes */
+const BUILD = 12;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -424,7 +424,14 @@ async function tick(){
           NET.up = true;
         }
       } catch(e){
-        if(e.status === 401){ NET.note = "a chave não foi aceite"; KEY = null; dirty = true; }
+        if(e.status === 401){
+          /* a mistyped key must not stick: leaving it in storage means every reload
+             fails the same silent way until somebody clears the browser */
+          NET.note = "a chave não foi aceite";
+          KEY = null;
+          try { localStorage.removeItem(K_KEY); } catch(e2){}
+          dirty = true;
+        }
         NET.up = false;
       }
     }
@@ -2002,7 +2009,7 @@ boot();
   }
  ],
  "api": "https://sondagens-api.ethosalpha.workers.dev",
- "build": 11
+ "build": 12
 }
 </script>
 </html>
