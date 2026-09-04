@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 18;   /* bumped whenever this file changes */
+const BUILD = 19;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -1401,7 +1401,7 @@ function viewSala(){
 
     <h2 style="margin-top:26px">The morning wall <span class="pt">o muro da manhã</span></h2>
     <div class="muted" style="font-size:13px;margin-bottom:8px">
-      Os oito cartões que cada mesa afixou às 09:20. Preenchido: ligado a nós. Vazio: genérico ou alugado.</div>
+      Os seis cartões que cada mesa afixou às 08:22, marcados de novo às 11:44. Preenchido: ligado a nós. Vazio: genérico ou alugado.</div>
     <table><thead><tr><th>cartão</th><th style="width:70px">mesa</th><th style="width:120px">ligado a nós</th><th style="width:40px"></th></tr></thead>
       <tbody>${(CFG.wall||[]).map(b=>`<tr>
         <td><input type="text" class="wl" data-id="${b.id}" value="${esc(b.label)}" size="46"></td>
