@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 21;   /* bumped whenever this file changes */
+const BUILD = 22;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -1805,8 +1805,10 @@ function wire(v){
     on("golive","click", async () => {
       if(!confirm("Ir para ao vivo: apaga as respostas de ensaio e as contagens, e volta à fase inicial. Continuar?")) return;
       await wipeAll();
-      CFG.rehearsal = false; CFG.phase = "setup"; delete CFG.tally;
-      await publish(); render();
+      CFG.rehearsal = false; delete CFG.tally;
+      await publish();
+      await setPhase("setup");   /* the room's register, not just this browser */
+      render();
     });
     on("wipe","click", async () => {
       if(!confirm("Apagar todas as respostas da sala?")) return;
@@ -1818,10 +1820,47 @@ function wire(v){
       const typed = prompt("Recomeçar a sala apaga TODAS as respostas, o muro e a fase.\n" +
         "Isto não se desfaz. Escreva APAGAR para continuar.");
       if((typed||"").trim().toUpperCase() !== "APAGAR") return;
-      for(const k of await S.list(K_RESP, true)) await S.del(k, true);
-      await S.del(K_CFG, true); MINE = {}; await saveMine();
-      CFG = await loadSeed(); CFG.phase="setup"; CFG.overrides={}; CFG.rehearsal=false;
-      await publish(); await pull(); render();
+
+      /* This used to be device-local only, while its own prompt promised the
+         room. Every step below was a S.set on this browser, so five seconds
+         later tick() did exactly what it is built to do — took the room as the
+         truth and pulled the whole rehearsal back: phase, the fourteen
+         activities, the wall, the answers. Measured on the live room: clean at
+         t=0, fully restored at t=10s. It read as a button that does nothing.
+
+         So reset the room, in the order that survives a poll landing mid-way:
+         load the baseline, push the list, push the phase, then the answers. */
+      const msg = document.getElementById("wMsg");
+      if(msg) msg.textContent = "a recomeçar…";
+
+      MINE = {}; await saveMine();
+      await S.del(K_CFG, true);
+      const clean = await loadSeed();
+      CFG = clean;
+      CFG.phase = "setup"; CFG.overrides = {}; CFG.rehearsal = false;
+      delete CFG.tally; delete CFG.cfgV; CFG.dirtyList = false;
+      await publish();
+
+      let note = "recomeçado nesta consola";
+      if(API && KEY){
+        const sent = await publishRoom();          /* the list and the wall */
+        if(sent === "sent"){
+          await setPhase("setup");                 /* the phase, in the room */
+          await wipeAll();                         /* the answers, in the room */
+          note = "sala recomeçada · lista limpa, respostas apagadas";
+        } else {
+          note = sent === "refused" ? "a chave não foi aceite · a sala não mudou"
+                                    : "a sala não respondeu · a sala não mudou";
+        }
+      } else {
+        note = "sem sala ligada · só esta consola foi limpa";
+      }
+
+      await pull();
+      LIVE = null;
+      render();
+      const m2 = document.getElementById("wMsg");
+      if(m2) m2.textContent = note;
     });
     on("exp","click", () => {
       document.getElementById("io").value = JSON.stringify({ ...CFG, responses: RESP }, null, 2);
