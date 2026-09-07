@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 20;   /* bumped whenever this file changes */
+const BUILD = 21;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -671,7 +671,10 @@ function sourceLine(){
 }
 
 /* -------------------------------------------------------------- the figure */
-const VW = 1000, VH = 545, M = 34, TOP = 52, BASE = 372;
+/* VH is gutter, and the gutter is only ever axis labels. Three wrapped rows at
+   -58° reach about 180px below the baseline in the worst case; 545 clipped the
+   last row of the longest names. Nothing else is positioned off VH. */
+const VW = 1000, VH = 570, M = 34, TOP = 52, BASE = 372;
 const SPAN = BASE - TOP;
 
 function figureSVG(personal){
@@ -818,20 +821,58 @@ function figureSVG(personal){
    neighbouring labels is the same on a laptop and on a 1920 projector, and the
    second lines interleave. The figure gives the shape; the divergence table
    carries the full names, which is where that discussion actually happens. */
-function axisLabel(text, en, cx, y, dim){
-  /* MAX trimmed to compensate for the larger font below, so the horizontal
-     footprint of a full-length label stays roughly where it was — bigger,
-     more legible characters, not longer rows fighting the next column. */
-  const MAX = 23, s = String(text||"");
-  let out = s;
-  if(s.length > MAX){
-    const cut = s.slice(0, MAX);
-    const sp = cut.lastIndexOf(" ");
-    out = (sp > 10 ? cut.slice(0, sp) : cut) + "…";
+/* Greedy wrap on word boundaries. Longest word wins over the limit rather than
+   being broken: a hyphenated fragment of a clinical term reads worse than one
+   long line. */
+/* A name is one line. Pasting a row out of a table or a spreadsheet carries a
+   tab and whatever sat in the next column, which arrives as one enormous
+   label that no amount of wrapping can rescue. Collapse it on the way in,
+   where it is still one field, rather than in the figure where it is data. */
+function oneLine(v){ return String(v||"").replace(/\s+/g, " ").trim(); }
+
+function wrapWords(s, maxChars){
+  const words = String(s||"").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let cur = "";
+  for(const w of words){
+    const test = cur ? cur + " " + w : w;
+    if(!cur || test.length <= maxChars) cur = test;
+    else { lines.push(cur); cur = w; }
   }
+  if(cur) lines.push(cur);
+  return lines.length ? lines : [""];
+}
+
+/* The whole name, over up to three rows, never cut mid-word. A truncated label
+   makes the divergence discussion impossible — "the third one from the left" is
+   not a name, and this is the moment the room argues about specific tasks.
+
+   Three rows is the ceiling the geometry allows, not a taste: at -58° the
+   perpendicular gap between neighbouring labels is pitch·sin(58°) ≈ 57px for
+   fourteen columns, and three 14px rows spend 28 of it. A fourth would collide
+   with the next activity's first row.
+
+   Widen the rows before spilling to a new one, because a long row costs vertical
+   gutter (which VH can give) while an extra row costs the gap to the neighbour
+   (which nothing can give). Only a name far past the nine words the board asked
+   for reaches the ellipsis, and its full text stays on tap. */
+function axisLabel(text, en, cx, y, dim){
+  const s = String(text||"").replace(/\s+/g, " ").trim();
+  let lines = [];
+  for(const max of [22, 26, 30]){
+    lines = wrapWords(s, max);
+    if(lines.length <= 3) break;
+  }
+  if(lines.length > 3){
+    lines = lines.slice(0, 3);
+    lines[2] = lines[2].replace(/\s*\S*$/, "") + "…";
+  }
+  const LH = 14;
+  const rows = lines.map((ln, i) =>
+    `<tspan x="0" dy="${i ? LH : 0}">${esc(ln)}</tspan>`).join("");
   return `<text transform="translate(${cx.toFixed(1)},${y}) rotate(-58)"
       fill="${dim ? "#6E8480" : "#C7D6D2"}" font-size="13" font-weight="500" text-anchor="end"
-      font-family="Georgia,serif">${esc(out)}<title>${esc(s)}${en?` · ${esc(en)}`:``}</title></text>`;
+      font-family="Georgia,serif">${rows}<title>${esc(s)}${en?` · ${esc(en)}`:``}</title></text>`;
 }
 
 function countLine(){
@@ -1583,7 +1624,8 @@ function wire(v){
     /* Never re-render on a keystroke: six labels are pasted in one pass and a
        rebuild would throw the focus and the tab chain away every time. */
     each(".bl","change", async el => {
-      const i = +el.dataset.i, val = el.value.trim();
+      const i = +el.dataset.i, val = oneLine(el.value);
+      if(el.value !== val) el.value = val;   /* show what was actually stored */
       CFG.dirtyList = true;
       const a = boardSlots()[i];
       if(!a && val){
@@ -1723,7 +1765,8 @@ function wire(v){
 
     each(".six","change", async el => {
       const a = CFG.activities.find(x=>x.id===el.dataset.id);
-      if(a){ a.label_pt = el.value; a.source = "waterline_board"; CFG.dirtyList = true; await publish(); }
+      if(a){ a.label_pt = oneLine(el.value); el.value = a.label_pt;
+             a.source = "waterline_board"; CFG.dirtyList = true; await publish(); }
     });
     each(".band","change", async el => {
       const a = CFG.activities.find(x=>x.id===el.dataset.id);
@@ -1734,7 +1777,7 @@ function wire(v){
         : null;
       await publish();
     });
-    each(".wl","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.label=el.value; CFG.dirtyList=true; await publish(); } });
+    each(".wl","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.label=oneLine(el.value); el.value=b.label; CFG.dirtyList=true; await publish(); } });
     each(".wt","change", async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.table=el.value; CFG.dirtyList=true; await publish(); } });
     each(".wb","click",  async el => { const b=CFG.wall.find(x=>x.id===el.dataset.id); if(b){ b.bound=!b.bound; CFG.dirtyList=true; await publish(); render(); } });
     each(".wx","click",  async el => { CFG.wall = CFG.wall.filter(x=>x.id!==el.dataset.id); CFG.dirtyList=true; await publish(); render(); });
