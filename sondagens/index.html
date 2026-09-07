@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 22;   /* bumped whenever this file changes */
+const BUILD = 23;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -905,7 +905,7 @@ function view(){
   const h = (location.hash || "#/").replace(/^#\/?/, "");
   return h.split("?")[0] || "door";
 }
-function go(v){ location.hash = "#/" + v; }
+function go(v){ PUBNOTE = ""; location.hash = "#/" + v; }
 
 function render(){
   const app = document.getElementById("app");
@@ -1391,7 +1391,7 @@ function viewAlmoco(){
         : `<button id="lock">trancar a lista</button>`}
       <button id="aExport">${API && KEY ? "publicar na sala" : "copiar para publicar"}</button>
       <button id="aBack" class="ghost">console completo</button>
-      <span class="muted" id="aMsg" style="font-size:12px"></span>
+      <span class="muted" id="aMsg" style="font-size:12px">${esc(PUBNOTE)}</span>
     </div>
     <div id="aOut" hidden style="margin-top:12px">
       <div class="muted" style="font-size:12.5px;margin-bottom:6px">
@@ -1534,8 +1534,8 @@ function viewSala(){
     <div class="row"><button id="wAdd" class="ghost">+ cartão</button></div>
     <div class="row" style="margin-top:12px">
       <button id="wPublish">${API && KEY ? "publicar na sala" : "publicar"}</button>
-      <span class="muted" id="wMsg" style="font-size:12px">${
-        API && KEY ? "a lista e o muro, para os telemóveis" : "sem sala ligada · use #/almoco"}</span>
+      <span class="muted" id="wMsg" style="font-size:12px">${esc(PUBNOTE) ||
+        (API && KEY ? "a lista e o muro, para os telemóveis" : "sem sala ligada · use #/almoco")}</span>
     </div>
 
     <h2 style="margin-top:26px">Rehearsal and data <span class="pt">ensaio e dados</span></h2>
@@ -1679,8 +1679,9 @@ function wire(v){
       CFG.published_at = now.toISOString();
       CFG.dirtyList = false;
       await publish();
+      PUBNOTE = "a publicar…";
       const m = document.getElementById("aMsg");
-      if(m) m.textContent = "a publicar…";
+      if(m) m.textContent = PUBNOTE;
 
       /* The room first. The clipboard and the file only come out if the room
          would not take it, because that path costs a commit and somebody else's
@@ -1688,11 +1689,8 @@ function wire(v){
       const sent = await publishRoom();
       if(sent === "sent"){
         LIVE = null;   /* re-read what the room now holds, do not assume */
+        PUBNOTE = "publicado na sala · os telemóveis atualizam em segundos";
         render();
-        /* after the repaint, never before: render() rebuilds this row, so a
-           message set first is destroyed and the press looks like it failed */
-        const m2 = document.getElementById("aMsg");
-        if(m2) m2.textContent = "publicado na sala · os telemóveis atualizam em segundos";
         return;
       }
 
@@ -1784,8 +1782,9 @@ function wire(v){
     on("wAdd","click", async () => { CFG.wall = CFG.wall||[]; CFG.wall.push({id:"w"+uid(),label:"",table:"",bound:true}); CFG.dirtyList=true; await publish(); render(); });
 
     on("wPublish","click", async () => {
+      PUBNOTE = "a publicar…";
       const m = document.getElementById("wMsg");
-      if(m) m.textContent = "a publicar…";
+      if(m) m.textContent = PUBNOTE;
       CFG.published_at = new Date().toISOString();
       CFG.dirtyList = false;
       await publish();
@@ -1795,10 +1794,9 @@ function wire(v){
       : sent === "refused"    ? "a chave não foi aceite"
       : sent === "no-backend" ? "sem sala ligada · use #/almoco e o ficheiro"
       :                         "a sala não respondeu · use #/almoco e o ficheiro";
-      if(sent === "sent"){ LIVE = null; render(); }
-      /* re-query: on success the row above was just rebuilt out from under us */
-      const m2 = document.getElementById("wMsg");
-      if(m2) m2.textContent = said;
+      PUBNOTE = said;
+      if(sent === "sent"){ LIVE = null; }
+      render();   /* PUBNOTE is rendered, so a later re-render keeps it */
     });
 
     on("seed","click", async () => { await seedRehearsal(); render(); });
@@ -1830,8 +1828,9 @@ function wire(v){
 
          So reset the room, in the order that survives a poll landing mid-way:
          load the baseline, push the list, push the phase, then the answers. */
+      PUBNOTE = "a recomeçar…";
       const msg = document.getElementById("wMsg");
-      if(msg) msg.textContent = "a recomeçar…";
+      if(msg) msg.textContent = PUBNOTE;
 
       MINE = {}; await saveMine();
       await S.del(K_CFG, true);
@@ -1858,9 +1857,8 @@ function wire(v){
 
       await pull();
       LIVE = null;
+      PUBNOTE = note;
       render();
-      const m2 = document.getElementById("wMsg");
-      if(m2) m2.textContent = note;
     });
     on("exp","click", () => {
       document.getElementById("io").value = JSON.stringify({ ...CFG, responses: RESP }, null, 2);
@@ -1894,6 +1892,12 @@ function repaint(){
    drop mid-sort costs nothing and nobody has to sort twice. */
 let PENDING_SEND = false;
 let TICKS = 0;   /* throttles the one poll target that still needs list() */
+/* What the last publish or reset said, held here rather than written straight
+   into the DOM. checkPublished() re-renders the console a beat after either
+   one finishes, which wiped the confirmation about 400ms after it appeared —
+   long enough to be missed, and this is a room where a press that looks like
+   it did nothing gets pressed again. */
+let PUBNOTE = "";
 
 async function flushMine(){
   if(!API) return;
