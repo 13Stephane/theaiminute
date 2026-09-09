@@ -3,7 +3,7 @@
 //  Both aim26.html and show-aim26.html read vocabulary, question text, and
 //  session id from this file. Never hand-mirror these values into pages.
 //  Session row: insert into course_sessions (id, phase) values ('aim26', 0)
-//  Phases: 0 lobby · 1 cold prior · 2 falsifier · 3 closed
+//  Phases: 0 lobby · 1 cold prior · 2 closed
 // ============================================================================
 
 var AIM26 = {
@@ -11,8 +11,7 @@ var AIM26 = {
 
   question: "Name the one AI shift your organization (or the firms you study) most needs to get right.",
   place_hint: "Then place it on the two axes below.",
-  falsifier_prompt: "Write the condition under which your placement would be wrong.",
-  consent: "Responses are published after the session as an anonymized aggregate at this address. First names are never published.",
+  consent: "Responses are published after the session as an anonymized aggregate at this address.",
 
   // x: 0 = visible, 1 = surprise · y: 0 = tactical, 1 = strategic
   axes: {
@@ -32,5 +31,5 @@ var AIM26 = {
     { x: 1, y: 1, name: "Surprise × Strategic", posture: "Narrate, reframe, pivot" }
   ],
 
-  phases: { 0: "lobby", 1: "prior", 2: "falsifier", 3: "closed" }
+  phases: { 0: "lobby", 1: "prior", 2: "closed" }
 };

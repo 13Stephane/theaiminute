@@ -27,17 +27,17 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
 .ylab{writing-mode:vertical-rl;transform:rotate(180deg);display:flex;justify-content:space-around;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
 .xlab{grid-column:2;display:flex;justify-content:space-around;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
 .grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;min-height:66vh;}
-.cell{border:1px solid var(--line);padding:16px 20px;display:flex;flex-direction:column;min-height:0;}
+.cell{border:1px solid var(--line);padding:16px 20px;display:flex;flex-direction:column;min-height:0;cursor:pointer;transition:border-color .15s;}
+.cell:hover{border-color:var(--gold);}
 .cell .head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px;}
 .cell .posture{font-size:17px;color:var(--ink);}
 .cell .qname{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
 .cell .count{font-family:'Fraunces',Georgia,serif;font-size:88px;line-height:1;color:var(--gold);font-weight:300;}
-.cell .items{overflow-y:auto;flex:1;margin-top:4px;}
+.cell .tap{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:2px;}
+.cell.open .tap{display:none;}
+.cell .items{overflow-y:auto;flex:1;margin-top:4px;display:none;}
+.cell.open .items{display:block;}
 .cell .it{font-size:14.5px;color:var(--dim);padding:5px 0;border-bottom:1px solid rgba(244,240,233,.06);}
-/* falsifier register */
-.reg{columns:2;column-gap:26px;}
-.reg .it{break-inside:avoid;border-left:2px solid var(--gold);padding:10px 14px;margin-bottom:12px;background:rgba(244,240,233,.03);font-size:16.5px;}
-.reg .it .who{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint);letter-spacing:.1em;margin-top:6px;}
 .foot{margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--faint);}
 </style>
 </head>
@@ -53,36 +53,25 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
   </div>
 
   <div class="strip">
-    <span><span class="dot" id="conn"></span><span id="connlab">not loaded</span></span>
+    <span><span class="dot ok" id="conn"></span><span id="connlab">live</span></span>
     <span id="phaselab">phase —</span>
-    <span id="countlab">— submissions</span>
+    <span id="countlab">0 priors</span>
     <span id="fetchedlab"></span>
     <button id="btn-reload">Reload</button>
     <button id="btn-auto" class="on">Auto 4s</button>
-    <span style="flex:1"></span>
-    <button id="tab-priors" class="on">Priors</button>
-    <button id="tab-fals">Falsifiers</button>
   </div>
 
   <div id="failbox" class="fail hide"><b>Live load failed — projecting nothing</b><span id="failmsg"></span></div>
-  <div id="notloaded" class="notloaded">Not loaded. Nothing is projected until a live load succeeds.</div>
+  <div id="notloaded" class="notloaded hide">Not loaded. Nothing is projected until a live load succeeds.</div>
 
-  <!-- PRIORS VIEW -->
-  <div id="v-priors" class="hide">
-    <div class="fieldwrap">
-      <div class="ylab" id="ylab"></div>
-      <div class="grid" id="grid"></div>
-      <div></div>
-      <div class="xlab" id="xlab"></div>
-    </div>
+  <div class="fieldwrap">
+    <div class="ylab" id="ylab"><span>Strategic reinvention</span><span>A tactical adjustment</span></div>
+    <div class="grid" id="grid"></div>
+    <div></div>
+    <div class="xlab" id="xlab"><span>Already visible</span><span>Likely to surprise</span></div>
   </div>
 
-  <!-- FALSIFIER VIEW -->
-  <div id="v-fals" class="hide">
-    <div class="reg" id="reg"></div>
-  </div>
-
-  <div class="foot">session <span id="sesslab"></span> · no demo data on this page: empty means empty, failure is announced (D3)</div>
+  <div class="foot">session <span id="sesslab">aim26</span> · click a quadrant to reveal its sentences · no demo data on this page: empty means empty, failure is announced (D3)</div>
 </div>
 
 <script src="config.js"></script>
@@ -92,6 +81,7 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
 //  Facilitator projection · reads course_priors live for session aim26.
 //  Doctrine: D3 no fabricated data — before the first successful load the page
 //  says "not loaded"; on failure it announces the reason. Never demo teams.
+//  Quadrants show a count only; click a cell to reveal its sentences.
 // ============================================================================
 (function () {
   "use strict";
@@ -121,15 +111,16 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
   document.getElementById("ylab").innerHTML =
     "<span>" + AIM26.axes.y.opts[1].label + "</span><span>" + AIM26.axes.y.opts[0].label + "</span>";
 
-  // build the four cells in frame order (TL TR BL BR)
+  // build the four cells in frame order (TL TR BL BR) — click toggles reveal
   var grid = document.getElementById("grid");
   AIM26.quadrants.forEach(function (q, i) {
     var c = document.createElement("div");
     c.className = "cell";
     c.innerHTML =
       '<div class="head"><div><div class="qname">' + q.name + '</div><div class="posture">' + q.posture + '</div></div>' +
-      '<div class="count" id="cnt-' + i + '">·</div></div>' +
+      '<div><div class="count" id="cnt-' + i + '">·</div><div class="tap">tap to reveal</div></div></div>' +
       '<div class="items" id="items-' + i + '"></div>';
+    c.addEventListener("click", function () { c.classList.toggle("open"); });
     grid.appendChild(c);
   });
 
@@ -142,14 +133,8 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
     document.getElementById("phaselab").textContent = "phase " + phase + " · " + (AIM26.phases[phase] || "?");
 
     var priors = rows.filter(function (r) { return r.lens !== "falsifier"; });
-    var falsRows = rows.filter(function (r) { return r.lens === "falsifier"; })
-      .map(function (r) { return { text: r.thesis, who: r.name, linked: false }; })
-      .concat(priors.filter(function (r) { return r.justification && r.justification.trim(); })
-        .map(function (r) { return { text: r.justification, who: r.name, linked: true }; }));
+    document.getElementById("countlab").textContent = priors.length + " priors";
 
-    document.getElementById("countlab").textContent = priors.length + " priors · " + falsRows.length + " falsifiers";
-
-    // quadrant counts + shift lists
     AIM26.quadrants.forEach(function (q, i) {
       var inCell = priors.filter(function (r) { return Number(r.x) === q.x && Number(r.y) === q.y; });
       document.getElementById("cnt-" + i).textContent = String(inCell.length);
@@ -158,19 +143,13 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
         return '<div class="it">' + esc(t) + '</div>';
       }).join("");
     });
-
-    // falsifier register
-    document.getElementById("reg").innerHTML = falsRows.map(function (f) {
-      return '<div class="it">' + esc(f.text) +
-        '<div class="who">' + (f.linked ? "linked to a prior" : "standalone entry") + '</div></div>';
-    }).join("") || '<div style="color:var(--faint);font-style:italic;">No falsifiers yet.</div>';
   }
 
   function load() {
     Promise.all([
       fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S + "&select=phase", { headers: H })
         .then(function (r) { if (!r.ok) throw new Error("sessions HTTP " + r.status); return r.json(); }),
-      fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S + "&select=name,thesis,lens,x,y,justification,created_at&order=created_at.desc&limit=500", { headers: H })
+      fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S + "&select=thesis,lens,x,y,created_at&order=created_at.desc&limit=500", { headers: H })
         .then(function (r) { if (!r.ok) throw new Error("priors HTTP " + r.status); return r.json(); })
     ]).then(function (res) {
       if (!res[0].length) throw new Error("session '" + S + "' not found — seed the session row");
@@ -184,18 +163,6 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
     });
   }
 
-  // tabs
-  function tab(which) {
-    document.getElementById("v-priors").classList.toggle("hide", which !== "priors");
-    document.getElementById("v-fals").classList.toggle("hide", which !== "fals");
-    document.getElementById("tab-priors").classList.toggle("on", which === "priors");
-    document.getElementById("tab-fals").classList.toggle("on", which === "fals");
-  }
-  document.getElementById("tab-priors").onclick = function () { tab("priors"); };
-  document.getElementById("tab-fals").onclick = function () { tab("fals"); };
-  tab("priors");
-  document.getElementById("v-priors").classList.remove("hide"); // container visible; cells fill on load
-
   // controls
   document.getElementById("btn-reload").onclick = load;
   document.getElementById("btn-auto").onclick = function () {
@@ -208,5 +175,6 @@ h1{font-weight:400;font-size:34px;letter-spacing:-.01em;}
   timer = setInterval(load, 4000);
 })();
 </script>
+
 </body>
 </html>

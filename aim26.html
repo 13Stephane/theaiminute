@@ -18,9 +18,8 @@ h1{font-weight:400;font-size:27px;letter-spacing:-.01em;margin-bottom:4px;}
 .q{font-size:17px;margin-bottom:6px;}
 .hint{font-size:13.5px;color:var(--dim);font-style:italic;margin-bottom:12px;}
 label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px;}
-input[type=text],textarea{width:100%;background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:15px;padding:10px;border-radius:2px;}
-textarea{min-height:84px;resize:vertical;}
-input:focus,textarea:focus{outline:none;border-color:var(--gold);}
+textarea{width:100%;background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:15px;padding:10px;border-radius:2px;min-height:84px;resize:vertical;}
+textarea:focus{outline:none;border-color:var(--gold);}
 .seg{display:flex;gap:8px;}
 .seg button{flex:1;background:rgba(244,240,233,.05);border:1px solid var(--line);color:var(--dim);font-family:'Fraunces',Georgia,serif;font-size:14.5px;padding:11px 8px;border-radius:2px;cursor:pointer;}
 .seg button.on{border-color:var(--gold);color:var(--ink);background:rgba(198,165,83,.14);}
@@ -65,8 +64,6 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
       <div class="seg" id="x-seg"></div>
       <label id="y-q"></label>
       <div class="seg" id="y-seg"></div>
-      <label for="f-name">First name · optional</label>
-      <input type="text" id="f-name" maxlength="40" placeholder="never published">
       <div class="consent" id="consent-line"></div>
       <button class="submit" id="btn-prior">Submit</button>
       <div class="status" id="st-prior"></div>
@@ -75,27 +72,10 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
   <div id="v-prior-done" class="done hide">
     <div class="big">Recorded.</div>
     <div class="placement" id="prior-placement"></div>
-    <p style="margin-top:10px;font-size:14px;color:var(--dim);">Hold on to your reasoning — you will need it once more before the end.</p>
+    <p style="margin-top:10px;font-size:14px;color:var(--dim);">You'll see how the room compares once everyone has answered.</p>
   </div>
 
-  <!-- PHASE 2 · FALSIFIER -->
-  <div id="v-fals" class="hide">
-    <div class="panel">
-      <div class="q" id="fals-prompt"></div>
-      <div class="hint" id="fals-echo"></div>
-      <label for="f-fals">The condition</label>
-      <textarea id="f-fals" maxlength="280" placeholder="If … , my placement was wrong."></textarea>
-      <button class="submit" id="btn-fals">Submit falsifier</button>
-      <div class="status" id="st-fals"></div>
-    </div>
-  </div>
-  <div id="v-fals-done" class="done hide">
-    <div class="big">Falsifier recorded.</div>
-    <div class="placement" id="fals-mode"></div>
-    <p style="margin-top:10px;font-size:14px;color:var(--dim);">It is the one field no model fills for you.</p>
-  </div>
-
-  <!-- PHASE 3 · CLOSED -->
+  <!-- PHASE 2 · CLOSED -->
   <div id="v-closed" class="lobby hide">Submissions are closed. The session record will be published at this address.</div>
 
   <div class="footer">
@@ -108,8 +88,9 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
 <script src="aim26_frame.js"></script>
 <script>
 // ============================================================================
-//  Participant page · phases: 0 lobby · 1 prior · 2 falsifier · 3 closed
+//  Participant page · phases: 0 lobby · 1 prior · 2 closed
 //  Writes to course_priors. No AI in the critical path. Failure is loud (D1).
+//  Anonymous by design — no name is collected.
 // ============================================================================
 (function () {
   "use strict";
@@ -142,7 +123,6 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
   document.getElementById("q-text").textContent = AIM26.question;
   document.getElementById("q-hint").textContent = AIM26.place_hint;
   document.getElementById("consent-line").textContent = AIM26.consent;
-  document.getElementById("fals-prompt").textContent = AIM26.falsifier_prompt;
   document.getElementById("x-q").textContent = AIM26.axes.x.q;
   document.getElementById("y-q").textContent = AIM26.axes.y.q;
 
@@ -169,7 +149,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
   }
 
   // ── view switching ────────────────────────────────────────────────────────
-  var views = ["v-lobby", "v-prior", "v-prior-done", "v-fals", "v-fals-done", "v-closed"];
+  var views = ["v-lobby", "v-prior", "v-prior-done", "v-closed"];
   function show(id) {
     views.forEach(function (v) { document.getElementById(v).classList.add("hide"); });
     document.getElementById(id).classList.remove("hide");
@@ -182,16 +162,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
           axisLabel("x", Number(get("aim26_x"))) + " · " + axisLabel("y", Number(get("aim26_y")));
         show("v-prior-done");
       } else show("v-prior");
-    } else if (phase === 2) {
-      if (get("aim26_fals_done")) {
-        document.getElementById("fals-mode").textContent = get("aim26_fals_mode") || "";
-        show("v-fals-done");
-      } else {
-        var echo = get("aim26_shift");
-        document.getElementById("fals-echo").textContent = echo ? "Your shift: " + echo : "";
-        show("v-fals");
-      }
-    } else if (phase >= 3) show("v-closed");
+    } else if (phase >= 2) show("v-closed");
     else show("v-lobby");
   }
 
@@ -216,59 +187,24 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold);}
     var shift = document.getElementById("f-shift").value.trim();
     if (!shift) { st.textContent = "The shift is required."; return; }
     if (picked.x === null || picked.y === null) { st.textContent = "Place it on both axes."; return; }
-    var name = document.getElementById("f-name").value.trim() || "anon";
     var btn = this; btn.disabled = true; st.textContent = "recording…";
     fetch(SUPABASE_URL + "/rest/v1/course_priors", {
       method: "POST",
       headers: Object.assign({ "Prefer": "return=representation" }, H),
-      body: JSON.stringify({ session_id: S, name: name, thesis: shift, lens: "prior", x: picked.x, y: picked.y, placed_by: "self" })
+      body: JSON.stringify({ session_id: S, name: "anon", thesis: shift, lens: "prior", x: picked.x, y: picked.y, placed_by: "self" })
     })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (rows) {
         if (!rows.length || !rows[0].id) throw new Error("no row returned");
         put("aim26_prior_id", rows[0].id);
-        put("aim26_shift", shift);
         put("aim26_x", String(picked.x));
         put("aim26_y", String(picked.y));
         render(1);
       })
       .catch(function (e) { btn.disabled = false; st.textContent = "failed: " + e.message + " — nothing recorded, try again"; });
   };
-
-  // ── phase 2 submit: PATCH own prior; loud fallback INSERT if unlinked ─────
-  document.getElementById("btn-fals").onclick = function () {
-    var st = document.getElementById("st-fals");
-    var text = document.getElementById("f-fals").value.trim();
-    if (!text) { st.textContent = "The condition is required."; return; }
-    var btn = this; btn.disabled = true; st.textContent = "recording…";
-    var priorId = get("aim26_prior_id");
-
-    function fallbackInsert() {
-      return fetch(SUPABASE_URL + "/rest/v1/course_priors", {
-        method: "POST",
-        headers: Object.assign({ "Prefer": "return=representation" }, H),
-        body: JSON.stringify({ session_id: S, name: get("aim26_name") || "anon", thesis: text, lens: "falsifier", placed_by: "self" })
-      }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-        .then(function (rows) { if (!rows.length) throw new Error("no row returned"); return "recorded as a new entry"; });
-    }
-
-    var flow;
-    if (priorId) {
-      flow = fetch(SUPABASE_URL + "/rest/v1/course_priors?id=eq." + priorId + "&session_id=eq." + S, {
-        method: "PATCH",
-        headers: Object.assign({ "Prefer": "return=representation" }, H),
-        body: JSON.stringify({ justification: text })
-      }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-        .then(function (rows) { if (rows.length) return "linked to your prior"; return fallbackInsert(); });
-    } else flow = fallbackInsert();
-
-    flow.then(function (mode) {
-      put("aim26_fals_done", "1");
-      put("aim26_fals_mode", mode);
-      render(2);
-    }).catch(function (e) { btn.disabled = false; st.textContent = "failed: " + e.message + " — nothing recorded, try again"; });
-  };
 })();
 </script>
+
 </body>
 </html>
