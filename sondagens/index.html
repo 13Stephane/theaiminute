@@ -254,7 +254,7 @@ const CONF = [ {k:"sure",pt:"com certeza",en:"certain"},
                {k:"guess",pt:"no palpite",en:"guessing"} ];
 const BAND_W = 0.06;              /* half-width of "na linha", in tide units */
 
-const BUILD = 23;   /* bumped whenever this file changes */
+const BUILD = 24;   /* bumped whenever this file changes */
 const uid = () => Math.random().toString(36).slice(2,10);
 const median = xs => { if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), m=s.length>>1;
                        return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
@@ -539,6 +539,22 @@ async function tick(){
        need sub-ten-second precision. */
     TICKS = (TICKS + 1) % 4;
     if(KEY && CFG.phase === "triagem" && TICKS === 0){ if(await refreshRoom()) dirty = true; }
+
+    /* The gate above has one hole: a console that BOOTS after the sort closed
+       never passes through triagem, so it never fetches the rows, and the
+       figure reads "sem respostas" over a room that answered. It did not bite
+       at Dijon only because the laptop stayed open all afternoon; a reload at
+       13:46 would have projected an empty terrain.
+
+       One fetch, not a poll. The count cannot change once the sort is shut, so
+       asking once is exactly right, and CAUGHT stops it asking again. It is set
+       only when the room actually answered (NET.up), so a network failure
+       retries on the next tick while a genuinely empty room does not. */
+    if(KEY && !RESP.length && CAUGHT !== CFG.phase &&
+       (CFG.phase === "figura" || CFG.phase === "revelado")){
+      if(await refreshRoom()) dirty = true;
+      if(NET.up) CAUGHT = CFG.phase;
+    }
   } else {
     const n = RESP.length, d = respondents();
     await pull();
@@ -1892,6 +1908,8 @@ function repaint(){
    drop mid-sort costs nothing and nobody has to sort twice. */
 let PENDING_SEND = false;
 let TICKS = 0;   /* throttles the one poll target that still needs list() */
+/* the phase this console has already back-filled answers for; see tick() */
+let CAUGHT = null;
 /* What the last publish or reset said, held here rather than written straight
    into the DOM. checkPublished() re-renders the console a beat after either
    one finishes, which wiped the confirmation about 400ms after it appeared —
