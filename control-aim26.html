@@ -71,6 +71,13 @@ h1{font-weight:400;font-size:27px;letter-spacing:-.01em;margin-bottom:22px;}
     <div class="status" id="st-phase"></div>
   </div>
 
+  <div id="wipebox" class="panel hide">
+    <div class="now"><span class="lab">Danger zone</span></div>
+    <div class="count">Deletes every recorded prior for this session and resets phase to Lobby. Cannot be undone.</div>
+    <button class="phase-btn" id="btn-wipe" style="border-color:var(--bad);color:var(--bad);justify-content:center;">Wipe the room</button>
+    <div class="status" id="st-wipe"></div>
+  </div>
+
   <div class="links">
     <a href="aim26.html" target="_blank">→ Open the participant page</a><br>
     <a href="show-aim26.html" target="_blank">→ Open the projection (the room, mapped)</a>
@@ -138,6 +145,7 @@ h1{font-weight:400;font-size:27px;letter-spacing:-.01em;margin-bottom:22px;}
         }
         document.getElementById("seedbox").classList.add("hide");
         document.getElementById("controls").classList.remove("hide");
+        document.getElementById("wipebox").classList.remove("hide");
         setButtons(rows[0].phase);
         loadCount();
       })
@@ -175,6 +183,39 @@ h1{font-weight:400;font-size:27px;letter-spacing:-.01em;margin-bottom:22px;}
         .catch(function (e) { st.textContent = "failed: " + e.message; });
     };
   });
+
+  document.getElementById("btn-wipe").onclick = function () {
+    if (!confirm("Wipe every recorded prior for session '" + S + "' and reset to Lobby? This cannot be undone.")) return;
+    var st = document.getElementById("st-wipe");
+    var btn = this; btn.disabled = true; st.textContent = "wiping…";
+    var deletedCount = null;
+    fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S, {
+      method: "DELETE",
+      headers: Object.assign({ "Prefer": "return=representation" }, H)
+    })
+      .then(function (r) { if (!r.ok) throw new Error("delete HTTP " + r.status); return r.json(); })
+      .then(function (rows) {
+        deletedCount = rows.length;
+        // The anon key is deliberately not granted DELETE on course_priors — a 200
+        // with an empty body means RLS silently filtered the request, not that the
+        // room was empty. Verify against a real count instead of trusting the echo.
+        return fetch(SUPABASE_URL + "/rest/v1/course_priors?session_id=eq." + S + "&select=id", { headers: H });
+      })
+      .then(function (r) { if (!r.ok) throw new Error("verify HTTP " + r.status); return r.json(); })
+      .then(function (remaining) {
+        if (remaining.length > 0) {
+          throw new Error(remaining.length + " row(s) still present after delete — your key likely lacks DELETE rights (RLS). Use the Supabase Table Editor instead.");
+        }
+        return fetch(SUPABASE_URL + "/rest/v1/course_sessions?id=eq." + S, {
+          method: "PATCH",
+          headers: Object.assign({ "Prefer": "return=representation" }, H),
+          body: JSON.stringify({ phase: 0 })
+        });
+      })
+      .then(function (r) { if (!r.ok) throw new Error("phase reset HTTP " + r.status); return r.json(); })
+      .then(function () { st.textContent = "wiped " + deletedCount + " row(s). Back to Lobby."; btn.disabled = false; load(); })
+      .catch(function (e) { btn.disabled = false; st.textContent = "failed: " + e.message; });
+  };
 
   document.getElementById("btn-reload").onclick = load;
 
