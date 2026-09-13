@@ -1,0 +1,1686 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>A nova curva</title>
+<!--
+  A nova curva · Uniodonto, Barcelona, 15 September 2026
+
+  The simplified room (11 September). Five doors, all open at once:
+    #/triagem    the relator only (relator card, &relator=1): the table's sort, after the reveal
+    #/muro       the room's wall, read only
+    #/curva      each person's curve: reduce or raise on the seven axes, each citing the room;
+                 below them, the table's new axes (change request 4), two at most
+    #/porta-voz  the relator only: today's line, and the table's wall with its arrows
+    #/tela       the projector (the facilitator's laptop, with the key)
+  and for the facilitator only, reached from ?f on the door:
+    #/f          console: which session is open, the as-is, the view, merges, export
+    #/relatorio  the session's report, with what the sort and the wall led us to expect
+
+  No room code and no names. The console opens one session at a time and
+  every phone writes to that one. rules.js is the one copy of the rules.
+-->
+<style>
+:root{
+  --bg:#193C3F; --bg2:#14333A; --panel:#1D4549; --line:#2C5457; --ink:#F4F0E9; --muted:#9FB4B0;
+  --gold:#C6A553; --cream:#EDE3CC; --grey:#8FA09E; --amber:#E0A040; --bad:#E2876B; --ok:#8FC79A;
+  --z-submerso:#4F8FAE; --z-linha:#7FB5AA; --z-polder:#8FAE62; --z-rocha:#A08E72;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.5 Calibri,"Segoe UI",system-ui,-apple-system,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:20px 18px 110px}
+.wrap.wide{max-width:1180px}
+h1,h2,.serif{font-family:Georgia,"Times New Roman",serif}
+h1{font-size:34px;line-height:1.1;margin:6px 0 4px;text-wrap:balance}
+h2{font-size:22px;margin:0 0 10px}
+h1 .en,h2 .en{display:block;color:var(--muted);font-weight:400;font-size:.55em;margin-top:4px}
+.kick{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)} .small{font-size:13.5px} .en2{display:block;color:var(--muted);font-size:.88em;margin-top:2px}
+a{color:var(--gold)}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px;cursor:pointer}
+button:hover{border-color:var(--gold)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.on{border-color:var(--gold);color:var(--gold);background:#22504F}
+button.primary{border-color:var(--gold);color:var(--gold);width:100%;padding:14px}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button.link{background:none;border:none;padding:0;color:var(--muted);text-decoration:underline}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.note{border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--muted);font-size:14.5px}
+.note.warn{border-color:var(--amber);color:var(--amber)}
+.loud{border:2px solid var(--bad);background:#4A2A26;border-radius:8px;padding:14px 16px}
+.chip{display:inline-block;font-size:12.5px;padding:2px 8px;border-radius:3px;border:1px solid var(--line);color:var(--muted);margin:2px 4px 2px 0}
+.chip.lig{border-color:var(--gold);color:var(--gold)}
+.chip.gen{border-style:dashed}
+.chip.amber{border-color:var(--amber);color:var(--amber)}
+.chip.unc{border-color:var(--bad);color:var(--bad)}
+.zsq{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:7px}
+.lock{position:sticky;top:0;z-index:5;background:#4A2A26;padding:8px 14px;font-size:14px;border-bottom:1px solid var(--bad)}
+.num{font-variant-numeric:tabular-nums}
+
+/* the door */
+.doors{display:grid;gap:10px;margin-top:22px}
+.door{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:baseline;text-decoration:none;color:var(--ink);
+      background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:15px 18px}
+.door:hover{border-color:var(--gold)}
+.door b{font-family:Georgia,serif;font-size:23px;font-weight:700}
+.door b i{font-style:normal;font-weight:400;font-size:14px;color:var(--muted);margin-left:8px}
+.door .st{font-size:13px;color:var(--gold);text-align:right}
+.door .d{grid-column:1/-1;color:var(--muted);font-size:14.5px}
+
+/* the sort, one task at a time, the places stacked */
+.task{font-family:Georgia,serif;font-size:25px;line-height:1.25;margin:10px 0 2px}
+.choices{display:grid;gap:10px;margin-top:18px}
+.choice{text-align:left;padding:14px 16px;display:grid;gap:4px}
+.choice b{font-size:18px}
+.choice b i{font-style:normal;font-weight:400;color:var(--muted)}
+.choice span{font-size:13.5px;color:var(--muted)}
+.answers{display:grid;gap:6px;margin-top:14px}
+.zrow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-top:6px}
+.zb{padding:8px 2px;font-size:12px;line-height:1.15}
+.zb .zsq{margin-right:3px}
+.answers button{text-align:left;display:flex;justify-content:space-between;gap:10px;padding:9px 12px;font-size:14px}
+
+/* the wall */
+.wrow{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.wallrow{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line)}
+
+/* the curve */
+.axis{padding:14px 0;border-bottom:1px solid var(--line)}
+.axis .hd{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.axis .hd b{font-family:Georgia,serif;font-size:19px}
+.pace{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-top:2px}
+input[type=range]{padding:0;border:none;background:none;accent-color:var(--gold);height:32px}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:0 4px}
+.cbar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:12px 0 14px;margin-top:18px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:19}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:var(--bg2);border-top:2px solid var(--gold);padding:18px 18px 26px;z-index:20}
+.sheet .inner{max-width:560px;margin:0 auto}
+.pick{display:flex;flex-direction:column;align-items:flex-start;text-align:left;width:100%;margin:6px 0;gap:2px}
+.pick.on{border-color:var(--gold)}
+.pick small{color:var(--muted)}
+.chart svg{display:block;width:100%;height:auto}
+
+/* the console */
+.sec{margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
+.seslist{display:grid;gap:8px}
+.ses{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-top:12px}
+.tbl{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t td,table.t th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:400}
+
+/* the projector, read at eight metres */
+.tela{padding:34px 48px 40px;min-height:100vh}
+.tela h1{font-size:54px}
+.tela .lede{font-size:26px;color:var(--muted);margin:4px 0 22px}
+.tela .foot{font-size:32px;margin-top:22px}
+.srow{display:grid;grid-template-columns:minmax(0,32%) 1fr minmax(0,24%);gap:18px;align-items:center;padding:6px 0;font-size:21px;border-bottom:1px solid var(--line)}
+.bar4{display:flex;height:30px;border-radius:4px;overflow:hidden;background:var(--bg2)}
+.bar4 div{height:100%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#0E2427;font-weight:700}
+.legend{display:flex;gap:22px;font-size:18px;color:var(--muted);margin:0 0 12px;flex-wrap:wrap}
+.twall{display:grid;grid-template-columns:1fr auto;gap:6px 24px;font-size:24px}
+.twall div{padding:6px 0;border-bottom:1px solid var(--line)}
+.xgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:16px}
+.xcol{border-top:3px solid var(--line);padding-top:10px;font-size:18px;line-height:1.35}
+.xcol{min-width:0;overflow-wrap:anywhere;hyphens:auto}
+.xcol b{font-family:Georgia,serif;font-size:24px;display:block}
+@media (max-width:1100px){ .xgrid{grid-template-columns:repeat(4,minmax(0,1fr))} .tela{padding:24px 28px} }
+.xcol .ex{color:var(--gold);margin:6px 0}
+.xcol .f{margin-top:10px}
+.xcol .f.tension{color:var(--amber)}
+.xcol .q{color:var(--muted);font-size:16px;margin-top:10px}
+/* change request 4: the created axes, beside the seven and never inside them */
+.movewrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,20%);gap:30px;align-items:start}
+.newax{border-left:2px solid var(--gold);padding-left:22px}
+.newax .nx{padding:10px 0;border-bottom:1px solid var(--line);font-size:18px;line-height:1.35}
+.newax .nx b{font-family:Georgia,serif;font-size:23px;display:block;line-height:1.2}
+.newax .q{color:var(--muted);font-size:16px;margin-top:4px}
+/* change request 5: the commitments, option tag first */
+.crow{padding:9px 0;border-bottom:1px solid var(--line)}
+.ctag{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;border-radius:3px;margin-right:8px;border:1px solid var(--gold);color:var(--gold);vertical-align:2px}
+.ctag.polder{border-color:var(--z-polder);color:var(--z-polder)}
+.tela .crow{font-size:24px;line-height:1.35;padding:14px 0}
+.tela .ctag{font-size:15px}
+.crow .who{color:var(--muted)}
+/* the terrain and the gate, as at Unimed */
+.fig{display:flex;gap:30px;align-items:flex-start}
+.fig .terrain{flex:1.75;min-width:0}
+.gate{flex:1;min-width:0;border-left:2px solid var(--line);padding-left:26px}
+.bricks{margin-top:12px}
+.brick{display:flex;gap:14px;align-items:flex-start;font-size:23px;line-height:1.25;padding:10px 0;border-bottom:1px solid var(--line)}
+.brick small{display:block;font-size:16px;color:var(--muted);margin-top:3px}
+.brick .mark{width:20px;height:20px;border:2.5px solid var(--gold);flex:none;margin-top:4px}
+.brick .mark.filled{background:var(--gold)}
+.brick.in{animation:brickin .55s ease-out both;animation-delay:calc(var(--i) * .28s)}
+@keyframes brickin{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.stamp{position:fixed;right:14px;bottom:10px;font-size:12px;letter-spacing:.2em;color:var(--amber)}
+
+/* the report */
+.rep{max-width:980px;margin:0 auto;padding:28px 28px 60px}
+.rep h2{margin-top:34px}
+.rep h3{font-family:Georgia,serif;font-size:19px;margin:22px 0 4px}
+.rep .f{padding:4px 0 4px 12px;border-left:3px solid var(--line);margin:6px 0}
+.rep .f.tension{border-left-color:var(--amber)}
+.rep .f.coherent{border-left-color:var(--ok)}
+.rep .f.check{border-left-color:var(--gold)}
+.rep blockquote{margin:6px 0;padding-left:12px;border-left:1px solid var(--line);color:var(--muted)}
+@media print{
+  html,body{background:#fff;color:#111}
+  .noprint{display:none!important}
+  .rep .f{border-left-color:#999} .muted,.en2,.rep blockquote{color:#555}
+  table.t td,table.t th{border-color:#ccc;color:#111}
+  a{color:#111}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div id="app"></div>
+<!-- ?b= moves with BUILD: a phone must never check moves against a cached copy of old rules -->
+<script src="rules.js?b=19"></script>
+<script src="rehearsal.js?b=19"></script>
+<script>
+"use strict";
+const R = window.NCRULES;
+const BUILD = 19;
+
+/* ---------------------------------------------------------------- storage */
+/* ?p= gives a second device in the same browser, for rehearsing on one laptop. */
+const NS = new URLSearchParams(location.search).get("p") || "";
+const MEM = {};
+const S = {
+  k: k => "nc" + NS + ":" + k,
+  get(k){ try { return localStorage.getItem(this.k(k)); } catch(e){ return MEM[k] ?? null; } },
+  set(k, v){ try { localStorage.setItem(this.k(k), v); } catch(e){ MEM[k] = v; } },
+  del(k){ try { localStorage.removeItem(this.k(k)); } catch(e){ delete MEM[k]; } },
+  getJ(k, d){ try { const v = this.get(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  setJ(k, v){ this.set(k, JSON.stringify(v)); },
+};
+
+/* ------------------------------------------------------------------ utils */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = v => v == null ? "—" : (Math.round(v * 10) / 10).toFixed(1).replace(".", ",");
+const param = k => new URLSearchParams(location.search).get(k);
+const hhmm = iso => { if(!iso) return ""; const d = new Date(iso); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+const route = () => location.hash.replace(/^#\/?/, "").split("/")[0] || "";
+const ZCOL = { submerso: "var(--z-submerso)", linha: "var(--z-linha)", polder: "var(--z-polder)", rocha: "var(--z-rocha)", sem_acordo: "#B7AFA0" };
+const ZHEX = { submerso: "#4F8FAE", linha: "#7FB5AA", polder: "#8FAE62", rocha: "#A08E72", sem_acordo: "#B7AFA0" };
+const cardNo = t => String(t.code || "").replace(/^T0?/, "");
+/* the arrow belongs to a bound card; a generic one carries none, whatever its minority said */
+const arrowGlyph = g => !g || !g.ligado ? "" : g.arrow === "escasso" ? "↑" : g && g.arrow === "estavel" ? "→" : g && g.arrow === "abundante" ? "↓" : "";
+const zsq = z => z && ZCOL[z] ? `<span class="zsq" style="background:${ZCOL[z]}"></span>` : "";
+const SHORT = { price: "Preço", network: "Rede", complaints: "Reclamações", ortho_specialist: "Ortodontia",
+                digital: "Digital", continuity: "Continuidade", employer_reporting: "Relatório" };
+const short = a => SHORT[a.code] || a.label_pt;
+/* One curve, two buyers: the employer buys the plan, the beneficiary chooses
+   the dentist. Each axis says whose it is (session.json, side). */
+const SIDES = [{ key: "employer", pt: "O empregador", en: "what the employer buys" },
+               { key: "beneficiary", pt: "O beneficiário", en: "what the beneficiary chooses" }];
+const sideOf = a => a && a.side === "beneficiary" ? "beneficiary" : a && a.side === "employer" ? "employer" : "";
+const sideWord = a => ({ employer: "empregador", beneficiary: "beneficiário" })[sideOf(a)] || "";
+/* Change request 6: the morning's seven axes are one group; the cooperado is supplier, customer and owner at once */
+const sidesOn = axes => (axes || []).some(a => a.side === "employer" || a.side === "beneficiary");
+/* The projector's six screens, in the order the day uses them. The console
+   steps through them one press at a time: no menu to pick the wrong one from. */
+const SEQ = [["asis", "A curva de hoje"], ["sort", "A maré"], ["wall", "O muro"],
+             ["overlay", "Todas as curvas"], ["moves", "Os movimentos"], ["expected", "O que se esperava"], ["commit", "Os compromissos"]];
+const toggle = (list, id) => { const i = list.indexOf(id); if(i >= 0) list.splice(i, 1); else list.push(id); };
+/* Five positions against the rival (change request 2): the room's morning
+   line sits one step either side of Odontoprev, or level with it. */
+const VMAX = R.LIMITS.VALUE_MAX;
+const fmtRel = v => { if(v == null) return "—"; const d = Math.round((v - R.RIVAL_VALUE) * 10) / 10;
+                      return d === 0 ? "igual" : (d > 0 ? "+" : "−") + String(Math.abs(d)).replace(".", ","); };
+const scaleWord = v => v == null ? "—" : Number.isInteger(v) ? R.SCALE_PT[v] : fmtRel(v);
+/* The outside read: the desk work, where public sources could read anything.
+   Only its direction against the rival is drawn, and it is never the ghost. */
+const outsideMark = (you, rival) => you == null || rival == null ? null : you - rival > 0.5 ? 3 : rival - you > 0.5 ? 1 : 2;
+function hash32(s){ let h = 2166136261 >>> 0; for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; }
+function rng(seed){ let a = seed >>> 0; return () => { a += 0x6D2B79F5; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function mintPid(){
+  const a = "abcdefghijklmnopqrstuvwxyz0123456789", b = new Uint8Array(24);
+  crypto.getRandomValues(b); let s = ""; for(const x of b) s += a[x % a.length]; return s;
+}
+
+/* ------------------------------------------------------------------ state */
+let SEED = null, API = null, KEY = null, PID = null;
+let ST = null;                              /* GET /state: the open session and the room's aggregate */
+let SORT = null, WALL = null, CURVE = null, PLACE = null, COMMIT = null; /* this device's own, for the open session */
+let SID = null, ROOM = null, SESSIONS = [], ACTIVE = null;
+let NET = { up: null, note: "" };
+let SHEET = null, NOTE = "", BUSY = false, PENDING_RENDER = false;
+let LINE_EDIT = false, CLAIMING = false;         /* the console's corrections to today's line stay hidden until asked for */
+let MESA = null;                                 /* the table, from the table's QR: ?mesa=N */
+let RELATOR = false;                             /* the relator's card adds &relator=1: only that phone sees Triagem and Porta-voz */
+const LAST = { state: 0, room: 0, sessions: 0 };
+const TIMERS = {};
+const debounce = (k, ms, fn) => { clearTimeout(TIMERS[k]); TIMERS[k] = setTimeout(fn, ms); };
+
+async function api(path, o = {}){
+  if(!API){ const e = new Error("no backend"); e.status = 0; throw e; }
+  const headers = {};
+  if(o.body) headers["content-type"] = "application/json";
+  if(o.key){ if(!KEY){ const e = new Error("no key"); e.status = 401; throw e; } headers["x-key"] = KEY; }
+  let r;
+  try { r = await fetch(API + path, { method: o.method || "GET", headers, body: o.body ? JSON.stringify(o.body) : undefined, cache: "no-store" }); }
+  catch(e){ NET.up = false; const x = new Error("offline"); x.status = 0; throw x; }
+  NET.up = true;
+  const data = await r.json().catch(() => null);
+  if(!r.ok){ const e = new Error((data && data.error) || ("http " + r.status)); e.status = r.status; e.data = data; throw e; }
+  return data;
+}
+
+/* ------------------------------------------------------------------- boot */
+async function boot(){
+  SEED = await loadSeed();
+  /* a phone holding an old copy of this file cannot be fixed by anything inside it */
+  if(SEED && SEED.build && SEED.build > BUILD && !/[?&]b=/.test(location.search)){
+    location.replace(location.pathname + "?b=" + SEED.build + location.hash); return;
+  }
+  API = (param("api") || (SEED && SEED.api) || "").replace(/\/+$/, "") || null;
+  /* the key arrives once, in the address, and lives in this browser only */
+  const k = param("k");
+  if(k){ KEY = k; S.set("key", k); const u = new URL(location.href); u.searchParams.delete("k"); history.replaceState(null, "", u.pathname + u.search + u.hash); }
+  else KEY = S.get("key");
+  PID = S.get("pid"); if(!PID){ PID = mintPid(); S.set("pid", PID); }
+  SID = param("s") || S.get("sid");
+  /* the table tent's QR carries its table, and the phone keeps it */
+  const pm = Number(param("mesa"));
+  if(pm >= 1 && pm <= 12){
+    if(String(pm) !== S.get("mesa")) S.del("relator");   /* another table's QR: not its relator */
+    MESA = pm; S.set("mesa", String(pm));
+  } else { const sm = Number(S.get("mesa")); MESA = sm >= 1 && sm <= 12 ? sm : null; }
+  /* the relator's card: the tent's address plus &relator=1, remembered like the table */
+  if(param("relator") === "1") S.set("relator", "1");
+  RELATOR = S.get("relator") === "1";
+  ST = S.getJ("state", null);
+  atTable();
+  loadMine();
+  addEventListener("hashchange", () => { SHEET = null; render(); tick(true); window.scrollTo(0, 0); });
+  addEventListener("online", () => tick(true));
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) tick(true); });
+  document.addEventListener("click", onClick);
+  document.addEventListener("input", onInput);
+  document.addEventListener("change", onChange);
+  document.addEventListener("focusout", () => { if(PENDING_RENDER){ PENDING_RENDER = false; setTimeout(render, 150); } });
+  render();
+  setInterval(() => tick(false), 2500);
+  tick(true);
+}
+async function loadSeed(){
+  try { const r = await fetch("session.json", { cache: "no-store" }); if(r.ok) return await r.json(); } catch(e){}
+  return null;
+}
+
+const sessId = () => ST && ST.session ? ST.session.id : null;
+const mk = k => "s:" + sessId() + ":" + k;
+const blankRows = () => Array.from({ length: R.LIMITS.WALL_ROWS }, () => ({ name: "", ligado: null }));
+function loadMine(){
+  if(!sessId()){ SORT = WALL = CURVE = PLACE = COMMIT = null; return; }
+  COMMIT = S.getJ(mk("commit"), null) || blankCommit();
+  COMMIT.pre = COMMIT.pre || {}; COMMIT.raise = COMMIT.raise || { axis_id: null, sees: "" };
+  SORT = S.getJ(mk("tsort"), null) || { choices: {}, submittedAt: null, err: null, sending: false, forceEdit: false };
+  WALL = S.getJ(mk("wall"), null) || { table: null, given: {}, rows: blankRows(), dirty: false, savedAt: null, taken: false, takeover: false };
+  WALL.given = WALL.given || {};
+  WALL.arrows = WALL.arrows || {};
+  WALL.rows = (WALL.rows || []).slice(0, R.LIMITS.WALL_ROWS); while(WALL.rows.length < R.LIMITS.WALL_ROWS) WALL.rows.push({ name: "", ligado: null });
+  PLACE = S.getJ(mk("placement"), null) || { choices: {}, err: null };
+  CURVE = S.getJ(mk("curve"), null) || { buyer: null, moves: {}, submitted: false, dirty: false, pendingSubmit: false, err: null, savedAt: null };
+}
+const saveSort = () => S.setJ(mk("tsort"), SORT);
+const saveWall = () => S.setJ(mk("wall"), WALL);
+const saveCurve = () => S.setJ(mk("curve"), CURVE);
+const savePlace = () => S.setJ(mk("placement"), PLACE);
+const saveCommit = () => S.setJ(mk("commit"), COMMIT);
+
+/* ------------------------------------------------------------------ polls */
+const PHONE = ["", "triagem", "curva", "porta-voz", "compromisso"];
+const FACIL = ["f", "tela", "relatorio"];
+async function tick(force){
+  if(document.hidden && !force) return;
+  if(!API){ return; }
+  const r = route(), t = Date.now();
+  if(PHONE.includes(r)){
+    if(force || t - LAST.state >= (r ? 12000 : 20000)){ LAST.state = t; await pollState(); }
+    await flush();
+    if(r === "triagem") await loadMesa(false);
+    if(r === "curva") await loadCreated(false);
+    if(r === "compromisso") await loadCommit(false);
+  }
+  if(FACIL.includes(r) && KEY){
+    /* the projector follows the session the console last picked, unless its address pins one */
+    if(r !== "f" && !param("s")){ const cur = S.get("sid"); if(cur && cur !== SID){ SID = cur; ROOM = null; } }
+    if(r === "f" && (force || t - LAST.sessions >= 15000)){ LAST.sessions = t; await pollSessions(); }
+    if(force || t - LAST.room >= 4500){ LAST.room = t; if(SID) await pollRoom(); }
+  }
+}
+function safeRender(){
+  const a = document.activeElement;
+  if(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.type !== "range" && a.type !== "checkbox"){ PENDING_RENDER = true; return; }
+  render();
+}
+async function pollState(){
+  try {
+    const since = ST && ST.session ? "?since=" + ST.session.data_v : "";
+    const d = await api("/state" + since);
+    if(d.unchanged){ safeRender(); return; }
+    const prev = sessId(); ST = d; S.setJ("state", d); atTable();
+    if(sessId() !== prev){ loadMine(); TBL = null; TBL_AT = 0; AXN.list = []; AXN.at = 0; AXN.form = null; AXN.err = null; CMT = null; CMT_AT = 0; }
+  } catch(e){}
+  safeRender();
+}
+async function pollSessions(){
+  try { const d = await api("/f/sessions", { key: true }); SESSIONS = d.sessions; ACTIVE = d.active; NET.note = "";
+        if(!SID && ACTIVE){ SID = ACTIVE; S.set("sid", SID); } }
+  catch(e){ NET.note = e.status === 401 ? "a chave não foi aceite" : ""; }
+  safeRender();
+}
+async function pollRoom(){
+  try {
+    const since = ROOM && ROOM.session && ROOM.session.id === SID ? "&since=" + ROOM.session.data_v : "";
+    const d = await api(`/f/room?session_id=${encodeURIComponent(SID)}${since}`, { key: true });
+    if(d.unchanged){ if(ROOM && ROOM.session.active !== d.active){ ROOM.session.active = d.active; safeRender(); } return; }
+    ROOM = d; ROOM.D = derive(d);
+  } catch(e){ if(e.status === 404){ SID = null; S.del("sid"); ROOM = null; } }
+  safeRender();
+}
+const refetchRoom = async () => { if(ROOM) ROOM.session.data_v = -1; await pollRoom(); };
+
+/* --------------------------------------------------------------- the pushes */
+async function flush(){
+  if(!sessId()) return;
+  if(WALL && WALL.dirty && WALL.table && !WALL.taken) await pushWall();
+  if(CURVE && CURVE.dirty) await pushCurve(CURVE.pendingSubmit);
+}
+/* The console moved to another session, or closed it: start fresh there. */
+function sessionChanged(e){
+  if(e.status === 409 && e.data && (e.data.session_id || e.data.closed)){
+    if(ST && ST.session) ST.session.data_v = -1;
+    LAST.state = 0; pollState(); return true;
+  }
+  return false;
+}
+async function claimSeat(){
+  try {
+    const d = await api("/wall", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, claim: true, takeover: !!WALL.takeover } });
+    WALL.table = d.table; WALL.taken = false; WALL.takeover = false;
+    const mine = WALL.rows.some(r => r.name.trim()) || Object.keys(WALL.given || {}).length > 0;
+    if(!mine){ const rows = blankRows(); (d.cards || []).slice(0, rows.length).forEach((c, i) => { rows[i] = { name: c.name, ligado: c.ligado, arrow: c.arrow || null }; });
+               WALL.rows = rows; WALL.given = d.given || {}; WALL.arrows = d.arrows || {}; }
+    saveWall();
+    if(mine){ WALL.dirty = true; await pushWall(); }
+  } catch(e){
+    if(e.status === 409 && e.data && e.data.taken){ WALL.taken = true; saveWall(); }
+    else sessionChanged(e);
+  }
+  CLAIMING = false;
+  render();
+}
+async function pushWall(){
+  try {
+    await api("/wall", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, given: WALL.given, arrows: WALL.arrows || {}, cards: WALL.rows } });
+    WALL.dirty = false; WALL.savedAt = new Date().toISOString(); saveWall();
+  } catch(e){
+    if(e.status === 409 && e.data && e.data.taken){ WALL.taken = true; saveWall(); }
+    else if(!sessionChanged(e) && e.status === 400){ NOTE = e.message; WALL.dirty = false; }
+  }
+  safeRender();
+}
+function movesPayload(){
+  return Object.keys(CURVE.moves).map(id => { const m = CURVE.moves[id];
+    return { axis_id: id, direction: m.direction, to_value: m.to_value, cites_task_ids: m.cites_task_ids || [], cites_wall_ids: m.cites_wall_ids || [],
+             offer_only: !!m.offer_only, offer_reason: m.offer_reason || null, note: m.note || null }; });
+}
+async function pushCurve(submit){
+  try {
+    const d = await api("/curve", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, buyer: CURVE.buyer, moves: movesPayload(), submit: !!submit } });
+    CURVE.dirty = false; CURVE.pendingSubmit = false; CURVE.err = null; CURVE.savedAt = new Date().toISOString(); CURVE.submitted = !!d.submitted;
+    saveCurve();
+  } catch(e){
+    if(e.status === 422){ CURVE.dirty = false; CURVE.pendingSubmit = false; CURVE.submitted = false; CURVE.err = e.data; saveCurve(); }
+    else if(sessionChanged(e)){}
+    else if(e.status === 400){ CURVE.dirty = false; CURVE.pendingSubmit = false; CURVE.err = { error: e.message }; saveCurve(); }
+    /* offline: it stays dirty and goes when the network comes back */
+  }
+  safeRender();
+}
+function ctxNow(){
+  if(!ST || !ST.session) return null;
+  return R.citeContext({ tasks: ST.tasks, sort: ST.cite, groups: ST.cite.wall, generic: ST.generic });
+}
+
+/* ------------------------------------------------------------ the phone views */
+function netBar(){
+  if(!API) return `<div class="lock">Sem servidor: session.json não tem api. Esta página não chega à sala.</div>`;
+  if(NET.up === false) return `<div class="lock">Sem rede. O que fizer fica neste aparelho e segue quando a rede voltar.</div>`;
+  return "";
+}
+function head(t, en){
+  const s = ST && ST.session;
+  return `${netBar()}<div class="wrap"><div class="row" style="justify-content:space-between"><a href="#/" class="small">← início</a>
+    <span class="small muted">${NET.up ? "em linha" : ""}</span></div>
+    <div class="kick" style="margin-top:14px">${s ? esc(s.title) : ""}</div><h1>${t}<span class="en">${en}</span></h1>`;
+}
+function needSession(){
+  if(ST && ST.session) return null;
+  return `${netBar()}<div class="wrap"><a href="#/" class="small">← início</a>
+    <h1>Ainda não<span class="en">Not yet</span></h1>
+    <p class="muted">A sessão ainda não abriu. Deixe esta página aberta: muda sozinha.<span class="en2">The session is not open yet. Leave this page open; it changes by itself.</span></p></div>`;
+}
+
+function viewDoor(){
+  const s = ST && ST.session;
+  const n = s ? ST.tasks.length : 16;
+  const answered = SORT ? Object.keys(SORT.choices).length : 0;
+  const cur = CURVE ? (CURVE.submitted ? "enviada" : Object.keys(CURVE.moves).length ? "rascunho" : "") : "";
+  const door = (href, t, en, d, st) => `<a class="door" href="#/${href}"><b>${t}<i>${en}</i></b><span class="st">${st || ""}</span><span class="d">${d}</span></a>`;
+  return `${netBar()}<div class="wrap">
+    <div class="kick">${esc((s && s.org) || "Uniodonto · Barcelona · 15 de setembro")}</div>
+    <h1>A nova curva<span class="en">The new curve</span></h1>
+    <p class="muted" style="margin:6px 0 0">${s ? esc(s.title) + (MESA ? ` · Mesa ${MESA}` : "") : "A sessão ainda não abriu. Esta página muda sozinha."}</p>
+    <div class="doors">
+      ${RELATOR ? door("triagem", "Triagem", "o relator registra, ao fim", "Depois da revelação: onde a mesa deixou cada um dos dezasseis cartões.", s ? (SORT && SORT.submittedAt ? "enviada" : answered ? `${answered} de ${n}` : "") : "") : ""}
+      ${door("curva", "Curva", "the curve", "A sua curva: o que reduzir, o que elevar, o que criar.", cur)}
+      ${RELATOR ? door("porta-voz", "Porta-voz", "o relator da mesa", "A curva de hoje, às 0:16, e o muro da mesa.", WALL && WALL.table ? `Mesa ${WALL.table}` : "") : ""}
+      ${RELATOR ? door("compromisso", "Compromisso", "a mesa decide, o relator registra", "Um pôlder que vocês financiam, ou uma elevação que vocês financiam e guardam.", COMMIT && COMMIT.sentAt ? "enviado" : COMMIT && COMMIT.option ? "rascunho" : "") : ""}
+    </div>
+    ${param("f") !== null ? `<p class="small" style="margin-top:22px"><a href="#/f">Consola do facilitador</a> · <a href="#/relatorio">Relatório</a></p>` : ""}
+  </div>`;
+}
+/* Change request 5: the table's commitment, one per table, entered by the
+   relator with the table. A fork between two options, and nothing else
+   renders until one is picked. Pre-fills come from the table's own moves
+   and every one of them can be changed: the table is deciding, not
+   confirming. The printed sheet carries the same fields, for a table that
+   loses the network. */
+let CMT = null, CMT_AT = 0;
+const blankCommit = () => ({ option: null, polder: null, bill: null, know: "", raise: { axis_id: null, sees: "" }, guard: null, price: "",
+                             owner: "", review: R.reviewDefault(), pre: {}, sentAt: null, err: null, takeover: false });
+function adoptCommit(d){
+  if(!d || !d.commit || COMMIT.option) return;
+  const k = d.commit;
+  Object.assign(COMMIT, { option: k.option, polder: k.polder || null, bill: k.bill || null, know: k.know || "", raise: k.raise || { axis_id: null, sees: "" },
+                          guard: k.guard || null, price: k.price || "", owner: k.owner || "", review: k.review || R.reviewDefault(), pre: {}, sentAt: k.submitted_at });
+  saveCommit();
+}
+async function loadCommit(force){
+  if(!sessId() || !API || !COMMIT) return;
+  if(!force && Date.now() - CMT_AT < 8000) return;
+  CMT_AT = Date.now();
+  try {
+    let d = await api(`/commit?session_id=${encodeURIComponent(sessId())}&pid=${PID}${MESA ? `&mesa=${MESA}` : ""}`);
+    if(!d.steward && !d.taken) d = await api("/commit", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, claim: true } });
+    CMT = Object.assign(d, { sending: false });
+    adoptCommit(d);
+  } catch(e){
+    if(e.status === 409 && e.data && e.data.taken) CMT = { table: MESA, steward: false, taken: true };
+    else sessionChanged(e);
+  }
+  safeRender();
+}
+const commitPayload = () => { const c = COMMIT;
+  return { option: c.option, polder: c.polder, bill: c.bill, know: c.know, raise: c.raise, guard: c.guard, price: c.price, owner: c.owner, review: c.review }; };
+const whoWhen = c => `${c.owner || "?"}, revisão ${c.review || "?"}`;
+function viewCompromisso(){
+  const g = needSession(); if(g) return g;
+  if(!CMT_AT) loadCommit(true);
+  const t = (CMT && CMT.table) || MESA || "";
+  const top = head(`Compromisso${t ? ` · Mesa ${t}` : ""}`, "a mesa decide, o relator registra");
+  if(CMT && CMT.taken && !CMT.steward) return top + `<div class="loud" style="margin-top:12px">A Mesa ${t} já tem relator noutro telefone. Se esse telefone parou, assuma aqui.
+      <span class="en2">Table ${t} already has a relator on another phone. If that phone died, take over here.</span>
+      <div class="row" style="margin-top:10px"><button data-act="ctake">assumir a mesa</button></div></div></div>`;
+  if(!CMT || !CMT.context) return top + `<p class="muted">A carregar a mesa…</p></div>`;
+  const ctx = ctxNow(), tc = CMT.context, c = COMMIT;
+  const aBy = R.index(ST.axes);
+  const choice = (k, letter, sub) => `<button class="choice ${c.option === k ? "on" : ""}" data-act="copt" data-o="${k}"><b>${letter} · ${esc(R.COMMIT_PT[k])}</b><span>${sub}</span></button>`;
+  let h = top + `<p class="muted">Uma escolha por mesa. A folha em papel tem os mesmos campos, se a rede cair.<span class="en2">One choice per table. The paper sheet has the same fields, if the network drops.</span></p>
+    <div class="choices">${choice("polder", "A", "Uma linha que a máquina podia fazer e que vocês mantêm humana. Sem guarda: não é uma posição a defender, é um custo que carregam de propósito.")}
+      ${choice("raise", "B", "Um atributo sobe o suficiente para o comprador reparar.")}</div>`;
+  if(!c.option) return h + `</div>`;   /* nothing else renders until A or B is picked */
+  const pick = (act, k, id, on, label, sub) => `<button class="pick ${on ? "on" : ""}" data-act="${act}" data-k="${k}" data-id="${esc(id)}"><span>${label}</span>${sub ? `<small>${sub}</small>` : ""}</button>`;
+  const pre = f => c.pre && c.pre[f] ? ` <span class="chip">pré-preenchido: pode mudar</span>` : "";
+  const field = (label, en, inner) => `<div class="kick" style="margin-top:18px">${label} <span class="muted">${en}</span></div>${inner}`;
+  const noSort = !tc.sort;
+  const mine = z => ctx.tasks.filter(x => noSort || tc.sort[x.id] === z);
+  const billOn = (k, id) => c.bill && c.bill.kind === k && c.bill.id === id;
+  const billPicks = allowText =>
+    mine("submerso").map(x => pick("cbill", "card", x.id, billOn("card", x.id), `${zsq("submerso")}${esc(x.label_pt)}`, noSort ? "a mesa não enviou triagem" : "a mesa pô-lo debaixo de água")).join("")
+    + (tc.reduces || []).map(r => pick("cbill", "reduce", r.axis_id, billOn("reduce", r.axis_id), `baixar ${esc(aBy[r.axis_id] ? aBy[r.axis_id].label_pt : "?")}`,
+                                      `${r.n} ${r.n === 1 ? "pessoa da mesa baixou" : "pessoas da mesa baixaram"}`)).join("")
+    + (allowText ? `<input data-cf="billtext" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" placeholder="ou uma linha de orçamento" value="${esc(c.bill && c.bill.kind === "text" ? c.bill.text : "")}" style="margin-top:6px">` : "");
+  if(c.option === "polder"){
+    h += field("O pôlder", "the polder" + pre("polder"),
+      (tc.created || []).map(x => pick("cpol", "created", x.id, c.polder && c.polder.kind === "created" && c.polder.id === x.id, esc(x.name), "eixo criado pela mesa")).join("")
+      + mine("polder").map(x => pick("cpol", "card", x.id, c.polder && c.polder.kind === "card" && c.polder.id === x.id, `${zsq("polder")}${esc(x.label_pt)}`, "a mesa guardou-o no pôlder")).join(""));
+    h += field("A conta", "who pays: a card under water, a reduction, or a budget line", billPicks(true));
+    h += field("Como saberemos", "how we will know", `<input data-cf="know" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.know)}" placeholder="uma linha">`);
+  } else {
+    const rCount = id => { const r = (tc.raises || []).find(x => x.axis_id === id); return r ? `${r.n} ${r.n === 1 ? "pessoa da mesa elevou" : "pessoas da mesa elevaram"}` : ""; };
+    h += field("A elevação", "which axis, and what the buyer would see" + pre("raise"),
+      ST.axes.map(a => pick("caxis", "axis", a.id, c.raise.axis_id === a.id, esc(a.label_pt), rCount(a.id))).join("")
+      + `<input data-cf="sees" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.raise.sees)}" placeholder="o que o comprador veria" style="margin-top:6px">`);
+    h += field("A conta", "a card under water, or a reduction the table made", billPicks(false));
+    h += field("O guarda", "a wall card, ours and getting scarcer" + pre("guard"),
+      ctx.wall.map(w => pick("cguard", "wall", w.id, c.guard === w.id, esc(w.name), w.ligado ? "ligado a nós" + (w.arrow ? " · " + R.WALL_ARROW_PT[w.arrow] : "") : "genérico ou alugado")).join(""));
+    h += field("O preço disso", "what you stop doing to pay for it", `<input data-cf="price" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.price)}" placeholder="o que deixam de fazer">`);
+  }
+  h += field("Responsável", "owner", `<input data-cf="owner" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.owner)}">`);
+  h += field("Data de revisão", "review date, ninety days by default", `<input type="date" data-cf="review" value="${esc(c.review)}">`);
+  const v = R.validateCommit(c, ctx, tc);
+  if(v.ok && v.amber) h += `<div class="note warn" style="margin-top:10px">${esc(R.msgPt("amber"))}</div>`;
+  return h + `<div class="cbar">${c.err ? `<div class="small" style="color:var(--bad);margin-bottom:6px">${esc(c.err)}</div>` : ""}
+      ${c.sentAt ? `<div class="small">enviado às ${hhmm(c.sentAt)} · pode mudar e reenviar</div>` : ""}
+      <button class="primary" style="margin-top:6px" data-act="csend" ${CMT.sending ? "disabled" : ""}>Enviar o compromisso da mesa <span class="muted">submit</span></button></div></div>`;
+}
+function commitSection(D){
+  const s = D.commitSplit;
+  return `<div class="sec"><h2>Os compromissos<span class="en">one per table, by its relator: A a pôlder the table funds, B a raise it funds and guards</span></h2>
+    <p class="small muted">${D.commits.length ? `${s.raise} ${s.raise === 1 ? "mesa escolheu" : "mesas escolheram"} uma elevação, ${s.polder} um pôlder` : "Nenhuma mesa enviou o compromisso."}</p>
+    ${D.commits.map(c => `<div class="crow small"><span class="ctag ${c.option}">${R.COMMIT_TAG[c.option]}</span><b>Mesa ${c.table_no}</b> · ${esc(R.commitSentence(c, D.name))} <span class="who">${esc(whoWhen(c))}</span>
+      ${c.amber ? `<span class="chip amber">nosso mas estável</span>` : ""}${c.uncited ? `<span class="chip unc">sem citação da sala</span>` : ""}</div>`).join("")}</div>`;
+}
+/* Triagem and Porta-voz typed into a phone that never scanned the relator's card */
+function viewRelatorOnly(){
+  return `${netBar()}<div class="wrap"><a href="#/">← início</a>
+    <h1 style="margin-top:14px">Só o relator<span class="en">Relator only</span></h1>
+    <p class="muted">Esta página abre pelo cartão de relator da mesa. Se o relator for você, digitalize o QR desse cartão.<span class="en2">This page opens from the table's relator card. If you are the relator, scan that card's QR.</span></p>
+    <p><a href="#/curva">Ir para a Curva</a></p></div>`;
+}
+
+/* The sort, entered once per table by its relator after the reveal (change
+   request 3): sixteen cards, each in one of four places or set aside as sem
+   acordo. The table's QR says which table; a second phone at a table that
+   already has a relator reads the entry and does not overwrite it. */
+let TBL = null, TBL_AT = 0;
+async function loadMesa(force){
+  if(!sessId()) return;
+  if(!force && Date.now() - TBL_AT < 8000) return;
+  TBL_AT = Date.now();
+  try { TBL = await api(`/mesa?session_id=${encodeURIComponent(sessId())}&pid=${PID}${MESA ? `&mesa=${MESA}` : ""}`); } catch(e){}
+  safeRender();
+}
+async function submitSort(){
+  SORT.sending = true; SORT.err = null; saveSort(); render();
+  try {
+    const d = await api("/sort", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, choices: SORT.choices, submit: true, takeover: !!SORT.forceEdit } });
+    SORT.submittedAt = d.submitted_at; SORT.forceEdit = false;
+    if(WALL && !WALL.table) { WALL.table = d.table; saveWall(); }
+  } catch(e){
+    if(e.status === 409 && e.data && e.data.taken) SORT.err = "taken";
+    else if(!sessionChanged(e)) SORT.err = e.status === 0 ? "Sem rede. A triagem fica neste telefone; tente de novo." : e.message;
+  }
+  SORT.sending = false; saveSort(); TBL_AT = 0; await loadMesa(true); render();
+}
+/* The table already has a relator on another phone: say so, and offer the
+   release, exactly as the wall does. */
+function takenView(kind){
+  const t = MESA || (TBL && TBL.table) || "";
+  return `${head(`Mesa ${t}`, kind === "sort" ? "o relator registra, ao fim" : "Porta-voz")}
+    <div class="loud" style="margin-top:12px">A Mesa ${t} já tem relator noutro telefone.${kind === "sort" ? " A triagem que enviou está abaixo." : ""} Se esse telefone parou, assuma aqui.
+      <span class="en2">Table ${t} already has a relator on another phone. If that phone died, take over here.</span>
+      <div class="row" style="margin-top:10px"><button data-act="${kind === "sort" ? "sorttake" : "wtake"}">assumir a mesa</button></div></div>`;
+}
+function viewTriagem(){
+  const g = needSession(); if(g) return g;
+  if(!TBL_AT) loadMesa(true);
+  const tasks = ST.tasks, c = SORT.choices;
+  if(TBL && TBL.taken && !TBL.steward && !SORT.forceEdit){
+    const sc = (TBL.sort && TBL.sort.choices) || {};
+    return takenView("sort") + (TBL.sort
+      ? `<div class="answers">${tasks.map(t => `<div class="wallrow"><span>${esc(cardNo(t))} · ${esc(t.short_pt || t.label_pt)}</span><span>${zsq(sc[t.id])}${esc(R.ZONE_PT[sc[t.id]] || "—")}</span></div>`).join("")}</div>
+         <p class="small muted">enviada às ${hhmm(TBL.sort.submitted_at)}</p>`
+      : `<p class="muted">Esta mesa ainda não enviou a triagem.</p>`) + `</div>`;
+  }
+  const answered = tasks.filter(t => c[t.id]).length;
+  return `${head(`Triagem${MESA ? ` · Mesa ${MESA}` : ""}`, "o relator registra, ao fim")}
+    <p class="muted">Depois da revelação, com os cartões que mudaram: onde a mesa deixou cada um dos dezasseis. <b>Sem acordo</b> quando a mesa não chegou a acordo: o cartão vai para o quadro e não conta para nenhum lado.
+      <span class="en2">After the reveal, with the cards that moved: where your table left each of the sixteen. Sem acordo when it could not agree.</span></p>
+    ${!MESA ? `<div class="note warn" style="margin-top:8px">Sem número de mesa no cartão: esta mesa fica com o próximo número livre, depois da Mesa 6.<span class="en2">No table number on the card: this table takes the next free number, after table 6.</span></div>` : ""}
+    ${tasks.map(t => `<div class="wrow"><b class="serif" style="font-size:16px">${esc(cardNo(t))} · ${esc(t.label_pt)}</b>
+      <div class="zrow">${R.SORT_STATES.map(z => `<button class="zb ${c[t.id] === z ? "on" : ""}" data-act="tz" data-id="${esc(t.id)}" data-z="${z}">${zsq(z)}${esc(R.ZONE_PT[z])}</button>`).join("")}</div></div>`).join("")}
+    <div class="cbar"><div class="small">${answered} de ${tasks.length} cartões${SORT.submittedAt ? ` · enviada às ${hhmm(SORT.submittedAt)}; pode corrigir e reenviar` : ""}</div>
+      ${SORT.err === "taken" ? `<div class="small" style="color:var(--bad);margin-top:4px">Esta mesa já tem relator noutro telefone.</div>` : SORT.err ? `<div class="small" style="color:var(--bad);margin-top:4px">${esc(SORT.err)}</div>` : ""}
+      <button class="primary" style="margin-top:8px" data-act="sortsend" ${answered === tasks.length && !SORT.sending ? "" : "disabled"}>${SORT.submittedAt ? "Reenviar a triagem da mesa" : "Enviar a triagem da mesa"} <span class="muted">(${answered}/${tasks.length})</span></button></div></div>`;
+}
+
+/* Change request 6: in a room of rivals (the morning) today's line is each
+   table's own, against the rival it names; the phone moves from its own
+   table's line. In the afternoon, one line for the room, against Odontoprev. */
+const tableScope = () => !!(ST && ST.session && ST.session.scope === "table");
+const myLine = () => tableScope() && MESA ? ((ST.placements || []).find(p => p.table_no === MESA) || null) : null;
+function atTable(){ if(tableScope()) ST.axes = R.axesAtTable(ST.axes, myLine() ? myLine().choices : null); }
+const rivalWord = () => tableScope() ? ((myLine() && myLine().rival_name) || "o rival da sua mesa") : ((ST && ST.session && ST.session.rival) || "Odontoprev");
+function tablePlacementBlock(){
+  const mine = myLine(), t = WALL.table;
+  if(mine) return `<div class="note" style="margin-top:12px">A curva de hoje da Mesa ${t} já entrou, contra ${esc(mine.rival_name || "o rival da mesa")}, às ${hhmm(mine.entered_at)}.
+    <span class="en2">Your table's line is in, against ${esc(mine.rival_name || "its rival")}.</span></div>`;
+  if(WALL.taken) return "";
+  const axes = ST.axes, c = PLACE.choices, n = axes.filter(a => c[a.code]).length, rv = String(PLACE.rival || "").trim();
+  return `<div class="card" style="margin-top:14px"><div class="kick">A curva de hoje da mesa <span class="muted">your table's line today</span></div>
+    <p class="small muted" style="margin:6px 0 4px">Primeiro, o rival da mesa: a empresa de capital que vos disputa o cooperado, um banco, uma trading, uma plataforma, uma operadora. Depois, por braço no ar, eixo a eixo: a mesa está acima dele, igual, ou abaixo?
+      <span class="en2">First your table's rival, the capital-owned company competing for your members. Then, by show of hands: above it, level, or below?</span></p>
+    <input data-pr="1" maxlength="60" placeholder="o rival da mesa" value="${esc(PLACE.rival || "")}">
+    ${axes.map(a => `<div class="wrow"><b class="serif">${esc(a.label_pt)}</b><div class="row" style="flex-wrap:nowrap">${R.PLACEMENT.map(v =>
+      `<button style="flex:1" class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></div>`).join("")}
+    ${PLACE.err ? `<p class="small" style="color:var(--bad)">${esc(PLACE.err)}</p>` : ""}
+    <button class="primary" style="margin-top:10px" data-act="placesubmit" ${n === axes.length && rv ? "" : "disabled"}>Enviar a curva de hoje da mesa (${n} de ${axes.length})</button></div>`;
+}
+/* Today's line, entered once by any relator. */
+function placementBlock(){
+  if(tableScope()) return tablePlacementBlock();
+  const p = ST.placement;
+  if(p) return `<div class="note" style="margin-top:12px">A curva de hoje já está na sala: ${p.table_no ? `entrada pela Mesa ${p.table_no}` : "entrada na consola"} às ${hhmm(p.entered_at)}.
+    <span class="en2">Today's line is in${p.table_no ? `, entered by table ${p.table_no}` : ", entered at the console"}.</span></div>`;
+  if(WALL.taken) return "";
+  const axes = ST.axes, c = PLACE.choices, n = axes.filter(a => c[a.code]).length;
+  return `<div class="card" style="margin-top:14px"><div class="kick">A curva de hoje <span class="muted">the room's line today</span></div>
+    <p class="small muted" style="margin:6px 0 4px">Por braço no ar, eixo a eixo: a Uniodonto está acima da Odontoprev, igual, ou abaixo? Um porta-voz envia; o primeiro a enviar fica.
+      <span class="en2">By show of hands: above Odontoprev, level, or below. One steward sends it; the first one in stands.</span></p>
+    ${axes.map(a => `<div class="wrow"><b class="serif">${esc(a.label_pt)}</b><div class="row" style="flex-wrap:nowrap">${R.PLACEMENT.map(v =>
+      `<button style="flex:1" class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></div>`).join("")}
+    ${PLACE.err ? `<p class="small" style="color:var(--bad)">${esc(PLACE.err)}</p>` : ""}
+    <button class="primary" style="margin-top:10px" data-act="placesubmit" ${n === axes.length ? "" : "disabled"}>Enviar a curva de hoje (${n} de ${axes.length})</button></div>`;
+}
+/* A bound card's arrow: is it getting scarcer, steady, or more abundant? */
+function arrowRow(kind, key, cur){
+  return `<div class="row small" style="flex-wrap:nowrap;margin-top:2px"><span class="muted" style="white-space:nowrap">e está ficando</span>${R.WALL_ARROWS.map(a =>
+    `<button style="flex:1;padding:7px 4px" class="${cur === a ? "on" : ""}" data-act="warrow" data-${kind}="${esc(String(key))}" data-a="${a}" ${WALL.taken ? "disabled" : ""}>${R.WALL_ARROW_PT[a]}</button>`).join("")}</div>`;
+}
+function viewPortaVoz(){
+  const g = needSession(); if(g) return g;
+  /* No table to pick: the phone becomes the next table the first time it opens this door. */
+  if(WALL.taken) return takenView("wall") + `</div>`;
+  if(!WALL.table){
+    if(!CLAIMING){ CLAIMING = true; setTimeout(claimSeat, 0); }
+    return `${head("Porta-voz da mesa", "o relator da mesa")}<p class="muted">A preparar a sua mesa…<span class="en2">Setting up your table…</span></p></div>`;
+  }
+  const given = ST.generic || [], gAns = WALL.given || {};
+  const answered = given.filter(g => gAns[g.id]).length;
+  const named = WALL.rows.filter(r => r.name.trim());
+  const missing = named.filter(r => r.ligado == null).length;
+  const noArrow = given.filter(g => gAns[g.id] === "ligado" && !(WALL.arrows || {})[g.id]).length + named.filter(r => r.ligado === true && !r.arrow).length;
+  const status = answered < given.length ? `<span style="color:var(--amber)">${answered} de ${given.length} cartões dados respondidos.</span>`
+    : missing ? `<span style="color:var(--amber)">${missing} ${missing === 1 ? "cartão novo sem marca" : "cartões novos sem marca"}: ligado ou genérico?</span>`
+    : noArrow ? `<span style="color:var(--amber)">${noArrow} ${noArrow === 1 ? "cartão nosso sem seta" : "cartões nossos sem seta"}: mais escasso, estável ou mais abundante?</span>`
+    : WALL.dirty ? "a guardar…" : WALL.savedAt ? `guardado às ${hhmm(WALL.savedAt)}.` : "";
+  return `${head(`Mesa ${WALL.table}`, "Porta-voz · o relator da mesa")}
+    ${placementBlock()}
+    <h2 style="margin-top:26px">O muro da mesa<span class="en">your table's wall</span></h2>
+    <p class="muted">Os seis cartões dados à mesa. Para cada um: está no vosso muro e preso a nós, está no muro mas é genérico, ou fica fora? E se é nosso: está ficando mais escasso, estável ou mais abundante?
+      <span class="en2">The six cards your table was given: on your wall and bound to us, on your wall but generic, or left off?</span></p>
+    ${given.map(g => `<div class="wrow"><b class="serif">${esc(g.name_pt)}</b>
+      <div class="row" style="flex-wrap:nowrap">${R.WALL_STATES.map(v => `<button style="flex:1" class="${gAns[g.id] === v ? "on" : ""}" data-act="wgiven" data-g="${esc(g.id)}" data-v="${v}" ${WALL.taken ? "disabled" : ""}>${R.WALL_STATE_PT[v]}</button>`).join("")}</div>${gAns[g.id] === "ligado" ? arrowRow("g", g.id, (WALL.arrows || {})[g.id]) : ""}</div>`).join("")}
+    <div class="kick" style="margin-top:22px">Cartões novos <span class="muted">up to ${R.LIMITS.WALL_ROWS}, only for something the six do not say</span></div>
+    ${WALL.rows.map((r, i) => `<div class="wrow">
+      <input data-wall="${i}" maxlength="${R.LIMITS.WALL_NAME_MAX}" placeholder="cartão novo ${i + 1}" value="${esc(r.name)}" ${WALL.taken ? "disabled" : ""}>
+      <div class="grid2"><button class="${r.ligado === true ? "on" : ""}" data-act="wlig" data-i="${i}" data-v="1" ${WALL.taken ? "disabled" : ""}>ligado a nós</button>
+        <button class="${r.ligado === false ? "on" : ""}" data-act="wlig" data-i="${i}" data-v="0" ${WALL.taken ? "disabled" : ""}>genérico ou alugado</button></div>${r.ligado === true ? arrowRow("i", i, r.arrow) : ""}</div>`).join("")}
+    <p class="small muted" style="margin-top:12px">${status}</p>
+    <p class="small muted">O muro da sala junta-se sozinho: um cartão entra quando mais de metade das mesas o põe no seu muro.<span class="en2">The room's wall merges itself: a card joins when more than half the tables put it on theirs.</span></p>
+    ${NOTE ? `<p class="small" style="color:var(--bad)">${esc(NOTE)}</p>` : ""}
+    </div>`;
+}
+
+/* ---------------------------------------------------------------- the curve */
+const axisBase = a => typeof a.as_is_you === "number" ? a.as_is_you : null;
+const curVal = a => { const m = CURVE.moves[a.id]; return m ? m.to_value : (axisBase(a) != null ? axisBase(a) : R.RIVAL_VALUE); };
+function errText(err){
+  if(err.needs_buyer) return R.msgPt("needs_buyer");
+  const v = (err.verdicts || []).find(x => !x.ok); if(v) return R.msgPt(v.errors[0]);
+  if(err.curve && !err.curve.ok) return R.msgPt(err.curve.errors[0]);
+  return err.error || "Não foi possível enviar.";
+}
+/* Change request 4: the table's created axes, below the seven. A created axis
+   is not a move on an existing one: a name, a wall card that is ours and
+   getting scarcer, and optionally the pôlder card it promotes. It has no
+   position and no pace. Two per table; a third person backs one of them. */
+let AXN = { list: [], table: null, cap: R.LIMITS.CREATED_PER_TABLE, at: 0, err: null, form: null, busy: false };
+async function loadCreated(force){
+  if(!sessId() || !API) return;
+  if(!force && Date.now() - AXN.at < 8000) return;
+  AXN.at = Date.now();
+  try {
+    const d = await api(`/created?session_id=${encodeURIComponent(sessId())}&pid=${PID}${MESA ? `&mesa=${MESA}` : ""}`);
+    AXN.list = d.axes || []; AXN.table = d.table; AXN.cap = d.cap || AXN.cap;
+  } catch(e){ sessionChanged(e); }
+  safeRender();
+}
+async function axCall(path, body){
+  AXN.busy = true; AXN.err = null; render();
+  try {
+    const d = await api(path, { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, ...body } });
+    AXN.list = d.axes || AXN.list; return d;
+  } catch(e){
+    if(sessionChanged(e)) return null;
+    if(e.data && e.data.axes) AXN.list = e.data.axes;
+    AXN.err = e.status === 0 ? "Sem rede. Tente de novo daqui a pouco." : e.message;
+    return null;
+  } finally { AXN.busy = false; AXN.at = Date.now(); render(); }
+}
+function createdHTML(ctx){
+  const f = AXN.form, list = AXN.list || [], cap = AXN.cap;
+  const tById = R.index(ctx.tasks);
+  const cite = a => { const w = ctx.wallIndex[a.wall_id], t = a.polder_id ? tById[a.polder_id] : null;
+    return (w ? `<span class="chip ${w.ligado ? "lig" : "gen"}">${esc(w.name)}</span>` : "")
+      + (t ? `<span class="chip">${zsq(t.place)}pôlder: ${esc(t.short_pt)}</span>` : "")
+      + (a.amber ? `<span class="chip amber" title="${esc(R.msgPt("amber"))}">nosso mas estável</span>` : "")
+      + (a.uncited ? `<span class="chip unc">sem citação da sala</span>` : ""); };
+  let h = `<div class="kick" style="margin-top:28px">${MESA ? `Eixos criados nesta mesa · Mesa ${MESA}` : "Os seus eixos criados"} <span class="muted">new axes · ${cap} por mesa</span></div>
+    <p class="small muted" style="margin:4px 0 8px">Nos sete eixos: reduzir ou elevar. Para algo que o setor ainda não oferece, criem um eixo novo, abaixo.</p>`;
+  h += list.length ? list.map(a => `<div class="card" style="margin-top:8px"><b class="serif" style="font-size:18px">${esc(a.name)}</b>
+      <div style="margin-top:4px">${cite(a)}</div>
+      <div class="row small" style="margin-top:6px;justify-content:space-between"><span class="muted">${a.backers} ${a.backers === 1 ? "apoio" : "apoios"}</span>
+        <span>${a.backed ? `<button class="link" data-act="axback" data-id="${esc(a.id)}" data-b="0">retirar o meu apoio</button>`
+                         : `<button data-act="axback" data-id="${esc(a.id)}" data-b="1">apoiar este eixo</button>`}${a.mine ? ` · <button class="link" data-act="axdel" data-id="${esc(a.id)}">apagar</button>` : ""}</span></div></div>`).join("")
+    : `<p class="small muted">Nenhum eixo criado ainda${MESA ? " nesta mesa" : ""}.</p>`;
+  if(AXN.err) h += `<div class="small" style="color:var(--bad);margin-top:8px">${esc(AXN.err)}</div>`;
+  if(list.length >= cap) return h + `<div class="note" style="margin-top:8px">A mesa já criou ${cap} eixos. Para juntar-se a um, toque em «apoiar este eixo».</div>`;
+  if(!f) return h + `<button style="margin-top:10px" data-act="axnew">criar um eixo</button>`;
+  const v = R.validateCreate(f, ctx);
+  const pickW = w => `<button class="pick ${f.wall_id === w.id ? "on" : ""}" data-act="axw" data-id="${esc(w.id)}"><span>${esc(w.name)}</span>
+    <small>${w.ligado ? "ligado a nós" + (w.arrow ? " · " + R.WALL_ARROW_PT[w.arrow] : "") : "genérico ou alugado"}${w.generic ? " · lista genérica" : ""}</small></button>`;
+  const pickP = t => `<button class="pick ${f.polder_id === t.id ? "on" : ""}" data-act="axp" data-id="${esc(t.id)}"><span>${zsq(t.place)}${esc(t.label_pt)}</span><small>${esc(placeLine(t))}</small></button>`;
+  return h + `<div class="card" style="margin-top:10px">
+      <div class="kick">Nome do eixo <span class="muted">o que o comprador veria numa proposta · até ${R.LIMITS.AXIS_NAME_MAX}</span></div>
+      <input data-axname="1" maxlength="${R.LIMITS.AXIS_NAME_MAX}" value="${esc(f.name)}" placeholder="por exemplo: segunda opinião garantida em 48 horas" style="margin-top:6px">
+      <div class="kick" style="margin-top:14px">Carta do muro <span class="muted">obrigatória: nossa e mais escassa</span></div>
+      ${ctx.wallMode === "fallback" ? `<div class="note warn">A sala ainda não tem muro: lista genérica.</div>` : ""}
+      ${ctx.wall.map(pickW).join("")}
+      <div class="kick" style="margin-top:14px">Carta de pôlder <span class="muted">opcional: um momento humano guardado, promovido a promessa</span></div>
+      ${R.polderCandidates(ctx).map(pickP).join("")}
+      ${v.amber ? `<div class="note warn" style="margin-top:8px">${esc(R.msgPt("amber"))}</div>` : ""}
+      ${(f.name.trim() || f.wall_id) && !v.ok ? `<div class="small" style="color:var(--bad);margin-top:8px">${esc(R.msgPt(v.errors[0]))}</div>` : ""}
+      <div class="row" style="margin-top:12px;flex-wrap:nowrap"><button class="primary" data-act="axsave" ${v.ok && !AXN.busy ? "" : "disabled"}>Criar o eixo</button>
+        <button class="link" data-act="axcancel">cancelar</button></div></div>`;
+}
+function refreshAxButton(){
+  const btn = document.querySelector("[data-act=axsave]"); if(!btn || !AXN.form) return;
+  btn.disabled = AXN.busy || !R.validateCreate(AXN.form, ctxNow()).ok;
+}
+function viewCurva(){
+  const g = needSession(); if(g) return g;
+  const ctx = ctxNow(), axes = ST.axes;
+  const moves = Object.keys(CURVE.moves).map(id => ({ axis_id: id, ...CURVE.moves[id] }));
+  const cv = R.validateCurve(moves);
+  const bad = moves.filter(m => { const a = axes.find(x => x.id === m.axis_id); return !a || !R.validateMove(m, ctx, a).ok; });
+  const missing = axes.filter(a => axisBase(a) == null);
+  const canSubmit = cv.ok && !bad.length && moves.length > 0;
+  const banners = [];
+  if(ctx.taskMode === "fallback") banners.push(`A triagem da sala ainda tem menos de ${R.LIMITS.MIN_SORT} respostas: todas as tarefas ficam abertas para citar, e as baixas ficam marcadas sem citação.`);
+  if(ctx.wallMode === "fallback") banners.push("A sala ainda não tem muro: cite da lista genérica, e as elevações ficam marcadas sem citação.");
+  if(missing.length) banners.push(missing.length === axes.length
+    ? (tableScope() && !MESA ? "Sem mesa: abra pela tenda da sua mesa para partir da curva de hoje dela. Os cursores começam ao meio, igual ao rival, e não há linha tracejada."
+       : tableScope() ? `A curva de hoje da Mesa ${MESA} ainda não entrou: os cursores começam ao meio, igual ao rival da mesa, e não há linha tracejada.`
+       : `A curva de hoje ainda não entrou: os cursores começam ao meio, igual à ${esc(rivalWord())}, e não há linha tracejada.`)
+    : `Sem a curva de hoje em ${missing.map(a => esc(a.label_pt)).join(", ")}: o cursor começa ao meio e não há linha tracejada.`);
+  return `${head("A sua curva", "Your curve · silent, alone, eight minutes")}
+    ${banners.map(b => `<div class="note warn" style="margin-top:10px">${b}</div>`).join("")}
+    <p class="muted" style="margin-top:14px">${sidesOn(axes) ? "Dois compradores, uma curva. À esquerda, o que o empregador compra; à direita, o que o beneficiário escolhe." : `Uma curva, ${axes.length} eixos.`} A tracejado, a curva de hoje${tableScope() ? " da sua mesa" : ""}; a cinzenta, ao meio, é ${esc(rivalWord())}. Mexa só onde tem uma razão.
+      <span class="en2">${sidesOn(axes) ? "Two buyers, one curve. Left, what the employer buys; right, what the beneficiary chooses." : `One curve, ${axes.length} axes.`} Dashed, today's line${tableScope() ? " at your table" : ""}; the grey one in the middle is ${esc(rivalWord())}. Move only where you have a reason.</span></p>
+    <div class="chart">${curveSVG(axes, [{ vals: axes.map(curVal), color: "#C6A553", w: 2.5, dots: true }], { asis: true, rival: true, sides: true })}</div>
+    ${!sidesOn(axes) ? `<div style="margin-top:18px">${axes.map(a => axisRow(a, ctx)).join("")}</div>` : SIDES.map(sd => { const list = axes.filter(a => sideOf(a) === sd.key);
+      return list.length ? `<div class="kick" style="margin-top:22px">${sd.pt} <span class="muted">${sd.en}</span></div>${list.map(a => axisRow(a, ctx)).join("")}` : ""; }).join("")}
+    ${createdHTML(ctx)}
+    <div class="cbar">
+      <div class="small">elevações <b>${cv.raises}</b> · baixas <b>${cv.lowers}</b> (pelo menos 1) ·
+        ${CURVE.submitted ? "<b>enviada</b>" : CURVE.dirty ? "a guardar…" : moves.length ? "rascunho guardado" : ""}</div>
+      ${!cv.ok && moves.length ? `<div class="small" style="color:var(--bad);margin-top:4px">${esc(R.msgPt("needs_lower"))}</div>` : ""}
+      ${CURVE.err ? `<div class="small" style="color:var(--bad);margin-top:4px">${esc(errText(CURVE.err))}</div>` : ""}
+      <button class="primary" style="margin-top:8px" data-act="submitcurve" ${canSubmit ? "" : "disabled"}>${CURVE.submitted ? "Enviada · enviar de novo" : "Enviar a minha curva"} <span class="muted">submit</span></button>
+    </div></div>${SHEET ? sheetHTML(ctx) : ""}`;
+}
+/* Pace: one word under the axis label, and nothing else. Context for the
+   participant's own judgement, never a warning and never a weight. */
+function paceLine(a, ctx){
+  const p = R.pace(ctx, a.code);
+  return p ? `<div class="pace" title="o ritmo a que este eixo se move sem ninguém o mover, pela triagem da sala">${R.PACE_PT[p]}</div>` : "";
+}
+function axisRow(a, ctx){
+  const m = CURVE.moves[a.id], base = axisBase(a);
+  const v = m ? R.validateMove(m, ctx, a) : null;
+  const hints = [];
+  if(R.axisUntagged(ST.tasks, a.code)) hints.push("Nenhuma tarefa o produz: a automação não o pode baixar. Baixá-lo é uma decisão de oferta.");
+  return `<div class="axis"><div class="hd"><b>${esc(a.label_pt)}</b><span class="muted serif">hoje: ${esc(scaleWord(base))}</span></div>
+    ${paceLine(a, ctx)}
+    ${a.polarity ? `<div class="small muted">${esc(a.polarity)}</div>` : ""}
+    ${hints.map(h => `<div class="small muted" style="font-style:italic">${h}</div>`).join("")}
+    <input type="range" min="0" max="${VMAX}" step="1" value="${m ? m.to_value : (base != null ? Math.round(base) : R.RIVAL_VALUE)}" data-ax="${esc(a.id)}" aria-label="${esc(a.label_pt)}">
+    <div class="ticks">${R.SCALE_PT.map(w => `<span>${w}</span>`).join("")}</div>
+    ${m ? `<div style="margin-top:6px">${moveChips(m, ctx, v)} <button class="link" data-act="editmove" data-ax="${esc(a.id)}">mudar</button> · <button class="link" data-act="dropmove" data-ax="${esc(a.id)}">tirar</button></div>` : ""}
+  </div>`;
+}
+function moveChips(m, ctx, v){
+  const tById = R.index(ctx.tasks);
+  const out = [`<span class="chip lig">${R.DIR_PT[m.direction]} → ${m.to_value}</span>`];
+  for(const id of m.cites_task_ids || []) if(tById[id]) out.push(`<span class="chip">${zsq(tById[id].place)}${esc(tById[id].short_pt)}</span>`);
+  for(const id of m.cites_wall_ids || []){ const w = ctx.wallIndex[id]; if(w) out.push(`<span class="chip ${w.ligado ? "lig" : "gen"}">${esc(w.name)}</span>`); }
+  if(m.offer_only) out.push(`<span class="chip">só oferta: ${esc(m.offer_reason || "")}</span>`);
+  if(v && v.amber) out.push(`<span class="chip amber" title="${esc(R.msgPt("amber"))}">nosso mas estável</span>`);
+  /* the pôlder fallback is silent: a room that kept nothing dry is normal, not a failure */
+  const loud = (R.LOWER.includes(m.direction) && !m.offer_only && ctx.taskMode === "fallback") || (R.UPPER.includes(m.direction) && ctx.wallMode === "fallback");
+  if(v && v.uncited && loud) out.push(`<span class="chip unc">sem citação da sala</span>`);
+  if(v && !v.ok) out.push(`<span class="chip unc">${esc(R.msgPt(v.errors[0]))}</span>`);
+  return out.join("");
+}
+/* Direction follows the slider: below today offers reduzir, above offers
+   elevar. Where today is unknown, both are offered. Criar is not here: a new
+   axis is created below the seven (change request 4). */
+function openSheet(axisId, value){
+  const a = ST.axes.find(x => x.id === axisId), base = axisBase(a), old = CURVE.moves[axisId];
+  const dirs = base == null ? R.DIRECTIONS.slice() : value < base ? R.LOWER.slice() : R.UPPER.slice();
+  SHEET = { axis_id: axisId, to_value: value, dirs,
+            direction: old && dirs.includes(old.direction) ? old.direction : (dirs.length === 1 ? dirs[0] : null),
+            cites_task_ids: old ? (old.cites_task_ids || []).slice() : [], cites_wall_ids: old ? (old.cites_wall_ids || []).slice() : [],
+            offer_only: old ? !!old.offer_only : false, offer_reason: old ? old.offer_reason || "" : "", note: old ? old.note || "" : "" };
+}
+function placeLine(t){
+  if(!t.place) return "a triagem da sala ainda não decidiu";
+  if(t.modes && t.modes.length > 1) return "empate: " + t.modes.map(z => R.ZONE_PT[z]).join(" e ");
+  return `${t.counts[t.place]} de ${t.counts.n} em ${R.ZONE_PT[t.place]}`;
+}
+function sheetHTML(ctx){
+  const s = SHEET, a = ST.axes.find(x => x.id === s.axis_id);
+  const v = s.direction ? R.validateMove({ ...s }, ctx, a) : null;
+  const lower = R.LOWER.includes(s.direction), upper = R.UPPER.includes(s.direction);
+  const pickT = t => `<button class="pick ${s.cites_task_ids.includes(t.id) ? "on" : ""}" data-act="citet" data-id="${esc(t.id)}"><span>${zsq(t.place)}${esc(t.label_pt)}</span><small>${esc(placeLine(t))}</small></button>`;
+  const pickW = w => `<button class="pick ${s.cites_wall_ids.includes(w.id) ? "on" : ""}" data-act="citew" data-id="${esc(w.id)}"><span>${esc(w.name)}</span>
+    <small>${w.ligado ? "ligado a nós" + (w.arrow ? " · " + R.WALL_ARROW_PT[w.arrow] : "") : "genérico ou alugado"}${w.n ? ` · ${w.n} ${w.n === 1 ? "mesa" : "mesas"}` : ""}${w.generic ? " · lista genérica" : ""}</small></button>`;
+  let body = "";
+  if(lower){
+    const cand = R.lowerCandidates(ctx, a.code);
+    const others = ctx.tasks.filter(t => (t.axis_tags || []).includes(a.code) && !cand.includes(t));
+    if(!s.offer_only){
+      body += `<div class="kick" style="margin-top:14px">A linha de água que o cobre <span class="muted">cite the flood</span></div>`;
+      body += cand.length ? cand.map(pickT).join("")
+        : R.axisUntagged(ctx.tasks, a.code) ? `<div class="note">${esc(R.msgPt("lower_untagged_axis"))}</div>`
+        : `<div class="note">A sala não pôs debaixo de água nem na linha nenhuma tarefa que produza este eixo: guardou-as todas. Baixá-lo é uma decisão de oferta: marque «só oferta» e diga porquê.</div>`;
+      if(others.length) body += `<div class="small muted" style="margin-top:6px">Não servem para baixar, pela triagem da sala: ${others.map(t => `${esc(t.short_pt)} (${esc(placeLine(t))})`).join("; ")}.</div>`;
+    }
+    body += `<label class="row small" style="margin-top:12px;flex-wrap:nowrap"><input type="checkbox" data-f="offer_only" ${s.offer_only ? "checked" : ""} style="width:auto"> só oferta: uma decisão de oferta, não de automação</label>`;
+    if(s.offer_only) body += `<input data-f="offer_reason" maxlength="${R.LIMITS.REASON_MAX}" placeholder="porquê, numa linha" value="${esc(s.offer_reason)}" style="margin-top:6px">`;
+  }
+  if(upper){
+    body += `<div class="kick" style="margin-top:14px">O cartão do muro que a sustenta <span class="muted">the wall card behind it</span></div>`;
+    if(ctx.wallMode === "fallback") body += `<div class="note warn">A sala ainda não tem muro: lista genérica.</div>`;
+    body += ctx.wall.map(pickW).join("");
+    if(s.direction === "raise"){
+      const tagged = ctx.tasks.filter(t => (t.axis_tags || []).includes(a.code));
+      if(tagged.length) body += `<div class="kick" style="margin-top:14px">E uma tarefa, se a mesma jogada também reduz o toque humano <span class="muted">optional</span></div>` + tagged.map(pickT).join("");
+    }
+    if(v && v.amber) body += `<div class="note warn" style="margin-top:8px">${esc(R.msgPt("amber"))}</div>`;
+  }
+  const errs = v && !v.ok ? v.errors : [];
+  return `<div class="scrim" data-act="closesheet"></div><div class="sheet" role="dialog" aria-label="${esc(a.label_pt)}"><div class="inner">
+    <div class="row" style="justify-content:space-between"><b class="serif" style="font-size:21px">${esc(a.label_pt)}: ${esc(scaleWord(axisBase(a)))} → ${esc(R.SCALE_PT[s.to_value])}</b><button class="link" data-act="closesheet">fechar</button></div>
+    ${paceLine(a, ctx)}
+    <div class="row" style="margin-top:10px">${s.dirs.map(d => `<button class="${s.direction === d ? "on" : ""}" data-act="dir" data-d="${d}">${R.DIR_PT[d]}</button>`).join("")}</div>
+    ${s.direction ? body : `<p class="small muted">Escolha a direção.</p>`}
+    ${s.direction ? `<textarea data-f="note" maxlength="${R.LIMITS.NOTE_MAX}" rows="2" placeholder="nota, opcional, 140 caracteres" style="margin-top:12px">${esc(s.note)}</textarea>` : ""}
+    ${errs.length ? `<div class="small" style="color:var(--bad);margin-top:8px">${esc(R.msgPt(errs[0]))}</div>` : ""}
+    <div style="margin-top:12px"><button class="primary" data-act="sheetsave" ${v && v.ok ? "" : "disabled"}>Guardar o movimento</button></div>
+  </div></div>`;
+}
+
+/* ---------------------------------------------------------------- the chart */
+function curveSVG(axes, lines, o){
+  o = o || {};
+  /* created axes sit to the right, off the scale, as named stubs; the chart grows to hold them */
+  const nC = (o.created || []).length, cw = o.big ? 190 : 92;
+  const big = !!o.big, W0 = big ? 1500 : 700, W = W0 + nC * cw, L = big ? 190 : 86, Rr = W0 - (big ? 180 : 28), T = 20;
+  /* room under the axis names for the two umbrellas, the employer's and the beneficiary's */
+  const under = o.sides ? (big ? 96 : 56) : 0;
+  const H = (big ? 560 : 300) + under, B = H - (big ? 60 : 40) - under;
+  const fs = big ? 22 : 12;
+  const x = i => L + i * (Rr - L) / Math.max(1, axes.length - 1);
+  const y = v => B - (v / VMAX) * (B - T);
+  let g = o.bg ? `<rect x="0" y="0" width="${W}" height="${H}" fill="#193C3F"/>` : "";
+  for(let v = 0; v <= VMAX; v++) g += `<line x1="${L}" x2="${Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#2C5457"/><text x="${L - (big ? 22 : 12)}" y="${y(v) + fs / 3}" fill="#9FB4B0" font-size="${fs}" text-anchor="end">${R.SCALE_PT[v]}</text>`;
+  axes.forEach((a, i) => {
+    g += `<line x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${B}" stroke="#2C5457"/>`;
+    g += `<text x="${x(i)}" y="${B + fs + 12}" fill="#F4F0E9" font-size="${fs}" font-family="Georgia,serif" text-anchor="${i === 0 ? "start" : i === axes.length - 1 ? "end" : "middle"}">${esc(short(a))}</text>`;
+  });
+  /* The seam between the two buyers, and an umbrella under each group of axis
+     names, in the deck's words (slide 7): the employer buys the plan, the
+     beneficiary chooses the dentist. */
+  if(o.sides){
+    const k = axes.findIndex(a => sideOf(a) === "beneficiary");
+    if(k > 0){
+      const mx = (x(k - 1) + x(k)) / 2, gap = big ? 18 : 10, tick = big ? 10 : 6;
+      const by = B + fs + (big ? 34 : 22);
+      g += `<line x1="${mx}" x2="${mx}" y1="${T}" y2="${B}" stroke="#C6A553" stroke-opacity=".45" stroke-dasharray="3 5"/>`;
+      const umbrella = (x1, x2, name, sub) =>
+        `<path d="M${x1} ${by - tick} L${x1} ${by} L${x2} ${by} L${x2} ${by - tick}" fill="none" stroke="#C6A553" stroke-width="${big ? 2 : 1.2}"/>` +
+        `<text x="${(x1 + x2) / 2}" y="${by + fs + 6}" fill="#C6A553" font-size="${fs}" text-anchor="middle" letter-spacing="1.5">${name}</text>` +
+        `<text x="${(x1 + x2) / 2}" y="${by + 2 * fs + 10}" fill="#9FB4B0" font-size="${Math.round(fs * .9)}" text-anchor="middle">${sub}</text>`;
+      g += umbrella(x(0) - (big ? 6 : 2), mx - gap, "O EMPREGADOR", "quem compra o plano");
+      g += umbrella(mx + gap, x(axes.length - 1) + (big ? 6 : 2), "O BENEFICIÁRIO", "quem escolhe o dentista");
+    }
+  }
+  if(nC){
+    const sx = Rr + (big ? 70 : 20), wl = big ? 15 : 12, lh = fs + (big ? 5 : 3);
+    g += `<line x1="${sx}" x2="${sx}" y1="${T}" y2="${B}" stroke="#C6A553" stroke-opacity=".35" stroke-dasharray="2 6"/>`;
+    g += `<text x="${sx + nC * cw / 2}" y="${T + fs}" fill="#C6A553" font-size="${Math.round(fs * .8)}" text-anchor="middle" letter-spacing="2">EIXOS NOVOS · FORA DA ESCALA</text>`;
+    o.created.forEach((c, j) => {
+      const cx = sx + cw * (j + .5), top = T + fs * 2, bot = top + (B - T) * .22;
+      const words = wrapWords(c.name, wl).slice(0, 4);
+      g += `<line x1="${cx}" x2="${cx}" y1="${top}" y2="${bot}" stroke="#C6A553" stroke-width="${big ? 5 : 3}" stroke-linecap="round"/>`;
+      words.forEach((ln, k) => { g += `<text x="${cx}" y="${bot + (big ? 32 : 16) + k * lh}" fill="#F4F0E9" font-size="${fs}" font-family="Georgia,serif" text-anchor="middle">${esc(ln)}</text>`; });
+      if(c.n) g += `<text x="${cx}" y="${bot + (big ? 32 : 16) + words.length * lh + 4}" fill="#9FB4B0" font-size="${Math.round(fs * .85)}" text-anchor="middle">${c.n} ${c.n === 1 ? "mesa" : "mesas"}</text>`;
+    });
+  }
+  const path = (vals, attrs) => {
+    const segs = []; let cur = [];
+    vals.forEach((v, i) => { if(v == null){ if(cur.length) segs.push(cur); cur = []; } else cur.push(`${x(i)},${y(v)}`); });
+    if(cur.length) segs.push(cur);
+    return segs.map(s => s.length > 1 ? `<polyline points="${s.join(" ")}" fill="none" ${attrs}/>` : "").join("");
+  };
+  if(o.band){
+    const up = [], dn = [];
+    o.band.forEach((q, i) => { if(q.p75 != null){ up.push(`${x(i)},${y(q.p75)}`); dn.unshift(`${x(i)},${y(q.p25)}`); } });
+    if(up.length > 1) g += `<polygon points="${up.concat(dn).join(" ")}" fill="#C6A553" fill-opacity=".2" stroke="none"/>`;
+  }
+  if(o.asis){
+    g += path(axes.map(a => typeof a.as_is_you === "number" ? a.as_is_you : null), `stroke="#EDE3CC" stroke-width="${big ? 4 : 2}" stroke-dasharray="${big ? "12 9" : "6 5"}"`);
+    if(o.rival) g += path(axes.map(a => typeof a.as_is_rival === "number" ? a.as_is_rival : null), `stroke="#8FA09E" stroke-width="${big ? 4 : 2}" stroke-dasharray="${big ? "12 9" : "6 5"}"`);
+  }
+  for(const ln of lines){
+    g += path(ln.vals, `stroke="${ln.color}" stroke-width="${ln.w}" stroke-opacity="${ln.op || 1}" stroke-linejoin="round"${ln.dash ? ` stroke-dasharray="${ln.dash}"` : ""}`);
+    if(ln.dots) ln.vals.forEach((v, i) => { if(v != null) g += `<circle cx="${x(i)}" cy="${y(v)}" r="${big ? 7 : 4}" fill="${ln.color}"/>`; });
+  }
+  /* the outside read: copper squares, direction only, never the ghost */
+  for(const d of (o.outside || [])) g += `<rect x="${x(d.i) - (big ? 11 : 6)}" y="${y(d.v) - (big ? 11 : 6)}" width="${big ? 22 : 12}" height="${big ? 22 : 12}" fill="#B87333"/>`;
+  for(const d of (o.amber || [])) g += `<circle cx="${x(d.i) + (big ? 14 : 7)}" cy="${y(d.v)}" r="${big ? 8 : 4}" fill="#E0A040"/>`;
+  for(const lb of (o.labels || [])) g += `<text x="${Rr + 14}" y="${y(lb.v) + fs / 3}" fill="${lb.color}" font-size="${fs}" font-family="Georgia,serif">${esc(lb.text)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="a curva de valor">${g}</svg>`;
+}
+
+/* ---------------------------------------------------------- the room, derived */
+function derive(room){
+  const cfg = room.session.config || {};
+  const responses = room.sorts.map(x => x.choices);
+  const sc = R.sortCounts(room.tasks, responses);
+  const sort = R.tallySort(room.tasks, responses);
+  const tide = R.tide(room.tasks, sc);
+  const wall = R.wallGroups(room.wall, cfg.generic || []);
+  const ctx = R.citeContext({ tasks: room.tasks, sort: sc, groups: wall.onWall, generic: cfg.generic || [] });
+  const sub = room.curves.filter(c => c.submitted_at);
+  const subPids = new Set(sub.map(c => c.pid));
+  const moves = room.moves.filter(m => subPids.has(m.pid) && m.valid);
+  const tById = R.index(room.tasks);
+  const name = { task: id => tById[id] ? (tById[id].short_pt || tById[id].label_pt) : "?",
+                 wall: id => ctx.wallIndex[id] ? ctx.wallIndex[id].name : "?" };
+  const byPid = {}; for(const m of moves) (byPid[m.pid] = byPid[m.pid] || []).push(m);
+  /* change request 6: in a room of rivals, a curve starts from its own table's line */
+  const tLine = t => (room.table_placements || []).find(p => p.table_no === t);
+  const axesOf = c => cfg.placement_scope === "table" ? R.axesAtTable(room.axes, tLine(c.table_no) ? tLine(c.table_no).choices : null) : room.axes;
+  const curves = sub.map(c => ({ pid: c.pid, buyer: c.buyer, table_no: c.table_no, vals: R.toBe(byPid[c.pid] || [], axesOf(c)), moves: byPid[c.pid] || [] }));
+  const map = R.moveMap(moves, room.axes, name, sub.length);
+  const created = R.createdGroups(room.created || [], room.backers || [], name.wall);
+  /* change request 5: one commitment per table, and the split across tables */
+  name.axis = id => { const a = room.axes.find(x => x.id === id); return a ? a.label_pt : "?"; };
+  name.created = id => { const c = (room.created || []).find(x => x.id === id); return c ? c.name : "?"; };
+  const commits = (room.commits || []).slice().sort((a, b) => a.table_no - b.table_no);
+  const commitSplit = { raise: commits.filter(c => c.option === "raise").length, polder: commits.filter(c => c.option === "polder").length };
+  const respondent = {}; room.curves.map(c => c.pid).concat(room.sorts.map(s => s.pid)).filter((p, i, a) => a.indexOf(p) === i).sort()
+    .forEach((p, i) => { respondent[p] = "r" + String(i + 1).padStart(2, "0"); });
+  return { sc, sort, tide, wall, ctx, submitted: sub, moves, curves, map, name, respondent,
+           spread: R.spread(curves.map(c => c.vals), room.axes),
+           expected: R.expectedShifts(ctx, room.axes, map, room.created || []), created, commits, commitSplit,
+           sortDone: room.sorts.length, sortAny: room.sorts.length };
+}
+function amberDots(D, axes){
+  const out = [];
+  D.moves.filter(m => m.amber).forEach(m => { const i = axes.findIndex(a => a.id === m.axis_id); if(i >= 0) out.push({ i, v: m.to_value }); });
+  return out;
+}
+
+/* ------------------------------------------------------------- the console */
+function viewConsole(){
+  if(!KEY) return `<div class="wrap"><div class="kick">Consola</div><h1>A chave</h1>
+    <p class="muted">A consola precisa da chave do facilitador, uma vez, neste navegador.</p>
+    <input id="keyin" type="password" placeholder="FACILITATOR_KEY"><button class="primary" style="margin-top:10px" data-act="setkey">Guardar a chave</button></div>`;
+  const s = ROOM && ROOM.session;
+  const act = SESSIONS.find(x => x.id === ACTIVE);
+  const banner = `<div class="${act ? "note" : "loud"}" style="position:sticky;top:0;z-index:4;background:var(--bg2);margin-bottom:14px;font-size:16px;color:var(--ink)">${act ? `Os telefones escrevem em: <b>${esc(act.title)}</b>` : "Nenhuma sessão aberta: os telefones não escrevem em lado nenhum."}</div>`;
+  let h = `${netBar()}<div class="wrap wide">${banner}
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><div class="kick">Consola · A nova curva${s && s.config.rehearsal ? " · ensaio" : ""}</div><h1>${s ? esc(s.title) : "Nenhuma sessão escolhida"}</h1></div>
+      <div class="small muted" style="text-align:right">${esc(location.host + location.pathname)}${NET.note ? `<br><span style="color:var(--bad)">${esc(NET.note)}</span>` : ""}</div></div>
+    <div class="sec"><h2>Sessões<span class="en">one per room; the phones write to the open one</span></h2>
+      <div class="seslist">${SESSIONS.map(x => `<div class="ses card">
+        <div><b>${esc(x.title)}</b> <span class="small muted">${esc(x.cohort || "")} · ${x.sorts} triagens · ${x.curves} curvas</span></div>
+        ${x.id === ACTIVE ? `<span class="chip lig">aberta aos telefones</span>` : `<button data-act="activate" data-id="${esc(x.id)}">abrir aos telefones</button>`}
+        <button class="${x.id === SID ? "on" : ""}" data-act="pickses" data-id="${esc(x.id)}">${x.id === SID ? "a ver" : "ver"}</button></div>`).join("") || `<div class="muted">Nenhuma sessão ainda.</div>`}</div>
+      ${ACTIVE ? `<p class="small"><button class="link" data-act="activate" data-id="">fechar a sessão aberta</button>: os telefones deixam de escrever.</p>` : ""}
+      <div class="row" style="margin-top:12px"><input id="nstitle" placeholder="Manhã · lideranças seniores" style="flex:2;min-width:220px">
+        <select id="nsseed" style="flex:1;min-width:210px"><option value="session.json">Uniodonto · uma linha, contra a Odontoprev</option><option value="session-ocesp.json">OCESP · SESCOOP/SP · uma linha por mesa</option></select>
+        <select id="nscohort" style="flex:1;min-width:170px"><option value="senior">manhã · senior</option><option value="emergente">tarde · emergente</option></select>
+        <label class="small row" style="gap:6px;flex-wrap:nowrap">mesas <input type="number" id="nstables" min="1" max="12" value="${SEED && SEED.tables || 6}" style="width:72px"></label>
+        <label class="small row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" id="nsreh" style="width:auto"> ensaio</label>
+        <button data-act="newses">Criar sessão</button></div>
+      ${NOTE && !ROOM ? `<p class="small">${esc(NOTE)}</p>` : ""}</div>`;
+  if(!ROOM) return h + `</div>`;
+  const D = ROOM.D, nT = Math.max(s.config.tables || 6, ...ROOM.seats.map(x => x.table_no));
+  if(!s.active) h += `<div class="loud" style="margin-top:18px">Esta sessão não está aberta. Os telefones escrevem na sessão aberta${ACTIVE ? "" : ", e neste momento não há nenhuma"}.</div>`;
+  h += `<div class="sec"><h2>A sala</h2><div class="row small">
+      <span class="card"><b class="num">${D.sort.n}</b> de ${nT} mesas com triagem</span>
+      <span class="card"><b class="num">${D.submitted.length}</b> curvas enviadas · ${ROOM.curves.length - D.submitted.length} rascunhos</span>
+      <span class="card"><b class="num">${D.wall.onWall.length}</b> cartões no muro · ${D.wall.ligadoCount} ligados a nós · ${D.wall.nTables} mesas com muro</span></div>
+    <div class="tables">${Array.from({ length: nT }, (_, i) => { const t = i + 1, seat = ROOM.seats.find(x => x.table_no === t), n = ROOM.wall.filter(c => c.table_no === t && !c.fora).length, done = ROOM.wall.some(c => c.table_no === t);
+      return `<div class="card small"><b class="serif" style="font-size:17px">Mesa ${t}</b><br>${seat ? `relator desde ${hhmm(seat.claimed_at)}` : "sem relator"} · ${ROOM.sorts.some(x => x.table_no === t) ? "triagem ✓" : "sem triagem"} · ${done ? `${n} no muro da mesa` : "sem muro"}
+        ${seat ? `<br><button class="link" data-act="freeseat" data-t="${t}">retirar esta mesa</button>` : ""}</div>`; }).join("")}</div></div>`;
+  h += sortSection(D);
+  h += `<div class="sec"><h2>O muro<span class="en">merges itself: a card is on the wall when more than half of the ${D.wall.nTables} tables that entered one put it on theirs; bound when more said bound than generic, a tie is generic</span></h2>`;
+  if(D.wall.nTables && D.wall.ligadoCount === 0) h += `<div class="loud">Nenhum cartão no muro da sala está ligado a nós. Nada no muro sustenta uma elevação: a sala precisa de outra conversa antes da curva.</div>`;
+  h += `<div class="tbl"><table class="t" style="margin-top:10px"><tr><th>cartão</th><th></th><th>mesas</th><th>ligado a nós</th><th>nosso e mais escasso</th><th>no muro</th></tr>${D.wall.groups.filter(g => g.n > 0 || g.kind === "given").map(g => `<tr style="${g.onWall ? "" : "opacity:.55"}">
+      <td>${esc(g.name)}${g.names.length > 1 ? `<div class="small muted">${g.names.filter(n => n !== g.name).map(esc).join(" · ")}</div>` : ""}</td>
+      <td class="small muted">${g.kind === "given" ? "dado" : "novo"}</td><td class="num">${g.n} de ${D.wall.nTables}</td>
+      <td class="num">${g.m} de ${g.n} ${g.n ? (g.ligado ? `<span class="chip lig">ligado</span>` : `<span class="chip gen">genérico</span>`) : ""}</td>
+      <td class="num">${g.m ? `${g.s} de ${g.m} ${arrowGlyph(g)}` : ""}</td><td>${g.onWall ? "sim" : "não"}</td></tr>`).join("")}</table></div></div>`;
+  h += commitSection(D);
+  h += placementSection(s);
+  const at = Math.max(0, SEQ.findIndex(x => x[0] === s.state.view));
+  h += `<div class="sec"><h2>O projetor<span class="en">one step at a time, in the day's order · <a href="#/tela" target="_blank" rel="noopener">abrir o projetor</a></span></h2>
+    <div class="row"><button data-act="step" data-d="-1" ${at === 0 ? "disabled" : ""}>← Anterior</button>
+      <div class="card" style="flex:1;min-width:240px"><span class="small muted">no ecrã, ${at + 1} de ${SEQ.length}</span><br><b class="serif" style="font-size:20px">${SEQ[at][1]}</b>${at < SEQ.length - 1 ? `<span class="small muted"> · a seguir: ${SEQ[at + 1][1]}</span>` : ""}</div>
+      <button class="primary" style="width:auto;padding:12px 22px" data-act="step" data-d="1" ${at === SEQ.length - 1 ? "disabled" : ""}>Seguinte →</button></div>
+    <p class="small muted" style="margin-top:6px">${SEQ.map((x, i) => i === at ? `<b style="color:var(--gold)">${x[1]}</b>` : x[1]).join(" · ")}</p></div>`;
+  const empty = !ROOM.sorts.length && !ROOM.wall.length && !ROOM.curves.length;
+  h += `<div class="sec"><h2>Exportar</h2><div class="row"><button data-act="csv">CSV dos movimentos</button><button data-act="csvaxes">CSV dos eixos novos</button><button data-act="csvcommit">CSV dos compromissos</button><button data-act="json">JSON da sessão</button>
+      <a href="#/relatorio" target="_blank" rel="noopener">o relatório (⌘P guarda em PDF)</a></div></div>
+    <div class="sec"><h2>Ensaio</h2><div class="row">${s.config.rehearsal
+      ? `<button data-act="rehearse" ${empty && !BUSY ? "" : "disabled"}>Encher com uma sala de ${rehPeople(s.config.tables || 6)} em ${s.config.tables || 6} mesas</button>` : `<span class="small muted">Só numa sessão criada como ensaio.</span>`}
+      <button data-act="delses">Apagar esta sessão</button></div>${NOTE ? `<p class="small">${esc(NOTE)}</p>` : ""}</div></div>`;
+  return h;
+}
+/* The banding table: per card, out of the tables that submitted, how many say
+   the machine can (under water or pôlder), how many keep it human (pôlder),
+   how many could not agree, and the band. No per-person arithmetic anywhere. */
+function sortSection(D){
+  const N = D.sort.n;
+  return `<div class="sec"><h2>A triagem<span class="en">${N} ${N === 1 ? "mesa enviou" : "mesas enviaram"} · a máquina consegue = submerso ou pôlder · manter humano = pôlder · sem acordo fica fora das duas contas</span></h2>
+    <div class="tbl"><table class="t"><tr><th>cartão</th><th>a máquina consegue</th><th>manter humano</th><th>sem acordo</th><th>faixa</th><th>onde a maioria o pôs</th></tr>
+    ${D.sort.rows.slice().sort((a, b) => a.ord - b.ord).map(r => `<tr><td>${esc(cardNo(r.task))} · ${esc(r.task.short_pt || r.task.label_pt)}</td>
+      <td class="num">${r.machine} de ${N}</td><td class="num">${r.keep} de ${N}</td><td class="num">${r.counts.sem_acordo || ""}</td>
+      <td>${r.band ? esc(R.BAND_PT[r.band]) : "—"}</td><td>${esc(placeTxt(r))}</td></tr>`).join("")}</table></div></div>`;
+}
+/* Change request 6: one line per table, each against its own rival; corrected one table and one axis at a time, logged */
+function tablePlacementSection(s){
+  const axes = ROOM.axes, tp = ROOM.table_placements || [];
+  const nT = Math.max(s.config.tables || 0, 0, ...tp.map(p => p.table_no));
+  const rows = Array.from({ length: nT }, (_, i) => { const t = i + 1, p = tp.find(x => x.table_no === t), c = p ? p.choices : {};
+    return `<div class="card" style="margin-top:8px"><b class="serif">Mesa ${t}</b> <span class="small muted">${p ? `contra ${esc(p.rival_name || "—")} · entrada às ${hhmm(p.entered_at)}${p.log.length ? ` · ${p.log.length} ${p.log.length === 1 ? "correção" : "correções"}` : ""}` : "a linha ainda não entrou"}</span>
+      ${LINE_EDIT ? `<div class="tbl"><table class="t" style="margin-top:6px">${axes.map(a => `<tr><td>${esc(a.label_pt)}</td><td><div class="row">${R.PLACEMENT.map(v =>
+          `<button class="${c[a.code] === v ? "on" : ""}" data-act="fplace" data-t="${t}" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></td></tr>`).join("")}</table></div>`
+        : `<div class="row small" style="margin-top:6px">${axes.map(a => `<span class="chip ${c[a.code] ? "lig" : ""}">${esc(short(a))}: ${esc(c[a.code] ? R.PLACEMENT_PT[c[a.code]] : "—")}</span>`).join("")}</div>`}</div>`; }).join("");
+  return `<div class="sec"><h2>A curva de hoje<span class="en">one line per table, each by show of hands against its own rival; each table's curves start from its own</span></h2>
+    ${rows}
+    <p style="margin-top:8px"><button class="${LINE_EDIT ? "on" : ""}" data-act="lineedit">${LINE_EDIT ? "Terminar a correção" : "Corrigir a curva de hoje de uma mesa"}</button></p></div>`;
+}
+function placementSection(s){
+  if(byTableRoom(ROOM)) return tablePlacementSection(s);
+  const p = ROOM.placement, c = p ? p.choices : {}, axes = ROOM.axes;
+  const missing = axes.filter(a => !c[a.code]);
+  return `<div class="sec"><h2>A curva de hoje<span class="en">the room's own line, placed by show of hands against Odontoprev; the redraw starts from it</span></h2>
+    ${p ? `<div class="note">${p.table_no ? `Entrada pela Mesa ${p.table_no}` : "Entrada na consola"} às ${hhmm(p.entered_at)}${p.log.length ? ` · ${p.log.length} ${p.log.length === 1 ? "correção" : "correções"}` : ""}.</div>` : ""}
+    ${missing.length ? `<div class="loud" style="margin-top:8px">${p ? `Faltam ${missing.map(a => esc(a.label_pt)).join(", ")}.` : "A curva de hoje ainda não entrou."}
+      Sem ela, esses eixos começam ao meio e o telefone diz que falta a linha. Um porta-voz envia-a na porta Porta-voz, ou corrija aqui.</div>` : ""}
+    ${LINE_EDIT ? `<div class="tbl"><table class="t" style="margin-top:10px"><tr><th>eixo</th><th>a sala está, contra a Odontoprev</th></tr>${axes.map(a => `<tr><td>${esc(a.label_pt)}</td>
+      <td><div class="row">${R.PLACEMENT.map(v => `<button class="${c[a.code] === v ? "on" : ""}" data-act="fplace" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></td></tr>`).join("")}</table></div>`
+      : `<div class="row small" style="margin-top:10px">${axes.map(a => `<span class="chip ${c[a.code] ? "lig" : ""}">${esc(short(a))}: ${esc(c[a.code] ? R.PLACEMENT_PT[c[a.code]] : "—")}</span>`).join("")}</div>`}
+    <p style="margin-top:8px"><button class="${LINE_EDIT ? "on" : ""}" data-act="lineedit">${LINE_EDIT ? "Terminar a correção" : "Corrigir a curva de hoje"}</button></p>
+    ${p && p.log.length ? `<p class="small muted" style="margin-top:8px">Correções: ${p.log.map(l => { const ax = axes.find(a => a.code === l.axis);
+      return `${esc(ax ? short(ax) : l.axis)} ${esc(l.from ? R.PLACEMENT_PT[l.from] : "—")} → ${esc(R.PLACEMENT_PT[l.to])} às ${hhmm(l.at)}`; }).join(" · ")}</p>` : ""}
+    <div class="row" style="margin-top:12px"><button class="${s.state.outside ? "on" : ""}" data-act="outside">${s.state.outside ? "A leitura de fora está no projetor" : "Mostrar a leitura de fora no projetor"}</button>
+      <span class="small muted">o trabalho de secretária, onde as fontes públicas leram alguma coisa. Só a direção, e nunca é a curva de hoje.</span></div></div>`;
+}
+
+/* ------------------------------------------------------------ the projector */
+function viewTela(){
+  if(!KEY) return `<div class="tela"><h1>O projetor</h1><p class="lede">Abre no portátil do facilitador, com a chave.</p></div>`;
+  if(!ROOM) return `<div class="tela"><h1>A nova curva</h1><p class="lede">${SID ? "a carregar…" : "Escolha uma sessão na consola."}</p></div>`;
+  const s = ROOM.session, v = param("v") || s.state.view;
+  if(v !== "sort" && v !== "wall") ANIM_SEEN = "";
+  const T = { sort: telaSort, wall: telaWall, asis: telaAsis, overlay: telaOverlay, moves: telaMoves, expected: telaExpected, commit: telaCommit }[v] || telaAsis;
+  return `<div class="tela">${T(ROOM, ROOM.D)}</div>${s.config.rehearsal ? `<div class="stamp">ENSAIO</div>` : ""}`;
+}
+function outsideMarks(room){
+  if(!room.session.state.outside) return [];
+  /* the session's own outside read (none in a room of rivals); a session from before keeps session.json's */
+  const cfg = room.session.config || {}, src = "outside_read" in cfg ? cfg.outside_read : SEED && SEED.outside_read;
+  const o = (src && src.axes) || {};
+  return room.axes.map((a, i) => { const r = o[a.code]; const v = r ? outsideMark(r.you, r.rival) : null; return v == null ? null : { i, v }; }).filter(Boolean);
+}
+function placeTxt(r){
+  if(!r.n) return "—";
+  if(r.modes.length > 1) return "empate: " + r.modes.map(z => R.ZONE_PT[z]).join(" e ");
+  return `${r.modeCount} de ${r.n} em ${R.ZONE_PT[r.place]}`;
+}
+/* The water rises once, when the screen comes up, and not again on every
+   refresh while phones keep sending. */
+let ANIM_SEEN = "";
+function animateOnce(key){
+  const k = (ROOM && ROOM.session.id) + ":" + key;
+  if(ANIM_SEEN === k) return false;
+  ANIM_SEEN = k;
+  try { return !matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ return true; }
+}
+/* A name over up to three rows, never cut mid-word; the full label on hover. */
+function wrapWords(s, max){
+  const out = []; let cur = "";
+  for(const w of String(s || "").split(/\s+/).filter(Boolean)){
+    const t = cur ? cur + " " + w : w;
+    if(!cur || t.length <= max) cur = t; else { out.push(cur); cur = w; }
+  }
+  if(cur) out.push(cur);
+  return out.length ? out : [""];
+}
+function termLabel(text, full, cx, y){
+  let lines = [];
+  for(const max of [18, 22, 26]){ lines = wrapWords(text, max); if(lines.length <= 3) break; }
+  if(lines.length > 3){ lines = lines.slice(0, 3); lines[2] = lines[2].replace(/\s*\S*$/, "") + "…"; }
+  return `<text transform="translate(${cx.toFixed(1)},${y}) rotate(-58)" fill="#C7D6D2" font-size="14" text-anchor="end" font-family="Georgia,serif">`
+    + lines.map((ln, i) => `<tspan x="0" dy="${i ? 15 : 0}">${esc(ln)}</tspan>`).join("") + `<title>${esc(full || text)}</title></text>`;
+}
+/* Unimed's figure, carried over: every task a column, its height how far the
+   machine still has to go; the water rises to the room's median reach; what the
+   room kept in the pôlder stands dry inside copper dikes. A thin cap on each
+   column is the place most of the room gave it, the place the citations use. */
+function terrainSVG(T, o){
+  o = o || {};
+  const W = 1000, H = 570, M = 40, TOP = 58, BASE = 372, SPAN = BASE - TOP;
+  const RG = 104, rows = T.rows, n = rows.length || 1, gap = 9, cw = (W - 2 * M - RG - (n - 1) * gap) / n;
+  const has = T.waterline != null, wy = has ? BASE - T.waterline * SPAN : BASE;
+  let g = o.bg ? `<rect x="0" y="0" width="${W}" height="${H}" fill="#193C3F"/>` : "";
+  g += `<text x="${M}" y="${TOP - 30}" fill="#9FB4B0" font-size="12" letter-spacing="2.2">ROCHA FIRME · ONDE NENHUMA MÁQUINA CHEGA</text>`;
+  g += `<text x="${W - M}" y="${TOP - 30}" fill="#9FB4B0" font-size="12" letter-spacing="2.2" text-anchor="end">AS TAREFAS, DA MAIS INUNDADA À MAIS FIRME →</text>`;
+  g += `<text transform="translate(18,${TOP + SPAN / 2}) rotate(-90)" fill="#6E8A86" font-size="11" letter-spacing="2" text-anchor="middle">↑ QUANTO FALTA À MÁQUINA</text>`;
+  let cols = "", pol = "", labs = "", marks = "";
+  rows.forEach((r, i) => {
+    const x = M + i * (cw + gap);
+    if(r.reach == null){
+      cols += `<rect x="${x.toFixed(1)}" y="${TOP}" width="${cw.toFixed(1)}" height="${SPAN}" fill="none" stroke="#5E7679" stroke-width="1.5" stroke-dasharray="4 5"/>`;
+    } else {
+      const h = Math.max(3, r.height * SPAN), y = BASE - h, cap = r.place && ZHEX[r.place] ? ZHEX[r.place] : "#8FA09E";
+      cols += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${h.toFixed(1)}" fill="#2C5558"${y < wy ? ' stroke="#F4F0E9" stroke-width="1"' : ""}/>`
+            + `<rect x="${x.toFixed(1)}" y="${(y - 5).toFixed(1)}" width="${cw.toFixed(1)}" height="5" fill="${cap}"/>`;
+      if(r.counts && r.counts.sem_acordo) marks += `<text x="${(x + cw / 2).toFixed(1)}" y="${(y - 13).toFixed(1)}" fill="#E0A040" font-size="15" text-anchor="middle" font-family="Georgia,serif">≠${r.counts.sem_acordo}</text>`;
+      if(r.place === "polder"){
+        /* repaint dry over the water, then the dikes */
+        const top = Math.min(y, wy) - 9;
+        pol += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${(BASE - y).toFixed(1)}" fill="#2C5558"/>`
+             + `<rect x="${x.toFixed(1)}" y="${(y - 5).toFixed(1)}" width="${cw.toFixed(1)}" height="5" fill="${cap}"/>`
+             + [x - 4, x + cw + 1].map(dx => `<rect x="${dx.toFixed(1)}" y="${top.toFixed(1)}" width="3" height="${(BASE - top).toFixed(1)}" fill="#BE7B4F"/>`).join("");
+      }
+    }
+    labs += termLabel(r.task.short_pt || r.task.label_pt, r.task.label_pt, x + cw / 2, BASE + 14);
+  });
+  g += cols;
+  if(has){
+    const A = (attr, from, to) => o.animate ? `<animate attributeName="${attr}" from="${from}" to="${to}" dur="2.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".25 .6 .3 1"/>` : "";
+    g += `<rect x="${M - 10}" y="${o.animate ? BASE : wy.toFixed(1)}" width="${W - 2 * M + 20}" height="${o.animate ? 0 : (BASE - wy).toFixed(1)}" fill="#67A5AB" opacity=".42">${A("y", BASE, wy.toFixed(1))}${A("height", 0, (BASE - wy).toFixed(1))}</rect>`;
+    g += pol + marks;
+    /* the bands, read straight off the terrain: 5-6 of 6 tables, 3-4, 2 or fewer */
+    const gy = f => BASE - f * SPAN, lx = W - M - RG + 16;
+    g += [1 / 6, 1 / 2].map(f => `<line x1="${M - 10}" x2="${W - M + 10}" y1="${gy(f).toFixed(1)}" y2="${gy(f).toFixed(1)}" stroke="#C6A553" stroke-opacity=".55" stroke-dasharray="2 6"/>`).join("");
+    g += `<text x="${lx}" y="${((gy(0) + gy(1 / 6)) / 2 + 4).toFixed(1)}" fill="#C6A553" font-size="11.5" letter-spacing="1.4">ASSENTE</text>`
+       + `<text x="${lx}" y="${((gy(1 / 6) + gy(1 / 2)) / 2 + 4).toFixed(1)}" fill="#C6A553" font-size="11.5" letter-spacing="1.4">EM DISPUTA</text>`
+       + `<text x="${lx}" y="${((gy(1 / 2) + gy(1)) / 2 + 4).toFixed(1)}" fill="#C6A553" font-size="11.5" letter-spacing="1.4">RESISTE</text>`;
+    g += `<line x1="${M - 10}" x2="${W - M + 10}" y1="${o.animate ? BASE : wy.toFixed(1)}" y2="${o.animate ? BASE : wy.toFixed(1)}" stroke="#67A5AB" stroke-width="2.5">${A("y1", BASE, wy.toFixed(1))}${A("y2", BASE, wy.toFixed(1))}</line>`;
+    g += `<text x="${M + 10}" y="${(wy - 9).toFixed(1)}" fill="#F4F0E9" font-size="12" letter-spacing="1.8"${o.animate ? ' opacity="0"' : ""}>LINHA D'ÁGUA · HOJE${o.animate ? '<animate attributeName="opacity" from="0" to="1" begin="2.6s" dur=".5s" fill="freeze"/>' : ""}</text>`;
+    g += `<text x="${M + 10}" y="${BASE - 9}" fill="#0F2A2C" font-size="12" letter-spacing="2.2" opacity=".75">SUBMERSO</text>`;
+  } else {
+    g += pol + `<text x="${W / 2}" y="${TOP + SPAN / 2}" fill="#9FB4B0" font-size="16" text-anchor="middle" font-family="Georgia,serif">a triagem ainda não tem respostas</text>`;
+  }
+  g += labs;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="a maré e as tarefas">${g}</svg>`;
+}
+/* The band thresholds in words, for however many tables sent: R.bandOf's
+   shares (5/6 and 1/2) turned back into counts. Six tables: 5 a 6, 3 a 4,
+   2 ou menos; four: 4 de 4, 2 a 3, 1 ou menos. */
+function bandRanges(N){
+  const s = Math.ceil(5 * N / 6), c = Math.ceil(N / 2);
+  const span = (a, b) => a === b ? `${a}` : `${a} a ${b}`;
+  return { settled: `${span(s, N)} de ${N} mesas`, contested: c <= s - 1 ? span(c, s - 1) : "nenhuma", held: c - 1 <= 0 ? "0" : `${c - 1} ou menos` };
+}
+function placeCounts(D){
+  const c = { settled: 0, contested: 0, held: 0 }; let sa = 0;
+  D.tide.rows.forEach(r => { if(r.band) c[r.band]++; if(r.counts && r.counts.sem_acordo) sa++; });
+  const b = bandRanges(D.tide.n || R.LIMITS.TABLES);
+  return `<b>${c.settled}</b> assentes (${b.settled}) · <b>${c.contested}</b> em disputa (${b.contested}) · <b>${c.held}</b> resistem (${b.held})`
+    + (sa ? ` · <span style="color:var(--amber)">≠</span> <b>${sa}</b> ${sa === 1 ? "cartão" : "cartões"} com mesas sem acordo` : "")
+    + `<span class="small" style="display:block;margin-top:4px">a máquina consegue = mesas que o puseram debaixo de água ou no pôlder · a cor no topo é o lugar que a maioria lhe deu</span>`;
+}
+function telaSort(room, D){
+  const anim = animateOnce("sort");
+  return `<h1>A maré</h1><p class="lede">${D.sort.n} ${D.sort.n === 1 ? "mesa" : "mesas"} · a altura de cada cartão é o que ainda falta à máquina · a água sobe até à mediana</p>
+    <div class="chart">${terrainSVG(D.tide, { animate: anim })}</div>
+    <p class="lede" style="margin-top:4px">${placeCounts(D)}</p>`;
+}
+function telaWall(room, D){
+  const anim = animateOnce("wall");
+  const on = D.wall.onWall, off = D.wall.groups.filter(g => !g.onWall && g.n > 0);
+  const bricks = on.map((g, i) => `<div class="brick${anim ? " in" : ""}" style="--i:${i}"><span class="mark${g.ligado ? " filled" : ""}"></span>
+      <span>${esc(g.name)} <span style="color:var(--gold)">${arrowGlyph(g)}</span>${g.kind === "new" ? ` <span class="chip" style="font-size:14px">novo</span>` : ""}<small>em ${g.n} de ${D.wall.nTables} mesas · ligado em ${g.m} · nosso e mais escasso em ${g.s}</small></span></div>`).join("");
+  return `<h1>O muro</h1><p class="lede">A água decide quanto custa o vosso trabalho. O muro decide quanto rende.</p>
+    <div class="fig"><div class="terrain">${terrainSVG(D.tide, { animate: false })}</div>
+      <div class="gate"><div class="kick" style="font-size:15px">o muro · o caminho até ao comprador passa por nós</div>
+        <div class="bricks">${bricks || `<p class="muted" style="font-size:20px">Ainda nenhum cartão tem a maioria das mesas.</p>`}</div>
+        <p class="muted" style="font-size:16px;margin-top:12px"><span class="mark" style="display:inline-block;width:13px;height:13px;border:2px solid var(--gold);background:var(--gold);vertical-align:-1px"></span> ligado a nós ·
+          <span style="display:inline-block;width:13px;height:13px;border:2px solid var(--gold);vertical-align:-1px"></span> genérico ou alugado · ↑ mais escasso · → estável · ↓ mais abundante</p>
+        ${off.length ? `<p class="muted" style="font-size:16px;margin-top:10px">abaixo da maioria, fora do muro: ${off.map(g => esc(g.name)).join(" · ")}</p>` : ""}
+        <p style="font-size:24px;margin-top:16px"><b class="serif" style="color:${D.wall.scarceCount ? "var(--gold)" : "var(--bad)"}">${D.wall.scarceCount}</b> ${D.wall.scarceCount === 1 ? "nosso e mais escasso" : "nossos e mais escassos"}: só esses sustentam uma elevação sem aviso.</p></div></div>`;
+}
+/* Change request 6: one line per table, each in its own colour, named by its rival */
+const byTableRoom = room => ((room && room.session && room.session.config) || {}).placement_scope === "table";
+function tableLines(room){
+  const pal = ["#EDE3CC", "#8FC7C9", "#E0A87A", "#B9D98F", "#D9A7C7", "#9EAEDB", "#E8D37A", "#C9B8A0"];
+  return (room.table_placements || []).map(p => ({ t: p.table_no, rival: p.rival_name || "o rival da mesa", color: pal[(p.table_no - 1) % pal.length],
+    vals: room.axes.map(a => p.choices[a.code] ? R.PLACEMENT_VALUE[p.choices[a.code]] : null) }));
+}
+const lineLegend = tl => `<div class="legend" style="margin-top:10px">${tl.map(l => `<span><i style="display:inline-block;width:28px;height:4px;background:${l.color};vertical-align:middle;margin-right:6px"></i>Mesa ${l.t} · contra ${esc(l.rival)}</span>`).join("")}</div>`;
+function telaAsis(room){
+  if(byTableRoom(room)){
+    const tl = tableLines(room), miss = Math.max(0, (room.session.config.tables || tl.length) - tl.length);
+    return `<h1>A curva de hoje</h1><p class="lede">Cada mesa, por braço no ar, contra o seu próprio rival: uma linha por mesa. A cinzenta, ao meio, é o rival de cada mesa.${miss ? ` Falta a linha de ${miss} ${miss === 1 ? "mesa" : "mesas"}.` : ""}</p>
+      <div class="chart">${curveSVG(room.axes, [{ vals: room.axes.map(() => R.RIVAL_VALUE), color: "#8FA09E", w: 4, dash: "12 9" }].concat(tl.map(l => ({ vals: l.vals, color: l.color, w: 4.5, dots: true }))), { big: true, sides: sidesOn(room.axes) })}</div>
+      ${lineLegend(tl)}`;
+  }
+  const last = room.axes[room.axes.length - 1], out = outsideMarks(room);
+  const lastV = last.as_is_you == null ? null : last.as_is_you;
+  return `<h1>A curva de hoje</h1><p class="lede">A sala, por braço no ar, contra a Odontoprev: a linha creme. A Odontoprev é a cinzenta, ao meio.${out.length ? " Quadrados cobre: a leitura de fora, só a direção." : ""}</p>
+    <div class="chart">${curveSVG(room.axes, [], { big: true, asis: true, rival: true, sides: true, outside: out,
+      labels: [{ v: lastV == null || lastV === R.RIVAL_VALUE ? R.RIVAL_VALUE + 0.35 : lastV, color: "#EDE3CC", text: "Uniodonto" },
+               { v: R.RIVAL_VALUE, color: "#8FA09E", text: "Odontoprev" }] })}</div>`;
+}
+function telaOverlay(room, D){
+  const lines = D.curves.map(c => ({ vals: c.vals, color: "#F4F0E9", w: 1.5, op: .35 }));
+  if(byTableRoom(room)) tableLines(room).forEach(l => lines.unshift({ vals: l.vals, color: l.color, w: 2.5, op: .85, dash: "10 8" }));
+  lines.push({ vals: D.spread.map(q => q.med), color: "#C6A553", w: 5, dots: true });
+  return `<h1>Todas as curvas</h1><p class="lede">${D.curves.length} curvas · a mediana a ouro, a metade do meio sombreada · ${byTableRoom(room) ? "a tracejado, a curva de hoje de cada mesa" : "a tracejado, hoje"} · âmbar: elevações sobre um ativo nosso mas estável${D.created.length ? " · à direita, os eixos novos, fora da escala" : ""}</p>
+    <div class="chart">${curveSVG(room.axes, lines, { big: true, asis: true, rival: true, sides: true, band: D.spread, amber: amberDots(D, room.axes), outside: outsideMarks(room),
+                                                   created: D.created.map(g => ({ name: g.name, n: g.tables })) })}</div>`;
+}
+function paceTag(D, a){ const p = R.pace(D.ctx, a.code); return p ? `<div class="ex">${R.PACE_PT[p]}</div>` : ""; }
+/* Change request 4: created axes come out of the per-axis counts entirely and
+   stand in their own block on the right: name, tables, backers, wall card. */
+function telaMoves(room, D){
+  const cg = D.created || [];
+  const cols = D.map.map(r => `<div class="xcol"><span class="kick" style="font-size:13px">${sideWord(r.axis)}</span><b>${esc(short(r.axis))}</b>${paceTag(D, r.axis)}
+      <div class="num">elevaram <b style="display:inline;font-size:26px">${r.raised}</b></div>
+      <div class="num">baixaram <b style="display:inline;font-size:26px">${r.lowered}</b>${r.offerOnly ? ` · ${r.offerOnly} só oferta` : ""}</div>
+      ${r.topWall ? `<div class="q">${r.topWall.count} citando ${esc(r.topWall.name)}</div>` : ""}
+      ${r.topTask ? `<div class="q">${r.topTask.count} citando ${esc(r.topTask.name)}</div>` : ""}
+      ${r.amber ? `<div class="q" style="color:var(--amber)">${r.amber} sobre algo nosso mas estável</div>` : ""}
+      ${r.unchosen ? `<div class="q">a sala ainda não escolheu</div>` : ""}</div>`).join("");
+  const side = `<div class="newax"><span class="kick" style="font-size:13px">Eixos novos · fora dos sete</span>${cg.map(g => `<div class="nx"><b>${esc(g.name)}</b>
+      <div class="num">${g.tables} ${g.tables === 1 ? "mesa" : "mesas"} · ${g.backers} ${g.backers === 1 ? "apoio" : "apoios"}</div>
+      ${g.topWall ? `<div class="q">sobre ${esc(g.topWall.name)}</div>` : ""}
+      ${g.amber ? `<div class="q" style="color:var(--amber)">nosso mas estável</div>` : ""}</div>`).join("")}</div>`;
+  return `<h1>Os movimentos</h1><p class="lede">${D.submitted.length} curvas · por eixo, quem elevou, quem baixou, e o que citaram${cg.length ? " · à direita, os eixos que as mesas criaram" : ""}</p>
+    ${cg.length ? `<div class="movewrap"><div class="xgrid">${cols}</div>${side}</div>` : `<div class="xgrid">${cols}</div>`}`;
+}
+/* Change request 5: the tables' commitments, option tag first, then the sentence */
+function telaCommit(room, D){
+  const s = D.commitSplit;
+  return `<h1>Os compromissos</h1><p class="lede">${D.commits.length ? `${s.raise} ${s.raise === 1 ? "mesa escolheu" : "mesas escolheram"} uma elevação, ${s.polder} um pôlder` : "Ainda nenhuma mesa enviou o compromisso."}</p>
+    ${D.commits.map(c => `<div class="crow"><span class="ctag ${c.option}">${R.COMMIT_TAG[c.option]}</span><b class="serif">Mesa ${c.table_no}</b> · ${esc(R.commitSentence(c, D.name))} <span class="who">${esc(whoWhen(c))}</span></div>`).join("")}`;
+}
+function telaExpected(room, D){
+  return `<h1>O que a triagem e o muro faziam esperar</h1><p class="lede">por eixo: o que a triagem da sala deixa baixar, o que guardou no pôlder, e o que a sala fez</p>
+    <div class="xgrid">${D.expected.map(e => `<div class="xcol"><span class="kick" style="font-size:13px">${sideWord(e.axis)}</span><b>${esc(short(e.axis))}</b><div class="ex">${esc(e.expectPt)}</div>
+      ${e.findings.slice(0, 2).map(f => `<div class="f ${f.kind}">${esc(f.pt)}</div>`).join("")}</div>`).join("")}</div>`;
+}
+
+/* -------------------------------------------------------------- the report */
+function viewRelatorio(){
+  if(!KEY) return `<div class="rep"><h1>O relatório</h1><p class="muted">Abre no portátil do facilitador, com a chave.</p></div>`;
+  if(!ROOM) return `<div class="rep"><p class="muted">a carregar…</p></div>`;
+  const s = ROOM.session, D = ROOM.D, axes = ROOM.axes;
+  const perSide = (sidesOn(axes) ? SIDES : [{ key: "", pt: "Todos os eixos" }]).map(sd => { const rows = D.map.filter(r => !sd.key || sideOf(r.axis) === sd.key);
+    const sum = k => rows.reduce((n, r) => n + r[k], 0);
+    return { pt: sd.pt, raised: sum("raised"), lowered: sum("lowered") }; });
+  const lines = (byTableRoom(ROOM) ? tableLines(ROOM).map(l => ({ vals: l.vals, color: l.color, w: 2, dash: "8 6" })) : [])
+    .concat(D.curves.map(c => ({ vals: c.vals, color: "#F4F0E9", w: 1.2, op: .35 }))).concat([{ vals: D.spread.map(q => q.med), color: "#C6A553", w: 3.5, dots: true }]);
+  return `<div class="rep">
+    <div class="row noprint" style="justify-content:space-between"><a href="#/f">← consola</a><button data-act="print">Imprimir ou guardar em PDF</button></div>
+    <div class="kick" style="margin-top:14px">${esc(s.config.org ? s.config.org + " de 2026" : "Uniodonto · Barcelona · 15 de setembro de 2026")}</div>
+    <h1>${esc(s.title)}<span class="en">A nova curva · the session's report</span></h1>
+    <p class="muted num">${esc(s.cohort || "")} · ${D.sort.n} mesas com triagem · ${D.wall.onWall.length} cartões no muro, ${D.wall.ligadoCount} ligados a nós · ${D.submitted.length} curvas enviadas · gerado às ${hhmm(new Date().toISOString())}${s.config.rehearsal ? " · ENSAIO" : ""}</p>
+
+    <h2>O que a triagem e o muro faziam esperar, e o que a sala escolheu</h2>
+    <p class="muted">Por eixo, a mesma leitura do slide da junta, feita sobre as respostas da própria sala: as tarefas que a sala pôs debaixo de água ou na linha deixam baixar o eixo, e ele converge com o rival; as que guardou no pôlder são o que um eixo novo pode promover; um eixo que nenhuma tarefa produz só se move por decisão de oferta. Depois, o que a sala de facto moveu.</p>
+    ${D.expected.map(e => `<h3>${esc(e.axis.label_pt)} <span class="muted small">· ${esc(e.expectPt)}</span></h3>
+      ${e.findings.map(f => `<div class="f ${f.kind}">${esc(f.pt)}</div>`).join("") || `<div class="f">Nada a assinalar.</div>`}`).join("")}
+
+    <h2>A curva</h2>
+    <div class="chart">${curveSVG(axes, lines, { bg: true, asis: true, rival: true, sides: true, band: D.spread, amber: amberDots(D, axes), created: D.created.map(g => ({ name: g.name, n: g.tables })) })}</div>
+    <p class="small muted">${byTableRoom(ROOM) ? `A tracejado, a curva de hoje de cada mesa, contra o seu rival: ${esc(tableLines(ROOM).map(l => `Mesa ${l.t}, ${l.rival}`).join("; ") || "nenhuma entrou")}. Cada curva parte da linha da sua mesa.` : "A tracejado, hoje: creme a sala, cinzenta ao meio a Odontoprev."} A ouro, a mediana das curvas; sombreada, a metade do meio. Cada linha fina é uma curva. Âmbar: uma elevação sobre um ativo nosso mas estável.</p>
+    <p class="small muted" ${byTableRoom(ROOM) ? "hidden" : ""}>Contra a Odontoprev: igual é o meio, cada passo é uma posição. A curva de hoje é a da sala, por braço no ar${ROOM.placement ? (ROOM.placement.table_no ? `, entrada pela Mesa ${ROOM.placement.table_no}` : ", entrada na consola") + (ROOM.placement.log.length ? `, com ${ROOM.placement.log.length} ${ROOM.placement.log.length === 1 ? "correção" : "correções"}` : "") : ", que ainda não entrou"}.</p>
+    <div class="tbl"><table class="t"><tr><th>eixo</th><th>hoje</th><th>mediana</th><th>metade do meio</th><th>curvas</th></tr>
+      ${axes.map((a, i) => { const q = D.spread[i]; return `<tr><td>${esc(a.label_pt)}</td><td>${byTableRoom(ROOM) ? esc(tableLines(ROOM).map(l => `M${l.t} ${scaleWord(l.vals[i])}`).join(" · ")) : esc(scaleWord(a.as_is_you))}</td>
+        <td class="num">${fmtRel(q.med)}</td><td class="num">${fmtRel(q.p25)} a ${fmtRel(q.p75)}</td><td class="num">${q.n}</td></tr>`; }).join("")}</table></div>
+
+    <h2>Os movimentos</h2>
+    <p class="muted">${perSide.map(p => `${p.pt}: ${p.raised} elevações, ${p.lowered} baixas`).join(" · ")}${D.created.length ? ` · ${D.created.length} ${D.created.length === 1 ? "eixo novo" : "eixos novos"}, abaixo` : ""}.</p>
+    <div class="tbl"><table class="t"><tr><th>eixo</th><th>elevaram</th><th>baixaram</th><th>só oferta</th><th>nosso mas estável</th><th>o mais citado</th></tr>
+      ${D.map.map(r => `<tr><td>${esc(r.axis.label_pt)}</td><td class="num">${r.raised}</td><td class="num">${r.lowered}</td>
+        <td class="num">${r.offerOnly}</td><td class="num">${r.amber}</td>
+        <td>${[r.topWall && `${r.topWall.count} × ${esc(r.topWall.name)}`, r.topTask && `${r.topTask.count} × ${esc(r.topTask.name)}`].filter(Boolean).join("<br>") || "—"}</td></tr>`).join("")}</table></div>
+
+    <h2>Os eixos novos</h2>
+    ${D.created.length ? `<p class="muted">Fora dos sete eixos: o que o setor ainda não oferece. Cada eixo nasce numa mesa, sobre um cartão do muro nosso e mais escasso, dois por mesa no máximo; os nomes que dizem o mesmo juntam-se entre mesas. Não tem posição na escala nem ritmo.</p>
+      <div class="tbl"><table class="t"><tr><th>eixo</th><th>mesas</th><th>apoios</th><th>cartão do muro</th><th>pôlder</th><th>nomes</th></tr>
+      ${D.created.map(g => `<tr><td>${esc(g.name)}${g.amber ? ` <span class="chip amber">nosso mas estável</span>` : ""}${g.uncited ? ` <span class="chip unc">sem citação da sala</span>` : ""}</td>
+        <td class="num">${g.tables}</td><td class="num">${g.backers}</td><td>${g.topWall ? esc(g.topWall.name) : "—"}</td>
+        <td>${g.polder_ids.map(id => esc(D.name.task(id))).join(", ") || "—"}</td><td class="small">${g.names.map(esc).join(" · ")}</td></tr>`).join("")}</table></div>`
+      : `<p class="muted">Nenhuma mesa criou um eixo.</p>`}
+
+    <h2>Os compromissos</h2>
+    ${D.commits.length ? `<p class="muted">Um por mesa, pelo relator: A, um pôlder que a mesa financia; B, uma elevação que financia e guarda. ${D.commitSplit.raise} ${D.commitSplit.raise === 1 ? "mesa escolheu" : "mesas escolheram"} uma elevação, ${D.commitSplit.polder} um pôlder.</p>
+      <div class="tbl"><table class="t"><tr><th>mesa</th><th>opção</th><th>o compromisso</th><th>responsável</th><th>revisão</th></tr>
+      ${D.commits.map(c => `<tr><td class="num">${c.table_no}</td><td>${R.COMMIT_TAG[c.option]}</td><td>${esc(R.commitSentence(c, D.name))}${c.amber ? ` <span class="chip amber">nosso mas estável</span>` : ""}${c.uncited ? ` <span class="chip unc">sem citação da sala</span>` : ""}</td>
+        <td>${esc(c.owner)}</td><td class="num">${esc(c.review)}</td></tr>`).join("")}</table></div>` : `<p class="muted">Nenhuma mesa enviou o compromisso.</p>`}
+
+    <h2>O que escreveram</h2>
+    ${D.map.filter(r => r.notes.length).map(r => `<h3>${esc(r.axis.label_pt)}</h3>${r.notes.map(n => `<blockquote>${esc(R.DIR_PT[n.direction])}: ${esc(n.note)}</blockquote>`).join("")}`).join("") || `<p class="muted">Nenhuma nota.</p>`}
+
+    <h2>A triagem</h2>
+    <div class="chart">${terrainSVG(D.tide, { bg: true })}</div>
+    <p class="small muted">Cada tarefa, a altura que ainda falta à máquina: um menos a parte da sala que a pôs debaixo de água, e metade da que a pôs na linha. A água sobe até à mediana. Dentro dos diques, o que a sala guardou no pôlder. O topo de cada coluna tem a cor do lugar que a maioria lhe deu.</p>
+    <div class="tbl"><table class="t"><tr><th>cartão</th>${R.SORT_STATES.map(z => `<th>${R.ZONE_PT[z]}</th>`).join("")}<th>a máquina consegue</th><th>faixa</th><th>onde a maioria o pôs</th></tr>
+      ${D.sort.rows.slice().sort((a, b) => a.ord - b.ord).map(r => `<tr><td>${esc(r.task.code)} ${esc(r.task.label_pt)}</td>${R.SORT_STATES.map(z => `<td class="num">${r.counts[z] || 0}</td>`).join("")}<td class="num">${r.machine} de ${D.sort.n}</td><td>${r.band ? esc(R.BAND_PT[r.band]) : "—"}</td><td>${esc(placeTxt(r))}</td></tr>`).join("")}</table></div>
+
+    <h2>O muro</h2>
+    <p class="muted">Juntou-se sozinho: um cartão entra quando mais de metade das ${D.wall.nTables} mesas que fizeram o muro o põe no seu, e é ligado quando mais mesas disseram ligado do que genérico.</p>
+    <div class="tbl"><table class="t"><tr><th>cartão</th><th></th><th>nomes</th><th>mesas</th><th>ligado a nós</th><th>nosso e mais escasso</th><th>no muro</th></tr>
+      ${D.wall.groups.filter(g => g.n > 0 || g.kind === "given").map(g => `<tr><td>${esc(g.name)}</td><td class="small">${g.kind === "given" ? "dado" : "novo"}</td><td class="small">${g.names.map(esc).join(" · ")}</td>
+        <td class="num">${g.n} de ${D.wall.nTables}</td><td class="num">${g.m} de ${g.n}${g.n ? (g.ligado ? " · ligado" : " · genérico") : ""}</td><td class="num">${g.m ? `${g.s} de ${g.m} ${arrowGlyph(g)}` : ""}</td><td>${g.onWall ? "sim" : "não"}</td></tr>`).join("")}</table></div>
+
+    <p class="small muted" style="margin-top:36px">Tudo nesta página vem das respostas da sala, por regras escritas em rules.js, que qualquer pessoa pode ler. Nenhuma IA. As respostas são anónimas: nenhum nome, nenhuma conta.</p>
+  </div>`;
+}
+
+/* ----------------------------------------------------------------- export */
+function csvCell(v){ const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function download(name, text, type){
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+/* Both rooms run the same instrument: the columns join on task and axis
+   codes, and session_id is the only thing that differs. */
+function exportCSV(){
+  const s = ROOM.session, D = ROOM.D, tById = R.index(ROOM.tasks), axById = R.index(ROOM.axes), curveBy = R.index(ROOM.curves, "pid");
+  const ctxT = R.index(D.ctx.tasks);
+  const head = ["session_id", "session_title", "cohort", "respondent", "side", "submitted", "axis", "direction", "to_value", "as_is", "as_is_vs_rival",
+                "cites_tasks", "cites_task_places", "cites_wall", "cites_wall_ligado", "cites_wall_arrow", "offer_only", "offer_reason", "note", "uncited", "amber", "valid"];
+  const rows = ROOM.moves.map(m => {
+    const a = axById[m.axis_id], c = curveBy[m.pid] || {};
+    const ts = (m.cites_task_ids || []).map(id => tById[id]), ws = (m.cites_wall_ids || []).map(id => D.ctx.wallIndex[id]);
+    return [s.id, s.title, s.cohort, D.respondent[m.pid], a ? sideOf(a) : "", c.submitted_at ? 1 : 0, a ? a.code : m.axis_id, m.direction, m.to_value,
+            a && a.as_is_you, a ? scaleWord(a.as_is_you) : "", ts.map(t => t ? t.code : "?").join(" "), ts.map(t => t && ctxT[t.id] ? ctxT[t.id].place || "" : "").join(" "),
+            ws.map(w => w ? w.name : "?").join(" | "), ws.map(w => w ? (w.ligado ? 1 : 0) : "").join(" "), ws.map(w => w && w.arrow ? w.arrow : "").join(" "),
+            m.offer_only ? 1 : 0, m.offer_reason, m.note, m.uncited ? 1 : 0, m.amber ? 1 : 0, m.valid ? 1 : 0];
+  });
+  download(`nova-curva_${s.id}.csv`, [head, ...rows].map(r => r.map(csvCell).join(",")).join("\n"), "text/csv;charset=utf-8");
+}
+/* Change request 4: the created axes, one row per table's axis, never inside
+   an existing axis: its name, wall card, pôlder card, and how many backed it. */
+function createdExport(){
+  const D = ROOM.D, tById = R.index(ROOM.tasks), backs = ROOM.backers || [];
+  return (ROOM.created || []).map(c => ({ table_no: c.table_no, name: c.name, wall: D.name.wall(c.wall_id),
+    polder: c.polder_id ? D.name.task(c.polder_id) : null, polder_code: c.polder_id && tById[c.polder_id] ? tById[c.polder_id].code : null,
+    backers: backs.filter(b => b.created_id === c.id).length, amber: !!c.amber, uncited: !!c.uncited, created_at: c.created_at }));
+}
+function exportCreatedCSV(){
+  const s = ROOM.session;
+  const cols = ["session_id", "session_title", "cohort", "table_no", "axis_name", "wall_card", "polder_card", "polder_code", "backers", "amber", "uncited", "created_at"];
+  const rows = createdExport().map(c => [s.id, s.title, s.cohort, c.table_no, c.name, c.wall, c.polder, c.polder_code, c.backers, c.amber ? 1 : 0, c.uncited ? 1 : 0, c.created_at]);
+  download(`nova-curva_${s.id}_eixos-novos.csv`, [cols, ...rows].map(r => r.map(csvCell).join(",")).join("\n"), "text/csv;charset=utf-8");
+}
+/* Change request 5: one commitment object per table: its option, its fields
+   in words, its citations as ids, owner and date, and the sentence. */
+function commitExport(c, n){
+  const bill = c.bill ? (c.bill.kind === "card" ? n.task(c.bill.id) : c.bill.kind === "reduce" ? "baixar " + n.axis(c.bill.id) : c.bill.text) : null;
+  return { table_no: c.table_no, option: c.option,
+    polder: c.polder ? (c.polder.kind === "created" ? n.created(c.polder.id) : n.task(c.polder.id)) : null, bill, know: c.know || null,
+    raise_axis: c.raise ? n.axis(c.raise.axis_id) : null, buyer_sees: c.raise ? c.raise.sees : null, guard: c.guard ? n.wall(c.guard) : null, price: c.price || null,
+    owner: c.owner, review: c.review, amber: !!c.amber, uncited: !!c.uncited, submitted_at: c.submitted_at,
+    citations: { polder: c.polder || null, bill: c.bill || null, raise_axis_id: c.raise ? c.raise.axis_id : null, guard: c.guard || null },
+    sentence: R.commitSentence(c, n) };
+}
+function exportCommitCSV(){
+  const s = ROOM.session, D = ROOM.D;
+  const cols = ["session_id", "session_title", "cohort", "table_no", "option", "polder", "bill", "know", "raise_axis", "buyer_sees", "guard", "price", "owner", "review", "amber", "uncited", "submitted_at", "sentence"];
+  const rows = D.commits.map(c => commitExport(c, D.name)).map(x => [s.id, s.title, s.cohort, x.table_no, x.option, x.polder, x.bill, x.know, x.raise_axis, x.buyer_sees,
+    x.guard, x.price, x.owner, x.review, x.amber ? 1 : 0, x.uncited ? 1 : 0, x.submitted_at, x.sentence]);
+  download(`nova-curva_${s.id}_compromissos.csv`, [cols, ...rows].map(r => r.map(csvCell).join(",")).join("\n"), "text/csv;charset=utf-8");
+}
+/* The device ids are the phones' keys to their own rows; the export carries
+   respondent numbers instead. */
+function exportJSON(){
+  const D = ROOM.D, rid = p => D.respondent[p] || "r?";
+  const out = { session: ROOM.session, tasks: ROOM.tasks, axes: ROOM.axes,
+    sorts: ROOM.sorts.map(x => ({ table_no: x.table_no, choices: x.choices, submitted_at: x.submitted_at })),
+    wall: ROOM.wall, seats: ROOM.seats.map(x => ({ table_no: x.table_no, claimed_at: x.claimed_at })),
+    curves: ROOM.curves.map(c => ({ respondent: rid(c.pid), buyer: c.buyer, submitted_at: c.submitted_at })),
+    moves: ROOM.moves.map(m => { const { pid, ...rest } = m; return { respondent: rid(pid), ...rest }; }),
+    placement: ROOM.placement,
+    created_axis: Object.values(createdExport().reduce((o, c) => { const k = c.table_no == null ? "none" : c.table_no;
+      (o[k] = o[k] || { table_no: c.table_no, axes: [] }).axes.push(c); return o; }, {})),
+    commitments: D.commits.map(c => commitExport(c, D.name)),
+    expected: D.expected.map(e => ({ axis: e.axis.code, expect: e.expect, findings: e.findings })) };
+  download(`nova-curva_${ROOM.session.id}.json`, JSON.stringify(out, null, 1), "application/json");
+}
+
+/* ----------------------------------------------------------------- events */
+/* the rehearsal fills a session at its own size: 16 at three tables, 40 at eight, five a table otherwise */
+const rehPeople = t => (window.NCREHEARSAL && window.NCREHEARSAL.PEOPLE && window.NCREHEARSAL.PEOPLE[t]) || t * 5;
+async function facil(fn){
+  try { const r = await fn(); NOTE = ""; return r || true; }
+  catch(e){ NOTE = e.status === 401 ? "a chave não foi aceite" : "falhou: " + e.message; render(); return null; }
+}
+const ACT = {
+  tz(el){ SORT.choices[el.dataset.id] = el.dataset.z; SORT.err = null; saveSort(); render(); },
+  async sortsend(){ await submitSort(); },
+  sorttake(){ if(!confirm("Assumir a triagem desta mesa neste telefone?\n\nO outro telefone deixa de ser o relator desta mesa.")) return;
+    SORT.forceEdit = true; if(TBL && TBL.sort) SORT.choices = { ...TBL.sort.choices }; saveSort(); render(); },
+  wtake(){ if(!confirm("Assumir esta mesa neste telefone?\n\nO outro telefone deixa de ser o relator desta mesa.")) return;
+    WALL.takeover = true; WALL.taken = false; saveWall(); claimSeat(); },
+  warrow(el){
+    if(el.dataset.g != null){ WALL.arrows = WALL.arrows || {}; WALL.arrows[el.dataset.g] = el.dataset.a; }
+    else WALL.rows[+el.dataset.i].arrow = el.dataset.a;
+    WALL.dirty = true; saveWall(); debounce("wall", 500, pushWall); render();
+  },
+  wgiven(el){ WALL.given = WALL.given || {}; WALL.given[el.dataset.g] = el.dataset.v; WALL.dirty = true; saveWall(); debounce("wall", 500, pushWall); render(); },
+  wlig(el){ WALL.rows[+el.dataset.i].ligado = el.dataset.v === "1"; WALL.dirty = true; saveWall(); debounce("wall", 500, pushWall); render(); },
+  buyer(el){ CURVE.buyer = el.dataset.b; CURVE.submitted = false; CURVE.dirty = true; saveCurve(); debounce("curve", 800, () => pushCurve(false)); render(); },
+  editmove(el){ openSheet(el.dataset.ax, CURVE.moves[el.dataset.ax].to_value); render(); },
+  dropmove(el){ delete CURVE.moves[el.dataset.ax]; CURVE.submitted = false; CURVE.dirty = true; saveCurve(); debounce("curve", 800, () => pushCurve(false)); render(); },
+  dir(el){ SHEET.direction = el.dataset.d; render(); },
+  citet(el){ toggle(SHEET.cites_task_ids, el.dataset.id); render(); },
+  citew(el){ toggle(SHEET.cites_wall_ids, el.dataset.id); render(); },
+  closesheet(){ SHEET = null; render(); },
+  sheetsave(){
+    const s = SHEET, lower = R.LOWER.includes(s.direction);
+    CURVE.moves[s.axis_id] = { direction: s.direction, to_value: s.to_value, cites_task_ids: s.cites_task_ids, cites_wall_ids: s.cites_wall_ids,
+                               offer_only: lower && s.offer_only, offer_reason: lower && s.offer_only ? s.offer_reason.trim() : null, note: s.note.trim() || null };
+    SHEET = null; CURVE.submitted = false; CURVE.err = null; CURVE.dirty = true; saveCurve(); debounce("curve", 600, () => pushCurve(false)); render();
+  },
+  async submitcurve(){ clearTimeout(TIMERS.curve); CURVE.pendingSubmit = true; CURVE.dirty = true; saveCurve(); render(); await pushCurve(true); },
+  /* change request 4: a new axis, below the seven */
+  axnew(){ AXN.form = { name: "", wall_id: null, polder_id: null }; AXN.err = null; render(); },
+  axcancel(){ AXN.form = null; AXN.err = null; render(); },
+  axw(el){ AXN.form.wall_id = AXN.form.wall_id === el.dataset.id ? null : el.dataset.id; render(); },
+  axp(el){ AXN.form.polder_id = AXN.form.polder_id === el.dataset.id ? null : el.dataset.id; render(); },
+  async axsave(){
+    const f = AXN.form; if(!f) return;
+    const d = await axCall("/created", { name: f.name.trim(), wall_id: f.wall_id, polder_id: f.polder_id });
+    /* made, or the table already has two, or already has this one: the form closes on the list */
+    if(d || AXN.list.length >= AXN.cap || AXN.list.some(a => R.sameCard(a.name, f.name))){ AXN.form = null; render(); }
+  },
+  async axback(el){ await axCall("/created/back", { id: el.dataset.id, back: el.dataset.b === "1" }); },
+  async axdel(el){ if(!confirm("Apagar este eixo?\n\nQuem o apoiava deixa de o apoiar.")) return; await axCall("/created/remove", { id: el.dataset.id }); },
+  /* change request 5: the table's commitment */
+  copt(el){
+    const o = el.dataset.o;
+    if(COMMIT.option !== o){
+      COMMIT.option = o; COMMIT.err = null; COMMIT.pre = COMMIT.pre || {};
+      const pf = R.commitPrefill(o, CMT && CMT.context);
+      if(o === "polder" && !COMMIT.polder && pf.polder){ COMMIT.polder = pf.polder; COMMIT.pre.polder = true; }
+      if(o === "raise"){
+        COMMIT.raise = COMMIT.raise || { axis_id: null, sees: "" };
+        if(!COMMIT.raise.axis_id && pf.raise){ COMMIT.raise.axis_id = pf.raise.axis_id; COMMIT.pre.raise = true; }
+        if(!COMMIT.guard && pf.guard){ COMMIT.guard = pf.guard; COMMIT.pre.guard = true; }
+      }
+      saveCommit();
+    }
+    render();
+  },
+  cpol(el){ COMMIT.polder = { kind: el.dataset.k, id: el.dataset.id }; COMMIT.pre.polder = false; COMMIT.err = null; saveCommit(); render(); },
+  cbill(el){ COMMIT.bill = { kind: el.dataset.k, id: el.dataset.id }; COMMIT.err = null; saveCommit(); render(); },
+  caxis(el){ COMMIT.raise.axis_id = el.dataset.id; COMMIT.pre.raise = false; COMMIT.err = null; saveCommit(); render(); },
+  cguard(el){ COMMIT.guard = el.dataset.id; COMMIT.pre.guard = false; COMMIT.err = null; saveCommit(); render(); },
+  async csend(){
+    const v = R.validateCommit(COMMIT, ctxNow(), CMT.context);
+    if(!v.ok){ COMMIT.err = R.msgPt(v.errors[0]); saveCommit(); render(); return; }
+    CMT.sending = true; render();
+    try {
+      const d = await api("/commit", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, takeover: !!COMMIT.takeover, commit: commitPayload() } });
+      COMMIT.sentAt = d.commit.submitted_at; COMMIT.err = null; COMMIT.takeover = false; CMT.commit = d.commit;
+    } catch(e){
+      if(e.status === 409 && e.data && e.data.taken){ CMT.taken = true; CMT.steward = false; }
+      else if(!sessionChanged(e)) COMMIT.err = e.status === 0 ? "Sem rede. Tentem de novo, ou preencham a folha em papel." : e.message;
+    }
+    CMT.sending = false; saveCommit(); render();
+  },
+  async ctake(){
+    if(!confirm("Assumir esta mesa neste telefone?\n\nO outro telefone deixa de ser o relator desta mesa.")) return;
+    try { CMT = Object.assign(await api("/commit", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, claim: true, takeover: true } }), { sending: false }); CMT_AT = Date.now(); adoptCommit(CMT); }
+    catch(e){ sessionChanged(e); }
+    render();
+  },
+  /* the console */
+  setkey(){ const v = document.getElementById("keyin").value.trim(); if(v){ KEY = v; S.set("key", v); render(); tick(true); } },
+  async activate(el){
+    const to = SESSIONS.find(x => x.id === el.dataset.id), from = SESSIONS.find(x => x.id === ACTIVE);
+    const msg = to ? `Abrir «${to.title}» aos telefones?\n\nA partir de agora, todos os telefones escrevem nesta sessão${from ? `, e deixam de escrever em «${from.title}»` : ""}.`
+                   : `Fechar «${from ? from.title : "a sessão aberta"}»?\n\nOs telefones deixam de escrever.`;
+    if(!confirm(msg)) return;
+    await facil(() => api("/f/active", { method: "POST", key: true, body: { session_id: el.dataset.id || null } })); await pollSessions(); await refetchRoom();
+  },
+  pickses(el){ SID = el.dataset.id; S.set("sid", SID); ROOM = null; render(); pollRoom(); },
+  async newses(){
+    const title = document.getElementById("nstitle").value.trim();
+    if(!title){ NOTE = "Dê um título à sessão."; render(); return; }
+    /* change request 6: the session's seed: the afternoon's (session.json) or the morning's (session-ocesp.json) */
+    const file = (document.getElementById("nsseed") || {}).value || "session.json";
+    let seed = SEED;
+    if(file !== "session.json"){ try { const r = await fetch(file, { cache: "no-store" }); seed = r.ok ? await r.json() : null; } catch(e){ seed = null; } }
+    if(!seed || !seed.tasks){ NOTE = `${file} não carregou: não há tarefas para semear.`; render(); return; }
+    const d = await facil(() => api("/f/session", { method: "POST", key: true, body: { title, cohort: document.getElementById("nscohort").value, activate: false,
+      config: { tasks: seed.tasks, axes: seed.axes, generic: seed.generic_wall,
+                tables: Math.max(1, Math.min(12, Number(document.getElementById("nstables").value) || seed.tables || 6)),
+                rehearsal: document.getElementById("nsreh").checked, build: SEED ? SEED.build : seed.build,
+                placement_scope: seed.placement_scope || "room", rival: seed.rival === undefined ? "Odontoprev" : seed.rival,
+                sides: seed.sides !== false, org: seed.org || null, outside_read: seed.outside_read || null } } }));
+    if(d && d.session_id){ SID = d.session_id; S.set("sid", SID); ROOM = null; await pollSessions(); await pollRoom(); }
+  },
+  async step(el){
+    const at = Math.max(0, SEQ.findIndex(x => x[0] === ROOM.session.state.view));
+    const next = SEQ[Math.min(SEQ.length - 1, Math.max(0, at + Number(el.dataset.d)))][0];
+    await facil(() => api("/f/state", { method: "POST", key: true, body: { session_id: SID, patch: { view: next } } })); await refetchRoom();
+  },
+  lineedit(){ LINE_EDIT = !LINE_EDIT; render(); },
+  async freeseat(el){ if(!confirm(`Retirar a Mesa ${el.dataset.t}?\n\nO telefone e o muro desta mesa saem da sala. Use quando o telefone de um porta-voz parou e outro telefone já entrou como mesa nova.`)) return;
+    await facil(() => api("/f/seat", { method: "POST", key: true, body: { session_id: SID, table: +el.dataset.t } })); await refetchRoom(); },
+  place(el){ PLACE.choices[el.dataset.a] = el.dataset.v; PLACE.err = null; savePlace(); render(); },
+  async placesubmit(){
+    try {
+      await api("/placement", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, choices: PLACE.choices, rival_name: tableScope() ? String(PLACE.rival || "").trim() : undefined } });
+      PLACE.err = null; savePlace();
+    } catch(e){
+      if(e.status === 409 && e.data && "table_no" in e.data){ PLACE.err = null; }
+      else if(!sessionChanged(e)){ PLACE.err = e.status === 403 ? "Só o porta-voz desta mesa envia. Assuma a mesa primeiro."
+                                   : e.status === 0 ? "Sem rede. Tente de novo daqui a pouco." : e.message; savePlace(); }
+    }
+    if(ST && ST.session) ST.session.data_v = -1;
+    await pollState(); render();
+  },
+  async fplace(el){ await facil(() => api("/f/placement", { method: "PUT", key: true, body: { session_id: SID, axis_code: el.dataset.a, value: el.dataset.v, table: el.dataset.t ? +el.dataset.t : undefined } })); await refetchRoom(); },
+  async outside(){ await facil(() => api("/f/state", { method: "POST", key: true, body: { session_id: SID, patch: { outside: !ROOM.session.state.outside } } })); await refetchRoom(); },
+  csv(){ exportCSV(); }, csvaxes(){ exportCreatedCSV(); }, csvcommit(){ exportCommitCSV(); }, json(){ exportJSON(); }, print(){ window.print(); },
+  async rehearse(){
+    const tb = (ROOM && ROOM.session.config.tables) || 6;
+    if(!confirm(`Encher esta sessão com uma sala de ensaio de ${rehPeople(tb)}, em ${tb} mesas? Isto também a abre aos telefones.`)) return;
+    BUSY = true; NOTE = "a encher…"; render();
+    try { await window.NCREHEARSAL.run({ call: (p, o) => api(p, o || {}), sessionId: SID, tables: tb, people: rehPeople(tb), log: m => { NOTE = m; render(); } }); NOTE = "Sala de ensaio pronta."; }
+    catch(e){ NOTE = "O ensaio parou: " + e.message; }
+    BUSY = false; await pollSessions(); await refetchRoom();
+  },
+  async delses(){ if(!confirm("Apagar esta sessão e tudo o que a sala escreveu nela?")) return;
+    const ok = await facil(() => api(`/f/session?session_id=${encodeURIComponent(SID)}`, { method: "DELETE", key: true }));
+    if(ok){ SID = null; S.del("sid"); ROOM = null; await pollSessions(); render(); } },
+};
+function onClick(e){
+  const el = e.target.closest("[data-act]"); if(!el || el.disabled) return;
+  const f = ACT[el.dataset.act]; if(!f) return;
+  if(el.tagName === "A") e.preventDefault();
+  f(el, e);
+}
+function refreshSheetButton(){
+  const btn = document.querySelector("[data-act=sheetsave]"); if(!btn || !SHEET) return;
+  const a = ST.axes.find(x => x.id === SHEET.axis_id);
+  const v = SHEET.direction ? R.validateMove({ ...SHEET }, ctxNow(), a) : null;
+  btn.disabled = !(v && v.ok);
+}
+function onInput(e){
+  const el = e.target;
+  if(el.dataset.wall != null){ WALL.rows[+el.dataset.wall].name = el.value.slice(0, R.LIMITS.WALL_NAME_MAX); WALL.dirty = true; saveWall(); debounce("wall", 1500, pushWall); return; }
+  if(el.dataset.f && SHEET && el.type !== "checkbox"){ SHEET[el.dataset.f] = el.value; refreshSheetButton(); return; }
+  if(el.dataset.axname != null && AXN.form){ AXN.form.name = el.value.slice(0, R.LIMITS.AXIS_NAME_MAX); refreshAxButton(); return; }
+  if(el.dataset.pr != null && PLACE){
+    PLACE.rival = el.value.slice(0, 60); savePlace();
+    const b = document.querySelector("[data-act=placesubmit]");
+    if(b) b.disabled = !(ST.axes.every(a => PLACE.choices[a.code]) && PLACE.rival.trim());
+    return;
+  }
+  if(el.dataset.cf && COMMIT){
+    const k = el.dataset.cf, v = el.value;
+    if(k === "sees") COMMIT.raise.sees = v;
+    else if(k === "billtext"){ if(v.trim()) COMMIT.bill = { kind: "text", text: v }; else if(COMMIT.bill && COMMIT.bill.kind === "text") COMMIT.bill = null; }
+    else COMMIT[k] = v;
+    COMMIT.err = null; saveCommit(); return;
+  }
+}
+function onChange(e){
+  const el = e.target;
+  /* the seed sets the likely room: the morning's three tables, the afternoon's eight */
+  if(el.id === "nsseed"){ const oc = el.value !== "session.json";
+    const t = document.getElementById("nstables"), c = document.getElementById("nscohort");
+    if(t) t.value = oc ? 3 : 8; if(c) c.value = oc ? "senior" : "emergente"; return; }
+  if(el.type === "range" && el.dataset.ax){
+    const v = Number(el.value), a = ST.axes.find(x => x.id === el.dataset.ax), base = axisBase(a);
+    if(base != null && v === base){
+      if(CURVE.moves[a.id]){ delete CURVE.moves[a.id]; CURVE.submitted = false; CURVE.dirty = true; saveCurve(); debounce("curve", 800, () => pushCurve(false)); }
+      render(); return;
+    }
+    openSheet(a.id, v); render(); return;
+  }
+  if(el.dataset.f === "offer_only" && SHEET){ SHEET.offer_only = el.checked; render(); }
+}
+
+function render(){
+  const r = route();
+  const V = !RELATOR && (r === "triagem" || r === "porta-voz" || r === "compromisso") ? viewRelatorOnly
+    : { "": viewDoor, triagem: viewTriagem, curva: viewCurva, "porta-voz": viewPortaVoz, compromisso: viewCompromisso,
+        f: viewConsole, tela: viewTela, relatorio: viewRelatorio }[r] || viewDoor;
+  const y = window.scrollY;
+  document.getElementById("app").innerHTML = V();
+  if(r !== "triagem") window.scrollTo(0, y);
+}
+</script>
+<script>boot();</script>
+</html>

@@ -1,0 +1,51 @@
+{
+ "module": "nova-curva",
+ "build": 19,
+ "api": "https://nova-curva-api.ethosalpha.workers.dev",
+ "title_pt": "A nova curva",
+ "title_en": "The new curve",
+ "org": "OCESP · SESCOOP/SP · Barcelona · 15 de setembro",
+ "source": "nova-curva_change_request_6.md: the morning room is OCESP and SESCOOP/SP, sixteen people at three tables, from the bodies that represent and train 1,026 cooperatives across seven branches. Twelve seeded cards (the four blank cards per table stay on paper; a table cites one in the move's note), seven branch-neutral axes in one group, twelve wall cards lettered A to L, and each table against its own capital-owned rival.",
+ "tables": 3,
+ "placement_scope": "table",
+ "rival": null,
+ "sides": false,
+ "tasks": [
+  { "code": "T01", "short_pt": "Cadastro do cooperado", "label_pt": "Cadastro e integração do cooperado", "label_en": "Member registration and onboarding", "axis_tags": ["alcance", "qualidade"] },
+  { "code": "T02", "short_pt": "Conciliação e cobrança", "label_pt": "Conciliação, lançamentos e cobrança", "label_en": "Reconciliation, postings and collection", "axis_tags": ["preco"] },
+  { "code": "T03", "short_pt": "Análise de risco", "label_pt": "Análise padronizada de risco ou de pedido", "label_en": "Standard risk or order analysis", "axis_tags": ["preco", "qualidade"] },
+  { "code": "T04", "short_pt": "Primeira leitura", "label_pt": "Primeira leitura de um documento técnico", "label_en": "First read of a technical document", "axis_tags": ["preco"] },
+  { "code": "T05", "short_pt": "Rascunho de proposta", "label_pt": "Rascunho de proposta, contrato ou orçamento", "label_en": "Draft of a proposal, contract or budget", "axis_tags": ["preco", "amplitude"] },
+  { "code": "T06", "short_pt": "Segmentação da base", "label_pt": "Segmentação da base e listas de contato", "label_en": "Segmenting the base, contact lists", "axis_tags": ["qualidade", "retorno"] },
+  { "code": "T07", "short_pt": "Normas e histórico", "label_pt": "Consulta a normas e ao histórico", "label_en": "Looking up rules and history", "axis_tags": ["preco"] },
+  { "code": "T08", "short_pt": "Ata e registro", "label_pt": "Ata e registro assinado por um responsável", "label_en": "Minutes and records signed by a responsible person", "axis_tags": ["preco", "relacao"] },
+  { "code": "T09", "short_pt": "Segunda opinião", "label_pt": "Segunda opinião num caso complexo", "label_en": "Second opinion on a complex case", "axis_tags": ["amplitude"] },
+  { "code": "T10", "short_pt": "A decisão responsável", "label_pt": "A decisão que gera responsabilidade", "label_en": "The decision that carries liability", "axis_tags": ["relacao"] },
+  { "code": "T11", "short_pt": "Recusa ou notícia difícil", "label_pt": "Comunicar uma recusa ou notícia difícil", "label_en": "Delivering a refusal or hard news", "axis_tags": ["relacao", "qualidade"] },
+  { "code": "T12", "short_pt": "Caso complexo", "label_pt": "O caso complexo: julgamento sob incerteza", "label_en": "The complex case: judgement under uncertainty", "axis_tags": ["relacao"] }
+ ],
+ "axes": [
+  { "code": "preco", "label_pt": "Preço", "label_en": "Price", "polarity": "mais alto = mais barato", "as_is_you": null, "as_is_rival": null, "eliminable": true },
+  { "code": "alcance", "label_pt": "Alcance", "label_en": "Reach", "polarity": null, "as_is_you": null, "as_is_rival": null, "eliminable": true },
+  { "code": "qualidade", "label_pt": "Qualidade", "label_en": "Quality", "polarity": null, "as_is_you": null, "as_is_rival": null, "eliminable": true },
+  { "code": "amplitude", "label_pt": "Amplitude", "label_en": "Breadth of offer", "polarity": null, "as_is_you": null, "as_is_rival": null, "eliminable": true },
+  { "code": "digital", "label_pt": "Digital", "label_en": "Digital", "polarity": null, "as_is_you": null, "as_is_rival": null, "eliminable": true },
+  { "code": "relacao", "label_pt": "Relação", "label_en": "Relationship", "polarity": null, "as_is_you": null, "as_is_rival": null, "eliminable": true },
+  { "code": "retorno", "label_pt": "Retorno", "label_en": "Return to members", "polarity": null, "as_is_you": null, "as_is_rival": null, "eliminable": true }
+ ],
+ "generic_wall": [
+  { "id": "g:A", "name_pt": "A · o vínculo com o cooperado", "name_en": "A · the bond with the member", "solid": true },
+  { "id": "g:B", "name_pt": "B · o histórico acumulado", "name_en": "B · the accumulated history", "solid": true },
+  { "id": "g:C", "name_pt": "C · a capilaridade territorial", "name_en": "C · territorial reach", "solid": true },
+  { "id": "g:D", "name_pt": "D · a base de cooperados que não troca", "name_en": "D · a member base that does not switch", "solid": true },
+  { "id": "g:E", "name_pt": "E · os contratos e convênios", "name_en": "E · contracts and agreements", "solid": true },
+  { "id": "g:F", "name_pt": "F · os dados de resultado ligados a decisões", "name_en": "F · outcome data tied to decisions", "solid": true },
+  { "id": "g:G", "name_pt": "G · a marca", "name_en": "G · the brand", "solid": false },
+  { "id": "g:H", "name_pt": "H · fornecedor e dono na mesma pessoa", "name_en": "H · supplier and owner in one person", "solid": true },
+  { "id": "g:I", "name_pt": "I · a capacidade instalada", "name_en": "I · installed capacity", "solid": true },
+  { "id": "g:J", "name_pt": "J · a plataforma do fornecedor", "name_en": "J · the vendor's platform", "solid": false },
+  { "id": "g:K", "name_pt": "K · o aplicativo", "name_en": "K · the app", "solid": false },
+  { "id": "g:L", "name_pt": "L · a licença ou registro", "name_en": "L · the licence or registration", "solid": true }
+ ],
+ "outside_read": null
+}

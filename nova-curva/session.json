@@ -1,0 +1,308 @@
+{
+ "module": "nova-curva",
+ "build": 19,
+ "api": "https://nova-curva-api.ethosalpha.workers.dev",
+ "title_pt": "A nova curva",
+ "title_en": "The new curve",
+ "tables": 6,
+ "org": "Uniodonto · Barcelona · 15 de setembro",
+ "placement_scope": "room",
+ "rival": "Odontoprev",
+ "sides": true,
+ "tag_sources": {
+  "slide25": "the joint slide, Uniodonto_Spine_v11.pptx slide 25",
+  "brief": "Course_ValueCurve_BuildBrief.md",
+  "inferred": "not on the joint slide: set by the build, for the facilitator to confirm or change before the day",
+  "change_request": "nova-curva_change_request.md, 11 September 2026"
+ },
+ "tasks": [
+  {
+   "code": "T01",
+   "short_pt": "Agendamento",
+   "label_pt": "Agendamento, lembretes e recuperação de faltas",
+   "label_en": "Scheduling, reminders, no-show recovery",
+   "axis_tags": [
+    "price",
+    "complaints",
+    "digital"
+   ],
+   "tag_source": "slide25 (price, complaints) · inferred (digital)"
+  },
+  {
+   "code": "T02",
+   "short_pt": "Guias TISS",
+   "label_pt": "Codificação e envio de guias (TISS)",
+   "label_en": "Claim coding and submission (TISS)",
+   "axis_tags": [
+    "price",
+    "employer_reporting"
+   ],
+   "tag_source": "slide25"
+  },
+  {
+   "code": "T03",
+   "short_pt": "Autorização prévia",
+   "label_pt": "Análise de autorização prévia, lado da operadora",
+   "label_en": "Prior-authorisation review, payer side",
+   "axis_tags": [
+    "price",
+    "complaints"
+   ],
+   "tag_source": "slide25 (price) · inferred (complaints: slide 25's 'authorisation speed' is not one of the seven axes)"
+  },
+  {
+   "code": "T04",
+   "short_pt": "Primeira leitura",
+   "label_pt": "Primeira leitura da radiografia ou do escaneamento",
+   "label_en": "First read of the radiograph or scan",
+   "axis_tags": [
+    "price"
+   ],
+   "tag_source": "inferred"
+  },
+  {
+   "code": "T05",
+   "short_pt": "Plano e orçamento",
+   "label_pt": "Rascunho do plano de tratamento e do orçamento",
+   "label_en": "Draft treatment plan and estimate",
+   "axis_tags": [
+    "price"
+   ],
+   "tag_source": "inferred"
+  },
+  {
+   "code": "T06",
+   "short_pt": "Risco e retorno",
+   "label_pt": "Estratificação de risco da carteira e listas de retorno",
+   "label_en": "Panel risk-stratification and recall lists",
+   "axis_tags": [
+    "complaints",
+    "employer_reporting"
+   ],
+   "tag_source": "slide25 (complaints: recall) · inferred (employer reporting: analytics)"
+  },
+  {
+   "code": "T07",
+   "short_pt": "Diretrizes na cadeira",
+   "label_pt": "Busca de diretrizes e histórico na cadeira",
+   "label_en": "Guideline and history retrieval at the chair",
+   "axis_tags": [
+    "price"
+   ],
+   "tag_source": "inferred"
+  },
+  {
+   "code": "T08",
+   "short_pt": "Escriba e prontuário",
+   "label_pt": "Escriba ambiente, depois o prontuário assinado pelo dentista",
+   "label_en": "Ambient scribe, then the dentist-signed record",
+   "axis_tags": [
+    "price"
+   ],
+   "tag_source": "inferred"
+  },
+  {
+   "code": "T09",
+   "short_pt": "Segunda opinião",
+   "label_pt": "Segunda opinião sobre um plano complexo",
+   "label_en": "Second opinion on a complex plan",
+   "axis_tags": [],
+   "tag_source": "inferred: no axis, so ortho and specialist stays un-lowerable by automation"
+  },
+  {
+   "code": "T10",
+   "short_pt": "Diagnóstico",
+   "label_pt": "Diagnóstico e a decisão de tratamento",
+   "label_en": "Diagnosis and the treatment decision",
+   "axis_tags": [
+    "continuity"
+   ],
+   "tag_source": "slide25 (the chairside act)"
+  },
+  {
+   "code": "T11",
+   "short_pt": "Consentimento",
+   "label_pt": "Consentimento, e a comunicação de notícias difíceis",
+   "label_en": "Consent, and breaking difficult news",
+   "axis_tags": [
+    "continuity"
+   ],
+   "tag_source": "slide25 (consent, the relationship)"
+  },
+  {
+   "code": "T12",
+   "short_pt": "Caso complexo",
+   "label_pt": "O caso complexo: julgamento sob incerteza",
+   "label_en": "The complex case: judgment under uncertainty",
+   "axis_tags": [
+    "continuity"
+   ],
+   "tag_source": "slide25 (the chairside act)"
+  },
+  {
+   "code": "T13",
+   "short_pt": "Relatório ao empregador",
+   "label_pt": "Montagem do relatório de utilização e prevenção para o empregador",
+   "label_en": "Assembling the employer utilisation and prevention report",
+   "axis_tags": [
+    "employer_reporting"
+   ],
+   "tag_source": "brief"
+  },
+  {
+   "code": "T14",
+   "short_pt": "Capacidade da rede",
+   "label_pt": "Planejamento de capacidade da rede por cidade",
+   "label_en": "Network capacity planning by city",
+   "axis_tags": [
+    "network"
+   ],
+   "tag_source": "brief"
+  },
+  {
+   "code": "T15",
+   "short_pt": "Ligação pré-extração",
+   "label_pt": "Ligação ao paciente ansioso antes da extração",
+   "label_en": "The call to the anxious patient before an extraction",
+   "axis_tags": [
+    "complaints",
+    "continuity"
+   ],
+   "tag_source": "change_request: pôlder bait"
+  },
+  {
+   "code": "T16",
+   "short_pt": "Ligação após notícia difícil",
+   "label_pt": "Acompanhamento por telefone após notícia difícil",
+   "label_en": "The follow-up call after difficult news",
+   "axis_tags": [
+    "continuity"
+   ],
+   "tag_source": "change_request: pôlder bait"
+  }
+ ],
+ "axes": [
+  {
+   "code": "price",
+   "label_pt": "Preço",
+   "label_en": "Price",
+   "polarity": "mais alto = mais barato",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": false,
+   "side": "employer"
+  },
+  {
+   "code": "network",
+   "label_pt": "Rede",
+   "label_en": "Network",
+   "polarity": "pontos por 100 mil habitantes",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": false,
+   "side": "employer"
+  },
+  {
+   "code": "complaints",
+   "label_pt": "Reclamações",
+   "label_en": "Complaints",
+   "polarity": "mais alto = menos reclamações",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": true,
+   "side": "employer"
+  },
+  {
+   "code": "employer_reporting",
+   "label_pt": "Relatório para o empregador",
+   "label_en": "Employer reporting",
+   "polarity": "o que o RH recebe",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": true,
+   "side": "employer"
+  },
+  {
+   "code": "continuity",
+   "label_pt": "Continuidade com o mesmo dentista",
+   "label_en": "Dentist continuity",
+   "polarity": "em dois anos",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": false,
+   "side": "beneficiary"
+  },
+  {
+   "code": "ortho_specialist",
+   "label_pt": "Ortodontia e especialidades",
+   "label_en": "Ortho & specialist",
+   "polarity": "além do rol da ANS",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": true,
+   "side": "beneficiary"
+  },
+  {
+   "code": "digital",
+   "label_pt": "Digital",
+   "label_en": "Digital",
+   "polarity": "notas dos aplicativos",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": true,
+   "side": "beneficiary"
+  }
+ ],
+ "generic_wall": [
+  {
+   "id": "g:owners",
+   "name_pt": "22 mil dentistas donos, no país inteiro",
+   "name_en": "22,000 owner-dentists, nationwide",
+   "solid": true
+  },
+  {
+   "id": "g:record",
+   "name_pt": "O prontuário longitudinal do paciente",
+   "name_en": "The longitudinal patient record",
+   "solid": true
+  },
+  {
+   "id": "g:reciprocity",
+   "name_pt": "Reciprocidade em todo o Brasil",
+   "name_en": "Reciprocity anywhere in Brazil",
+   "solid": true
+  },
+  {
+   "id": "g:onebody",
+   "name_pt": "Operadora e prestador no mesmo corpo",
+   "name_en": "Payer and provider in one body",
+   "solid": true
+  },
+  {
+   "id": "g:brand",
+   "name_pt": "A marca",
+   "name_en": "The brand",
+   "solid": true
+  },
+  {
+   "id": "g:vendor",
+   "name_pt": "A plataforma e o painel do fornecedor",
+   "name_en": "The vendor's platform and dashboard",
+   "solid": false
+  }
+ ],
+ "generic_wall_source": "slide 52/53, the six VRIO rows. They are the six cards every table is given for the wall, and the fallback wall when no card reaches a majority; solid where the outside read calls the asset bound, hollow where rented.",
+ "outside_read": {
+  "note": "The desk work, where public sources could read anything (curva/session.json, September 2026). Shown on the projector as direction only, and only when the console switches it on. Never the ghost.",
+  "axes": {
+   "price": {
+    "you": 2.0,
+    "rival": 3.8
+   },
+   "digital": {
+    "you": 1.9,
+    "rival": 4.4
+   }
+  }
+ }
+}
