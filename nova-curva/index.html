@@ -1057,10 +1057,10 @@ function viewConsole(){
         ${x.id === ACTIVE ? `<span class="chip lig">aberta aos telefones</span>` : `<button data-act="activate" data-id="${esc(x.id)}">abrir aos telefones</button>`}
         <button class="${x.id === SID ? "on" : ""}" data-act="pickses" data-id="${esc(x.id)}">${x.id === SID ? "a ver" : "ver"}</button></div>`).join("") || `<div class="muted">Nenhuma sessão ainda.</div>`}</div>
       ${ACTIVE ? `<p class="small"><button class="link" data-act="activate" data-id="">fechar a sessão aberta</button>: os telefones deixam de escrever.</p>` : ""}
-      <div class="row" style="margin-top:12px"><input id="nstitle" placeholder="Manhã · lideranças seniores" style="flex:2;min-width:220px">
+      <div class="row" style="margin-top:12px"><input id="nstitle" placeholder="título, ex.: Teste · manhã" style="flex:2;min-width:220px">
         <select id="nsseed" style="flex:1;min-width:210px"><option value="session.json">Uniodonto · uma linha, contra a Odontoprev</option><option value="session-ocesp.json">OCESP · SESCOOP/SP · uma linha por mesa</option></select>
         <select id="nscohort" style="flex:1;min-width:170px"><option value="senior">manhã · senior</option><option value="emergente">tarde · emergente</option></select>
-        <label class="small row" style="gap:6px;flex-wrap:nowrap">mesas <input type="number" id="nstables" min="1" max="12" value="${SEED && SEED.tables || 6}" style="width:72px"></label>
+        <label class="small row" style="gap:6px;flex-wrap:nowrap">mesas <input type="number" id="nstables" min="1" max="12" value="${SEED && SEED.tables || 8}" style="width:72px"></label>
         <label class="small row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" id="nsreh" style="width:auto"> ensaio</label>
         <button data-act="newses">Criar sessão</button></div>
       ${NOTE && !ROOM ? `<p class="small">${esc(NOTE)}</p>` : ""}</div>`;
