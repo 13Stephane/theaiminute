@@ -484,9 +484,9 @@ function viewDoor(){
     <h1>A nova curva<span class="en">The new curve</span></h1>
     <p class="muted" style="margin:6px 0 0">${s ? esc(s.title) + (MESA ? ` · Mesa ${MESA}` : "") : "A sessão ainda não abriu. Esta página muda sozinha."}</p>
     <div class="doors">
+      ${RELATOR ? door("porta-voz", "Porta-voz", "o relator da mesa", "Às 0:16, a curva de hoje da mesa. Depois da triagem e da caminhada, o muro da mesa.", WALL && WALL.table ? `Mesa ${WALL.table}` : "") : ""}
       ${RELATOR ? door("triagem", "Triagem", "o relator registra, ao fim", `Depois da revelação: onde a mesa deixou cada um dos ${s ? numPt(n) + " " : ""}cartões.`, s ? (SORT && SORT.submittedAt ? "enviada" : answered ? `${answered} de ${n}` : "") : "") : ""}
       ${door("curva", "Curva", "the curve", "A sua curva: o que reduzir, o que elevar, o que criar.", cur)}
-      ${RELATOR ? door("porta-voz", "Porta-voz", "o relator da mesa", "A curva de hoje, às 0:16, e o muro da mesa.", WALL && WALL.table ? `Mesa ${WALL.table}` : "") : ""}
       ${RELATOR ? door("compromisso", "Compromisso", "a mesa decide, o relator registra", "Um pôlder que vocês financiam, ou uma elevação que vocês financiam e guardam.", COMMIT && COMMIT.sentAt ? "enviado" : COMMIT && COMMIT.option ? "rascunho" : "") : ""}
     </div>
     ${param("f") !== null ? `<p class="small" style="margin-top:22px"><a href="#/f">Consola do facilitador</a> · <a href="#/relatorio">Relatório</a></p>` : ""}
@@ -645,7 +645,8 @@ function viewTriagem(){
       <div class="zrow">${R.SORT_STATES.map(z => `<button class="zb ${c[t.id] === z ? "on" : ""}" data-act="tz" data-id="${esc(t.id)}" data-z="${z}">${zsq(z)}${esc(R.ZONE_PT[z])}</button>`).join("")}</div></div>`).join("")}
     <div class="cbar"><div class="small">${answered} de ${tasks.length} cartões${SORT.submittedAt ? ` · enviada às ${hhmm(SORT.submittedAt)}; pode corrigir e reenviar` : ""}</div>
       ${SORT.err === "taken" ? `<div class="small" style="color:var(--bad);margin-top:4px">Esta mesa já tem relator noutro telefone.</div>` : SORT.err ? `<div class="small" style="color:var(--bad);margin-top:4px">${esc(SORT.err)}</div>` : ""}
-      <button class="primary" style="margin-top:8px" data-act="sortsend" ${answered === tasks.length && !SORT.sending ? "" : "disabled"}>${SORT.submittedAt ? "Reenviar a triagem da mesa" : "Enviar a triagem da mesa"} <span class="muted">(${answered}/${tasks.length})</span></button></div></div>`;
+      <button class="primary" style="margin-top:8px" data-act="sortsend" ${answered === tasks.length && !SORT.sending ? "" : "disabled"}>${SORT.submittedAt ? "Reenviar a triagem da mesa" : "Enviar a triagem da mesa"} <span class="muted">(${answered}/${tasks.length})</span></button>
+      ${SORT.submittedAt ? `<p class="small" style="margin:8px 0 0"><a href="#/">← voltar ao início</a> · a seguir, depois da caminhada: o muro da mesa, no Porta-voz.</p>` : ""}</div></div>`;
 }
 
 /* Change request 6: in a room of rivals (the morning) today's line is each
