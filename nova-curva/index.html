@@ -655,6 +655,12 @@ const tableScope = () => !!(ST && ST.session && ST.session.scope === "table");
 const myLine = () => tableScope() && MESA ? ((ST.placements || []).find(p => p.table_no === MESA) || null) : null;
 function atTable(){ if(tableScope()) ST.axes = R.axesAtTable(ST.axes, myLine() ? myLine().choices : null); }
 const rivalWord = () => tableScope() ? ((myLine() && myLine().rival_name) || "o rival da sua mesa") : ((ST && ST.session && ST.session.rival) || "Odontoprev");
+/* what still stops the table's line from going: the rival sits at the top, above the fold on a phone */
+function placeMissing(){
+  const k = ST.axes.filter(a => !PLACE.choices[a.code]).length, rv = String(PLACE.rival || "").trim();
+  const m = [rv ? "" : "falta o rival da mesa, no topo", k ? (k === 1 ? "falta 1 eixo" : `faltam ${k} eixos`) : ""].filter(Boolean);
+  return m.length ? "Para enviar: " + m.join(" · ") + "." : "";
+}
 function tablePlacementBlock(){
   const mine = myLine(), t = WALL.table;
   if(mine) return `<div class="note" style="margin-top:12px">A curva de hoje da Mesa ${t} já entrou, contra ${esc(mine.rival_name || "o rival da mesa")}, às ${hhmm(mine.entered_at)}.
@@ -668,7 +674,8 @@ function tablePlacementBlock(){
     ${axes.map(a => `<div class="wrow"><b class="serif">${esc(a.label_pt)}</b><div class="row" style="flex-wrap:nowrap">${R.PLACEMENT.map(v =>
       `<button style="flex:1" class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></div>`).join("")}
     ${PLACE.err ? `<p class="small" style="color:var(--bad)">${esc(PLACE.err)}</p>` : ""}
-    <button class="primary" style="margin-top:10px" data-act="placesubmit" ${n === axes.length && rv ? "" : "disabled"}>Enviar a curva de hoje da mesa (${n} de ${axes.length})</button></div>`;
+    <button class="primary" style="margin-top:10px" data-act="placesubmit" ${n === axes.length && rv ? "" : "disabled"}>Enviar a curva de hoje da mesa (${n} de ${axes.length})</button>
+    <p class="small" data-prmiss style="color:var(--amber);margin:6px 0 0">${esc(placeMissing())}</p></div>`;
 }
 /* Today's line, entered once by any relator. */
 function placementBlock(){
@@ -1652,6 +1659,7 @@ function onInput(e){
     PLACE.rival = el.value.slice(0, 60); savePlace();
     const b = document.querySelector("[data-act=placesubmit]");
     if(b) b.disabled = !(ST.axes.every(a => PLACE.choices[a.code]) && PLACE.rival.trim());
+    const h = document.querySelector("[data-prmiss]"); if(h) h.textContent = placeMissing();
     return;
   }
   if(el.dataset.cf && COMMIT){
