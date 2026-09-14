@@ -368,8 +368,14 @@ async function tick(force){
     if(r === "" && RELATOR && ST && ST.session){ if(ST.session.step === "sort") await loadMesa(false); if(ST.session.step === "commit") await loadCommit(false); }
   }
   if(FACIL.includes(r) && KEY){
-    /* the projector follows the session the console last picked, unless its address pins one */
-    if(r !== "f" && !param("s")){ const cur = S.get("sid"); if(cur && cur !== SID){ SID = cur; ROOM = null; } }
+    /* the projector follows the session the phones write to, so the afternoon room never sees the
+       morning's screens, and shows nothing while no session is open; the report follows the
+       console's pick; an address with ?s= pins either */
+    if(r === "tela" && !param("s")){
+      if(force || t - LAST.sessions >= 5000){ LAST.sessions = t; await pollSessions(); }
+      if((ACTIVE || null) !== SID){ SID = ACTIVE || null; ROOM = null; safeRender(); }
+    }
+    else if(r !== "f" && !param("s")){ const cur = S.get("sid"); if(cur && cur !== SID){ SID = cur; ROOM = null; } }
     if(r === "f" && (force || t - LAST.sessions >= 15000)){ LAST.sessions = t; await pollSessions(); }
     if(force || t - LAST.room >= 4500){ LAST.room = t; if(SID) await pollRoom(); }
   }
@@ -1206,7 +1212,7 @@ function placementSection(s){
 /* ------------------------------------------------------------ the projector */
 function viewTela(){
   if(!KEY) return `<div class="tela"><h1>O projetor</h1><p class="lede">Abre no portátil do facilitador, com a chave.</p></div>`;
-  if(!ROOM) return `<div class="tela"><h1>A nova curva</h1><p class="lede">${SID ? "a carregar…" : "Escolha uma sessão na consola."}</p></div>`;
+  if(!ROOM) return `<div class="tela"><h1>A nova curva</h1><p class="lede">${SID ? "a carregar…" : "à espera da sessão."}</p></div>`;
   const s = ROOM.session, v = param("v") || s.state.view;
   if(v !== "sort" && v !== "wall") ANIM_SEEN = "";
   const T = { sort: telaSort, wall: telaWall, asis: telaAsis, overlay: telaOverlay, moves: telaMoves, expected: telaExpected, commit: telaCommit }[v] || telaAsis;
