@@ -1105,8 +1105,10 @@ function amberDots(D, axes){
 
 /* ------------------------------------------------------------- the console */
 function viewConsole(){
-  if(!KEY) return `<div class="wrap"><div class="kick">Consola</div><h1>A chave</h1>
-    <p class="muted">A consola precisa da chave do facilitador, uma vez, neste navegador.</p>
+  /* a key the Worker refuses (a typo, a placeholder) asks again, instead of leaving the console locked */
+  const keyBad = NET.note === "a chave não foi aceite";
+  if(!KEY || keyBad) return `<div class="wrap"><div class="kick">Consola</div><h1>A chave</h1>
+    <p class="muted">${keyBad ? "Esta chave não foi aceite. Cole a chave do facilitador outra vez." : "A consola precisa da chave do facilitador, uma vez, neste navegador."}</p>
     <input id="keyin" type="password" placeholder="FACILITATOR_KEY"><button class="primary" style="margin-top:10px" data-act="setkey">Guardar a chave</button></div>`;
   const s = ROOM && ROOM.session;
   const act = SESSIONS.find(x => x.id === ACTIVE);
@@ -1213,7 +1215,7 @@ function placementSection(s){
 
 /* ------------------------------------------------------------ the projector */
 function viewTela(){
-  if(!KEY) return `<div class="tela"><h1>O projetor</h1><p class="lede">Abre no portátil do facilitador, com a chave.</p></div>`;
+  if(!KEY || NET.note === "a chave não foi aceite") return `<div class="tela"><h1>O projetor</h1><p class="lede">Abre no portátil do facilitador, com a chave: guarde-a na consola deste navegador.</p></div>`;
   if(!ROOM) return `<div class="tela"><h1>A nova curva</h1><p class="lede">${SID ? "a carregar…" : "à espera da sessão."}</p></div>`;
   const s = ROOM.session, v = param("v") || s.state.view;
   if(v !== "sort" && v !== "wall") ANIM_SEEN = "";
