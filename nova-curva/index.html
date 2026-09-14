@@ -1057,11 +1057,13 @@ function viewConsole(){
         ${x.id === ACTIVE ? `<span class="chip lig">aberta aos telefones</span>` : `<button data-act="activate" data-id="${esc(x.id)}">abrir aos telefones</button>`}
         <button class="${x.id === SID ? "on" : ""}" data-act="pickses" data-id="${esc(x.id)}">${x.id === SID ? "a ver" : "ver"}</button></div>`).join("") || `<div class="muted">Nenhuma sessão ainda.</div>`}</div>
       ${ACTIVE ? `<p class="small"><button class="link" data-act="activate" data-id="">fechar a sessão aberta</button>: os telefones deixam de escrever.</p>` : ""}
-      <div class="row" style="margin-top:12px"><input id="nstitle" placeholder="título, ex.: Teste · manhã" style="flex:2;min-width:220px">
-        <select id="nsseed" style="flex:1;min-width:210px"><option value="session.json">Uniodonto · uma linha, contra a Odontoprev</option><option value="session-ocesp.json">OCESP · SESCOOP/SP · uma linha por mesa</option></select>
-        <select id="nscohort" style="flex:1;min-width:170px"><option value="senior">manhã · senior</option><option value="emergente">tarde · emergente</option></select>
-        <label class="small row" style="gap:6px;flex-wrap:nowrap">mesas <input type="number" id="nstables" min="1" max="12" value="${SEED && SEED.tables || 8}" style="width:72px"></label>
-        <label class="small row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" id="nsreh" style="width:auto"> ensaio</label>
+      <div class="row" style="margin-top:12px"><input id="nstitle" placeholder="título, ex.: Teste · manhã" value="${esc(NSF.title)}" style="flex:2;min-width:220px">
+        <select id="nsseed" style="flex:1;min-width:210px">${[["session.json", "Uniodonto · uma linha, contra a Odontoprev"], ["session-ocesp.json", "OCESP · SESCOOP/SP · uma linha por mesa"]]
+          .map(([v, l]) => `<option value="${v}"${NSF.seed === v ? " selected" : ""}>${l}</option>`).join("")}</select>
+        <select id="nscohort" style="flex:1;min-width:170px">${[["senior", "manhã · senior"], ["emergente", "tarde · emergente"]]
+          .map(([v, l]) => `<option value="${v}"${NSF.cohort === v ? " selected" : ""}>${l}</option>`).join("")}</select>
+        <label class="small row" style="gap:6px;flex-wrap:nowrap">mesas <input type="number" id="nstables" min="1" max="12" value="${esc(String(NSF.tables || (SEED && SEED.tables) || 8))}" style="width:72px"></label>
+        <label class="small row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" id="nsreh" style="width:auto"${NSF.reh ? " checked" : ""}> ensaio</label>
         <button data-act="newses">Criar sessão</button></div>
       ${NOTE && !ROOM ? `<p class="small">${esc(NOTE)}</p>` : ""}</div>`;
   if(!ROOM) return h + `</div>`;
@@ -1589,7 +1591,7 @@ const ACT = {
                 rehearsal: document.getElementById("nsreh").checked, build: SEED ? SEED.build : seed.build,
                 placement_scope: seed.placement_scope || "room", rival: seed.rival === undefined ? "Odontoprev" : seed.rival,
                 sides: seed.sides !== false, org: seed.org || null, outside_read: seed.outside_read || null } } }));
-    if(d && d.session_id){ SID = d.session_id; S.set("sid", SID); ROOM = null; await pollSessions(); await pollRoom(); }
+    if(d && d.session_id){ Object.assign(NSF, { title: "", reh: false }); SID = d.session_id; S.set("sid", SID); ROOM = null; await pollSessions(); await pollRoom(); }
   },
   async step(el){
     const at = Math.max(0, SEQ.findIndex(x => x[0] === ROOM.session.state.view));
@@ -1641,6 +1643,8 @@ function refreshSheetButton(){
 }
 function onInput(e){
   const el = e.target;
+  if(el.id === "nstitle"){ NSF.title = el.value; return; }
+  if(el.id === "nstables"){ NSF.tables = el.value; return; }
   if(el.dataset.wall != null){ WALL.rows[+el.dataset.wall].name = el.value.slice(0, R.LIMITS.WALL_NAME_MAX); WALL.dirty = true; saveWall(); debounce("wall", 1500, pushWall); return; }
   if(el.dataset.f && SHEET && el.type !== "checkbox"){ SHEET[el.dataset.f] = el.value; refreshSheetButton(); return; }
   if(el.dataset.axname != null && AXN.form){ AXN.form.name = el.value.slice(0, R.LIMITS.AXIS_NAME_MAX); refreshAxButton(); return; }
@@ -1658,12 +1662,18 @@ function onInput(e){
     COMMIT.err = null; saveCommit(); return;
   }
 }
+/* the new-session form keeps what was typed and chosen: the console redraws on every poll */
+const NSF = { title: "", seed: "session.json", cohort: "emergente", tables: null, reh: false };
 function onChange(e){
   const el = e.target;
   /* the seed sets the likely room: the morning's three tables, the afternoon's eight */
   if(el.id === "nsseed"){ const oc = el.value !== "session.json";
+    NSF.seed = el.value; NSF.tables = oc ? 3 : 8; NSF.cohort = oc ? "senior" : "emergente";
     const t = document.getElementById("nstables"), c = document.getElementById("nscohort");
-    if(t) t.value = oc ? 3 : 8; if(c) c.value = oc ? "senior" : "emergente"; return; }
+    if(t) t.value = NSF.tables; if(c) c.value = NSF.cohort; return; }
+  if(el.id === "nscohort"){ NSF.cohort = el.value; return; }
+  if(el.id === "nstables"){ NSF.tables = el.value; return; }
+  if(el.id === "nsreh"){ NSF.reh = el.checked; return; }
   if(el.type === "range" && el.dataset.ax){
     const v = Number(el.value), a = ST.axes.find(x => x.id === el.dataset.ax), base = axisBase(a);
     if(base != null && v === base){
