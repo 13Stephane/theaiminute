@@ -768,7 +768,9 @@ function viewPortaVoz(){
   const status = answered < given.length ? `<span style="color:var(--amber)">${answered} de ${given.length} cartões dados respondidos.</span>`
     : missing ? `<span style="color:var(--amber)">${missing} ${missing === 1 ? "cartão novo sem marca" : "cartões novos sem marca"}: ligado ou genérico?</span>`
     : noArrow ? `<span style="color:var(--amber)">${noArrow} ${noArrow === 1 ? "cartão nosso sem seta" : "cartões nossos sem seta"}: mais escasso, estável ou mais abundante?</span>`
-    : WALL.dirty ? "a guardar…" : WALL.savedAt ? `guardado às ${hhmm(WALL.savedAt)}.` : "";
+    : "";
+  /* whether the wall is saved shows even while cards are left blank: a room's wall entered once leaves most blank */
+  const saved = WALL.dirty ? "a guardar…" : WALL.savedAt ? `guardado às ${hhmm(WALL.savedAt)}.` : "";
   if(EMBED === "line") return `${head(`Mesa ${WALL.table}`, "")}${placementBlock()}</div>`;
   return `${head(`Mesa ${WALL.table}`, "Porta-voz · o relator da mesa")}
     ${EMBED === "wall" ? "" : placementBlock()}
@@ -782,7 +784,7 @@ function viewPortaVoz(){
       <input data-wall="${i}" maxlength="${R.LIMITS.WALL_NAME_MAX}" placeholder="cartão novo ${i + 1}" value="${esc(r.name)}" ${WALL.taken ? "disabled" : ""}>
       <div class="grid2"><button class="${r.ligado === true ? "on" : ""}" data-act="wlig" data-i="${i}" data-v="1" ${WALL.taken ? "disabled" : ""}>ligado a nós</button>
         <button class="${r.ligado === false ? "on" : ""}" data-act="wlig" data-i="${i}" data-v="0" ${WALL.taken ? "disabled" : ""}>genérico ou alugado</button></div>${r.ligado === true ? arrowRow("i", i, r.arrow) : ""}</div>`).join("")}
-    <p class="small muted" style="margin-top:12px">${status}</p>
+    <p class="small muted" style="margin-top:12px">${[status, saved].filter(Boolean).join(" ")}</p>
     <p class="small muted">O muro da sala junta-se sozinho: um cartão entra quando mais de metade das mesas o põe no seu muro.<span class="en2">The room's wall merges itself: a card joins when more than half the tables put it on theirs.</span></p>
     ${NOTE ? `<p class="small" style="color:var(--bad)">${esc(NOTE)}</p>` : ""}
     </div>`;
