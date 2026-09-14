@@ -100,7 +100,7 @@ const MSG = {
                      "A lower move must cite a card the tables put under water or at the line. Or mark it offer-only and say why."],
   lower_untagged_axis:["Nenhum cartão da triagem produz este eixo, por isso a automação não o pode baixar. Se o baixar, é uma decisão de oferta: marque «só oferta» e diga porquê.",
                      "No card in the sort produces this axis, so automation cannot lower it. Lowering it is an offer decision: mark it offer-only and say why."],
-  offer_reason:     ["«Só oferta» precisa de uma linha a dizer porquê, até 140 caracteres.", "Offer-only needs one line saying why, 140 characters at most."],
+  offer_reason:     ["O porquê de «só oferta» tem no máximo 140 caracteres.", "The offer-only reason is 140 characters at most."],
   upper_needs_wall: ["Elevar exige citar um cartão do muro da sala.", "A raise must cite a card from the room's wall."],
   upper_needs_scarce:["Elevar ou criar exige um cartão do muro que seja nosso e esteja ficando mais escasso. Um cartão genérico, ou nosso mas mais abundante, não sustenta o preço.",
                      "A raise or create needs a wall card that is ours and getting scarcer. A generic card, or ours but more abundant, does not hold the price."],
@@ -120,7 +120,7 @@ const MSG = {
   commit_same_axis: ["Um eixo não se paga baixando o próprio eixo. A conta tem de vir de outro sítio.", "An axis is not paid for by lowering the same axis. The bill has to come from somewhere else."],
   commit_option:    ["Escolham primeiro: A, um pôlder que vocês financiam, ou B, uma elevação que vocês financiam e guardam.", "Choose first: A, a polder you fund, or B, a raise you fund and guard."],
   commit_polder:    ["Digam qual é o pôlder: um eixo criado pela mesa, ou um cartão que a mesa guardou no pôlder.", "Say which polder: an axis the table created, or a card the table kept in the polder."],
-  commit_raise:     ["Digam que eixo sobe e o que o comprador veria.", "Say which axis goes up and what the buyer would see."],
+  commit_raise:     ["Digam que eixo sobe.", "Say which axis goes up."],
   commit_know:      ["Como saberemos? Uma linha.", "How will we know? One line."],
   commit_price:     ["O preço disso: o que deixam de fazer para o pagar.", "What it costs: what you stop doing to pay for it."],
   commit_owner:     ["Quem é o responsável?", "Who owns it?"],
@@ -418,7 +418,7 @@ function validateMove(m, ctx, axis) {
     offerOnly = !!m.offer_only;
     if (offerOnly) {
       const r = String(m.offer_reason || "").trim();
-      if (!r || r.length > LIMITS.REASON_MAX) errors.push("offer_reason");
+      if (r.length > LIMITS.REASON_MAX) errors.push("offer_reason");
     } else {
       const carrying = taskIds.filter(id => taskById[id] && carriesLower(taskStanding(ctx, axis.code, taskById[id])));
       if (!carrying.length)
@@ -533,10 +533,9 @@ function validateCommit(c, ctx, tc) {
     const ok = p.kind === "created" ? arr(tc.created).some(x => x.id === p.id) : p.kind === "card" ? inSort(p.id, "polder") : false;
     if (!ok) errors.push("commit_polder");
     if (!billOk(true)) errors.push("commit_polder_bill");
-    if (!txt(c.know)) errors.push("commit_know");
   } else {
     const r = c.raise || {};
-    if (arr(tc.axes).indexOf(r.axis_id) < 0 || !txt(r.sees)) errors.push("commit_raise");
+    if (arr(tc.axes).indexOf(r.axis_id) < 0) errors.push("commit_raise");
     if (!billOk(false)) errors.push("commit_raise_bill");
     else if (c.bill.kind === "reduce" && c.bill.id === r.axis_id) errors.push("commit_same_axis");
     const w = c.guard ? (ctx.wallIndex || index(ctx.wall))[c.guard] : null;
@@ -546,10 +545,10 @@ function validateCommit(c, ctx, tc) {
       else if (w.ligado && (w.arrow === "estavel" || w.arrow == null)) amber = true;
       else errors.push("commit_raise_guard");
     } else uncited = true;
-    if (!txt(c.price)) errors.push("commit_price");
   }
-  if (!txt(c.owner)) errors.push("commit_owner");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(c.review || "")) || isNaN(Date.parse(c.review))) errors.push("commit_date");
+  /* 15 September: the owner, the review date, how we will know, what the buyer sees and
+     the price are the paper sheet's; the app asks only for what the signal needs */
+  if (c.review && (!/^\d{4}-\d{2}-\d{2}$/.test(String(c.review)) || isNaN(Date.parse(c.review)))) errors.push("commit_date");
   if (long) errors.push("commit_text");
   /* the sentence that applies comes first */
   const first = ["commit_option", "commit_raise_bill", "commit_raise_guard", "commit_polder_bill"];
@@ -583,10 +582,10 @@ function commitSentence(c, n) {
   const bill = b => !b ? "?" : b.kind === "card" ? f(n.task, b.id) : b.kind === "reduce" ? "a baixa em " + f(n.axis, b.id) : b.text;
   if (c.option === "polder") {
     const p = c.polder || {};
-    return `Mantemos humano: ${p.kind === "created" ? f(n.created, p.id) : f(n.task, p.id)}. Paga-se com ${bill(c.bill)}. Saberemos por: ${c.know || "?"}.`;
+    return `Mantemos humano: ${p.kind === "created" ? f(n.created, p.id) : f(n.task, p.id)}. Paga-se com ${bill(c.bill)}.${c.know ? ` Saberemos por: ${c.know}.` : ""}`;
   }
   const r = c.raise || {};
-  return `${f(n.axis, r.axis_id)} sobe: ${r.sees || "?"}. Paga-se com ${bill(c.bill)}, guardado por ${f(n.wall, c.guard)}. Preço disso: ${c.price || "?"}.`;
+  return `${f(n.axis, r.axis_id)} sobe${r.sees ? `: ${r.sees}` : ""}. Paga-se com ${bill(c.bill)}, guardado por ${f(n.wall, c.guard)}.${c.price ? ` Preço disso: ${c.price}.` : ""}`;
 }
 
 /* Change request 6: today's line may be each table's own, against its own

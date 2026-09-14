@@ -193,8 +193,8 @@ table.t th{color:var(--muted);font-weight:400}
 </style>
 <div id="app"></div>
 <!-- ?b= moves with BUILD: a phone must never check moves against a cached copy of old rules -->
-<script src="rules.js?b=20"></script>
-<script src="rehearsal.js?b=20"></script>
+<script src="rules.js?b=21"></script>
+<script src="rehearsal.js?b=21"></script>
 <script>
 "use strict";
 const R = window.NCRULES;
@@ -349,7 +349,17 @@ const saveSort = () => S.setJ(mk("tsort"), SORT);
 const saveWall = () => S.setJ(mk("wall"), WALL);
 const saveCurve = () => S.setJ(mk("curve"), CURVE);
 const savePlace = () => S.setJ(mk("placement"), PLACE);
-const saveCommit = () => S.setJ(mk("commit"), COMMIT);
+const saveCommit = () => { S.setJ(mk("commit"), COMMIT); autoCommit(); };
+/* 15 September: the commitment sends itself once complete, and again after each change;
+   the button stays as reassurance. csend saves without calling this, so nothing loops. */
+function autoCommit(){
+  debounce("commitauto", 1500, () => {
+    if(!COMMIT || !COMMIT.option || !CMT || !CMT.context || CMT.sending || (CMT.taken && !CMT.steward)) return;
+    if(!R.validateCommit(COMMIT, ctxNow(), CMT.context).ok) return;
+    if(JSON.stringify(commitPayload()) === COMMIT.sentSig) return;
+    ACT.csend();
+  });
+}
 
 /* ------------------------------------------------------------------ polls */
 const PHONE = ["", "triagem", "curva", "porta-voz", "compromisso"];
@@ -457,7 +467,16 @@ function movesPayload(){
     return { axis_id: id, direction: m.direction, to_value: m.to_value, cites_task_ids: m.cites_task_ids || [], cites_wall_ids: m.cites_wall_ids || [],
              offer_only: !!m.offer_only, offer_reason: m.offer_reason || null, note: m.note || null }; });
 }
+/* 15 September: a curve is sent as soon as it is complete (a reduction, every move valid),
+   and again after each change; no one has to find the button */
+function curveReady(){
+  if(!ST || !ST.axes || !CURVE) return false;
+  const ctx = ctxNow(), axes = ST.axes;
+  const moves = Object.keys(CURVE.moves).map(id => ({ axis_id: id, ...CURVE.moves[id] }));
+  return moves.length > 0 && R.validateCurve(moves).ok && moves.every(m => { const a = axes.find(x => x.id === m.axis_id); return a && R.validateMove(m, ctx, a).ok; });
+}
 async function pushCurve(submit){
+  submit = submit || curveReady();
   try {
     const d = await api("/curve", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, buyer: CURVE.buyer, moves: movesPayload(), submit: !!submit } });
     CURVE.dirty = false; CURVE.pendingSubmit = false; CURVE.err = null; CURVE.savedAt = new Date().toISOString(); CURVE.submitted = !!d.submitted;
@@ -611,24 +630,21 @@ function viewCompromisso(){
       (tc.created || []).map(x => pick("cpol", "created", x.id, c.polder && c.polder.kind === "created" && c.polder.id === x.id, esc(x.name), "eixo criado pela mesa")).join("")
       + mine("polder").map(x => pick("cpol", "card", x.id, c.polder && c.polder.kind === "card" && c.polder.id === x.id, `${zsq("polder")}${esc(x.label_pt)}`, "a mesa guardou-o no pôlder")).join(""));
     h += field("A conta", "who pays: a card under water, a reduction, or a budget line", billPicks(true));
-    h += field("Como saberemos", "how we will know", `<input data-cf="know" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.know)}" placeholder="uma linha">`);
   } else {
     const rCount = id => { const r = (tc.raises || []).find(x => x.axis_id === id); return r ? `${r.n} ${r.n === 1 ? "pessoa da mesa elevou" : "pessoas da mesa elevaram"}` : ""; };
     h += field("A elevação", "which axis, and what the buyer would see" + pre("raise"),
       ST.axes.map(a => pick("caxis", "axis", a.id, c.raise.axis_id === a.id, esc(a.label_pt), rCount(a.id))).join("")
-      + `<input data-cf="sees" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.raise.sees)}" placeholder="o que o comprador veria" style="margin-top:6px">`);
+      + `<input data-cf="sees" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.raise.sees)}" placeholder="opcional: o que o comprador veria" style="margin-top:6px">`);
     h += field("A conta", "a card under water, or a reduction the table made", billPicks(false));
     h += field("O guarda", "a wall card, ours and getting scarcer" + pre("guard"),
       ctx.wall.map(w => pick("cguard", "wall", w.id, c.guard === w.id, esc(w.name), w.ligado ? "ligado a nós" + (w.arrow ? " · " + R.WALL_ARROW_PT[w.arrow] : "") : "genérico ou alugado")).join(""));
-    h += field("O preço disso", "what you stop doing to pay for it", `<input data-cf="price" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.price)}" placeholder="o que deixam de fazer">`);
+    h += field("O preço disso · opcional", "what you stop doing to pay for it, optional", `<input data-cf="price" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.price)}" placeholder="o que deixam de fazer">`);
   }
-  h += field("Responsável", "owner", `<input data-cf="owner" maxlength="${R.LIMITS.COMMIT_TEXT_MAX}" value="${esc(c.owner)}">`);
-  h += field("Data de revisão", "review date, ninety days by default", `<input type="date" data-cf="review" value="${esc(c.review)}">`);
   const v = R.validateCommit(c, ctx, tc);
   if(v.ok && v.amber) h += `<div class="note warn" style="margin-top:10px">${esc(R.msgPt("amber"))}</div>`;
   return h + `<div class="cbar">${c.err ? `<div class="small" style="color:var(--bad);margin-bottom:6px">${esc(c.err)}</div>` : ""}
       ${c.sentAt ? `<div class="small">enviado às ${hhmm(c.sentAt)} · pode mudar e reenviar</div>` : ""}
-      <button class="primary" style="margin-top:6px" data-act="csend" ${CMT.sending ? "disabled" : ""}>Enviar o compromisso da mesa <span class="muted">submit</span></button></div></div>`;
+      <button class="primary" style="margin-top:6px" data-act="csend" ${CMT.sending ? "disabled" : ""}>${COMMIT && COMMIT.sentAt ? `Enviado às ${hhmm(COMMIT.sentAt)} · enviar de novo` : "Enviar o compromisso da mesa"} <span class="muted">envia-se sozinho quando está completo</span></button></div></div>`;
 }
 function commitSection(D){
   const s = D.commitSplit;
@@ -1559,7 +1575,9 @@ async function facil(fn){
   catch(e){ NOTE = e.status === 401 ? "a chave não foi aceite" : "falhou: " + e.message; render(); return null; }
 }
 const ACT = {
-  tz(el){ SORT.choices[el.dataset.id] = el.dataset.z; SORT.err = null; saveSort(); render(); },
+  tz(el){ SORT.choices[el.dataset.id] = el.dataset.z; SORT.err = null; saveSort(); render();
+    /* 15 September: the sort sends itself once every card has a place, and again after each correction */
+    debounce("sortauto", 1200, () => { if(ST && ST.tasks.every(t => SORT.choices[t.id]) && !SORT.sending && !(TBL && TBL.taken && !TBL.steward)) submitSort(); }); },
   async sortsend(){ await submitSort(); },
   sorttake(){ if(!confirm("Assumir a triagem desta mesa neste telefone?\n\nO outro telefone deixa de ser o relator desta mesa.")) return;
     SORT.forceEdit = true; if(TBL && TBL.sort) SORT.choices = { ...TBL.sort.choices }; saveSort(); render(); },
@@ -1621,16 +1639,17 @@ const ACT = {
   cguard(el){ COMMIT.guard = el.dataset.id; COMMIT.pre.guard = false; COMMIT.err = null; saveCommit(); render(); },
   async csend(){
     const v = R.validateCommit(COMMIT, ctxNow(), CMT.context);
-    if(!v.ok){ COMMIT.err = R.msgPt(v.errors[0]); saveCommit(); render(); return; }
+    const store = () => S.setJ(mk("commit"), COMMIT);
+    if(!v.ok){ COMMIT.err = R.msgPt(v.errors[0]); store(); render(); return; }
     CMT.sending = true; render();
     try {
       const d = await api("/commit", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, takeover: !!COMMIT.takeover, commit: commitPayload() } });
-      COMMIT.sentAt = d.commit.submitted_at; COMMIT.err = null; COMMIT.takeover = false; CMT.commit = d.commit;
+      COMMIT.sentAt = d.commit.submitted_at; COMMIT.err = null; COMMIT.takeover = false; CMT.commit = d.commit; COMMIT.sentSig = JSON.stringify(commitPayload());
     } catch(e){
       if(e.status === 409 && e.data && e.data.taken){ CMT.taken = true; CMT.steward = false; }
       else if(!sessionChanged(e)) COMMIT.err = e.status === 0 ? "Sem rede. Tentem de novo, ou preencham a folha em papel." : e.message;
     }
-    CMT.sending = false; saveCommit(); render();
+    CMT.sending = false; store(); render();
   },
   async ctake(){
     if(!confirm("Assumir esta mesa neste telefone?\n\nO outro telefone deixa de ser o relator desta mesa.")) return;
