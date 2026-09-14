@@ -1148,7 +1148,8 @@ function viewConsole(){
       <div class="card" style="flex:1;min-width:240px"><span class="small muted">no ecrã, ${at + 1} de ${SEQ.length}</span><br><b class="serif" style="font-size:20px">${SEQ[at][1]}</b>${at < SEQ.length - 1 ? `<span class="small muted"> · a seguir: ${SEQ[at + 1][1]}</span>` : ""}</div>
       <button class="primary" style="width:auto;padding:12px 22px" data-act="step" data-d="1" ${at === SEQ.length - 1 ? "disabled" : ""}>Seguinte →</button></div>
     <p class="small muted" style="margin-top:6px">${SEQ.map((x, i) => i === at ? `<b style="color:var(--gold)">${x[1]}</b>` : x[1]).join(" · ")}</p></div>`;
-  const rs = R.stepOf(s.state);
+  /* a phone or console holding an older rules.js must not throw: fall back to the projector's screen */
+  const rs = R.stepOf ? R.stepOf(s.state) : ({ asis: "line", sort: "sort", wall: "wall", commit: "commit" }[(s.state && s.state.step) || (s.state && s.state.view) || "asis"] || "none");
   h += `<div class="sec"><h2>O passo dos relatores<span class="en">what every relator's screen has open; it follows the projector until you pick one here</span></h2>
     <div class="row">${[["line", "A curva de hoje"], ["sort", "Triagem"], ["wall", "O muro"], ["commit", "Compromisso"], ["none", "Nenhum"]].map(([k, l]) =>
       `<button class="${rs === k ? "on" : ""}" data-act="relstep" data-s="${k}">${l}</button>`).join("")}</div></div>`;
