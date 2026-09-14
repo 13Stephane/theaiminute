@@ -30,19 +30,24 @@ const SORT = {
 };
 const CODE = { S: "submerso", L: "linha", P: "polder", R: "rocha", X: "sem_acordo" };
 
-/* Each table's wall: its answer on the six given cards (slide 52), in the
-   order owners, record, reciprocity, one body, brand, vendor, the arrow on
-   every card it calls ours (E mais escasso · T estável · A mais abundante),
-   then up to three of its own. The owners and the record come out ours and
-   scarcer, one body ours but steady, reciprocity ours but more abundant, the
-   brand generic on a tie; "dados de desfecho", in three wordings, joins. */
+/* Each table's wall: its answer on the twelve printed cards, A to L, given
+   here in the order of GIVEN_ORDER (the six the app first had, then the six
+   added from the print pack on 14 September), the arrow on every card it
+   calls ours (E mais escasso · T estável · A mais abundante), then up to three
+   of its own. The chairs (I) and the record (A) come out ours and scarcer, one
+   body (H) ours but steady, reciprocity (D) ours but more abundant, the brand
+   (G) generic on a tie, and the outcome data (F) ours and scarcer at two of
+   three; the patient bond, the city network, employer contracts, the app and
+   TISS stay below the line. */
+const GIVEN_ORDER = ["g:owners", "g:record", "g:reciprocity", "g:onebody", "g:brand", "g:vendor",
+                     "g:bond", "g:citynet", "g:employers", "g:outcomes", "g:app", "g:tiss"];
 const L = "ligado", G = "generico", X = "fora", E = "escasso", T = "estavel", A = "abundante";
 const WALLS = [
-  { given: [L, L, L, L, L, G], arrows: [E, E, A, T, T, null], cards: [["Dados de desfecho", true, E]] },
-  { given: [L, L, X, L, G, G], arrows: [E, E, null, T, null, null], cards: [["Os dados de desfecho clínico", true, E], ["Contratos com empregadores", true, T]] },
-  { given: [L, G, L, L, G, X], arrows: [T, null, A, E, null, null], cards: [["Relação de confiança com o paciente", true, E]] },
-  { given: [L, L, L, X, L, G], arrows: [E, E, T, null, T, null], cards: [["Dados de desfecho ligados à decisão", false, null], ["Reciprocidade nacional", true, A]] },
-  { given: [G, L, G, L, X, G], arrows: [null, E, null, T, null, null], cards: [["Capacidade da rede em cada cidade", false, null]] },
+  { given: [L, L, L, L, L, G, X, X, X, L, G, G], arrows: [E, E, A, T, T, null, null, null, null, E, null, null], cards: [] },
+  { given: [L, L, X, L, G, G, X, X, L, L, X, X], arrows: [E, E, null, T, null, null, null, null, T, E, null, null], cards: [] },
+  { given: [L, G, L, L, G, X, L, X, X, X, X, G], arrows: [T, null, A, E, null, null, E, null, null, null, null, null], cards: [] },
+  { given: [L, L, L, X, L, G, X, X, X, G, G, X], arrows: [E, E, T, null, T, null, null, null, null, null, null, null], cards: [] },
+  { given: [G, L, G, L, X, G, X, G, X, X, X, X], arrows: [null, E, null, T, null, null, null, null, null, null, null, null], cards: [] },
   null,   /* Mesa 6 never writes a wall */
 ];
 
@@ -59,14 +64,14 @@ const PLACEMENT = {
    across Mesas 1 and 3; Mesa 4's rests on one body, ours but steady, so amber.
    Mesa 6 creates nothing. */
 const CREATES = {
-  1: [["Relatório de desfecho clínico para o RH", /pront/i, null], ["Uma pessoa liga depois da notícia difícil", /don/i, "T16"]],
+  1: [["Relatório de desfecho clínico para o RH", /pront/i, null], ["Uma pessoa liga depois da notícia difícil", /cadeiras/i, "T16"]],
   2: [["Relatório de desfecho para o RH", /desfecho/i, null]],
-  3: [["Ligação antes da extração, no contrato", /don/i, "T15"], ["Uma pessoa liga após a notícia difícil", /don/i, "T16"]],
+  3: [["Ligação antes da extração, no contrato", /cadeiras/i, "T15"], ["Uma pessoa liga após a notícia difícil", /cadeiras/i, "T16"]],
   4: [["Segunda opinião garantida em 48 horas", /operadora/i, null]],
   5: [["Desfecho clínico reportado ao RH", /pront/i, null]],
   /* only in a room of eight */
   7: [["Relatório trimestral de desfecho para o RH", /pront/i, null]],
-  8: [["Dentista de referência nomeado no contrato", /don/i, null]],
+  8: [["Dentista de referência nomeado no contrato", /cadeiras/i, null]],
 };
 /* Change request 6: the morning room, OCESP and SESCOOP/SP. Twelve cards, seven
    branch-neutral axes, wall cards A to L in the seed's order, and each table
@@ -103,7 +108,7 @@ const OCESP = {
           amplitude: "mais linhas no mesmo balcão", digital: "tudo no aplicativo" },
 };
 const WALL_FOR = {
-  continuity: /don|cooper|dentist|confian/i,
+  continuity: /cadeiras|v.nculo|pront/i,
   employer_reporting: /pront|desfecho|hist/i,
   complaints: /operadora|prestador/i,
 };
@@ -142,7 +147,7 @@ async function run(opt) {
   const pids = Array.from({ length: N }, (_, i) => pidFor(sid, i));
   /* the content follows the seed: the morning's twelve cards, or the afternoon's sixteen */
   const K = room.axes.some(a => a.code === "preco") ? OCESP
-    : { SORT, WALLS, PLACEMENT, CREATES, WALL_FOR, LOWERS: ["price", "employer_reporting", "digital", "network"],
+    : { SORT, WALLS, GIVEN_ORDER, PLACEMENT, CREATES, WALL_FOR, LOWERS: ["price", "employer_reporting", "digital", "network"],
         RAISES: ["continuity", "employer_reporting", "complaints"], OFFER: "ortho_specialist", OFFER_WHY: "o empregador não paga por isso", SEES: null };
   const byTable = (room.session.config || {}).placement_scope === "table";
 
@@ -156,12 +161,15 @@ async function run(opt) {
   if (!carryOn("sort")) return { pids };
 
   /* ---- five walls, in order, so the stewards are Mesa 1 to 5; the room's wall merges itself */
+  /* the afternoon answers by id (GIVEN_ORDER), the morning in its seed's order; a card the
+     session does not have (an older six-card session) is left out */
   const givenIds = (room.session.config.generic || []).map(g => g.id);
+  const order = K.GIVEN_ORDER || givenIds, has = id => givenIds.includes(id);
   for (let t = 0; t < TABLES; t++) {
     const w = wallOf(t); if (!w) continue;
     await P("/wall", { pid: pids[t], session_id: sid, mesa: t + 1,
-      given: Object.fromEntries(givenIds.map((id, k) => [id, w.given[k]])),
-      arrows: Object.fromEntries(givenIds.map((id, k) => [id, w.arrows[k]]).filter(([, a]) => a)),
+      given: Object.fromEntries(order.map((id, k) => [id, w.given[k]]).filter(([id, v]) => v && has(id))),
+      arrows: Object.fromEntries(order.map((id, k) => [id, w.arrows[k]]).filter(([id, a]) => a && has(id))),
       cards: w.cards.map(([name, ligado, arrow]) => ({ name, ligado, arrow })) });
   }
   log(`${Array.from({ length: TABLES }, (_, t) => wallOf(t)).filter(Boolean).length} walls in; the wall merged itself`);

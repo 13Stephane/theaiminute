@@ -223,16 +223,6 @@
    "side": "employer"
   },
   {
-   "code": "continuity",
-   "label_pt": "Continuidade com o mesmo dentista",
-   "label_en": "Dentist continuity",
-   "polarity": "em dois anos",
-   "as_is_you": null,
-   "as_is_rival": null,
-   "eliminable": false,
-   "side": "beneficiary"
-  },
-  {
    "code": "ortho_specialist",
    "label_pt": "Ortodontia e especialidades",
    "label_en": "Ortho & specialist",
@@ -251,47 +241,93 @@
    "as_is_rival": null,
    "eliminable": true,
    "side": "beneficiary"
+  },
+  {
+   "code": "continuity",
+   "label_pt": "Continuidade com o mesmo dentista",
+   "label_en": "Dentist continuity",
+   "polarity": "em dois anos",
+   "as_is_you": null,
+   "as_is_rival": null,
+   "eliminable": false,
+   "side": "beneficiary"
   }
  ],
  "generic_wall": [
   {
-   "id": "g:owners",
-   "name_pt": "22 mil dentistas donos, no país inteiro",
-   "name_en": "22,000 owner-dentists, nationwide",
+   "id": "g:record",
+   "name_pt": "A · O prontuário longitudinal",
+   "name_en": "A · the longitudinal record",
    "solid": true
   },
   {
-   "id": "g:record",
-   "name_pt": "O prontuário longitudinal do paciente",
-   "name_en": "The longitudinal patient record",
+   "id": "g:bond",
+   "name_pt": "B · O vínculo com o paciente",
+   "name_en": "B · the patient relationship",
+   "solid": true
+  },
+  {
+   "id": "g:citynet",
+   "name_pt": "C · A rede de cooperados numa cidade",
+   "name_en": "C · the cooperado network in a city",
    "solid": true
   },
   {
    "id": "g:reciprocity",
-   "name_pt": "Reciprocidade em todo o Brasil",
-   "name_en": "Reciprocity anywhere in Brazil",
+   "name_pt": "D · O intercâmbio nacional",
+   "name_en": "D · national reciprocity",
    "solid": true
   },
   {
-   "id": "g:onebody",
-   "name_pt": "Operadora e prestador no mesmo corpo",
-   "name_en": "Payer and provider in one body",
+   "id": "g:employers",
+   "name_pt": "E · Contratos com empregadores",
+   "name_en": "E · employer contracts",
+   "solid": true
+  },
+  {
+   "id": "g:outcomes",
+   "name_pt": "F · Dados de desfecho ligados a decisões",
+   "name_en": "F · outcomes joined to decisions",
    "solid": true
   },
   {
    "id": "g:brand",
-   "name_pt": "A marca",
-   "name_en": "The brand",
+   "name_pt": "G · A marca Uniodonto",
+   "name_en": "G · the brand",
+   "solid": true
+  },
+  {
+   "id": "g:onebody",
+   "name_pt": "H · Operadora e prestador num só corpo",
+   "name_en": "H · payer and provider in one body",
+   "solid": true
+  },
+  {
+   "id": "g:owners",
+   "name_pt": "I · A capacidade instalada: 22 mil cadeiras",
+   "name_en": "I · installed capacity: 22,000 chairs",
    "solid": true
   },
   {
    "id": "g:vendor",
-   "name_pt": "A plataforma e o painel do fornecedor",
-   "name_en": "The vendor's platform and dashboard",
+   "name_pt": "J · A plataforma do fornecedor",
+   "name_en": "J · the vendor's platform",
+   "solid": false
+  },
+  {
+   "id": "g:app",
+   "name_pt": "K · O aplicativo do beneficiário",
+   "name_en": "K · the member app",
+   "solid": false
+  },
+  {
+   "id": "g:tiss",
+   "name_pt": "L · A integração TISS",
+   "name_en": "L · TISS integration",
    "solid": false
   }
  ],
- "generic_wall_source": "slide 52/53, the six VRIO rows. They are the six cards every table is given for the wall, and the fallback wall when no card reaches a majority; solid where the outside read calls the asset bound, hollow where rented.",
+ "generic_wall_source": "The printed afternoon pack (Uniodonto_Print_Pack.pdf, cartas do muro A to L), matched on 14 September; the six cards the app had keep their ids.",
  "outside_read": {
   "note": "The desk work, where public sources could read anything (curva/session.json, September 2026). Shown on the projector as direction only, and only when the console switches it on. Never the ghost.",
   "axes": {
