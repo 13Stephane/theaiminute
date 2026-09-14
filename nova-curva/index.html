@@ -205,6 +205,9 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const fmt = v => v == null ? "—" : (Math.round(v * 10) / 10).toFixed(1).replace(".", ",");
 const param = k => new URLSearchParams(location.search).get(k);
 const hhmm = iso => { if(!iso) return ""; const d = new Date(iso); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+/* the counts in the copy come from the session: twelve cards in the morning, sixteen in the afternoon */
+const NUM_PT = ["zero", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze", "treze", "catorze", "quinze", "dezasseis", "dezassete", "dezoito", "dezanove", "vinte"];
+const numPt = k => NUM_PT[k] || String(k);
 const route = () => location.hash.replace(/^#\/?/, "").split("/")[0] || "";
 const ZCOL = { submerso: "var(--z-submerso)", linha: "var(--z-linha)", polder: "var(--z-polder)", rocha: "var(--z-rocha)", sem_acordo: "#B7AFA0" };
 const ZHEX = { submerso: "#4F8FAE", linha: "#7FB5AA", polder: "#8FAE62", rocha: "#A08E72", sem_acordo: "#B7AFA0" };
@@ -481,7 +484,7 @@ function viewDoor(){
     <h1>A nova curva<span class="en">The new curve</span></h1>
     <p class="muted" style="margin:6px 0 0">${s ? esc(s.title) + (MESA ? ` · Mesa ${MESA}` : "") : "A sessão ainda não abriu. Esta página muda sozinha."}</p>
     <div class="doors">
-      ${RELATOR ? door("triagem", "Triagem", "o relator registra, ao fim", "Depois da revelação: onde a mesa deixou cada um dos dezasseis cartões.", s ? (SORT && SORT.submittedAt ? "enviada" : answered ? `${answered} de ${n}` : "") : "") : ""}
+      ${RELATOR ? door("triagem", "Triagem", "o relator registra, ao fim", `Depois da revelação: onde a mesa deixou cada um dos ${s ? numPt(n) + " " : ""}cartões.`, s ? (SORT && SORT.submittedAt ? "enviada" : answered ? `${answered} de ${n}` : "") : "") : ""}
       ${door("curva", "Curva", "the curve", "A sua curva: o que reduzir, o que elevar, o que criar.", cur)}
       ${RELATOR ? door("porta-voz", "Porta-voz", "o relator da mesa", "A curva de hoje, às 0:16, e o muro da mesa.", WALL && WALL.table ? `Mesa ${WALL.table}` : "") : ""}
       ${RELATOR ? door("compromisso", "Compromisso", "a mesa decide, o relator registra", "Um pôlder que vocês financiam, ou uma elevação que vocês financiam e guardam.", COMMIT && COMMIT.sentAt ? "enviado" : COMMIT && COMMIT.option ? "rascunho" : "") : ""}
@@ -635,7 +638,7 @@ function viewTriagem(){
   }
   const answered = tasks.filter(t => c[t.id]).length;
   return `${head(`Triagem${MESA ? ` · Mesa ${MESA}` : ""}`, "o relator registra, ao fim")}
-    <p class="muted">Depois da revelação, com os cartões que mudaram: onde a mesa deixou cada um dos dezasseis. <b>Sem acordo</b> quando a mesa não chegou a acordo: o cartão vai para o quadro e não conta para nenhum lado.
+    <p class="muted">Depois da revelação, com os cartões que mudaram: onde a mesa deixou cada um dos ${numPt(tasks.length)}. <b>Sem acordo</b> quando a mesa não chegou a acordo: o cartão vai para o quadro e não conta para nenhum lado.
       <span class="en2">After the reveal, with the cards that moved: where your table left each of the sixteen. Sem acordo when it could not agree.</span></p>
     ${!MESA ? `<div class="note warn" style="margin-top:8px">Sem número de mesa no cartão: esta mesa fica com o próximo número livre, depois da Mesa 6.<span class="en2">No table number on the card: this table takes the next free number, after table 6.</span></div>` : ""}
     ${tasks.map(t => `<div class="wrow"><b class="serif" style="font-size:16px">${esc(cardNo(t))} · ${esc(t.label_pt)}</b>
@@ -708,11 +711,11 @@ function viewPortaVoz(){
   return `${head(`Mesa ${WALL.table}`, "Porta-voz · o relator da mesa")}
     ${placementBlock()}
     <h2 style="margin-top:26px">O muro da mesa<span class="en">your table's wall</span></h2>
-    <p class="muted">Os seis cartões dados à mesa. Para cada um: está no vosso muro e preso a nós, está no muro mas é genérico, ou fica fora? E se é nosso: está ficando mais escasso, estável ou mais abundante?
-      <span class="en2">The six cards your table was given: on your wall and bound to us, on your wall but generic, or left off?</span></p>
+    <p class="muted">Os ${numPt(given.length)} cartões dados à mesa. Para cada um: está no vosso muro e preso a nós, está no muro mas é genérico, ou fica fora? E se é nosso: está ficando mais escasso, estável ou mais abundante?
+      <span class="en2">The ${given.length} cards your table was given: on your wall and bound to us, on your wall but generic, or left off?</span></p>
     ${given.map(g => `<div class="wrow"><b class="serif">${esc(g.name_pt)}</b>
       <div class="row" style="flex-wrap:nowrap">${R.WALL_STATES.map(v => `<button style="flex:1" class="${gAns[g.id] === v ? "on" : ""}" data-act="wgiven" data-g="${esc(g.id)}" data-v="${v}" ${WALL.taken ? "disabled" : ""}>${R.WALL_STATE_PT[v]}</button>`).join("")}</div>${gAns[g.id] === "ligado" ? arrowRow("g", g.id, (WALL.arrows || {})[g.id]) : ""}</div>`).join("")}
-    <div class="kick" style="margin-top:22px">Cartões novos <span class="muted">up to ${R.LIMITS.WALL_ROWS}, only for something the six do not say</span></div>
+    <div class="kick" style="margin-top:22px">Cartões novos <span class="muted">up to ${R.LIMITS.WALL_ROWS}, only for something the ${given.length} do not say</span></div>
     ${WALL.rows.map((r, i) => `<div class="wrow">
       <input data-wall="${i}" maxlength="${R.LIMITS.WALL_NAME_MAX}" placeholder="cartão novo ${i + 1}" value="${esc(r.name)}" ${WALL.taken ? "disabled" : ""}>
       <div class="grid2"><button class="${r.ligado === true ? "on" : ""}" data-act="wlig" data-i="${i}" data-v="1" ${WALL.taken ? "disabled" : ""}>ligado a nós</button>
