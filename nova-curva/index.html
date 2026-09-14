@@ -86,6 +86,19 @@ input,textarea,select{font:inherit;color:var(--ink);background:var(--bg2);border
 
 /* the wall */
 .wrow{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+/* change request 7: the relator's one screen */
+.rhead{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:2px solid var(--gold);padding:10px 18px 8px}
+.rmesa{font:700 30px/1.1 Georgia,serif;color:var(--cream);letter-spacing:.02em}
+.rstep{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px}
+.rstep.shut{opacity:.45}
+.rstep.open{border-color:var(--gold)}
+.rrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rrow b{font:700 19px Georgia,serif}
+.rrow .st{font-size:13px;color:var(--gold);text-align:right}
+.rstep .card > p.small.muted:first-of-type{display:none}
+.prow{display:grid;grid-template-columns:minmax(5.6em,auto) 1fr 1fr 1fr;gap:6px;align-items:center;padding:3px 0}
+.prow b{font-size:15px}
+.prow button{padding:10px 2px;font-size:14px}
 .wallrow{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line)}
 
 /* the curve */
@@ -180,8 +193,8 @@ table.t th{color:var(--muted);font-weight:400}
 </style>
 <div id="app"></div>
 <!-- ?b= moves with BUILD: a phone must never check moves against a cached copy of old rules -->
-<script src="rules.js?b=19"></script>
-<script src="rehearsal.js?b=19"></script>
+<script src="rules.js?b=20"></script>
+<script src="rehearsal.js?b=20"></script>
 <script>
 "use strict";
 const R = window.NCRULES;
@@ -346,11 +359,13 @@ async function tick(force){
   if(!API){ return; }
   const r = route(), t = Date.now();
   if(PHONE.includes(r)){
-    if(force || t - LAST.state >= (r ? 12000 : 20000)){ LAST.state = t; await pollState(); }
+    if(force || t - LAST.state >= (r ? 12000 : RELATOR ? 5000 : 20000)){ LAST.state = t; await pollState(); }
     await flush();
     if(r === "triagem") await loadMesa(false);
     if(r === "curva") await loadCreated(false);
     if(r === "compromisso") await loadCommit(false);
+    /* the relator's one screen loads whatever step the console has open */
+    if(r === "" && RELATOR && ST && ST.session){ if(ST.session.step === "sort") await loadMesa(false); if(ST.session.step === "commit") await loadCommit(false); }
   }
   if(FACIL.includes(r) && KEY){
     /* the projector follows the session the console last picked, unless its address pins one */
@@ -461,6 +476,7 @@ function netBar(){
   return "";
 }
 function head(t, en){
+  if(EMBED) return "<div>";
   const s = ST && ST.session;
   return `${netBar()}<div class="wrap"><div class="row" style="justify-content:space-between"><a href="#/" class="small">← início</a>
     <span class="small muted">${NET.up ? "em linha" : ""}</span></div>
@@ -473,6 +489,37 @@ function needSession(){
     <p class="muted">A sessão ainda não abriu. Deixe esta página aberta: muda sozinha.<span class="en2">The session is not open yet. Leave this page open; it changes by itself.</span></p></div>`;
 }
 
+/* Change request 7: the relator's QR opens one screen. The console opens a step; the
+   open step expands with the controls tested before, the others stay shut. The header,
+   always in view, says which table and which room: the two mistakes nothing else catches. */
+let EMBED = null;
+const RSTEPS = [["line", "A curva de hoje", "por braço no ar"], ["sort", "Triagem", "depois da revelação"], ["wall", "O muro da mesa", "depois da caminhada"], ["commit", "Compromisso", "no fim"]];
+function relStatus(k){
+  if(k === "line"){ const l = tableScope() ? myLine() : ST.placement; return l ? `enviada às ${hhmm(l.entered_at)}` : ""; }
+  if(k === "sort"){ const a = SORT ? Object.keys(SORT.choices).length : 0; return SORT && SORT.submittedAt ? `enviada às ${hhmm(SORT.submittedAt)}` : a ? `${a} de ${ST.tasks.length}` : ""; }
+  if(k === "wall") return WALL && WALL.savedAt ? `guardado às ${hhmm(WALL.savedAt)}` : "";
+  if(k === "commit") return COMMIT && COMMIT.sentAt ? "enviado" : COMMIT && COMMIT.option ? "rascunho" : "";
+  return "";
+}
+function relBody(k){
+  EMBED = k;
+  try { return k === "sort" ? viewTriagem() : k === "commit" ? viewCompromisso() : viewPortaVoz(); }
+  finally { EMBED = null; }
+}
+function viewRelator(){
+  const s = ST && ST.session;
+  if(!s) return viewDoor();
+  const step = s.step || "none", t = MESA || (WALL && WALL.table) || "?";
+  const room = String(s.title || "").split(" · ")[0].toUpperCase();
+  const cur = CURVE ? (CURVE.submitted ? "enviada" : Object.keys(CURVE.moves).length ? "rascunho" : "") : "";
+  return `${netBar()}<div class="rhead"><div class="rmesa">MESA ${esc(String(t))} · ${esc(room)}</div><div class="small muted">${esc(s.title)}${NET.up ? " · em linha" : ""}</div></div>
+    <div class="wrap">
+    ${RSTEPS.map(([k, name, when], i) => { const open = k === step;
+      return `<section class="rstep ${open ? "open" : "shut"}"><div class="rrow"><b>${i + 1} · ${name}</b><span class="st">${esc(relStatus(k) || (open ? "aberto agora" : when))}</span></div>${open ? relBody(k) : ""}</section>`; }).join("")}
+    ${step === "none" ? `<p class="small muted" style="margin-top:12px">Nenhum passo aberto: o facilitador abre o próximo.<span class="en2">No step open; the facilitator opens the next one.</span></p>` : ""}
+    <a class="door" href="#/curva" style="margin-top:16px"><b>Curva<i>a sua, como todos</i></b><span class="st">${cur}</span><span class="d">A sua curva, sozinho, quando o facilitador pedir.</span></a>
+  </div>`;
+}
 function viewDoor(){
   const s = ST && ST.session;
   const n = s ? ST.tasks.length : 16;
@@ -672,8 +719,8 @@ function tablePlacementBlock(){
     <p class="small muted" style="margin:6px 0 4px">Primeiro, o rival da mesa: a empresa de capital que vos disputa o cooperado, um banco, uma trading, uma plataforma, uma operadora. Depois, por braço no ar, eixo a eixo: a mesa está acima dele, igual, ou abaixo?
       <span class="en2">First your table's rival, the capital-owned company competing for your members. Then, by show of hands: above it, level, or below?</span></p>
     <input data-pr="1" maxlength="60" placeholder="o rival da mesa" value="${esc(PLACE.rival || "")}">
-    ${axes.map(a => `<div class="wrow"><b class="serif">${esc(a.label_pt)}</b><div class="row" style="flex-wrap:nowrap">${R.PLACEMENT.map(v =>
-      `<button style="flex:1" class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></div>`).join("")}
+    ${axes.map(a => `<div class="prow"><b class="serif">${esc(a.label_pt)}</b>${R.PLACEMENT.map(v =>
+      `<button class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div>`).join("")}
     ${PLACE.err ? `<p class="small" style="color:var(--bad)">${esc(PLACE.err)}</p>` : ""}
     <button class="primary" style="margin-top:10px" data-act="placesubmit" ${n === axes.length && rv ? "" : "disabled"}>Enviar a curva de hoje da mesa (${n} de ${axes.length})</button>
     <p class="small" data-prmiss style="color:var(--amber);margin:6px 0 0">${esc(placeMissing())}</p></div>`;
@@ -689,8 +736,8 @@ function placementBlock(){
   return `<div class="card" style="margin-top:14px"><div class="kick">A curva de hoje <span class="muted">the room's line today</span></div>
     <p class="small muted" style="margin:6px 0 4px">Por braço no ar, eixo a eixo: a Uniodonto está acima da Odontoprev, igual, ou abaixo? Um porta-voz envia; o primeiro a enviar fica.
       <span class="en2">By show of hands: above Odontoprev, level, or below. One steward sends it; the first one in stands.</span></p>
-    ${axes.map(a => `<div class="wrow"><b class="serif">${esc(a.label_pt)}</b><div class="row" style="flex-wrap:nowrap">${R.PLACEMENT.map(v =>
-      `<button style="flex:1" class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div></div>`).join("")}
+    ${axes.map(a => `<div class="prow"><b class="serif">${esc(a.label_pt)}</b>${R.PLACEMENT.map(v =>
+      `<button class="${c[a.code] === v ? "on" : ""}" data-act="place" data-a="${esc(a.code)}" data-v="${v}">${R.PLACEMENT_PT[v]}</button>`).join("")}</div>`).join("")}
     ${PLACE.err ? `<p class="small" style="color:var(--bad)">${esc(PLACE.err)}</p>` : ""}
     <button class="primary" style="margin-top:10px" data-act="placesubmit" ${n === axes.length ? "" : "disabled"}>Enviar a curva de hoje (${n} de ${axes.length})</button></div>`;
 }
@@ -716,9 +763,10 @@ function viewPortaVoz(){
     : missing ? `<span style="color:var(--amber)">${missing} ${missing === 1 ? "cartão novo sem marca" : "cartões novos sem marca"}: ligado ou genérico?</span>`
     : noArrow ? `<span style="color:var(--amber)">${noArrow} ${noArrow === 1 ? "cartão nosso sem seta" : "cartões nossos sem seta"}: mais escasso, estável ou mais abundante?</span>`
     : WALL.dirty ? "a guardar…" : WALL.savedAt ? `guardado às ${hhmm(WALL.savedAt)}.` : "";
+  if(EMBED === "line") return `${head(`Mesa ${WALL.table}`, "")}${placementBlock()}</div>`;
   return `${head(`Mesa ${WALL.table}`, "Porta-voz · o relator da mesa")}
-    ${placementBlock()}
-    <h2 style="margin-top:26px">O muro da mesa<span class="en">your table's wall</span></h2>
+    ${EMBED === "wall" ? "" : placementBlock()}
+    <h2 style="margin-top:${EMBED ? 4 : 26}px">O muro da mesa<span class="en">your table's wall</span></h2>
     <p class="muted">Os ${numPt(given.length)} cartões dados à mesa. Para cada um: está no vosso muro e preso a nós, está no muro mas é genérico, ou fica fora? E se é nosso: está ficando mais escasso, estável ou mais abundante?
       <span class="en2">The ${given.length} cards your table was given: on your wall and bound to us, on your wall but generic, or left off?</span></p>
     ${given.map(g => `<div class="wrow"><b class="serif">${esc(g.name_pt)}</b>
@@ -1100,6 +1148,10 @@ function viewConsole(){
       <div class="card" style="flex:1;min-width:240px"><span class="small muted">no ecrã, ${at + 1} de ${SEQ.length}</span><br><b class="serif" style="font-size:20px">${SEQ[at][1]}</b>${at < SEQ.length - 1 ? `<span class="small muted"> · a seguir: ${SEQ[at + 1][1]}</span>` : ""}</div>
       <button class="primary" style="width:auto;padding:12px 22px" data-act="step" data-d="1" ${at === SEQ.length - 1 ? "disabled" : ""}>Seguinte →</button></div>
     <p class="small muted" style="margin-top:6px">${SEQ.map((x, i) => i === at ? `<b style="color:var(--gold)">${x[1]}</b>` : x[1]).join(" · ")}</p></div>`;
+  const rs = R.stepOf(s.state);
+  h += `<div class="sec"><h2>O passo dos relatores<span class="en">what every relator's screen has open; it follows the projector until you pick one here</span></h2>
+    <div class="row">${[["line", "A curva de hoje"], ["sort", "Triagem"], ["wall", "O muro"], ["commit", "Compromisso"], ["none", "Nenhum"]].map(([k, l]) =>
+      `<button class="${rs === k ? "on" : ""}" data-act="relstep" data-s="${k}">${l}</button>`).join("")}</div></div>`;
   const empty = !ROOM.sorts.length && !ROOM.wall.length && !ROOM.curves.length;
   h += `<div class="sec"><h2>Exportar</h2><div class="row"><button data-act="csv">CSV dos movimentos</button><button data-act="csvaxes">CSV dos eixos novos</button><button data-act="csvcommit">CSV dos compromissos</button><button data-act="json">JSON da sessão</button>
       <a href="#/relatorio" target="_blank" rel="noopener">o relatório (⌘P guarda em PDF)</a></div></div>
@@ -1604,8 +1656,10 @@ const ACT = {
   async step(el){
     const at = Math.max(0, SEQ.findIndex(x => x[0] === ROOM.session.state.view));
     const next = SEQ[Math.min(SEQ.length - 1, Math.max(0, at + Number(el.dataset.d)))][0];
-    await facil(() => api("/f/state", { method: "POST", key: true, body: { session_id: SID, patch: { view: next } } })); await refetchRoom();
+    /* the projector's next screen also hands the relators' step back to it */
+    await facil(() => api("/f/state", { method: "POST", key: true, body: { session_id: SID, patch: { view: next, step: null } } })); await refetchRoom();
   },
+  async relstep(el){ await facil(() => api("/f/state", { method: "POST", key: true, body: { session_id: SID, patch: { step: el.dataset.s } } })); await refetchRoom(); },
   lineedit(){ LINE_EDIT = !LINE_EDIT; render(); },
   async freeseat(el){ if(!confirm(`Retirar a Mesa ${el.dataset.t}?\n\nO telefone e o muro desta mesa saem da sala. Use quando o telefone de um porta-voz parou e outro telefone já entrou como mesa nova.`)) return;
     await facil(() => api("/f/seat", { method: "POST", key: true, body: { session_id: SID, table: +el.dataset.t } })); await refetchRoom(); },
@@ -1697,7 +1751,7 @@ function onChange(e){
 function render(){
   const r = route();
   const V = !RELATOR && (r === "triagem" || r === "porta-voz" || r === "compromisso") ? viewRelatorOnly
-    : { "": viewDoor, triagem: viewTriagem, curva: viewCurva, "porta-voz": viewPortaVoz, compromisso: viewCompromisso,
+    : { "": RELATOR ? viewRelator : viewDoor, triagem: viewTriagem, curva: viewCurva, "porta-voz": viewPortaVoz, compromisso: viewCompromisso,
         f: viewConsole, tela: viewTela, relatorio: viewRelatorio }[r] || viewDoor;
   const y = window.scrollY;
   document.getElementById("app").innerHTML = V();

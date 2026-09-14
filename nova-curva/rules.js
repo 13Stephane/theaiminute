@@ -721,7 +721,18 @@ function expectedShifts(ctx, axes, map, created) {
   });
 }
 
+/* Change request 7: the step every relator's screen has open. The console may pick one;
+   until it does, the step follows the projector's screen. */
+const STEPS = ["line", "sort", "wall", "commit", "none"];
+const STEP_OF_VIEW = { asis: "line", sort: "sort", wall: "wall", commit: "commit" };
+function stepOf(state) {
+  state = state || {};
+  if (state.step && STEPS.includes(state.step)) return state.step;
+  return STEP_OF_VIEW[state.view || "asis"] || "none";
+}
+
 root.NCRULES = {
+  STEPS, STEP_OF_VIEW, stepOf,
   ZONES, SORT_STATES, ZONE_PT, ZONE_EN, ZONE_DO_PT, ZONE_DO_EN, ZONE_WHY_PT, BAND_PT, BAND_EN,
   LOWER, UPPER, DIRECTIONS, DIR_PT, DIR_EN, BUYERS, BUYER_PT, BUYER_EN,
   PLACEMENT, PLACEMENT_VALUE, PLACEMENT_PT, RIVAL_VALUE, SCALE_PT, SCALE_EN,
