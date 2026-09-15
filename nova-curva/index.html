@@ -1085,7 +1085,11 @@ function derive(room){
   const responses = room.sorts.map(x => x.choices);
   const sc = R.sortCounts(room.tasks, responses);
   const sort = R.tallySort(room.tasks, responses);
-  const tide = R.tide(room.tasks, sc);
+  /* 15 September: a card every table that sent a sort put on sem acordo was not sorted at all
+     (the tables sorted twelve of sixteen); it stays off the tide, its waterline, bands and counts */
+  const unsorted = room.tasks.filter(t => { const c = sc && sc.counts && sc.counts[t.id]; return !!c && sc.n > 0 && c.sem_acordo === sc.n; });
+  const tide = R.tide(room.tasks.filter(t => !unsorted.includes(t)), sc);
+  tide.out = unsorted.map(t => t.short_pt || t.label_pt);
   const wall = R.wallGroups(room.wall, cfg.generic || []);
   const ctx = R.citeContext({ tasks: room.tasks, sort: sc, groups: wall.onWall, generic: cfg.generic || [] });
   const sub = room.curves.filter(c => c.submitted_at);
@@ -1343,6 +1347,7 @@ function placeCounts(D){
   const b = bandRanges(D.tide.n || R.LIMITS.TABLES);
   return `<b>${c.settled}</b> assentes (${b.settled}) · <b>${c.contested}</b> em disputa (${b.contested}) · <b>${c.held}</b> resistem (${b.held})`
     + (sa ? ` · <span style="color:var(--amber)">≠</span> <b>${sa}</b> ${sa === 1 ? "cartão" : "cartões"} com mesas sem acordo` : "")
+    + (D.tide.out && D.tide.out.length ? ` · ${D.tide.out.length} ${D.tide.out.length === 1 ? "cartão ficou fora da maré: nenhuma mesa o triou" : "cartões ficaram fora da maré: nenhuma mesa os triou"}` : "")
     + `<span class="small" style="display:block;margin-top:4px">a máquina consegue = mesas que o puseram debaixo de água ou no pôlder · a cor no topo é o lugar que a maioria lhe deu</span>`;
 }
 function telaSort(room, D){
