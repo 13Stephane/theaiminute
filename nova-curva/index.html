@@ -199,6 +199,9 @@ table.t th{color:var(--muted);font-weight:400}
 <script>
 "use strict";
 const R = window.NCRULES;
+/* the mechanisms that are not about this room: what is missing, what sends itself,
+   what the room actually entered. One copy, shared with the next instrument. */
+const LR = window.LIVEROOM;
 const BUILD = 19;
 
 /* ---------------------------------------------------------------- storage */
@@ -366,15 +369,17 @@ const saveCurve = () => S.setJ(mk("curve"), CURVE);
 const savePlace = () => S.setJ(mk("placement"), PLACE);
 const saveCommit = () => { S.setJ(mk("commit"), COMMIT); autoCommit(); };
 /* 15 September: the commitment sends itself once complete, and again after each change;
-   the button stays as reassurance. csend saves without calling this, so nothing loops. */
-function autoCommit(){
-  debounce("commitauto", 1500, () => {
-    if(!COMMIT || !COMMIT.option || !CMT || !CMT.context || CMT.sending || (CMT.taken && !CMT.steward)) return;
-    if(!R.validateCommit(COMMIT, ctxNow(), CMT.context).ok) return;
-    if(JSON.stringify(commitPayload()) === COMMIT.sentSig) return;
-    ACT.csend();
-  });
-}
+   the button stays as reassurance. csend saves without calling this, so nothing loops.
+   25 September: live-room owns the quiet period, the never-twice guard and the retry;
+   what stays here is what the commitment means by ready. */
+const COMMIT_SEND = LR.autosend({
+  key: "commitauto", wait: 1500,
+  ready: () => !!COMMIT && !!COMMIT.option && !!CMT && !!CMT.context && !CMT.sending
+    && !(CMT.taken && !CMT.steward) && R.validateCommit(COMMIT, ctxNow(), CMT.context).ok,
+  payload: () => commitPayload(),
+  send: () => ACT.csend(),
+});
+const autoCommit = () => COMMIT_SEND.changed();
 
 /* ------------------------------------------------------------------ polls */
 const PHONE = ["", "triagem", "curva", "porta-voz", "compromisso"];
@@ -688,6 +693,14 @@ async function loadMesa(force){
   try { TBL = await api(`/mesa?session_id=${encodeURIComponent(sessId())}&pid=${PID}${MESA ? `&mesa=${MESA}` : ""}`); } catch(e){}
   safeRender();
 }
+/* the sort goes when every card has a place, and never twice for the same twelve or sixteen */
+const SORT_SEND = LR.autosend({
+  key: "sortauto", wait: 1200,
+  ready: () => !!ST && !!SORT && ST.tasks.every(t => SORT.choices[t.id]) && !SORT.sending
+    && !(TBL && TBL.taken && !TBL.steward),
+  payload: () => SORT.choices,
+  send: () => submitSort(),
+});
 async function submitSort(){
   SORT.sending = true; SORT.err = null; saveSort(); render();
   try {
@@ -742,7 +755,7 @@ function atTable(){ if(tableScope()) ST.axes = R.axesAtTable(ST.axes, myLine() ?
 const rivalWord = () => tableScope() ? ((myLine() && myLine().rival_name) || "o rival da sua mesa") : ((ST && ST.session && ST.session.rival) || "Odontoprev");
 /* what still stops the table's line from going: the rival sits at the top, above the fold on a phone */
 function placeMissing(){
-  const LR = globalThis.LIVEROOM, k = ST.axes.filter(a => !PLACE.choices[a.code]).length;
+  const k = ST.axes.filter(a => !PLACE.choices[a.code]).length;
   return LR.missing([
     { ok: !!String(PLACE.rival || "").trim(), say: "falta o rival da mesa, no topo" },
     { ok: !k, say: k === 1 ? "falta 1 eixo" : `faltam ${k} eixos` },
@@ -1104,9 +1117,14 @@ function derive(room){
   const sort = R.tallySort(room.tasks, responses);
   /* 15 September: a card every table that sent a sort put on sem acordo was not sorted at all
      (the tables sorted twelve of sixteen); it stays off the tide, its waterline, bands and counts */
-  const unsorted = room.tasks.filter(t => { const c = sc && sc.counts && sc.counts[t.id]; return !!c && sc.n > 0 && c.sem_acordo === sc.n; });
-  const tide = R.tide(room.tasks.filter(t => !unsorted.includes(t)), sc);
-  tide.out = unsorted.map(t => t.short_pt || t.label_pt);
+  /* a card sem acordo at every table that sent is absent, not a zero: it stays off the tide
+     and is named under it instead of being drawn as a column nobody placed */
+  const sorted = LR.present(room.tasks, {
+    seen: t => { const c = sc && sc.counts && sc.counts[t.id]; return !(!!c && sc.n > 0 && c.sem_acordo === sc.n); },
+    name: t => t.short_pt || t.label_pt,
+  });
+  const tide = R.tide(sorted.shown, sc);
+  tide.out = sorted.names;
   const wall = R.wallGroups(room.wall, cfg.generic || []);
   const ctx = R.citeContext({ tasks: room.tasks, sort: sc, groups: wall.onWall, generic: cfg.generic || [] });
   const sub = room.curves.filter(c => c.submitted_at);
@@ -1603,7 +1621,7 @@ async function facil(fn){
 const ACT = {
   tz(el){ SORT.choices[el.dataset.id] = el.dataset.z; SORT.err = null; saveSort(); render();
     /* 15 September: the sort sends itself once every card has a place, and again after each correction */
-    debounce("sortauto", 1200, () => { if(ST && ST.tasks.every(t => SORT.choices[t.id]) && !SORT.sending && !(TBL && TBL.taken && !TBL.steward)) submitSort(); }); },
+    SORT_SEND.changed(); },
   async sortsend(){ await submitSort(); },
   sorttake(){ if(!confirm("Assumir a triagem desta mesa neste telefone?\n\nO outro telefone deixa de ser o relator desta mesa.")) return;
     SORT.forceEdit = true; if(TBL && TBL.sort) SORT.choices = { ...TBL.sort.choices }; saveSort(); render(); },
@@ -1670,7 +1688,9 @@ const ACT = {
     CMT.sending = true; render();
     try {
       const d = await api("/commit", { method: "PUT", body: { pid: PID, session_id: sessId(), mesa: MESA, takeover: !!COMMIT.takeover, commit: commitPayload() } });
-      COMMIT.sentAt = d.commit.submitted_at; COMMIT.err = null; COMMIT.takeover = false; CMT.commit = d.commit; COMMIT.sentSig = JSON.stringify(commitPayload());
+      COMMIT.sentAt = d.commit.submitted_at; COMMIT.err = null; COMMIT.takeover = false; CMT.commit = d.commit;
+      /* the button and the auto-send share one signature, so neither repeats the other's work */
+      COMMIT_SEND.markSent(commitPayload());
     } catch(e){
       if(e.status === 409 && e.data && e.data.taken){ CMT.taken = true; CMT.steward = false; }
       else if(!sessionChanged(e)) COMMIT.err = e.status === 0 ? "Sem rede. Tentem de novo, ou preencham a folha em papel." : e.message;
