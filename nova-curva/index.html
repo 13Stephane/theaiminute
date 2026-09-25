@@ -193,8 +193,9 @@ table.t th{color:var(--muted);font-weight:400}
 </style>
 <div id="app"></div>
 <!-- ?b= moves with BUILD: a phone must never check moves against a cached copy of old rules -->
-<script src="rules.js?b=21"></script>
-<script src="rehearsal.js?b=21"></script>
+<script src="live-room.js?b=22"></script>
+<script src="rules.js?b=22"></script>
+<script src="rehearsal.js?b=22"></script>
 <script>
 "use strict";
 const R = window.NCRULES;
@@ -286,6 +287,20 @@ async function api(path, o = {}){
   const data = await r.json().catch(() => null);
   if(!r.ok){ const e = new Error((data && data.error) || ("http " + r.status)); e.status = r.status; e.data = data; throw e; }
   return data;
+}
+
+/* 25 September: the projector's four-character code, so a facilitator never has to compute
+   it by hand. The key holder asks the Worker, which derives it the same way it checks it.
+   Fetched once a day: setting TELA stops the next render asking again. */
+let TELA = null;
+function pullTelaCode(){
+  if(!KEY || (TELA && TELA.day === new Date().toISOString().slice(0, 10))) return;
+  if(pullTelaCode.busy) return;
+  pullTelaCode.busy = true;
+  api("/f/tela-code", { key: true })
+    .then(d => { TELA = d; safeRender(); })
+    .catch(() => {})
+    .then(() => { pullTelaCode.busy = false; });
 }
 
 /* ------------------------------------------------------------------- boot */
@@ -727,9 +742,11 @@ function atTable(){ if(tableScope()) ST.axes = R.axesAtTable(ST.axes, myLine() ?
 const rivalWord = () => tableScope() ? ((myLine() && myLine().rival_name) || "o rival da sua mesa") : ((ST && ST.session && ST.session.rival) || "Odontoprev");
 /* what still stops the table's line from going: the rival sits at the top, above the fold on a phone */
 function placeMissing(){
-  const k = ST.axes.filter(a => !PLACE.choices[a.code]).length, rv = String(PLACE.rival || "").trim();
-  const m = [rv ? "" : "falta o rival da mesa, no topo", k ? (k === 1 ? "falta 1 eixo" : `faltam ${k} eixos`) : ""].filter(Boolean);
-  return m.length ? "Para enviar: " + m.join(" · ") + "." : "";
+  const LR = globalThis.LIVEROOM, k = ST.axes.filter(a => !PLACE.choices[a.code]).length;
+  return LR.missing([
+    { ok: !!String(PLACE.rival || "").trim(), say: "falta o rival da mesa, no topo" },
+    { ok: !k, say: k === 1 ? "falta 1 eixo" : `faltam ${k} eixos` },
+  ], { prefix: "Para enviar: " }).line;
 }
 function tablePlacementBlock(){
   const mine = myLine(), t = WALL.table;
@@ -1173,7 +1190,11 @@ function viewConsole(){
   h += commitSection(D);
   h += placementSection(s);
   const at = Math.max(0, SEQ.findIndex(x => x[0] === s.state.view));
+  pullTelaCode();
   h += `<div class="sec"><h2>O projetor<span class="en">one step at a time, in the day's order · <a href="#/tela" target="_blank" rel="noopener">abrir o projetor</a></span></h2>
+    <p class="small muted" style="margin:0 0 10px">Numa máquina que não pode guardar a chave: abra <b>#/tela</b> nela e escreva o código de hoje,
+      <b class="serif" style="font-size:22px;color:var(--gold);letter-spacing:.14em">${TELA ? esc(TELA.code) : "…"}</b>.
+      <span class="en2">four characters, read-only, lapses at midnight UTC</span></p>
     <div class="row"><button data-act="step" data-d="-1" ${at === 0 ? "disabled" : ""}>← Anterior</button>
       <div class="card" style="flex:1;min-width:240px"><span class="small muted">no ecrã, ${at + 1} de ${SEQ.length}</span><br><b class="serif" style="font-size:20px">${SEQ[at][1]}</b>${at < SEQ.length - 1 ? `<span class="small muted"> · a seguir: ${SEQ[at + 1][1]}</span>` : ""}</div>
       <button class="primary" style="width:auto;padding:12px 22px" data-act="step" data-d="1" ${at === SEQ.length - 1 ? "disabled" : ""}>Seguinte →</button></div>
