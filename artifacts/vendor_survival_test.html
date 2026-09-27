@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rented, thin, or yours? A four-question test for any AI vendor | The AI Minute</title>
+<meta name="description" content="Four questions to run on any AI vendor: will it still matter in two years, and who keeps your data and learning if it doesn't?">
+<meta name="author" content="Stéphane Guerraz">
+<link rel="canonical" href="https://www.theaiminute.blog/artifacts/vendor_survival_test">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23193C3F'/%3E%3Ccircle cx='50' cy='50' r='28' fill='none' stroke='%23C6A553' stroke-width='8'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The AI Minute">
+<meta property="og:title" content="Rented, thin, or yours? A four-question test for any AI vendor">
+<meta property="og:description" content="Will this AI vendor still matter in two years, and who keeps your data and learning if it doesn't? Four questions, one verdict.">
+<meta property="og:url" content="https://www.theaiminute.blog/artifacts/vendor_survival_test">
+<!-- Replace with the absolute URL of a 1200x627 preview image before publishing -->
+<meta property="og:image" content="https://www.theaiminute.blog/images/vendor_survival_test_og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --bg: #193C3F; --ink: #F4F0E9; --gold: #C6A553; --soft: #CFD6D0;
+    --surface: #22494D; --line: #3E6A6D; --muted: #9FB3B0;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #193C3F; --ink: #F4F0E9; --gold: #C6A553; --soft: #CFD6D0;
+      --surface: #22494D; --line: #3E6A6D; --muted: #9FB3B0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #193C3F; --ink: #F4F0E9; --gold: #C6A553; --soft: #CFD6D0;
+    --surface: #22494D; --line: #3E6A6D; --muted: #9FB3B0;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.1rem; line-height: 1.55;
+  }
+  main { max-width: 680px; margin: 0 auto; padding: 48px 22px 64px; }
+  h1 { font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.1; margin: 0 0 16px; font-weight: 700; }
+  .intro { color: var(--soft); margin: 0 0 36px; max-width: 34em; }
+  .vendor label { display: block; margin-bottom: 8px; color: var(--soft); }
+  .vendor input {
+    width: 100%; font: inherit; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px;
+  }
+  fieldset { border: 0; margin: 40px 0 0; padding: 0; }
+  legend { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; padding: 0; }
+  legend .n { color: var(--gold); margin-right: 8px; }
+  .hint { color: var(--soft); margin: 0 0 14px; font-size: 1rem; }
+  .opt {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 14px 16px; margin-top: 10px; min-height: 48px;
+    border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+  }
+  .opt input { margin-top: 5px; accent-color: var(--gold); width: 18px; height: 18px; flex-shrink: 0; }
+  .opt:has(input:checked) { border-color: var(--gold); background: var(--surface); }
+  .actions { margin-top: 40px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  button {
+    font: inherit; cursor: pointer; border-radius: 6px; padding: 12px 22px; min-height: 48px;
+  }
+  .primary { background: var(--gold); color: #193C3F; border: 1px solid var(--gold); font-weight: 700; }
+  .secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .error { color: var(--gold); margin: 0; }
+  #result { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--line); }
+  #result[hidden] { display: none; }
+  .for { color: var(--soft); margin: 0 0 6px; }
+  .verdict { font-size: clamp(2.2rem, 8vw, 3.4rem); line-height: 1.05; color: var(--gold); margin: 0 0 12px; font-weight: 700; }
+  .why { margin: 0 0 8px; max-width: 34em; }
+  .note { color: var(--soft); margin: 0 0 8px; font-size: 1rem; max-width: 34em; }
+  .layers { margin: 28px 0 0; display: grid; gap: 10px; }
+  .layer {
+    display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr); gap: 16px;
+    padding: 14px 16px; background: var(--surface); border-radius: 6px; border: 1px solid transparent;
+  }
+  .layer .name { font-weight: 700; }
+  .layer .state { color: var(--soft); }
+  .layer.pair { border-color: var(--gold); }
+  .layer.pair .name, .layer.pair .state { color: var(--gold); }
+  .pairline { margin: 22px 0 0; max-width: 34em; }
+  .pairline strong { color: var(--gold); }
+  .copied { color: var(--soft); font-size: 1rem; margin: 0; }
+  footer { margin-top: 56px; color: var(--muted); font-size: 0.95rem; max-width: 34em; }
+  footer p { margin: 0 0 8px; }
+  footer a { color: var(--gold); }
+  @media (max-width: 480px) {
+    .layer { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    #result.reveal { animation: rise 420ms ease-out; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Will this AI vendor still matter in two years?</h1>
+  <p class="intro">AI split business software into three layers: the model, which everyone rents; the interface, which is cheap to copy; and the data and learning, which improve with use. Four questions show which layer a vendor owns, and which one you do.</p>
+
+  <form id="test" novalidate>
+    <div class="vendor">
+      <label for="vendor">Vendor or product you are evaluating (optional)</label>
+      <input id="vendor" name="vendor" type="text" autocomplete="off" placeholder="For example, the copilot on your shortlist">
+    </div>
+
+    <fieldset id="q1">
+      <legend><span class="n">1</span>Which layer does the vendor own?</legend>
+      <p class="hint">Pick what it actually holds, not what the pitch deck says.</p>
+      <label class="opt"><input type="radio" name="layer" value="thin"><span>An interface on someone else's model</span></label>
+      <label class="opt"><input type="radio" name="layer" value="model"><span>Its own model</span></label>
+      <label class="opt"><input type="radio" name="layer" value="pair"><span>Data and learning that improve with use</span></label>
+      <label class="opt"><input type="radio" name="layer" value="complement"><span>Distribution, regulated deployment, or trust that others cannot buy</span></label>
+      <label class="opt"><input type="radio" name="layer" value="unknown"><span>I can't tell</span></label>
+    </fieldset>
+
+    <fieldset id="q2">
+      <legend><span class="n">2</span>Could a large platform ship this in one release?</legend>
+      <p class="hint">Think of the suites your company already pays for.</p>
+      <label class="opt"><input type="radio" name="copy" value="yes"><span>Yes, it is a feature</span></label>
+      <label class="opt"><input type="radio" name="copy" value="probably"><span>Probably, with some effort</span></label>
+      <label class="opt"><input type="radio" name="copy" value="no"><span>No, it needs something platforms don't have</span></label>
+      <label class="opt"><input type="radio" name="copy" value="unknown"><span>I can't tell</span></label>
+    </fieldset>
+
+    <fieldset id="q3">
+      <legend><span class="n">3</span>Who holds your corrections, and who learns from them?</legend>
+      <p class="hint">Every time your people fix an output, someone's system gets better.</p>
+      <label class="opt"><input type="radio" name="corrections" value="trains"><span>The vendor keeps them and trains on them</span></label>
+      <label class="opt"><input type="radio" name="corrections" value="holds"><span>The vendor keeps them; the contract bars training</span></label>
+      <label class="opt"><input type="radio" name="corrections" value="ours"><span>We hold them and can export them</span></label>
+      <label class="opt"><input type="radio" name="corrections" value="unknown"><span>I can't tell</span></label>
+    </fieldset>
+
+    <fieldset id="q4">
+      <legend><span class="n">4</span>If the vendor disappears, what leaves with it?</legend>
+      <p class="hint">Acquisition, shutdown, or a price you won't pay.</p>
+      <label class="opt"><input type="radio" name="exit" value="interface"><span>Only the interface</span></label>
+      <label class="opt"><input type="radio" name="exit" value="some"><span>Some data, recoverable with effort</span></label>
+      <label class="opt"><input type="radio" name="exit" value="all"><span>Our data, corrections and workflows</span></label>
+      <label class="opt"><input type="radio" name="exit" value="unknown"><span>I can't tell</span></label>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" class="primary">See the verdict</button>
+      <p class="error" id="error" role="alert"></p>
+    </div>
+  </form>
+
+  <section id="result" hidden aria-live="polite" tabindex="-1">
+    <p class="for" id="r-for"></p>
+    <p class="verdict" id="r-verdict"></p>
+    <p class="why" id="r-why"></p>
+    <p class="note" id="r-note"></p>
+
+    <div class="layers">
+      <div class="layer"><span class="name">The model</span><span class="state" id="l-model"></span></div>
+      <div class="layer"><span class="name">The interface</span><span class="state" id="l-interface"></span></div>
+      <div class="layer pair"><span class="name">Data and learning</span><span class="state" id="l-pair"></span></div>
+    </div>
+
+    <p class="pairline" id="r-pair"></p>
+
+    <div class="actions">
+      <button type="button" class="primary" id="copy">Copy the verdict</button>
+      <button type="button" class="secondary" id="again">Test another vendor</button>
+      <p class="copied" id="copied" role="status"></p>
+    </div>
+  </section>
+
+  <footer>
+    <p>Built on Teece (1986): when a product is easy to copy, the value goes to whoever holds the scarce complement. The intelligence is rented. The pair, data and learning, is not.</p>
+    <p>Nothing you enter leaves this page.</p>
+    <p>Vendor survival test v3 · Stéphane Guerraz · <a href="https://www.theaiminute.blog">theaiminute.blog</a></p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var form = document.getElementById('test');
+  var result = document.getElementById('result');
+  var errorEl = document.getElementById('error');
+  var lastText = '';
+
+  function val(name) {
+    var el = form.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : null;
+  }
+
+  function vendorVerdict(layer, copy) {
+    var scarce = layer === 'pair' || layer === 'complement' || layer === 'model';
+    var out = { note: '' };
+    if (!scarce && (copy === 'yes' || copy === 'probably')) {
+      out.verdict = 'Absorbed';
+      out.why = 'It sells an interface on a rented model, and a platform can ship the same thing. When it does, this product loses its reason to exist.';
+    } else if (!scarce) {
+      out.verdict = 'Dies with the funding';
+      out.why = 'Nothing it holds is scarce, and no platform needs to copy it. It lasts as long as its investors do.';
+    } else if (copy === 'no') {
+      out.verdict = 'Survives';
+      out.why = 'It holds something a platform cannot ship in one release.';
+    } else {
+      out.verdict = 'Survives, if the asset is real';
+      out.why = 'A platform can copy the feature, not the asset. Check that the asset is as scarce as the vendor says.';
+    }
+    if (layer === 'unknown') out.note = 'A layer you cannot name counts as an interface until the vendor shows otherwise.';
+    if (layer === 'model') out.note = 'Owning a model is scarce only at the frontier. Check who else offers the same capability.';
+    if (copy === 'unknown' && scarce) out.note = (out.note ? out.note + ' ' : '') + 'Ask the vendor what a platform would need to replicate it.';
+    return out;
+  }
+
+  function pairStatus(corr, exit) {
+    // worst case wins: theirs > at risk > yours
+    var rank = { yours: 0, risk: 1, theirs: 2 };
+    var c = corr === 'trains' ? 'theirs' : corr === 'ours' ? 'yours' : 'risk';
+    var e = exit === 'all' ? 'theirs' : exit === 'interface' ? 'yours' : 'risk';
+    var worst = rank[c] >= rank[e] ? c : e;
+    var lines = [];
+    if (corr === 'trains') lines.push('The vendor keeps your corrections and trains on them. Its model learns your judgment, and you rent it back.');
+    if (corr === 'holds') lines.push('Your corrections sit with the vendor. Write export and deletion rights into the contract.');
+    if (corr === 'unknown') lines.push('You cannot say where your corrections go. Ask before you sign.');
+    if (exit === 'all') lines.push('If the vendor goes, your data, corrections and workflows go with it.');
+    if (exit === 'some') lines.push('Getting your data back is a project. Price it before you sign.');
+    if (exit === 'unknown') lines.push('You cannot say what leaves with the vendor. Find out before you depend on it.');
+    if (!lines.length) lines.push('Your data and learning stay with you. The interface is the only thing you rent.');
+    var label = worst === 'yours' ? 'yours' : worst === 'risk' ? 'at risk' : "the vendor's";
+    return { label: label, text: lines.join(' ') };
+  }
+
+  function interfaceState(copy) {
+    return copy === 'yes' ? 'A platform could ship it'
+         : copy === 'probably' ? 'Copyable with some effort'
+         : copy === 'no' ? 'Hard to copy'
+         : 'Unclear';
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var names = ['layer', 'copy', 'corrections', 'exit'];
+    var ids = ['q1', 'q2', 'q3', 'q4'];
+    for (var i = 0; i < names.length; i++) {
+      if (!val(names[i])) {
+        errorEl.textContent = 'Answer all four questions to see the verdict. Question ' + (i + 1) + ' is still open.';
+        var first = document.querySelector('#' + ids[i] + ' input');
+        if (first) first.focus();
+        return;
+      }
+    }
+    errorEl.textContent = '';
+    var layer = val('layer'), copy = val('copy'), corr = val('corrections'), exit = val('exit');
+    var vendor = document.getElementById('vendor').value.trim();
+    var v = vendorVerdict(layer, copy);
+    var p = pairStatus(corr, exit);
+
+    document.getElementById('r-for').textContent = vendor ? 'Verdict for ' + vendor : 'Verdict';
+    document.getElementById('r-verdict').textContent = v.verdict;
+    document.getElementById('r-why').textContent = v.why;
+    var note = document.getElementById('r-note');
+    note.textContent = v.note; note.hidden = !v.note;
+    document.getElementById('l-model').textContent = layer === 'model' ? "The vendor's own" : 'Rented';
+    document.getElementById('l-interface').textContent = interfaceState(copy);
+    document.getElementById('l-pair').textContent = p.label.charAt(0).toUpperCase() + p.label.slice(1);
+    var pairEl = document.getElementById('r-pair');
+    pairEl.textContent = '';
+    var strong = document.createElement('strong');
+    strong.textContent = 'Your data and learning: ' + p.label + '. ';
+    pairEl.appendChild(strong);
+    pairEl.appendChild(document.createTextNode(p.text));
+
+    lastText = 'Vendor survival test' + (vendor ? ': ' + vendor : '') + '\n'
+      + 'Verdict: ' + v.verdict + '. ' + v.why + '\n'
+      + 'Your data and learning: ' + p.label + '. ' + p.text + '\n'
+      + 'The intelligence is rented. The pair, data and learning, is not.';
+
+    document.getElementById('copied').textContent = '';
+    result.hidden = false;
+    result.classList.remove('reveal'); void result.offsetWidth; result.classList.add('reveal');
+    result.focus({ preventScroll: true });
+    result.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var status = document.getElementById('copied');
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = lastText; ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      status.textContent = ok ? 'Verdict copied.' : 'Copying is blocked here. Select the verdict text above and copy it.';
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lastText).then(function () { status.textContent = 'Verdict copied.'; }, fallback);
+      } else { fallback(); }
+    } catch (e) { fallback(); }
+  });
+
+  document.getElementById('again').addEventListener('click', function () {
+    form.reset();
+    result.hidden = true;
+    errorEl.textContent = '';
+    window.scrollTo({ top: 0 });
+    document.getElementById('vendor').focus();
+  });
+})();
+</script>
+</body>
+</html>
