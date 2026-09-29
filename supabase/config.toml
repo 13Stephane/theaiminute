@@ -1,0 +1,11 @@
+# Minimal Supabase CLI config for the live-AI functions.
+# `supabase link --project-ref <ref>` connects it to the hosted project.
+project_id = "theaiminute"
+
+[functions.ai]
+# Public: the gate in functions/ai/gate.ts does the checking.
+verify_jwt = false
+
+[functions.admin]
+# A Supabase Auth session is required; logic.ts then insists on ADMIN_EMAIL.
+verify_jwt = true
