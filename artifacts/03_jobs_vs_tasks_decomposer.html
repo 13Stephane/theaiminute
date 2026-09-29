@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<!-- rev 20260814-1719 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jobs vs Tasks — Decompose a Role</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F;
+    --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6;
+    --ink:#15302E; --muted:#5E726F;
+    --automate:#B05F45; --augment:#C6A553; --human:#4E7E78;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.5;padding:clamp(16px,3vw,40px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto}
+  .eyebrow{font:600 13px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(28px,4.6vw,44px);line-height:1.08;letter-spacing:-.01em}
+  .lede{max-width:68ch;margin-top:14px;color:#D9D3C6;font-size:clamp(15px,1.7vw,17px)}
+  .lede b{color:var(--gold-soft);font-weight:600}
+
+  .input-row{display:flex;gap:10px;margin:24px 0 8px;flex-wrap:wrap}
+  #job{flex:1;min-width:240px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:11px;padding:14px 16px;font:500 16px "Calibri";color:var(--ink)}
+  #job::placeholder{color:#94A09E}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:11px;padding:14px 22px;font:700 15px "Calibri";cursor:pointer;transition:.15s;white-space:nowrap}
+  .btn:hover{background:#D4B868}
+  .btn:disabled{opacity:.55;cursor:wait}
+  .examples{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .ex{background:transparent;border:1px solid rgba(244,240,233,.28);color:#D9D3C6;font:500 12.5px "Calibri";padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .ex:hover{border-color:var(--gold);color:var(--cream)}
+  .status{min-height:20px;font-size:13px;color:var(--gold-soft);margin:10px 0}
+  .status.err{color:#E3B6A6}
+
+  /* weighting toggle */
+  .weighting{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 4px}
+  .weighting .lbl{font-size:12.5px;color:#BCC9C7}
+  .seg-toggle{display:inline-flex;background:rgba(244,240,233,.08);border-radius:10px;padding:3px}
+  .seg-toggle button{background:transparent;border:none;color:#C6D2D0;font:600 13px "Calibri";padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s}
+  .seg-toggle button.active{background:var(--gold);color:var(--teal)}
+
+  .share{display:flex;height:34px;border-radius:8px;overflow:hidden;margin:12px 0 8px;background:rgba(244,240,233,.1)}
+  .share div{display:flex;align-items:center;justify-content:center;font:700 12.5px "Calibri";color:#fff;transition:width .45s ease;min-width:0;overflow:hidden;white-space:nowrap}
+  .seg-automate{background:var(--automate)} .seg-augment{background:var(--augment);color:var(--teal)} .seg-human{background:var(--human)}
+  .share-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:#BCC9C7;margin-bottom:14px}
+  .share-legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px}
+
+  .headline{background:rgba(198,165,83,.10);border:1px solid rgba(198,165,83,.3);border-radius:12px;padding:14px 17px;margin:6px 0 20px;font-size:14px;color:#EAE3D2}
+  .headline b{color:var(--gold-soft)}
+  .headline .big{font-family:Georgia,serif;font-size:15.5px;color:var(--cream);margin-bottom:3px}
+
+  .tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px}
+  .card{background:var(--cream);color:var(--ink);border-radius:12px;padding:14px 15px;border-left:5px solid var(--gold);cursor:pointer;transition:.12s;user-select:none}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.22)}
+  .card.automate{border-left-color:var(--automate)} .card.augment{border-left-color:var(--augment)} .card.human{border-left-color:var(--human)}
+  .card .task{font-weight:700;font-size:14.5px;color:var(--teal);margin-bottom:5px}
+  .card .why{font-size:12.5px;color:var(--muted);line-height:1.4}
+  .card .tag{display:inline-block;margin-top:9px;font:700 10.5px "Calibri";letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+  .tag.automate{background:#F2DDD3;color:var(--automate)} .tag.augment{background:#F1E6C6;color:#8A6E26} .tag.human{background:#DCE9E5;color:var(--human)}
+  .card .hint{font-size:10.5px;color:#A6B0AD;margin-top:7px}
+  .wt{margin-top:10px;padding-top:9px;border-top:1px solid #E0D8C8}
+  .wt .wl{display:flex;justify-content:space-between;font:600 11px "Calibri";color:var(--muted);margin-bottom:4px}
+  .wt .wl b{color:var(--teal);font-variant-numeric:tabular-nums}
+  .wt input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:999px;background:#DCD3C2;cursor:pointer}
+  .wt input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .wt input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid #fff}
+
+  .dividend{margin-top:22px;background:rgba(78,126,120,.14);border:1px solid rgba(78,126,120,.4);border-radius:13px;padding:18px 20px}
+  .dividend h3{font-family:Georgia,serif;font-size:17px;color:var(--gold-soft);margin-bottom:6px}
+  .dividend .freed{font-family:Georgia,serif;font-size:28px;font-weight:700;color:var(--cream);margin:2px 0 8px}
+  .dividend p{font-size:13.5px;color:#CBD6D4}
+  .dividend b{color:var(--cream)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .insight{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.12);border-radius:13px;padding:18px 20px}
+  .insight h3{font-family:Georgia,serif;font-size:16px;color:var(--gold-soft);margin-bottom:8px}
+  .insight p{font-size:13.5px;color:#CBD6D4}
+  .insight b{color:var(--cream)}
+
+  .footnote{margin-top:24px;color:#A9B7B5;font-size:12.5px;max-width:78ch}
+  .footnote b{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Work in the Age of AI · Brynjolfsson</div>
+  <h1>No job is automated — only its tasks</h1>
+  <p class="lede">A role is a bundle of tasks. AI rarely takes a whole job; it reshapes the bundle. Decompose a role, sort each task &mdash; <b>automate</b>, <b>augment</b>, or <b>keep human</b> &mdash; then weight each by its share of the <b>week</b> and of the role&rsquo;s <b>value</b>. Counting tasks flatters automation; weighting reveals where the time and the worth actually sit. Tap a card to re-classify; drag to re-weight.</p>
+
+  <div class="examples" id="examples"></div>
+  <div class="input-row">
+    <input id="job" type="text" placeholder="Enter a role — e.g. Financial controller" autocomplete="off">
+    <button class="btn" id="go">Decompose with Claude</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div id="results" style="display:none">
+    <div class="weighting">
+      <span class="lbl">Weight the split by:</span>
+      <div class="seg-toggle" id="toggle">
+        <button data-v="count">Task count</button>
+        <button data-v="time" class="active">Time (the week)</button>
+        <button data-v="value">Value</button>
+      </div>
+    </div>
+    <div class="share" id="share"></div>
+    <div class="share-legend">
+      <span><i class="sw seg-automate"></i>Automate</span>
+      <span><i class="sw seg-augment"></i>Augment</span>
+      <span><i class="sw seg-human"></i>Keep human</span>
+      <span style="color:#8FA09D">tap a card to override · drag to re-weight</span>
+    </div>
+    <div class="headline" id="headline"></div>
+
+    <div class="tasks" id="tasks"></div>
+
+    <div class="dividend" id="dividend"></div>
+
+    <div class="grid2">
+      <div class="insight">
+        <h3>Automation caps value. Augmentation expands it.</h3>
+        <p>Replacing what humans already do puts an <b>upper bound</b> on the gain. Letting AI extend what humans <i>couldn&rsquo;t</i> do before opens new value &mdash; and tends to lift wages rather than concentrate them.</p>
+      </div>
+      <div class="insight">
+        <h3>Mind the Turing Trap.</h3>
+        <p>The easy instinct is to point AI at tasks humans already do, bank the saving, and call it progress. The richer move is to ask what becomes <b>possible</b> that no one was doing &mdash; and who owns the scarce complement once the task itself is cheap.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote"><b>How to run it in class.</b> Each group decomposes a real role from their own organisation, corrects Claude&rsquo;s weights to match their week, then debates the split. Watch the headline move as you switch from task count to time to value: the tasks that resist automation are usually the few that carry the role&rsquo;s worth. The radiologist example is Brynjolfsson&rsquo;s &mdash; AI strong at reading images, weak at the human encounter. <span style="color:#8FA09D">Weights are estimates to argue with, not measurements.</span></p>
+</div>
+
+<script>
+const FALLBACK = {
+  "radiologist":[
+    {task:"Detect nodules on scans",type:"automate",why:"Pattern recognition matches or beats experts",time:16,value:8},
+    {task:"Flag urgent findings",type:"automate",why:"Triage by confidence score is fast",time:6,value:7},
+    {task:"Measure & quantify lesions",type:"automate",why:"Precise repetitive measurement suits machines",time:10,value:4},
+    {task:"Draft the report",type:"augment",why:"AI drafts; radiologist verifies and signs",time:12,value:8},
+    {task:"Integrate clinical history",type:"augment",why:"AI surfaces context; human weighs relevance",time:8,value:9},
+    {task:"Resolve ambiguous images",type:"augment",why:"Hard cases need experienced judgement",time:10,value:12},
+    {task:"Decide next diagnostic step",type:"human",why:"Accountable judgement under uncertainty",time:8,value:15},
+    {task:"Discuss results with patient",type:"human",why:"Empathy and trust are irreducibly human",time:12,value:14},
+    {task:"Administer sedation",type:"human",why:"Physical, safety-critical, real-time care",time:8,value:7},
+    {task:"Consult with the care team",type:"human",why:"Negotiation and shared accountability",time:10,value:12}
+  ],
+  "financial controller":[
+    {task:"Reconcile ledgers",type:"automate",why:"Rule-based matching at scale",time:16,value:4},
+    {task:"Flag anomalous transactions",type:"automate",why:"Outlier detection is a machine strength",time:8,value:6},
+    {task:"Generate the monthly close pack",type:"automate",why:"Templated assembly from clean data",time:14,value:5},
+    {task:"Draft variance commentary",type:"augment",why:"AI drafts; controller adds business context",time:10,value:8},
+    {task:"Build the forecast",type:"augment",why:"AI proposes; human owns the assumptions",time:12,value:14},
+    {task:"Brief the board",type:"human",why:"Narrative judgement and credibility",time:8,value:18},
+    {task:"Set accounting policy",type:"human",why:"Accountable choice with real consequences",time:6,value:16},
+    {task:"Negotiate with auditors",type:"human",why:"Relationship and professional judgement",time:10,value:13},
+    {task:"Design controls & guardrails",type:"human",why:"Deciding where the machine may act",time:8,value:12}
+  ]
+};
+
+let tasks=[], view="time";
+const order=["automate","augment","human"];
+const LABEL={automate:"Automate",augment:"Augment",human:"Keep human"};
+const $=id=>document.getElementById(id);
+function esc(s){return (s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
+
+["Radiologist","Financial controller","Marketing manager","Recruiter","Equity research analyst"].forEach(x=>{
+  const b=document.createElement("button");b.className="ex";b.textContent=x;
+  b.onclick=()=>{$("job").value=x;run();};$("examples").appendChild(b);
+});
+
+function sumKey(k){return tasks.reduce((a,t)=>a+(+t[k]||0),0)||1;}
+function bucketShare(type,mode){
+  if(mode==="count"){const n=tasks.length||1;return tasks.filter(t=>t.type===type).length/n;}
+  const key=mode==="time"?"time":"value", tot=sumKey(key);
+  return tasks.filter(t=>t.type===type).reduce((a,t)=>a+(+t[key]||0),0)/tot;
+}
+function exposed(mode){return Math.round((bucketShare("automate",mode)+bucketShare("augment",mode))*100);}
+
+function renderShare(){
+  $("share").innerHTML=order.map(k=>{
+    const pct=bucketShare(k,view)*100;
+    return pct>0.5?`<div class="seg-${k}" style="width:${pct}%">${Math.round(pct)}%</div>`:"";
+  }).join("");
+}
+function renderHeadline(){
+  const c=exposed("count"), t=exposed("time"), v=exposed("value");
+  const autoT=Math.round(bucketShare("automate","time")*100), autoV=Math.round(bucketShare("automate","value")*100);
+  $("headline").innerHTML=
+    `<div class="big">Exposed to AI (automate + augment): <b>${c}% of tasks · ${t}% of the week · ${v}% of the value</b></div>`+
+    `Counting tasks says one thing; weighting by where the week goes says another; weighting by worth says a third. Fully automatable work is <b>${autoT}%</b> of the week but only <b>${autoV}%</b> of the value \u2014 the judgement that resists automation is where the worth concentrates.`;
+}
+function renderDividend(){
+  const freed=Math.round((bucketShare("automate","time")+0.5*bucketShare("augment","time"))*100);
+  $("dividend").innerHTML=
+    `<h3>The augmentation dividend</h3>`+
+    `<div class="freed">\u2248 ${freed}% of the week could be freed</div>`+
+    `<p>Automating the automatable and letting AI carry half of the augmented work frees roughly <b>${freed}%</b> of this role&rsquo;s time. Banking it as headcount is the <b>Turing Trap</b>. The value move is to redeploy it toward what wasn&rsquo;t possible before \u2014 more judgement, more cases, more of the scarce human work. <b>Where do the freed hours go?</b></p>`;
+}
+function renderCards(){
+  const el=$("tasks");el.innerHTML="";
+  const key = view==="value"?"value":"time";
+  const tot = sumKey(key);
+  tasks.forEach((t,i)=>{
+    const c=document.createElement("div");c.className="card "+t.type;
+    let wt="";
+    if(view!=="count"){
+      const shareP=Math.round((+t[key]||0)/tot*100);
+      wt=`<div class="wt"><div class="wl"><span>${view==="value"?"Share of value":"Share of week"}</span><b>${shareP}%</b></div>
+        <input type="range" min="0" max="30" step="1" value="${+t[key]||0}" data-i="${i}" data-key="${key}"></div>`;
+    }
+    c.innerHTML=`<div class="task">${esc(t.task)}</div><div class="why">${esc(t.why||"")}</div>
+      <span class="tag ${t.type}">${LABEL[t.type]}</span>
+      <div class="hint">tap to re-classify &rarr;</div>${wt}`;
+    c.onclick=()=>{t.type=order[(order.indexOf(t.type)+1)%3];renderAll();};
+    el.appendChild(c);
+  });
+  // wire sliders (stop propagation so dragging doesn't re-classify)
+  el.querySelectorAll('input[type=range]').forEach(s=>{
+    s.addEventListener("click",e=>e.stopPropagation());
+    s.addEventListener("input",e=>{e.stopPropagation();
+      tasks[+s.dataset.i][s.dataset.key]=+s.value;
+      renderShare();renderHeadline();renderDividend();
+      const wl=s.previousElementSibling.querySelector("b");
+      if(wl)wl.textContent=Math.round((+s.value)/sumKey(s.dataset.key)*100)+"%";
+    });
+  });
+}
+function renderAll(){renderCards();renderShare();renderHeadline();renderDividend();}
+
+$("toggle").querySelectorAll("button").forEach(b=>{
+  b.onclick=()=>{view=b.dataset.v;
+    $("toggle").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));
+    renderAll();};
+});
+
+function show(){$("results").style.display="block";renderAll();}
+
+async function run(){
+  const job=$("job").value.trim();
+  if(!job){$("status").textContent="Enter a role first.";return;}
+  $("status").className="status";$("status").textContent="Asking Claude to decompose the role\u2026";
+  $("go").disabled=true;
+  const prompt=`You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. Decompose the role of "${job}" into 8 to 11 concrete constituent tasks. Classify each as exactly one of: "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop), or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill). Also estimate two weights per task: "time" = its share of the working week, and "value" = its share of the role's economic value; across all tasks time should sum to roughly 100 and value to roughly 100. Order tasks roughly automate first, human last. Return ONLY a JSON array, no prose and no markdown fences. Each element: {"task": string max 7 words, "type": "automate"|"augment"|"human", "why": string max 12 words, "time": integer, "value": integer}.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok) throw new Error("status "+res.status);
+    const data=await res.json();
+    let text=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim().replace(/```json|```/g,"").trim();
+    const arr=JSON.parse(text);
+    tasks=arr.filter(t=>t&&t.task&&order.includes(t.type)).map(t=>({task:t.task,type:t.type,why:t.why||"",time:+t.time||8,value:+t.value||8}));
+    if(!tasks.length) throw new Error("empty");
+    $("status").textContent="Claude's first pass \u2014 now debate it. Tap a card to re-classify, drag to re-weight, and switch the toggle from count to time to value.";
+    show();
+  }catch(e){
+    const key=job.toLowerCase();
+    const fb=FALLBACK[key]||(key.includes("radiolog")?FALLBACK["radiologist"]:key.includes("controll")||key.includes("financ")?FALLBACK["financial controller"]:null);
+    if(fb){tasks=fb.map(t=>({...t}));show();
+      $("status").className="status err";
+      $("status").textContent="Couldn't reach Claude live \u2014 loaded a worked example so you can still run the exercise.";
+    }else{
+      $("status").className="status err";
+      $("status").innerHTML="Couldn't reach Claude live. Try the example chips above, or open this as a published Claude artifact where the live decomposition works.";
+    }
+  }finally{$("go").disabled=false;}
+}
+$("go").onclick=run;
+$("job").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
+
+// preload Brynjolfsson's radiologist example
+$("job").value="Radiologist";tasks=FALLBACK["radiologist"].map(t=>({...t}));show();
+$("status").textContent="Brynjolfsson's radiologist example, loaded. Switch the toggle from task count to time to value \u2014 watch the split move.";
+</script>
+</body>
+</html>
