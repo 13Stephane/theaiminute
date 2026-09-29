@@ -2,10 +2,19 @@
 // supabase-js is replaced by a stub whose session carries a test token.
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
+// Playwright from the repo (npm install --no-save playwright) or from a global install.
 let playwright;
-try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
+try { playwright = require("playwright"); } catch {
+  const { execSync } = require("node:child_process");
+  playwright = require(execSync("npm root -g").toString().trim() + "/playwright");
+}
 
 const BASE = "http://localhost:8787";
+try { await fetch(BASE + "/__usage"); } catch {
+  console.error("The local server is not running. In another terminal, from the repository folder, run:\n" +
+    "  deno run --allow-net --allow-read --allow-env tests/local_server.ts");
+  process.exit(1);
+}
 const shot = process.argv[2];
 let failures = 0;
 const check = (label, cond, detail = "") => {

@@ -114,15 +114,39 @@ So a dollar is a generous day, and the recommended **daily budget of $5** will o
 
 ## Tests
 
+Every command below runs from inside the repository folder. Once, to get the code and the tools:
+
 ```
-deno test --allow-read tests/                              # gate, templates, admin (20 tests)
-deno run --allow-net --allow-read --allow-env tests/local_server.ts   # local harness on :8787
-node tests/pages_e2e.mjs                                   # both pages in Chromium, offline and live
-node tests/admin_e2e.mjs                                   # the control room in Chromium
+git clone -b claude/live-ai-03-06 https://github.com/13Stephane/theaiminute
+cd theaiminute
+brew install deno                                  # or see deno.com
+npm install --no-save playwright && npx playwright install chromium
+```
+
+Then:
+
+```
+deno test --allow-read tests/                      # gate, templates, admin (20 tests)
+```
+
+The two browser checks need the local server. Start it in a second terminal, also inside the folder, and leave it running:
+
+```
+deno run --allow-net --allow-read --allow-env tests/local_server.ts
+```
+
+```
+node tests/pages_e2e.mjs                           # both pages in Chromium, offline and live (31 checks)
+node tests/admin_e2e.mjs                           # the control room in Chromium (14 checks)
+```
+
+After deployment, against the real function:
+
+```
 AI_URL=https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai CLASS_CODE=ABC123 tests/smoke.sh
 ```
 
-The local harness serves the site and both functions with an in-memory database and a canned Claude, so everything can be exercised without Supabase or a key. With `ANTHROPIC_API_KEY` set it calls Claude for real.
+The local server serves the site and both functions with an in-memory database and a canned Claude, so everything can be exercised without Supabase or a key. With `ANTHROPIC_API_KEY` set it calls Claude for real.
 
 ### Trying it by hand on your own machine
 

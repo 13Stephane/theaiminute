@@ -3,3 +3,5 @@
 !.env.example
 supabase/.temp/
 supabase/.branches/
+node_modules/
+package-lock.json
