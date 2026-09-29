@@ -6,8 +6,11 @@
 // With ANTHROPIC_API_KEY set it calls Anthropic for real; otherwise a canned
 // reply stands in. Test-only control: POST /__control with a JSON patch
 // (enabled, opens_at, closes_at, budget_usd, code), GET /__usage for the log.
+// The admin function is served too; bearer token "local-admin" is the admin,
+// "local-other" is a signed-in stranger.
 
 import { anthropicCaller, type CallAnthropic, handle } from "../supabase/functions/ai/gate.ts";
+import { handleAdmin } from "../supabase/functions/admin/logic.ts";
 import { hashCode } from "../supabase/functions/_shared/http.ts";
 import { memStore } from "./memstore.ts";
 
@@ -49,11 +52,21 @@ const deps = {
   allowLocalhost: true,
 };
 
+const adminDeps = {
+  store: m.store,
+  emailForToken: (t: string) =>
+    Promise.resolve(({ "local-admin": "admin@local.test", "local-other": "other@local.test" } as Record<string, string>)[t] ?? null),
+  adminEmail: "admin@local.test",
+  pepper: PEPPER,
+  allowLocalhost: true,
+};
+
 const TYPES: Record<string, string> = { html: "text/html; charset=utf-8", js: "text/javascript", css: "text/css" };
 
 Deno.serve({ port: PORT }, async (req) => {
   const url = new URL(req.url);
   if (url.pathname.startsWith("/functions/v1/ai")) return handle(req, deps);
+  if (url.pathname.startsWith("/functions/v1/admin")) return handleAdmin(req, adminDeps);
   if (url.pathname === "/__control" && req.method === "POST") {
     const patch = await req.json();
     if (patch.code) await setCode(patch.code);
