@@ -31,7 +31,7 @@ async function open(path, { live = false, original = null, code = null, clipboar
   // The blog cannot reach Anthropic directly; neither can these pages here.
   await page.route("https://api.anthropic.com/**", (r) => r.abort());
   await page.route(BASE + path, async (route) => {
-    let html = original ? readFileSync(original, "utf8") : await (await fetch(BASE + path)).text();
+    let html = original ? readFileSync(original, "utf8") : await (await fetch(BASE + path + "?offline")).text();
     if (live) html = html.replace('const AI_URL = "";', `const AI_URL = "${AI}";`);
     await route.fulfill({ body: html, contentType: "text/html; charset=utf-8" });
   });

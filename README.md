@@ -124,4 +124,20 @@ AI_URL=https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai CLASS_CODE=ABC12
 
 The local harness serves the site and both functions with an in-memory database and a canned Claude, so everything can be exercised without Supabase or a key. With `ANTHROPIC_API_KEY` set it calls Claude for real.
 
+### Trying it by hand on your own machine
+
+1. Start the harness (add `ANTHROPIC_API_KEY=sk-ant-...` in front for real answers; a decomposition costs about a cent):
+   ```
+   deno run --allow-net --allow-read --allow-env tests/local_server.ts
+   ```
+2. Open `http://localhost:8787/artifacts/03_jobs_vs_tasks_decomposer.html`. The badge reads **Live AI on**; the class code is `LOCAL1`. Add `?offline` to the address to see the page exactly as committed.
+3. Flip the state from a second terminal and watch the pages react:
+   ```
+   curl -X POST localhost:8787/__control -d '{"enabled":false}'          # Live AI is off
+   curl -X POST localhost:8787/__control -d '{"enabled":true,"budget_usd":0}'  # budget spent
+   curl -X POST localhost:8787/__control -d '{"budget_usd":5,"code":"NEWONE"}' # new class code
+   curl localhost:8787/__usage                                                # the usage log
+   ```
+The control room needs real Supabase sign-in, so locally it is covered by `tests/admin_e2e.mjs` only.
+
 Everything in this repository is published by Cloudflare Pages, including this README and the function source. None of it is secret: the key, the pepper and the admin address live only in Supabase secrets.

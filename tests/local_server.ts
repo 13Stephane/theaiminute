@@ -6,6 +6,8 @@
 // With ANTHROPIC_API_KEY set it calls Anthropic for real; otherwise a canned
 // reply stands in. Test-only control: POST /__control with a JSON patch
 // (enabled, opens_at, closes_at, budget_usd, code), GET /__usage for the log.
+// Artifacts are served with AI_URL pointed here (class code LOCAL1); append
+// ?offline to a page's URL to get it exactly as committed.
 // The admin function is served too; bearer token "local-admin" is the admin,
 // "local-other" is a signed-in stranger.
 
@@ -78,7 +80,12 @@ Deno.serve({ port: PORT }, async (req) => {
   const path = decodeURIComponent(url.pathname).replace(/\/$/, "/index.html");
   if (path.includes("..")) return new Response("no", { status: 400 });
   try {
-    const body = await Deno.readFile(ROOT + path);
+    let body: Uint8Array | string = await Deno.readFile(ROOT + path);
+    // Artifacts are served live, pointed at this harness; add ?offline to get them untouched.
+    if (path.startsWith("/artifacts/") && path.endsWith(".html") && !url.searchParams.has("offline")) {
+      body = new TextDecoder().decode(body)
+        .replace('const AI_URL = "";', `const AI_URL = "http://localhost:${PORT}/functions/v1/ai";`);
+    }
     return new Response(body, { headers: { "content-type": TYPES[path.split(".").pop()!] ?? "application/octet-stream" } });
   } catch {
     return new Response("not found", { status: 404 });
