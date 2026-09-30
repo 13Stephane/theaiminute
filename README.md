@@ -6,7 +6,7 @@ With `AI_URL` empty, both pages are offline-only and behave as they always have.
 
 ## How it is hosted
 
-The site is served by **Cloudflare Pages** from this repository (the live responses carry `server: cloudflare`, `_headers` is applied, and `.html` is redirected to a clean URL). A commit to `main` publishes. There is no build step. The backend reuses the course's existing Supabase project, with its own `ai_`-prefixed tables.
+The site is served by **Cloudflare** (Workers Builds, connected to this repository: the live responses carry `server: cloudflare`, `_headers` is applied, and `.html` is redirected to a clean URL). A commit to `main` publishes. There is no build step. The backend reuses the course's existing Supabase project, with its own `ai_`-prefixed tables.
 
 ```
 supabase/
@@ -53,7 +53,7 @@ You need the [Supabase CLI](https://supabase.com/docs/guides/cli) and access to 
    ```js
    const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";
    ```
-   Commit to `main`; Cloudflare Pages publishes it.
+   Commit to `main`; Cloudflare publishes it. (Artifact 03 already carries this address; 06 stays offline until you add it there.)
 6. **Supabase Auth.** In *Authentication → URL Configuration*, add `https://www.theaiminute.blog/admin/` to the redirect URLs. In *Authentication → Users*, add your own address (the same as `ADMIN_EMAIL`): the control room sends links only to existing users, so strangers cannot create accounts from it.
 7. **Backstop.** In the Claude Console, set a monthly spend limit on the workspace that owns the key. If everything else fails, that is the ceiling.
 
@@ -154,7 +154,7 @@ The local server serves the site and both functions with an in-memory database a
    ```
    deno run --allow-net --allow-read --allow-env tests/local_server.ts
    ```
-2. Open `http://localhost:8787/artifacts/03_jobs_vs_tasks_decomposer.html`. The badge reads **Live AI on**; the class code is `LOCAL1`. Add `?offline` to the address to see the page exactly as committed.
+2. Open `http://localhost:8787/artifacts/03_jobs_vs_tasks_decomposer.html`. The badge reads **Live AI on**; the class code is `LOCAL1`. Add `?offline` to the address to see the page with live AI off.
 3. Flip the state from a second terminal and watch the pages react:
    ```
    curl -X POST localhost:8787/__control -d '{"enabled":false}'          # Live AI is off
@@ -164,4 +164,4 @@ The local server serves the site and both functions with an in-memory database a
    ```
 The control room needs real Supabase sign-in, so locally it is covered by `tests/admin_e2e.mjs` only.
 
-Everything in this repository is published by Cloudflare Pages, including this README and the function source. None of it is secret: the key, the pepper and the admin address live only in Supabase secrets.
+Everything in this repository is published by Cloudflare, including this README and the function source. None of it is secret: the key, the pepper and the admin address live only in Supabase secrets.

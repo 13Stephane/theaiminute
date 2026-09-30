@@ -1,11 +1,15 @@
-# Minimal Supabase CLI config for the live-AI functions.
-# `supabase link --project-ref <ref>` connects it to the hosted project.
+# Supabase CLI config for this site's edge functions.
+# `supabase link --project-ref kcobpakjfluuyfzswtoq` connects it to the hosted project.
 project_id = "theaiminute"
 
 [functions.ai]
-# Public: the gate in functions/ai/gate.ts does the checking.
+# Live AI for artifacts 03 and 06. Public: the gate in functions/ai/gate.ts does the checking.
 verify_jwt = false
 
 [functions.admin]
-# A Supabase Auth session is required; logic.ts then insists on ADMIN_EMAIL.
+# The live-AI control room. A Supabase Auth session is required; logic.ts then insists on ADMIN_EMAIL.
+verify_jwt = true
+
+[functions.compose]
+# The editor's AI Composer. A Supabase Auth session is required; logic.ts then insists on an editor.
 verify_jwt = true

@@ -7,7 +7,7 @@
 // reply stands in. Test-only control: POST /__control with a JSON patch
 // (enabled, opens_at, closes_at, budget_usd, code), GET /__usage for the log.
 // Artifacts are served with AI_URL pointed here (class code LOCAL1); append
-// ?offline to a page's URL to get it exactly as committed.
+// ?offline to a page's URL to get it with AI_URL empty (offline only).
 // The admin function is served too; bearer token "local-admin" is the admin,
 // "local-other" is a signed-in stranger.
 
@@ -81,10 +81,10 @@ Deno.serve({ port: PORT }, async (req) => {
   if (path.includes("..")) return new Response("no", { status: 400 });
   try {
     let body: Uint8Array | string = await Deno.readFile(ROOT + path);
-    // Artifacts are served live, pointed at this harness; add ?offline to get them untouched.
-    if (path.startsWith("/artifacts/") && path.endsWith(".html") && !url.searchParams.has("offline")) {
-      body = new TextDecoder().decode(body)
-        .replace('const AI_URL = "";', `const AI_URL = "http://localhost:${PORT}/functions/v1/ai";`);
+    // Artifacts are served live, pointed at this harness; add ?offline to get them with AI_URL empty.
+    if (path.startsWith("/artifacts/") && path.endsWith(".html")) {
+      const to = url.searchParams.has("offline") ? "" : `http://localhost:${PORT}/functions/v1/ai`;
+      body = new TextDecoder().decode(body).replace(/const AI_URL = "[^"]*";/, `const AI_URL = "${to}";`);
     }
     return new Response(body, { headers: { "content-type": TYPES[path.split(".").pop()!] ?? "application/octet-stream" } });
   } catch {
