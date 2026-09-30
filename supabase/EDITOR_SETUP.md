@@ -17,6 +17,7 @@ Do the steps **in this order**. The old editor keeps working until step 4, becau
    - Turn off new user sign-ups: editors and the control-room admin are added by hand, and nobody else needs an account.
 4. **Deploy the Composer, then merge.**
    ```
+   supabase link --project-ref kcobpakjfluuyfzswtoq
    supabase functions deploy compose
    ```
    It reads the `MISTRAL_API_KEY` secret (already set for `course_place`; after step 5, set it to the new key). Merge the pull request; Cloudflare Pages publishes the new editor.
