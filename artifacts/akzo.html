@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://www.theaiminute.blog/akzo/">
+<meta name="description" content="Sum of the parts against PPG’s offer, April 2017, with the 2012–2016 financials.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AkzoNobel: the parts, or the offer?">
+<meta property="og:description" content="Sum of the parts against PPG’s offer, April 2017, with the 2012–2016 financials.">
+<meta property="og:url" content="https://www.theaiminute.blog/akzo/">
+<meta property="og:image" content="https://www.theaiminute.blog/logo.png">
+<link rel="icon" href="https://www.theaiminute.blog/logo.png">
+<title>AkzoNobel: the parts or the offer</title>
+<style>
+:root {
+  --bg: #0F2A2C; --ink: #F7F3EA; --muted: #CFC8B9; --card: #173A3D; --card2: #1F4749;
+  --line: #3C6467; --gold: #D6B45F; --gold-soft: #D6B45F; --chem: #7FB5E6; --paint: #D6B45F;
+  --good: #4CC79F; --bad: #E39A7E; --bar-bg: #0B2123;
+  color-scheme: dark; box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F2A2C; --ink: #F7F3EA; --muted: #CFC8B9; --card: #173A3D; --card2: #1F4749;
+    --line: #3C6467; --gold: #D6B45F; --gold-soft: #D6B45F; --chem: #7FB5E6; --paint: #D6B45F;
+    --good: #4CC79F; --bad: #E39A7E; --bar-bg: #0B2123;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F2A2C; --ink: #F7F3EA; --muted: #CFC8B9; --card: #173A3D; --card2: #1F4749;
+  --line: #3C6467; --gold: #D6B45F; --gold-soft: #D6B45F; --chem: #7FB5E6; --paint: #D6B45F;
+  --good: #4CC79F; --bad: #E39A7E; --bar-bg: #0B2123;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.55; }
+.num, table, .readout, input, button, .grid-sens { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 22px 48px; }
+h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.01em; }
+h2 { font-size: 27px; margin: 48px 0 8px; color: var(--gold); }
+h3 { font-size: 20px; margin: 0 0 6px; }
+p { margin: 0 0 10px; }
+.lede { font-size: 20px; color: var(--muted); max-width: 70ch; }
+.small { font-size: 16px; color: var(--muted); }
+.scen { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 8px; }
+.scen button { border: 2px solid var(--line); background: transparent; color: var(--ink); padding: 12px 18px; border-radius: 8px; font-size: 17px; cursor: pointer; text-align: left; }
+.scen button[aria-pressed="true"] { border-color: var(--gold); background: var(--card); }
+.scen button:focus-visible, input:focus-visible, .reveal:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.scen b { display: block; font-size: 17px; }
+.scen span { font-size: 14px; color: var(--muted); }
+.motion { background: var(--card); border-left: 5px solid var(--gold); padding: 16px 20px; margin: 16px 0 0; font-size: 19px; }
+/* the comparison */
+.compare { margin: 26px 0 6px; }
+.row { display: grid; grid-template-columns: 200px 1fr 150px; align-items: center; gap: 12px; margin: 10px 0; }
+.row .lab { font-size: 18px; }
+.track { position: relative; height: 46px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
+.seg { position: absolute; top: 0; bottom: 0; transition: width .25s ease, left .25s ease; }
+.seg.remain { background: var(--paint); }
+.seg.dist { background: var(--chem); }
+.seg.offer { background: var(--muted); }
+.row .val { font-size: 30px; font-weight: 600; text-align: right; }
+.legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: 15px; color: var(--muted); margin-left: 214px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.verdict { font-size: 23px; margin: 18px 0 4px; }
+.verdict b.good { color: var(--good); } .verdict b.bad { color: var(--bad); }
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 16px 0; }
+.readout div { background: var(--card); border-radius: 6px; padding: 12px 14px; }
+.readout .k { font-size: 14px; color: var(--muted); }
+.readout .v { font-size: 30px; font-weight: 700; }
+/* inputs */
+.inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; margin-top: 18px; }
+.inp { display: grid; grid-template-columns: 1fr 110px; align-items: center; gap: 4px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.inp label { font-size: 17px; }
+.inp .src { grid-column: 1 / 3; font-size: 14px; color: var(--muted); }
+.inp output { text-align: right; font-weight: 700; font-size: 18px; }
+.inp input[type=range] { grid-column: 1 / 3; width: 100%; accent-color: var(--gold); }
+/* tables */
+.tscroll { overflow-x: auto; margin: 10px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 16px; }
+th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+thead th { color: var(--muted); font-weight: 600; font-size: 15px; }
+tr.em td { font-weight: 600; }
+td.pos { color: var(--good); } td.neg { color: var(--bad); }
+.grid-sens td { text-align: center; padding: 8px 6px; }
+.grid-sens td.win { background: color-mix(in srgb, var(--good) 22%, transparent); }
+.grid-sens td.lose { background: color-mix(in srgb, var(--bad) 18%, transparent); }
+.grid-sens td.here { outline: 2px solid var(--gold); outline-offset: -2px; font-weight: 700; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.panel { background: var(--card); border-radius: 8px; padding: 16px 18px; }
+.panel.chem { border-top: 4px solid var(--chem); } .panel.paint { border-top: 4px solid var(--paint); }
+.panel ul { margin: 6px 0 0; padding-left: 20px; } .panel li { margin: 6px 0; }
+svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; fill: var(--muted); font-size: 12px; }
+.q { border-bottom: 1px solid var(--line); padding: 12px 0; }
+.reveal { background: transparent; border: 2px solid var(--line); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-size: 16px; cursor: pointer; margin-top: 6px; }
+.ans { display: none; margin-top: 10px; background: var(--card); padding: 12px 16px; border-radius: 8px; font-size: 18px; }
+.ans.open { display: block; }
+.note { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 40px; padding-top: 14px; }
+@media (max-width: 760px) {
+  .inputs, .two { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr 90px; }
+  .row .track { grid-column: 1 / 3; grid-row: 2; }
+  .legend { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>AkzoNobel: the parts, or the offer?</h1>
+<p class="lede">A decision-time tool. Choose the moment, set what the board believed, and compare the value of separation with what PPG put on the table.</p>
+
+<div class="scen" role="group" aria-label="Decision moment">
+  <button id="scA" aria-pressed="true"><b>24 April 2017 · PPG's third proposal</b><span>€61.50 cash + 0.357 PPG share. Historical.</span></button>
+  <button id="scB" aria-pressed="false"><b>Executive-board exercise · 18 Oct 2017</b><span>PPG offers €89 cash. Case variant, not the historical offer.</span></button>
+</div>
+<div class="motion" id="motion"></div>
+
+<section class="compare" aria-live="polite">
+  <div class="row"><div class="lab">Sum of the parts</div><div class="track"><div class="seg remain" id="bRemain"></div><div class="seg dist" id="bDist"></div></div><div class="val num" id="vSop"></div></div>
+  <div class="row"><div class="lab" id="offerLab">PPG offer</div><div class="track"><div class="seg offer" id="bOffer"></div></div><div class="val num" id="vOffer"></div></div>
+  <div class="legend"><span><i class="sw" style="background:var(--paint)"></i>Paints &amp; Coatings equity per share</span><span><i class="sw" style="background:var(--chem)"></i>Specialty Chemicals proceeds paid out per share</span></div>
+  <p class="verdict" id="verdict"></p>
+</section>
+
+<div class="readout">
+  <div><div class="k">Offer premium</div><div class="v num" id="rPrem"></div><div class="k" id="rPremRef"></div></div>
+  <div><div class="k">Separation upside</div><div class="v num" id="rUp"></div><div class="k" id="rUpRef"></div></div>
+  <div><div class="k">Break-even multiple for Paints &amp; Coatings</div><div class="v num" id="rBe"></div><div class="k">EV/EBITDA at which the parts equal the offer</div></div>
+  <div><div class="k">Specialty Chemicals, implied EV/EBITDA</div><div class="v num" id="rScM"></div><div class="k">on 2016 EBITDA of €953 m</div></div>
+</div>
+
+<div class="inputs">
+  <div class="inp" id="iPpgWrap"><label for="iPpg">PPG share price (€), for the 0.357 share</label><output id="oPpg"></output><input type="range" id="iPpg" min="80" max="120" step="0.01"><span class="src">€98.74 makes the offer €96.75, as announced. The stock part moves with PPG.</span></div>
+  <div class="inp"><label for="iProc">Specialty Chemicals value (€ bn)</label><output id="oProc"></output><input type="range" id="iProc" min="6" max="13" step="0.1"><span class="src" id="sProc"></span></div>
+  <div class="inp"><label for="iMult">Paints &amp; Coatings EV/EBITDA</label><output id="oMult"></output><input type="range" id="iMult" min="7" max="16" step="0.5"><span class="src">Peer multiple in the case exercise: 11.5×. AkzoNobel traded at a discount to peers (ING, case p. 3).</span></div>
+  <div class="inp"><label for="iEb">Paints &amp; Coatings EBITDA (€ m)</label><output id="oEb"></output><input type="range" id="iEb" min="1000" max="1700" step="1"><span class="src">Case exercise: €1,349 m. Check: 2016 group EBITDA €2,242 m less Specialty Chemicals €953 m = €1,289 m.</span></div>
+  <div class="inp"><label for="iDebt">Paints &amp; Coatings debt (€ m)</label><output id="oDebt"></output><input type="range" id="iDebt" min="1000" max="5000" step="5"><span class="src">Case exercise: €3,585 m after the sale. Group interest-bearing debt end 2016: €2,731 m.</span></div>
+  <div class="inp"><label for="iPay">Proceeds returned to shareholders</label><output id="oPay"></output><input type="range" id="iPay" min="0" max="100" step="5"><span class="src">The plan: the "vast majority", starting with a €1 bn special dividend (circular, ch. 5).</span></div>
+  <div class="inp"><label for="iLeak">Leakage: tax, pensions, separation costs</label><output id="oLeak"></output><input type="range" id="iLeak" min="0" max="30" step="1"><span class="src">Not quantified in the case. The circular excludes these from "net proceeds".</span></div>
+  <div class="inp"><label>Shares outstanding</label><output class="num">252 m</output><span class="src">Case exercise.</span></div>
+</div>
+
+<h2>Sensitivity: sum of the parts per share</h2>
+<p class="small">Rows: Paints &amp; Coatings EV/EBITDA. Columns: Specialty Chemicals value. Green beats the offer; the outlined cell is your current setting (nearest values).</p>
+<div class="tscroll"><table class="grid-sens" id="sens"></table></div>
+
+<h2>AkzoNobel before the bid, 2012–2016</h2>
+<p class="small">€ m. Case exhibits (balance sheet, income statement, invested capital, FOCF, ROIC, economic profit). ROIC on invested capital at the start of the year; WACC 5.7% as in the case.</p>
+<div class="tscroll"><table id="hist"></table></div>
+<svg id="roicChart" viewBox="0 0 640 250" width="100%" style="max-width:760px;display:block" role="img" aria-label="ROIC against WACC and economic profit, 2013 to 2016"></svg>
+<p class="small">2013 is not comparable: a €3.9 bn fall in other operating assets inflates free operating cash flow and the ROIC base. From 2015, AkzoNobel earned about twice its cost of capital. The question in 2017 was not whether it created value, but who would be paid for it.</p>
+
+<h2>Two businesses under one roof</h2>
+<div class="tscroll"><table>
+  <thead><tr><th>H1 2017, pro forma, € m</th><th>Specialty Chemicals</th><th>Paints &amp; Coatings</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue</td><td>2,549</td><td>4,897</td></tr>
+    <tr><td>Operating income</td><td>307</td><td>510</td></tr>
+    <tr class="em"><td>Operating margin</td><td>12.0%</td><td>10.4%</td></tr>
+    <tr><td>Property, plant and equipment</td><td>2,245</td><td>1,818</td></tr>
+    <tr><td>Intangible assets</td><td>831</td><td>3,400</td></tr>
+    <tr><td>Business equity (before the planned €2.4 bn debt)</td><td>3,008</td><td>3,763</td></tr>
+  </tbody></table></div>
+<p class="small">Source: shareholder circular, 18 October 2017, annexes 1–3. Specialty Chemicals, full year 2016: sales €4.8 bn, operating profit €629 m, EBITDA €953 m (case pp. 2–3). The plan loaded €2.0–2.8 bn of debt onto Specialty Chemicals, paid to AkzoNobel; at the €2.4 bn midpoint its business equity falls from €3,008 m to €608 m.</p>
+
+<h2>Where each part earns its spread</h2>
+<div class="two">
+  <div class="panel chem"><h3>Specialty Chemicals</h3>
+    <ul>
+      <li>Mature chemistries sold to specification: ethylene and sulfur derivatives, industrial chemicals, pulp and performance chemicals, polymer and surface chemistry.</li>
+      <li>Industry evolution: stage 3. Competition runs on process and cost; value sits with the cost leader.</li>
+      <li>Teece: the complementary assets decide, over 70 manufacturing sites and 15 research centres. IP matters in pockets (polymer, surface chemistry), not across the portfolio.</li>
+      <li>Theory of value: operational efficiency. Natural owner: a buyer that prizes cash conversion and can carry debt.</li>
+    </ul></div>
+  <div class="panel paint"><h3>Paints &amp; Coatings</h3>
+    <ul>
+      <li>Brands (Dulux) and specifications: #1 in marine, #2 in aerospace and industrial coatings (case, appendix 1).</li>
+      <li>Industry evolution: mature and consolidating. PPG 12%, AkzoNobel 9% of a fragmented market; Sherwin-Williams buying Valspar for $11.3 bn. This is horizontal scale, Utterback's shakeout, not stage-4 re-integration.</li>
+      <li>Teece: the spread goes to whoever holds brands, channels and scale. AkzoNobel's decorative margins sat below peers (appendix 1).</li>
+      <li>Theory of value: intangible capital, with scale as the missing piece. PPG's premium was a price for that scale.</li>
+    </ul></div>
+</div>
+
+<h2 id="exH">The executive-board exercise</h2>
+<p class="small">From the case exercise: it is 18 October 2017, the stock trades at €58 (about 2.1× book), PPG offers €89 in cash, and the CEO's proposed structure sells Specialty Chemicals for €10,100 m, 100% paid out. You ask the supervisory board for a yes or a no.</p>
+<div class="q"><b>1. At €58, what is AkzoNobel's EV/EBITDA?</b><br><button class="reveal" data-a="a1">Show the answer</button><div class="ans" id="a1">Market value 252 m × €58 = €14,616 m. Add interest-bearing debt of €2,731 m (end 2016): EV €17,347 m. Divide by 2016 EBITDA of €2,242 m (EBIT €1,519 m + D&amp;A €723 m): <b>7.7×</b>. Check: €14,616 m ÷ equity €7,034 m = 2.08× book.</div></div>
+<div class="q"><b>2. At the 11.5× peer multiple, what would the whole company be worth per share?</b><br><button class="reveal" data-a="a2">Show the answer</button><div class="ans" id="a2">11.5 × €2,242 m = €25,783 m EV. Less €2,731 m debt = €23,052 m equity, ÷ 252 m = <b>€91.5</b> per share, +58% on €58. The discount to peers alone is worth more than PPG's €89.</div></div>
+<div class="q"><b>3. After the sale, what is the upside, and is it enough?</b><br><button class="reveal" data-a="a3">Show the answer</button><div class="ans" id="a3">Paints &amp; Coatings: 11.5 × €1,349 m = €15,514 m EV, less €3,585 m debt = €11,929 m, ÷ 252 m = €47.3. Specialty Chemicals: €10,100 m ÷ 252 m = €40.1. Sum: <b>€87.4</b>, +50.7% on €58, against PPG's €89, +53.4%. Separation needs Paints &amp; Coatings to re-rate to about 11.8× just to match the offer, before tax, pensions and separation costs.</div></div>
+<div class="q"><b>4. Sell Specialty Chemicals, or accept PPG?</b><br><button class="reveal" data-a="a4">Show the reasoning</button><div class="ans" id="a4">On these numbers the two paths are within €2 a share. The choice therefore turns on what the numbers leave out: certainty (cash now against a re-rating that may not come), leakage on the sale, PPG's synergies (which a premium would share with you), and what a sale would cost the other stakeholders: 46,000 jobs and the Dutch ties the Boards cited. The board's vote is a judgment about those, not a calculation.</div></div>
+
+<h2>What the sum of the parts leaves out</h2>
+<ul>
+  <li>PPG's synergies, and how much of them the premium already hands to AkzoNobel's shareholders.</li>
+  <li>Separation costs and stranded corporate costs: 46 legal entities were shared between the two businesses (circular, basis of preparation).</li>
+  <li>Tax on the sale and pension funding, which the circular excludes from net proceeds.</li>
+  <li>Timing and risk: proceeds arrive in 2018; PPG's stock component moves with PPG; PPG's offer carried antitrust risk.</li>
+  <li>The re-rating of Paints &amp; Coatings is an assumption about the market, not a cash flow.</li>
+</ul>
+
+<p class="note">AI &amp; Corporate Finance, lecture 3, Data Analytics, AI &amp; Finance series, Nyenrode Business University. Case: Dennis Vink, "AkzoNobel business case: Prey or hunter?" (2023), exhibits 2012–2016 and the executive-board exercise. Segment data: AkzoNobel shareholder circular, 18 October 2017. The €10.1 bn in the exercise equals the enterprise value at which the sale to Carlyle and GIC closed on 1 October 2018; on 24 April 2017 the published estimate was ING's ≈ 9× 2016 EBITDA, €8.6 bn. Illustrative; not investment advice.</p>
+</div>
+
+<script>
+(function () {
+  var SH = 252, SC_EBITDA = 953;
+  var S = {
+    A: { motion: 'The motion: the Boards should open talks with PPG on its €96.75 proposal. Reference price: €64.42, the close before the first proposal (1 March 2017).',
+         ref: 64.42, refLab: 'vs €64.42 undisturbed', cash: 61.5, shares: 0.357, ppg: 98.74, proc: 8.6,
+         procSrc: 'Known on 24 April: ING valued it at about 9× 2016 EBITDA of €953 m, €8.6 bn; others said about 8× (case p. 3).', offerLab: 'PPG offer' },
+    B: { motion: 'The board question: approve the sale of Specialty Chemicals, or accept PPG\u2019s €89 in cash? Reference price: €58, where the stock trades in the exercise.',
+         ref: 58, refLab: 'vs €58 in the exercise', cash: 89, shares: 0, ppg: 98.74, proc: 10.1,
+         procSrc: 'The exercise\u2019s proposed structure: €10,100 m, 100% paid out as a dividend.', offerLab: 'PPG offer, cash' }
+  };
+  var cur = 'A';
+  var $ = function (id) { return document.getElementById(id); };
+  var inp = { ppg: $('iPpg'), proc: $('iProc'), mult: $('iMult'), eb: $('iEb'), debt: $('iDebt'), pay: $('iPay'), leak: $('iLeak') };
+  function eur(v, d) { return '€' + v.toFixed(d === undefined ? 1 : d); }
+  function pct(v) { return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%'; }
+
+  function setScenario(k) {
+    cur = k; var s = S[k];
+    $('scA').setAttribute('aria-pressed', k === 'A'); $('scB').setAttribute('aria-pressed', k === 'B');
+    $('motion').textContent = s.motion; $('sProc').textContent = s.procSrc; $('offerLab').textContent = s.offerLab;
+    inp.ppg.value = s.ppg; inp.proc.value = s.proc; inp.mult.value = 11.5; inp.eb.value = 1349; inp.debt.value = 3585; inp.pay.value = 100; inp.leak.value = 0;
+    $('iPpgWrap').style.display = s.shares ? '' : 'none';
+    calc();
+  }
+
+  function calc() {
+    var s = S[cur];
+    var ppg = +inp.ppg.value, proc = +inp.proc.value, mult = +inp.mult.value, eb = +inp.eb.value, debt = +inp.debt.value, pay = +inp.pay.value / 100, leak = +inp.leak.value / 100;
+    var offer = s.cash + s.shares * ppg;
+    var remain = (mult * eb - debt) / SH;
+    var dist = proc * 1000 * pay * (1 - leak) / SH;
+    var sop = remain + dist;
+    var be = ((offer - dist) * SH + debt) / eb;
+    $('oPpg').textContent = eur(ppg, 2); $('oProc').textContent = eur(proc) + ' bn'; $('oMult').textContent = mult.toFixed(1) + '×';
+    $('oEb').textContent = '€' + eb.toLocaleString('en-GB') + ' m'; $('oDebt').textContent = '€' + debt.toLocaleString('en-GB') + ' m';
+    $('oPay').textContent = Math.round(pay * 100) + '%'; $('oLeak').textContent = Math.round(leak * 100) + '%';
+    var max = Math.max(sop, offer, 1) * 1.08;
+    $('bRemain').style.left = '0'; $('bRemain').style.width = Math.max(0, remain) / max * 100 + '%';
+    $('bDist').style.left = Math.max(0, remain) / max * 100 + '%'; $('bDist').style.width = dist / max * 100 + '%';
+    $('bOffer').style.left = '0'; $('bOffer').style.width = offer / max * 100 + '%';
+    $('vSop').textContent = eur(sop); $('vOffer').textContent = eur(offer, 2);
+    var d = sop - offer;
+    $('verdict').innerHTML = d >= 0
+      ? 'Separation is worth <b class="good">' + eur(d) + ' a share more</b> than the offer, on these assumptions.'
+      : 'The offer is worth <b class="bad">' + eur(-d) + ' a share more</b> than separation, on these assumptions.';
+    $('rPrem').textContent = pct(offer / s.ref - 1); $('rPremRef').textContent = s.refLab;
+    $('rUp').textContent = pct(sop / s.ref - 1); $('rUpRef').textContent = s.refLab;
+    $('rBe').textContent = be.toFixed(1) + '×'; $('rScM').textContent = (proc * 1000 / SC_EBITDA).toFixed(1) + '×';
+    sens(offer, mult, proc, eb, debt, pay, leak);
+  }
+
+  function sens(offer, m0, p0, eb, debt, pay, leak) {
+    var ms = [9, 10, 11, 11.5, 12, 13, 14, 15], ps = [7, 8, 8.6, 9, 10.1, 11, 12];
+    var nm = ms.reduce(function (a, b) { return Math.abs(b - m0) < Math.abs(a - m0) ? b : a; });
+    var np = ps.reduce(function (a, b) { return Math.abs(b - p0) < Math.abs(a - p0) ? b : a; });
+    var h = '<thead><tr><th>EV/EBITDA</th>' + ps.map(function (p) { return '<th>€' + p + ' bn</th>'; }).join('') + '</tr></thead><tbody>';
+    ms.forEach(function (m) {
+      h += '<tr><td>' + m.toFixed(1) + '×</td>';
+      ps.forEach(function (p) {
+        var v = (m * eb - debt) / SH + p * 1000 * pay * (1 - leak) / SH;
+        h += '<td class="' + (v >= offer ? 'win' : 'lose') + (m === nm && p === np ? ' here' : '') + '">€' + Math.round(v) + '</td>';
+      });
+      h += '</tr>';
+    });
+    $('sens').innerHTML = h + '</tbody>';
+  }
+
+  // history, from the case exhibits
+  var Y = [2012, 2013, 2014, 2015, 2016];
+  var H = {
+    sales: [15390, 14590, 14296, 14859, 14197], ebit: [-1198, 958, 987, 1573, 1519], da: [2731, 755, 620, 648, 723],
+    ni: [-1593, 661, 600, 1060, 1054], debt: [3529, 3627, 3338, 2591, 2731], cash: [1635, 2098, 1732, 1365, 1479],
+    eq: [9560, 6021, 6267, 6980, 7034], ic: [13089, 9648, 9605, 9571, 9765],
+    noplat: [null, 641.9, 661.3, 1053.9, 1017.7], roic: [null, .049, .069, .110, .106], ep: [null, -104.7, 111.4, 506.4, 472.2],
+    focf: [null, 4082.9, 704.3, 1087.9, 823.7], capex: [null, 639, 866, 816, 910]
+  };
+  function f0(v) { return v === null ? '–' : Math.round(v).toLocaleString('en-GB'); }
+  var rows = [
+    ['Net sales', H.sales.map(f0)],
+    ['EBITDA', H.ebit.map(function (e, i) { return f0(e + H.da[i]); }), 'em'],
+    ['EBIT', H.ebit.map(f0)],
+    ['EBIT margin', H.ebit.map(function (e, i) { return (e / H.sales[i] * 100).toFixed(1) + '%'; })],
+    ['Net income', H.ni.map(f0)],
+    ['Interest-bearing debt', H.debt.map(f0)],
+    ['Operating cash', H.cash.map(f0)],
+    ['Net debt', H.debt.map(function (d, i) { return f0(d - H.cash[i]); }), 'em'],
+    ['Shareholders\u2019 equity', H.eq.map(f0)],
+    ['Invested capital', H.ic.map(f0)],
+    ['Capital expenditure', H.capex.map(f0)],
+    ['Free operating cash flow', H.focf.map(f0)],
+    ['NOPLAT (33% tax)', H.noplat.map(f0)],
+    ['ROIC', H.roic.map(function (r) { return r === null ? '–' : (r * 100).toFixed(1) + '%'; }), 'em'],
+    ['WACC', Y.map(function (y) { return y === 2012 ? '–' : '5.7%'; })],
+    ['Economic profit', H.ep.map(f0), 'em']
+  ];
+  var t = '<thead><tr><th></th>' + Y.map(function (y) { return '<th>' + y + '</th>'; }).join('') + '</tr></thead><tbody>';
+  rows.forEach(function (r) {
+    t += '<tr' + (r[2] ? ' class="em"' : '') + '><td>' + r[0] + '</td>' + r[1].map(function (v, i) {
+      var cls = (r[0] === 'Economic profit' && H.ep[i] !== null) ? (H.ep[i] >= 0 ? ' class="pos"' : ' class="neg"') : '';
+      return '<td' + cls + '>' + v + '</td>'; }).join('') + '</tr>';
+  });
+  $('hist').innerHTML = t + '</tbody>';
+
+  // ROIC vs WACC and economic profit (SVG)
+  (function () {
+    var svg = $('roicChart'), ns = 'http://www.w3.org/2000/svg', yrs = [2013, 2014, 2015, 2016], roic = [.049, .069, .110, .106], ep = [-104.7, 111.4, 506.4, 472.2];
+    function el(n, a, txt) { var e = document.createElementNS(ns, n); for (var k in a) e.setAttribute(k, a[k]); if (txt !== undefined) e.textContent = txt; svg.appendChild(e); return e; }
+    var x0 = 50, w = 250, y0 = 20, h = 170, max = .12;
+    el('text', { x: x0, y: 12 }, 'ROIC against WACC (5.7%)');
+    yrs.forEach(function (y, i) {
+      var bx = x0 + i * 62 + 8, bh = roic[i] / max * h;
+      el('rect', { x: bx, y: y0 + h - bh, width: 40, height: bh, fill: 'var(--gold-soft)', rx: 2 });
+      var below = roic[i] < .057;
+      el('text', { x: bx + 20, y: below ? y0 + h - bh + 16 : y0 + h - bh - 5, 'text-anchor': 'middle', style: below ? 'fill:var(--bg)' : '' }, (roic[i] * 100).toFixed(1) + '%');
+      el('text', { x: bx + 20, y: y0 + h + 32, 'text-anchor': 'middle' }, y);
+    });
+    var wy = y0 + h - .057 / max * h;
+    el('line', { x1: x0, x2: x0 + w, y1: wy, y2: wy, stroke: 'var(--ink)', 'stroke-width': 1.5, 'stroke-dasharray': '5 4' });
+    el('text', { x: x0 + w + 4, y: wy + 4 }, 'WACC');
+    var x1 = 360, w1 = 250, mx = 520, zero = y0 + h * (mx / (mx + 140));
+    el('text', { x: x1, y: 12 }, 'Economic profit, € m');
+    el('line', { x1: x1, x2: x1 + w1, y1: zero, y2: zero, stroke: 'var(--line)', 'stroke-width': 1 });
+    yrs.forEach(function (y, i) {
+      var bx = x1 + i * 62 + 8, v = ep[i], bh = Math.abs(v) / (mx + 140) * h;
+      el('rect', { x: bx, y: v >= 0 ? zero - bh : zero, width: 40, height: bh, fill: v >= 0 ? 'var(--good)' : 'var(--bad)', rx: 2 });
+      el('text', { x: bx + 20, y: v >= 0 ? zero - bh - 5 : zero + bh + 13, 'text-anchor': 'middle' }, Math.round(v));
+      el('text', { x: bx + 20, y: y0 + h + 32, 'text-anchor': 'middle' }, y);
+    });
+  })();
+
+  document.querySelectorAll('.reveal').forEach(function (b) {
+    b.addEventListener('click', function () { var a = $(b.getAttribute('data-a')); var o = a.classList.toggle('open'); b.textContent = o ? 'Hide' : (b.getAttribute('data-a') === 'a4' ? 'Show the reasoning' : 'Show the answer'); });
+  });
+  Object.keys(inp).forEach(function (k) { inp[k].addEventListener('input', calc); });
+  $('scA').addEventListener('click', function () { setScenario('A'); });
+  $('scB').addEventListener('click', function () { setScenario('B'); });
+  setScenario('A');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://www.theaiminute.blog/lego/">
+<meta name="description" content="A factory decision, the controller’s model, and what a reviewer should flag.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="LEGO India: sign the INR 100 m?">
+<meta property="og:description" content="A factory decision, the controller’s model, and what a reviewer should flag.">
+<meta property="og:url" content="https://www.theaiminute.blog/lego/">
+<meta property="og:image" content="https://www.theaiminute.blog/logo.png">
+<link rel="icon" href="https://www.theaiminute.blog/logo.png">
+<title>LEGO India: sign the INR 100 m?</title>
+<style>
+:root {
+  --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9;
+  --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123;
+  color-scheme: dark; box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9; --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123; }
+}
+:root[data-theme="dark"] { --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9; --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.55; }
+.num, table, input, button, select, textarea, .ro, .val { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 26px 56px; }
+h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.12; margin: 0 0 10px; }
+h2 { font-size: 27px; margin: 48px 0 8px; color: var(--gold); font-weight: 700; }
+h3 { font-size: 20px; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+.lede { font-size: 20px; color: var(--muted); max-width: 72ch; }
+.small { font-size: 16px; color: var(--muted); }
+.scen { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 8px; }
+.scen button { border: 2px solid var(--line); background: transparent; color: var(--ink); padding: 12px 18px; border-radius: 8px; font-size: 17px; cursor: pointer; text-align: left; }
+.scen button[aria-pressed="true"] { border-color: var(--gold); background: var(--card); }
+.scen b { display: block; font-size: 17px; } .scen span { font-size: 14px; color: var(--muted); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.motion { background: var(--card); border-left: 5px solid var(--gold); padding: 16px 20px; margin: 16px 0 0; font-size: 19px; }
+.row { display: grid; grid-template-columns: 200px 1fr 150px; align-items: center; gap: 14px; margin: 12px 0; }
+.row .lab { font-size: 18px; }
+.track { position: relative; height: 46px; background: var(--track); border-radius: 5px; overflow: hidden; }
+.seg { position: absolute; top: 0; bottom: 0; transition: width .25s ease, left .25s ease; }
+.val { font-size: 30px; font-weight: 700; text-align: right; }
+.legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: 15px; color: var(--muted); margin-left: 214px; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 7px; }
+.verdict { font-size: 23px; margin: 20px 0 6px; }
+.good { color: var(--good); } .bad { color: var(--bad); } .gold { color: var(--gold); }
+.ro { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 18px 0; }
+.ro > div { background: var(--card); border-radius: 8px; padding: 14px 16px; }
+.ro .k { font-size: 14px; color: var(--muted); }
+.ro .v { font-size: 30px; font-weight: 700; margin: 2px 0; }
+.inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; margin-top: 18px; }
+.inp { display: grid; grid-template-columns: 1fr 110px; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.inp label { font-size: 17px; }
+.inp .src { grid-column: 1 / 3; font-size: 14px; color: var(--muted); }
+.inp output { text-align: right; font-weight: 700; font-size: 18px; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+.inp input[type=range] { grid-column: 1 / 3; width: 100%; accent-color: var(--gold); height: 22px; }
+.tog { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 17px; }
+.tog input { width: 22px; height: 22px; accent-color: var(--gold); }
+.tscroll { overflow-x: auto; margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 16px; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+thead th { color: var(--muted); font-weight: 600; font-size: 15px; }
+tr.em td { font-weight: 700; }
+td.pos { color: var(--good); } td.neg { color: var(--bad); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.panel { background: var(--card); border-radius: 10px; padding: 18px 20px; }
+.panel ul { margin: 6px 0 0; padding-left: 20px; } .panel li { margin: 6px 0; }
+.btn { background: var(--gold); color: #10292B; border: 0; border-radius: 8px; padding: 11px 18px; font-size: 17px; font-weight: 700; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); font-weight: 600; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; fill: var(--muted); font-size: 13px; }
+.note { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px; }
+@media (max-width: 800px) {
+  .inputs, .two { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr 110px; } .row .track { grid-column: 1 / 3; grid-row: 2; }
+  .legend { margin-left: 0; } body { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+
+.seg.base { background: var(--muted); } .seg.lego { background: var(--gold); }
+.flags { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; }
+.chk { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.chk b { color: var(--gold); }
+details { background: var(--card); border-radius: 10px; padding: 14px 18px; margin: 12px 0; }
+summary { cursor: pointer; font-size: 19px; font-weight: 700; color: var(--gold); }
+details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0; }
+.err { color: var(--bad); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>LEGO India: sign the INR 100 m?</h1>
+<p class="lede">Start of 2024. Aswath's business case, rebuilt line by line from his spreadsheet. First the model as he built it, then the deal LEGO actually signs.</p>
+
+<div class="scen" role="group" aria-label="Which view">
+  <button id="vA" aria-pressed="true"><b>The controller's model</b><span>100% of project cash flows, as in the spreadsheet</span></button>
+  <button id="vB" aria-pressed="false"><b>LEGO's deal</b><span>LEGO keeps 30% of project cash flows</span></button>
+</div>
+
+<section aria-live="polite">
+  <div class="row"><div class="lab">NPV, whole project</div><div class="track"><div class="seg base" id="b100"></div></div><div class="val" id="v100"></div></div>
+  <div class="row"><div class="lab">NPV to LEGO</div><div class="track"><div class="seg lego" id="bL"></div></div><div class="val" id="vL"></div></div>
+  <p class="small">Bars show the size of the loss; both NPVs are in INR thousands (kINR), as in the spreadsheet.</p>
+  <p class="verdict" id="verdict"></p>
+</section>
+
+<div class="ro">
+  <div><div class="k">Discount rate</div><div class="v" id="rR"></div><div class="k" id="rRs"></div></div>
+  <div><div class="k">Unit gross margin, 2024 → 2033</div><div class="v" id="rM"></div><div class="k">flat price against rising unit costs</div></div>
+  <div><div class="k">Highest ROIC in any year</div><div class="v" id="rRoic"></div><div class="k">the controller said "about 40%"</div></div>
+  <div><div class="k">IRR, whole project</div><div class="v" id="rIrr"></div><div class="k" id="rIrrS"></div></div>
+</div>
+
+<div class="inputs">
+  <div class="inp"><label for="iShare">LEGO's share of project cash flows</label><output id="oShare"></output><input type="range" id="iShare" min="10" max="100" step="5"><span class="src">The case: 70% to the government, 30% to LEGO. The spreadsheet runs at 100%.</span></div>
+  <div class="tog"><input type="checkbox" id="iOwn"><label for="iOwn">LEGO pays the INR 100 m factory and receives the INR 100 m buy-back itself</label></div>
+  <div class="inp"><label for="iHq">Head-office cost of capital</label><output id="oHq"></output><input type="range" id="iHq" min="3" max="12" step="0.5"><span class="src">6% from LEGO's head office (case, p. 5).</span></div>
+  <div class="inp"><label for="iCrp">India country risk premium</label><output id="oCrp"></output><input type="range" id="iCrp" min="0" max="8" step="0.5"><span class="src">4%, "what he heard from the accountant" (case, p. 5).</span></div>
+  <div class="inp"><label for="iPg">Price growth a year</label><output id="oPg"></output><input type="range" id="iPg" min="0" max="5" step="0.5"><span class="src">The case: INR 120.50 for ten years.</span></div>
+  <div class="inp"><label for="iCg">Unit cost growth a year</label><output id="oCg"></output><input type="range" id="iCg" min="0" max="5" step="0.5"><span class="src">The case: 2% on raw materials, production and distribution.</span></div>
+  <div class="inp"><label for="iMg">Market growth a year</label><output id="oMg"></output><input type="range" id="iMg" min="0" max="12" step="0.5"><span class="src">The case: 8%, from 35 m units in 2024.</span></div>
+  <div class="inp"><label for="iSs">Market share path, scaled</label><output id="oSs"></output><input type="range" id="iSs" min="25" max="150" step="5"><span class="src">100% = the case's 5% rising to 28% by 2033.</span></div>
+</div>
+<div class="flags" style="margin-top:12px">
+  <div class="tog"><input type="checkbox" id="iTax"><label for="iTax">Losses earn a 30% tax credit (as in the spreadsheet)</label></div>
+  <div class="tog"><input type="checkbox" id="iSunk"><label for="iSunk">Include the INR 2 m already spent on R&amp;D <span class="err">(error)</span></label></div>
+  <div class="tog"><input type="checkbox" id="iInt"><label for="iInt">Deduct the INR 1 m a year of interest <span class="err">(error)</span></label></div>
+  <div class="tog"><button class="btn ghost" id="reset" type="button">Reset to the case</button></div>
+</div>
+
+<h2>Unit economics and cash flows</h2>
+<svg id="chart" viewBox="0 0 1100 300" width="100%" role="img" aria-label="Unit gross margin and free operating cash flow by year"></svg>
+<div class="tscroll"><table id="tbl"></table></div>
+<p class="small">kINR. Free operating cash flow = NOPLAT + depreciation − investment in working capital − reinvestment. 2033 carries the INR 100 m buy-back and the release of all working capital. ROIC = NOPLAT ÷ opening invested capital (factory INR 100 m, held flat by reinvestment, plus working capital).</p>
+
+<h2>After your verdict: the reviewer's checklist</h2>
+<details><summary>Show what a careful reviewer, human or AI, should flag</summary><ol>
+  <li><b>LEGO keeps 30%.</b> The spreadsheet values 100% of the project. Its "significant minority" row is empty and never used.</li>
+  <li><b>Who funds the factory, who gets the buy-back?</b> The case says LEGO pays the INR 100 m invoice; it does not say the buy-back goes to LEGO alone. The NPV to LEGO depends on it.</li>
+  <li><b>The price never moves.</b> INR 120.50 for ten years against costs rising 2% a year takes unit margin from 13% to −4%. At 2% price growth the project NPV turns positive: this assumption decides the case.</li>
+  <li><b>The discount rate is the wrong fight.</b> A lower rate makes this NPV worse, because the large inflow comes last. The 4% premium still needs a source, and INR cash flows need an INR rate.</li>
+  <li><b>"ROIC about 40%" is not in the numbers.</b> ROIC peaks around 12% in 2026 and is negative from 2029.</li>
+  <li><b>Sunk and financing costs stay out.</b> The INR 2 m of R&amp;D is spent either way; interest belongs in the discount rate, not the cash flows. The spreadsheet gets both right.</li>
+  <li><b>Tax credits on losses.</b> The model books a 30% credit on every loss. Inside a 70/30 venture, whose tax bill absorbs it?</li>
+  <li><b>Market share.</b> One limited-edition theme reaching 28% of all LEGO units sold in India by 2033 is an assumption to test, not a given.</li>
+  <li><b>Mechanics.</b> Tax (30%) and the discount rate (10%) are typed into formulas, not linked to input cells; reinvestment from 2025 references the depreciation row; the buy-back is booked in 2033 although the case dates it 2034.</li>
+</ol></details>
+
+<p class="note">AI &amp; Corporate Finance, lecture 3, Data Analytics, AI &amp; Finance series, Nyenrode Business University. Case: Dennis Vink, "LEGO factory investment in India" (2023), a fictional scenario, and its spreadsheet (LEGO_NPV.xls). At the case's settings this page reproduces the spreadsheet's NPV of −232,136 kINR to the unit. Illustrative; not investment advice.</p>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var Y = [2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033];
+  var SHARE = [5, 10, 15, 16, 18, 20, 22, 24, 26, 28], FTE = [5, 6, 18, 21, 24, 27, 30, 33, 36, 39], MK = [750, 1250, 1500, 2000];
+  var I = { share: $('iShare'), own: $('iOwn'), hq: $('iHq'), crp: $('iCrp'), pg: $('iPg'), cg: $('iCg'), mg: $('iMg'), ss: $('iSs'), tax: $('iTax'), sunk: $('iSunk'), int: $('iInt') };
+  var view = 'A';
+  function defaults(v) {
+    I.share.value = v === 'A' ? 100 : 30; I.own.checked = v === 'B'; I.hq.value = 6; I.crp.value = 4; I.pg.value = 0; I.cg.value = 2; I.mg.value = 8; I.ss.value = 100;
+    I.tax.checked = true; I.sunk.checked = false; I.int.checked = false;
+  }
+  function model(p) {
+    var rate = p.hq + p.crp, nwcPrev = 10000, rows = [];
+    for (var i = 0; i < 10; i++) {
+      var vol = 35000 * Math.pow(1 + p.mg, i) * SHARE[i] / 100 * p.ss;
+      var price = 120.5 * Math.pow(1 + p.pg, i), uc = 105 * Math.pow(1 + p.cg, i);
+      var sales = vol * price, costs = vol * uc;
+      var mkt = i < 4 ? MK[i] : 2000 * Math.pow(1.02, i - 3);
+      var sf = FTE[i] * 50 * Math.pow(1.02, i), oh = 0.04 * sales, dep = 10000;
+      var ebit = sales - costs - mkt - sf - oh - dep;
+      var tax = (ebit < 0 && !p.tax) ? 0 : 0.3 * ebit, noplat = ebit - tax;
+      var nwc = 0.05 * costs + 0.08 * sales, capex = i < 9 ? 10000 : -90000;
+      var inv = (i < 9) ? (nwcPrev - nwc) - capex : nwcPrev - capex;
+      var focf = noplat + dep + inv - (p.int ? 1000 : 0);
+      var df = 1 / Math.pow(1 + rate, i + 1);
+      rows.push({ wc: (i < 9) ? nwcPrev - nwc : nwcPrev, y: Y[i], price: price, uc: uc, m: (price - uc) / price, sales: sales, ebit: ebit, noplat: noplat, dnwc: nwcPrev - nwc, capex: capex, focf: focf, df: df, pv: focf * df, roic: noplat / (100000 + nwcPrev) });
+      nwcPrev = nwc;
+    }
+    var t0 = -110000 - (p.sunk ? 2000 : 0);
+    var pvSum = rows.reduce(function (a, r) { return a + r.pv; }, 0);
+    var npv = t0 + pvSum, dfEnd = rows[9].df;
+    var npvL = p.own ? (-100000 + 100000 * dfEnd + p.share * (npv + 100000 - 100000 * dfEnd)) : p.share * npv;
+    var cf = [t0].concat(rows.map(function (r) { return r.focf; }));
+    var f = function (r) { return cf.reduce(function (a, v, k) { return a + v / Math.pow(1 + r, k); }, 0); };
+    var irr = null, lo = -0.95, hi = 1.5;
+    if (f(lo) * f(hi) < 0) { for (var k = 0; k < 200; k++) { var mid = (lo + hi) / 2; if (f(lo) * f(mid) <= 0) hi = mid; else lo = mid; } irr = (lo + hi) / 2; }
+    return { rows: rows, npv: npv, npvL: npvL, irr: irr, rate: rate, nominal: cf.reduce(function (a, v) { return a + v; }, 0) };
+  }
+  function k(v) { return (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('en-GB'); }
+  function calc() {
+    var p = { share: +I.share.value / 100, own: I.own.checked, hq: +I.hq.value / 100, crp: +I.crp.value / 100, pg: +I.pg.value / 100, cg: +I.cg.value / 100, mg: +I.mg.value / 100, ss: +I.ss.value / 100, tax: I.tax.checked, sunk: I.sunk.checked, int: I.int.checked };
+    $('oShare').textContent = Math.round(p.share * 100) + '%'; $('oHq').textContent = (p.hq * 100).toFixed(1) + '%'; $('oCrp').textContent = (p.crp * 100).toFixed(1) + '%';
+    $('oPg').textContent = (p.pg * 100).toFixed(1) + '%'; $('oCg').textContent = (p.cg * 100).toFixed(1) + '%'; $('oMg').textContent = (p.mg * 100).toFixed(1) + '%'; $('oSs').textContent = Math.round(p.ss * 100) + '%';
+    var R = model(p);
+    var mx = Math.max(Math.abs(R.npv), Math.abs(R.npvL), 1) * 1.08;
+    [['b100', R.npv], ['bL', R.npvL]].forEach(function (x) { var el = $(x[0]); el.style.left = 0; el.style.width = Math.abs(x[1]) / mx * 100 + '%'; el.style.opacity = x[1] < 0 ? 1 : .55; });
+    $('v100').textContent = k(R.npv); $('vL').textContent = k(R.npvL);
+    $('v100').className = 'val ' + (R.npv < 0 ? 'bad' : 'good'); $('vL').className = 'val ' + (R.npvL < 0 ? 'bad' : 'good');
+    $('verdict').innerHTML = R.npvL < 0 ? 'On these assumptions LEGO destroys <b class="bad">INR ' + (Math.abs(R.npvL) / 1000).toFixed(1) + ' m</b> of value by signing.' : 'On these assumptions LEGO creates <b class="good">INR ' + (R.npvL / 1000).toFixed(1) + ' m</b> of value by signing.';
+    $('rR').textContent = (R.rate * 100).toFixed(1) + '%'; $('rRs').textContent = (p.hq * 100).toFixed(1) + '% head office + ' + (p.crp * 100).toFixed(1) + '% country premium';
+    $('rM').textContent = (R.rows[0].m * 100).toFixed(0) + '% → ' + (R.rows[9].m * 100).toFixed(0) + '%';
+    var best = R.rows.reduce(function (a, r) { return r.roic > a.roic ? r : a; });
+    $('rRoic').textContent = (best.roic * 100).toFixed(1) + '%'; 
+    $('rIrr').textContent = R.irr === null ? 'none' : (R.irr * 100).toFixed(1) + '%';
+    $('rIrrS').textContent = 'nominal cash flows sum to ' + k(R.nominal) + ' kINR';
+    var h = '<thead><tr><th>kINR</th>' + Y.map(function (y) { return '<th>' + y + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var line = function (lab, f, cls) { return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + lab + '</td>' + R.rows.map(function (r) { var v = f(r); return '<td' + (typeof v === 'number' && v < 0 ? ' class="neg"' : '') + '>' + (typeof v === 'number' ? k(v) : v) + '</td>'; }).join('') + '</tr>'; };
+    h += line('Unit gross margin', function (r) { return (r.m * 100).toFixed(1) + '%'; });
+    h += line('Sales', function (r) { return r.sales; });
+    h += line('EBIT', function (r) { return r.ebit; });
+    h += line('NOPLAT', function (r) { return r.noplat; });
+    h += line('Working capital (built −, released +)', function (r) { return r.wc; });
+    h += line('Reinvestment (−) / buy-back (+)', function (r) { return -r.capex; });
+    h += line('Free operating cash flow', function (r) { return r.focf; }, 'em');
+    h += line('Present value', function (r) { return r.pv; });
+    h += line('ROIC', function (r) { return (r.roic * 100).toFixed(1) + '%'; });
+    $('tbl').innerHTML = h + '</tbody>';
+    draw(R);
+  }
+  function draw(R) {
+    var svg = $('chart'), ns = 'http://www.w3.org/2000/svg'; while (svg.firstChild) svg.removeChild(svg.firstChild);
+    function el(n, a, t) { var e = document.createElementNS(ns, n); for (var q in a) e.setAttribute(q, a[q]); if (t !== undefined) e.textContent = t; svg.appendChild(e); return e; }
+    // left: unit margin
+    var x0 = 50, w = 440, y0 = 30, h = 220, mn = -0.06, mxm = 0.16;
+    var ys = function (v) { return y0 + h - (v - mn) / (mxm - mn) * h; };
+    el('text', { x: x0, y: 16, style: 'font-size:15px;fill:var(--gold)' }, 'Unit gross margin');
+    el('line', { x1: x0, x2: x0 + w, y1: ys(0), y2: ys(0), stroke: 'var(--line)' });
+    var pts = R.rows.map(function (r, i) { return (x0 + i * w / 9) + ',' + ys(r.m); }).join(' ');
+    el('polyline', { points: pts, fill: 'none', stroke: 'var(--gold)', 'stroke-width': 3 });
+    R.rows.forEach(function (r, i) {
+      var x = x0 + i * w / 9;
+      el('circle', { cx: x, cy: ys(r.m), r: 4, fill: 'var(--gold)' });
+      el('text', { x: x, y: ys(r.m) - 9, 'text-anchor': 'middle' }, (Math.round(r.m * 100) === 0 ? '0' : (r.m * 100).toFixed(0)) + '%');
+      el('text', { x: x, y: y0 + h + 22, 'text-anchor': 'middle' }, "'" + String(r.y).slice(2));
+    });
+    // right: FOCF bars
+    var x1 = 580, w1 = 500, max = Math.max.apply(null, R.rows.map(function (r) { return Math.abs(r.focf); })) || 1;
+    var zero = y0 + h / 2 + 30;
+    el('text', { x: x1, y: 16, style: 'font-size:15px;fill:var(--gold)' }, 'Free operating cash flow, kINR');
+    el('line', { x1: x1, x2: x1 + w1, y1: zero, y2: zero, stroke: 'var(--line)' });
+    R.rows.forEach(function (r, i) {
+      var bw = 34, x = x1 + i * w1 / 10 + 8, bh = Math.abs(r.focf) / max * (h / 2 + 10);
+      el('rect', { x: x, y: r.focf >= 0 ? zero - bh : zero, width: bw, height: bh, fill: r.focf >= 0 ? 'var(--good)' : 'var(--bad)', rx: 2 });
+      el('text', { x: x + bw / 2, y: y0 + h + 22, 'text-anchor': 'middle' }, "'" + String(r.y).slice(2));
+    });
+  }
+  Object.keys(I).forEach(function (q) { I[q].addEventListener('input', calc); I[q].addEventListener('change', calc); });
+  function setView(v) { view = v; $('vA').setAttribute('aria-pressed', v === 'A'); $('vB').setAttribute('aria-pressed', v === 'B'); defaults(v); calc(); }
+  $('vA').addEventListener('click', function () { setView('A'); }); $('vB').addEventListener('click', function () { setView('B'); });
+  $('reset').addEventListener('click', function () { setView(view); });
+  setView('A');
+})();
+</script>
+</body>
+</html>

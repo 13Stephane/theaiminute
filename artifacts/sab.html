@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://www.theaiminute.blog/sab/">
+<meta name="description" content="The value test and the buyer’s ROIC on a $100 bn acquisition.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AB InBev / SABMiller: does the price pay?">
+<meta property="og:description" content="The value test and the buyer’s ROIC on a $100 bn acquisition.">
+<meta property="og:url" content="https://www.theaiminute.blog/sab/">
+<meta property="og:image" content="https://www.theaiminute.blog/logo.png">
+<link rel="icon" href="https://www.theaiminute.blog/logo.png">
+<title>AB InBev / SABMiller: does the price pay?</title>
+<style>
+:root {
+  --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9;
+  --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123;
+  color-scheme: dark; box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9; --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123; }
+}
+:root[data-theme="dark"] { --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9; --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.55; }
+.num, table, input, button, select, textarea, .ro, .val { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 26px 56px; }
+h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.12; margin: 0 0 10px; }
+h2 { font-size: 27px; margin: 48px 0 8px; color: var(--gold); font-weight: 700; }
+h3 { font-size: 20px; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+.lede { font-size: 20px; color: var(--muted); max-width: 72ch; }
+.small { font-size: 16px; color: var(--muted); }
+.scen { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 8px; }
+.scen button { border: 2px solid var(--line); background: transparent; color: var(--ink); padding: 12px 18px; border-radius: 8px; font-size: 17px; cursor: pointer; text-align: left; }
+.scen button[aria-pressed="true"] { border-color: var(--gold); background: var(--card); }
+.scen b { display: block; font-size: 17px; } .scen span { font-size: 14px; color: var(--muted); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.motion { background: var(--card); border-left: 5px solid var(--gold); padding: 16px 20px; margin: 16px 0 0; font-size: 19px; }
+.row { display: grid; grid-template-columns: 200px 1fr 150px; align-items: center; gap: 14px; margin: 12px 0; }
+.row .lab { font-size: 18px; }
+.track { position: relative; height: 46px; background: var(--track); border-radius: 5px; overflow: hidden; }
+.seg { position: absolute; top: 0; bottom: 0; transition: width .25s ease, left .25s ease; }
+.val { font-size: 30px; font-weight: 700; text-align: right; }
+.legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: 15px; color: var(--muted); margin-left: 214px; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 7px; }
+.verdict { font-size: 23px; margin: 20px 0 6px; }
+.good { color: var(--good); } .bad { color: var(--bad); } .gold { color: var(--gold); }
+.ro { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 18px 0; }
+.ro > div { background: var(--card); border-radius: 8px; padding: 14px 16px; }
+.ro .k { font-size: 14px; color: var(--muted); }
+.ro .v { font-size: 30px; font-weight: 700; margin: 2px 0; }
+.inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; margin-top: 18px; }
+.inp { display: grid; grid-template-columns: 1fr 110px; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.inp label { font-size: 17px; }
+.inp .src { grid-column: 1 / 3; font-size: 14px; color: var(--muted); }
+.inp output { text-align: right; font-weight: 700; font-size: 18px; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+.inp input[type=range] { grid-column: 1 / 3; width: 100%; accent-color: var(--gold); height: 22px; }
+.tog { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 17px; }
+.tog input { width: 22px; height: 22px; accent-color: var(--gold); }
+.tscroll { overflow-x: auto; margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 16px; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+thead th { color: var(--muted); font-weight: 600; font-size: 15px; }
+tr.em td { font-weight: 700; }
+td.pos { color: var(--good); } td.neg { color: var(--bad); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.panel { background: var(--card); border-radius: 10px; padding: 18px 20px; }
+.panel ul { margin: 6px 0 0; padding-left: 20px; } .panel li { margin: 6px 0; }
+.btn { background: var(--gold); color: #10292B; border: 0; border-radius: 8px; padding: 11px 18px; font-size: 17px; font-weight: 700; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); font-weight: 600; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; fill: var(--muted); font-size: 13px; }
+.note { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); margin-top: 44px; padding-top: 16px; }
+@media (max-width: 800px) {
+  .inputs, .two { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr 110px; } .row .track { grid-column: 1 / 3; grid-row: 2; }
+  .legend { margin-left: 0; } body { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+
+.seg.prem { background: var(--bad); } .seg.syn { background: var(--good); } .seg.left { background: var(--gold); }
+textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 17px; line-height: 1.45; }
+.ai-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.ai-out { background: var(--card); border-radius: 10px; padding: 16px 18px; font-size: 18px; line-height: 1.55; white-space: pre-wrap; min-height: 80px; }
+.callout { background: var(--card2); border-left: 5px solid var(--gold); padding: 14px 18px; margin: 14px 0; font-size: 18px; }
+.gate { background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 20px 22px; margin: 22px 0; }
+.gate .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 14px 0; }
+.gate label { display: block; font-size: 16px; color: var(--muted); margin-bottom: 6px; }
+.gate input[type=number] { width: 100%; font-size: 24px; padding: 10px 12px; background: var(--bg); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; }
+.locked { display: none; } .open { display: block; }
+.cmp td:first-child { font-weight: 700; }
+.how { font-size: 16px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 14px; margin: 10px 0 0; }
+@media (max-width: 800px) { .gate .fields { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>AB InBev / SABMiller: does the price pay?</h1>
+<p class="lede">7 October 2015. The Chair needs a rule by tonight: the maximum price, the conditions, and what makes AB InBev walk. Test the premium against the synergies first; red-team your rule second.</p>
+
+<p class="how">Use at step 3, after your table has done the value test by hand. Enter your numbers first; the model opens once you have committed to them.</p>
+
+<div class="gate" id="gate">
+  <h3 class="gold">Your table's numbers from step 2</h3>
+  <div class="fields">
+    <div><label for="uPrem">Premium paid ($ bn)</label><input type="number" id="uPrem" step="0.1" inputmode="decimal"></div>
+    <div><label for="uSyn">Value of the synergies ($ bn)</label><input type="number" id="uSyn" step="0.1" inputmode="decimal"></div>
+    <div><label for="uMax">Your walk-away price ($ per share)</label><input type="number" id="uMax" step="0.5" inputmode="decimal"></div>
+  </div>
+  <button class="btn" id="unlock" disabled>Compare with the model</button>
+  <span class="small" style="margin-left:12px">Enter the first two to continue.</span>
+</div>
+
+<div class="locked" id="model">
+<div class="tscroll"><table class="cmp" id="cmp"></table></div>
+
+<section aria-live="polite">
+  <div class="row"><div class="lab">Premium paid</div><div class="track"><div class="seg prem" id="bPrem"></div></div><div class="val" id="vPrem"></div></div>
+  <div class="row"><div class="lab">Value of synergies</div><div class="track"><div class="seg syn" id="bSyn"></div></div><div class="val" id="vSyn"></div></div>
+  <p class="verdict" id="verdict"></p>
+</section>
+
+<div class="ro">
+  <div><div class="k">Equity value at the offer</div><div class="v" id="rEq"></div><div class="k" id="rEqS"></div></div>
+  <div><div class="k">Premium over undisturbed value</div><div class="v" id="rPremPct"></div><div class="k">handed to SABMiller's shareholders</div></div>
+  <div><div class="k">Break-even synergy growth</div><div class="v" id="rG"></div><div class="k">a year, forever, for the premium to pay</div></div>
+  <div><div class="k">Break-even synergies at your growth</div><div class="v" id="rS"></div><div class="k">gross, a year, before disposals</div></div>
+</div>
+
+<div class="inputs">
+  <div class="inp"><label for="iOffer">Offer per SABMiller share ($)</label><output id="oOffer"></output><input type="range" id="iOffer" min="50" max="75" step="0.5"><span class="src">Third proposal: $64 (£42.15) in cash, 7 October 2015.</span></div>
+  <div class="inp"><label for="iUnd">Undisturbed equity value ($ bn)</label><output id="oUnd"></output><input type="range" id="iUnd" min="60" max="90" step="0.5"><span class="src">Data pack: ≈ $75 bn on 15 September 2015.</span></div>
+  <div class="inp"><label for="iSyn">Annual cost synergies ($ bn)</label><output id="oSyn"></output><input type="range" id="iSyn" min="0" max="4" step="0.1"><span class="src">Management's estimate: $2.2 bn (case, p. 5).</span></div>
+  <div class="inp"><label for="iDis">Synergies lost with disposals</label><output id="oDis"></output><input type="range" id="iDis" min="0" max="60" step="5"><span class="src">Regulators may take assets worth about a third of SAB's EV and just under half its EBITDA (case, p. 5).</span></div>
+  <div class="inp"><label for="iTax">Tax rate</label><output id="oTax"></output><input type="range" id="iTax" min="15" max="40" step="1"><span class="src">Deck: 30%. Data pack: 38%. SABMiller FY2015 effective: 34%.</span></div>
+  <div class="inp"><label for="iW">WACC</label><output id="oW"></output><input type="range" id="iW" min="5" max="10" step="0.25"><span class="src">Data pack: 7% (its label says "assumption of 10%").</span></div>
+  <div class="inp"><label for="iG">Synergy growth, forever</label><output id="oG"></output><input type="range" id="iG" min="-2" max="4" step="0.1"><span class="src">0% means the savings stay flat in dollars.</span></div>
+  <div class="inp"><label for="iInt">One-off integration cost ($ bn)</label><output id="oInt"></output><input type="range" id="iInt" min="0" max="5" step="0.1"><span class="src">Not in the case. Set it to test the margin of safety.</span></div>
+</div>
+
+<h2>Does the buyer earn its cost of capital?</h2>
+<p class="small">The value test asks whether the synergies pay for the premium. This asks the same question year by year: what return does AB InBev earn on everything it paid, against its 7% cost of capital?</p>
+<div class="ro">
+  <div><div class="k">Enterprise value paid</div><div class="v" id="qEv"></div><div class="k">equity + SAB net debt + minorities</div></div>
+  <div><div class="k">Paid above SAB's book capital</div><div class="v" id="qGw"></div><div class="k">becomes goodwill and brands</div></div>
+  <div><div class="k">Year-1 ROIC on what was paid</div><div class="v" id="qRp"></div><div class="k" id="qRpS"></div></div>
+  <div><div class="k">Year-1 economic profit</div><div class="v" id="qEp"></div><div class="k">NOPLAT − WACC × capital paid</div></div>
+</div>
+<div class="inputs">
+  <div class="inp"><label for="iGr">Operating profit growth a year</label><output id="oGr"></output><input type="range" id="iGr" min="0" max="8" step="0.5"><span class="src">Applies to SAB's NOPLAT including synergies.</span></div>
+  <div class="inp"><label for="iRn">Return on new investment</label><output id="oRn"></output><input type="range" id="iRn" min="6" max="30" step="1"><span class="src">Growth needs capital: reinvestment = NOPLAT × growth ÷ this return.</span></div>
+</div>
+<svg id="roicChart" viewBox="0 0 1100 330" width="100%" role="img" aria-label="ROIC on the price paid and on SAB's own capital against WACC over fifteen years"></svg>
+<div class="callout" id="roicMsg"></div>
+
+<h3 class="gold" style="margin-top:26px">SABMiller's own ROIC, FY2015: three readings of the same year</h3>
+<div class="tscroll"><table>
+  <thead><tr><th></th><th>NOPLAT ($ bn)</th><th>Capital ($ bn)</th><th>ROIC</th><th>vs 7% WACC</th></tr></thead>
+  <tbody>
+    <tr><td>As in the data pack (EBIT after 38% tax, over opening capital)</td><td>2.72</td><td>43.9</td><td>6.2%</td><td class="neg">−0.8 pp</td></tr>
+    <tr><td>Adding the $1.08 bn earned by joint ventures and associates, whose $11.4 bn is already in that capital</td><td>3.80</td><td>43.9</td><td>8.7%</td><td class="pos">+1.7 pp</td></tr>
+    <tr><td>Operations only: without goodwill, brands and those stakes</td><td>2.72</td><td>5.5</td><td>≈ 50%</td><td class="pos">far above</td></tr>
+  </tbody></table></div>
+<p class="small">The breweries earn exceptional returns; SABMiller's own acquisitions (Miller, Bavaria, Foster's) put $27 bn of goodwill and brands into the capital base. AB InBev's price adds about $80 bn more on top.</p>
+
+<h2>Your walk-away rule</h2>
+<p class="small">Write the rule your table will give the Chair, then ask Claude to attack it. The prompt carries the numbers above.</p>
+<textarea id="rule" aria-label="Your walk-away rule">We pay up to $__ per share if __ ; we walk if __ .</textarea>
+<div class="ai-row">
+  <button class="btn" data-q="red">Red-team my rule</button>
+  <button class="btn ghost" data-q="flip">Which assumption flips the verdict?</button>
+  <button class="btn ghost" data-q="sd">What would the Santo Domingo family need?</button>
+  <button class="btn ghost" id="stop" hidden>Stop</button>
+</div>
+<div class="ai-out" id="aiOut">The red-team runs on the viewer's Claude account; the first request asks for consent.</div>
+<div class="ai-row"><button class="btn ghost" id="copyPrompt" hidden>Copy the prompt</button></div>
+<p class="small" id="aiNote"></p>
+
+<h2>Where the value sits</h2>
+<div class="two">
+  <div class="panel"><h3 class="gold">Theories of value</h3><ul>
+    <li><b>Operational efficiency</b>: the primary thesis. $2.2 bn of cost synergies, the 3G playbook.</li>
+    <li><b>Capital redeployment</b>: buying growth AB InBev could not build; Baldwin's own account of 3G (case, p. 6).</li>
+    <li><b>Intangible capital</b>: brands are protected IP; recipes are not. Craft beer takes share at the margin (case, p. 5).</li>
+    <li><b>Regulatory &amp; political</b>: disposals in the US, China and Europe decide how much of the target survives.</li>
+    <li><b>Risk &amp; resilience</b>: leverage, and emerging-market revenue against dollar debt.</li>
+  </ul></div>
+  <div class="panel"><h3 class="gold">Teece: who keeps the spread</h3><ul>
+    <li><b>Complementary assets</b>: SAB's routes to market in Africa and Latin America; partnerships with Castel and Coca-Cola bottlers (data pack, slide 2). AB InBev cannot build these quickly.</li>
+    <li><b>Appropriability</b>: brands can be protected; cost savings cannot. Rivals can copy procurement and overhead savings.</li>
+    <li><b>The holder of the scarce asset keeps the spread</b>: in a contested auction that is the target's shareholders, through the premium.</li>
+  </ul></div>
+</div>
+
+</div>
+
+<h2>The two companies, last reported</h2>
+<p class="small">$ m. AB InBev: year to December 2015. SABMiller: year to March 2015. In the case, the titles of Tables 1 and 2 are swapped; the figures below follow the annual reports.</p>
+<div class="tscroll"><table>
+  <thead><tr><th></th><th>AB InBev (Dec 2015)</th><th>SABMiller (Mar 2015)</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue</td><td>43,604</td><td>22,130</td></tr>
+    <tr><td>Operating profit before non-recurring / exceptional items</td><td>13,768</td><td>4,459</td></tr>
+    <tr><td>Depreciation and amortization</td><td>3,153</td><td>1,395</td></tr>
+    <tr class="em"><td>EBITDA (consolidated)</td><td>16,921</td><td>5,854</td></tr>
+    <tr><td>Share of associates and joint ventures (post-tax)</td><td>10</td><td>1,083</td></tr>
+    <tr><td>Profit attributable to owners</td><td>8,273</td><td>3,299</td></tr>
+    <tr><td>Basic EPS ($)</td><td>5.05</td><td>2.057</td></tr>
+    <tr><td>Weighted average shares (m)</td><td>1,638</td><td>1,604</td></tr>
+    <tr><td>Interest-bearing debt</td><td>49,466</td><td>12,544</td></tr>
+    <tr><td>Cash</td><td>6,923</td><td>965</td></tr>
+    <tr class="em"><td>Net debt</td><td>42,543</td><td>11,579</td></tr>
+    <tr><td>Total equity</td><td>45,719</td><td>24,355</td></tr>
+  </tbody></table></div>
+<p class="small">SABMiller's consolidated EBITDA leaves out its share of MillerCoors, CR Snow and Castel, which is why the case quotes $7.1 bn of EBITDA acquired. SABMiller's D&amp;A is the data pack's figure; AB InBev's includes impairment.</p>
+
+<h2>Hindsight, for the debrief</h2>
+<p class="small">Open this only after the rules have been read aloud.</p>
+<button class="btn ghost" id="showHind">Show what happened, 2016–2025</button>
+<div class="locked" id="hind">
+  <div class="tscroll"><table>
+    <thead><tr><th>What happened</th><th>When</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Deal completed; gross purchase consideration $114 bn</td><td>10 Oct 2016</td><td>AB InBev 20-F</td></tr>
+      <tr><td>Incremental goodwill recognised: $72.4 bn</td><td>2016</td><td>AB InBev 20-F</td></tr>
+      <tr><td>Net debt $108.0 bn (from $42.2 bn), about 5.5× EBITDA</td><td>Dec 2016</td><td>AB InBev 20-F; CNN</td></tr>
+      <tr><td>MillerCoors and CR Snow stakes sold; later Australia for $11.3 bn</td><td>2016–2020</td><td>Annual reports; CNN</td></tr>
+      <tr><td>Synergy and cost-savings expectation: $3.2 bn, against the case's $2.2 bn</td><td>confirmed Oct 2018</td><td>3Q18 results</td></tr>
+      <tr><td>Dividend halved: €1.80 for 2018 against €3.60; €0.50 for 2020</td><td>Oct 2018; 2021</td><td>3Q18 results; FY20 release</td></tr>
+      <tr><td>Goodwill impairment of $2.5 bn: South Africa $1.5 bn, Rest of Africa $1.0 bn</td><td>2Q 2020</td><td>AB InBev 20-F 2020</td></tr>
+      <tr><td>Net debt $60.9 bn, 2.87× EBITDA; target still about 2×</td><td>Dec 2025</td><td>FY25 results</td></tr>
+      <tr><td>ROIC about 7% on about $184 bn of invested capital (3-year median 6.3%)</td><td>2026</td><td>Alpha Spread estimate</td></tr>
+    </tbody></table></div>
+  <div class="callout">AB InBev expected $3.2 bn of synergies and cost savings, more than the case's $2.2 bn. The premium had already paid them to SABMiller's shareholders: a decade later the group earns roughly its cost of capital on everything it paid, with third-party WACC estimates between about 5% and 9%.</div>
+</div>
+
+<p class="note">AI &amp; Corporate Finance, lecture 3, Data Analytics, AI &amp; Finance series, Nyenrode Business University. Case: Dennis Vink, "AB InBev and SABMiller: Raising glasses to a happy future?" (2023) and the SAB select-data pack. Financials: AB InBev Annual Report 2015; SABMiller plc Annual Report 2015. Equity value at the offer uses the case's ≈ $105 bn at $64 (1,640 m shares); the annual report's weighted average is 1,604 m. Hindsight: AB InBev 20-F filings 2016 and 2020, 3Q18 and FY25 results releases; ROIC is a third-party estimate (Alpha Spread, 2026). Illustrative; not investment advice.</p>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var SH = 1640, SAB_ND = 11.579, SAB_NCI = 1.183, BOOK = 36.899, SAB_EBIT = 4.459, SAB_JV = 1.083;
+  var I = { offer: $('iOffer'), und: $('iUnd'), syn: $('iSyn'), dis: $('iDis'), tax: $('iTax'), w: $('iW'), g: $('iG'), int: $('iInt'), gr: $('iGr'), rn: $('iRn') };
+  var D = { offer: 64, und: 75, syn: 2.2, dis: 0, tax: 30, w: 7, g: 0, int: 0, gr: 3, rn: 12 };
+  Object.keys(D).forEach(function (k) { I[k].value = D[k]; });
+  var S = {};
+  function bn(v) { return (v < 0 ? '−$' : '$') + Math.abs(v).toFixed(1) + ' bn'; }
+  function pc(v) { return (v * 100).toFixed(1) + '%'; }
+
+  // commit before reveal
+  function gateCheck() { $('unlock').disabled = !($('uPrem').value !== '' && $('uSyn').value !== ''); }
+  ['uPrem', 'uSyn', 'uMax'].forEach(function (id) { $(id).addEventListener('input', gateCheck); });
+  $('unlock').addEventListener('click', function () {
+    $('model').className = 'open'; $('gate').style.display = 'none';
+    calc(); compare(); $('model').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  function compare() {
+    var up = parseFloat($('uPrem').value), us = parseFloat($('uSyn').value), um = parseFloat($('uMax').value);
+    var mp = 64 * SH / 1000 - 75, ms = 2.2 * 0.7 / 0.07;
+    var mm = (75 + ms) * 1000 / SH;
+    var row = function (lab, u, m, f) { return '<tr><td>' + lab + '</td><td>' + (isNaN(u) ? '–' : f(u)) + '</td><td>' + f(m) + '</td><td>' + (isNaN(u) ? '–' : ((u - m >= 0 ? '+' : '') + f(u - m))) + '</td></tr>'; };
+    var fb = function (v) { return (v < 0 ? '−' : '') + '$' + Math.abs(v).toFixed(1) + (Math.abs(v) >= 10 || true ? '' : ''); };
+    $('cmp').innerHTML = '<thead><tr><th>At the case settings</th><th>Your table</th><th>The model</th><th>Difference</th></tr></thead><tbody>' +
+      row('Premium ($ bn)', up, mp, function (v) { return fb(v) + ' bn'; }) +
+      row('Value of synergies ($ bn)', us, ms, function (v) { return fb(v) + ' bn'; }) +
+      row('Walk-away price ($/share): undisturbed value + synergies, per share', um, mm, function (v) { return fb(v); }) + '</tbody>';
+  }
+
+  function calc() {
+    var offer = +I.offer.value, und = +I.und.value, syn = +I.syn.value, dis = +I.dis.value / 100, tax = +I.tax.value / 100,
+        w = +I.w.value / 100, g = +I.g.value / 100, integ = +I.int.value, gr = +I.gr.value / 100, rn = +I.rn.value / 100;
+    $('oOffer').textContent = '$' + offer.toFixed(1); $('oUnd').textContent = '$' + und.toFixed(1) + ' bn'; $('oSyn').textContent = '$' + syn.toFixed(1) + ' bn';
+    $('oDis').textContent = Math.round(dis * 100) + '%'; $('oTax').textContent = Math.round(tax * 100) + '%'; $('oW').textContent = (w * 100).toFixed(2) + '%';
+    $('oG').textContent = (g * 100).toFixed(1) + '%'; $('oInt').textContent = '$' + integ.toFixed(1) + ' bn'; $('oGr').textContent = (gr * 100).toFixed(1) + '%'; $('oRn').textContent = Math.round(rn * 100) + '%';
+    // value test
+    var eq = offer * SH / 1000, prem = eq - und, s = syn * (1 - dis), at = s * (1 - tax);
+    var pv = (w > g) ? at / (w - g) - integ : Infinity, left = pv - prem;
+    var beG = (prem + integ) > 0 ? w - at / (prem + integ) : null;
+    var beS = (prem + integ) * (w - g) / (1 - tax) / ((1 - dis) || 1);
+    var max = Math.max(prem, isFinite(pv) ? pv : prem, 1) * 1.08;
+    $('bPrem').style.left = 0; $('bPrem').style.width = Math.max(0, prem) / max * 100 + '%';
+    $('bSyn').style.left = 0; $('bSyn').style.width = Math.max(0, isFinite(pv) ? pv : max) / max * 100 + '%';
+    $('vPrem').textContent = bn(prem); $('vSyn').textContent = isFinite(pv) ? bn(pv) : 'n/a';
+    $('verdict').innerHTML = !isFinite(pv) ? 'Growth at or above WACC: the formula no longer holds.'
+      : left >= 0 ? 'AB InBev\u2019s shareholders keep <b class="good">' + bn(left) + '</b> after paying the premium.'
+      : 'SABMiller\u2019s shareholders take <b class="bad">' + bn(-left) + ' more</b> than the synergies are worth.';
+    $('rEq').textContent = bn(eq); $('rEqS').textContent = '$' + offer.toFixed(1) + ' × 1,640 m shares';
+    $('rPremPct').textContent = '+' + (prem / und * 100).toFixed(0) + '%';
+    $('rG').textContent = beG === null ? 'n/a' : (beG * 100).toFixed(1) + '%';
+    $('rS').textContent = '$' + beS.toFixed(2) + ' bn';
+    // buyer's ROIC
+    var ev = eq + SAB_ND + SAB_NCI, above = ev - BOOK;
+    var n1 = SAB_EBIT * (1 - tax) + SAB_JV + at;
+    var rp1 = n1 / ev, ep1 = n1 - w * ev;
+    $('qEv').textContent = bn(ev); $('qGw').textContent = bn(above);
+    $('qRp').textContent = pc(rp1); $('qRp').className = 'v ' + (rp1 >= w ? 'good' : 'bad');
+    $('qRpS').textContent = 'against a WACC of ' + pc(w) + '; on SAB\u2019s own capital: ' + pc(n1 / BOOK);
+    $('qEp').textContent = bn(ep1); $('qEp').className = 'v ' + (ep1 >= 0 ? 'good' : 'bad');
+    var path = [], icp = ev, icb = BOOK, n = n1, cross = null;
+    for (var t = 1; t <= 15; t++) {
+      var rp = n / icp, rb = n / icb; path.push({ t: t, rp: rp, rb: rb });
+      if (cross === null && rp >= w) cross = t;
+      var reinv = n * gr / rn; icp += reinv; icb += reinv; n *= 1 + gr;
+    }
+    drawRoic(path, w);
+    var need = w * ev;
+    $('roicMsg').innerHTML = 'The business clears its cost of capital on its own books (' + pc(n1 / BOOK) + '). On what AB InBev pays, it earns ' + pc(rp1) +
+      ' in year one: NOPLAT of ' + bn(n1) + ' against the ' + bn(need) + ' needed to earn ' + pc(w) + ' on ' + bn(ev) + '. ' +
+      (cross ? 'At ' + (gr * 100).toFixed(1) + '% growth the return on the price reaches WACC in <b class="good">year ' + cross + '</b>.'
+             : 'At ' + (gr * 100).toFixed(1) + '% growth it <b class="bad">does not reach WACC within 15 years</b>: the ' + bn(above) + ' paid above book capital must earn ' + pc(w) + ' too.');
+    S = { offer: offer, und: und, eq: eq, prem: prem, syn: syn, dis: dis, tax: tax, w: w, g: g, integ: integ, pv: pv, left: left, beG: beG, ev: ev, above: above, rp1: rp1, rb1: n1 / BOOK, ep1: ep1, cross: cross, gr: gr };
+  }
+  function drawRoic(path, w) {
+    var svg = $('roicChart'), ns = 'http://www.w3.org/2000/svg'; while (svg.firstChild) svg.removeChild(svg.firstChild);
+    function el(n, a, t) { var e = document.createElementNS(ns, n); for (var q in a) e.setAttribute(q, a[q]); if (t !== undefined) e.textContent = t; svg.appendChild(e); return e; }
+    var x0 = 60, x1 = 900, y0 = 20, h = 260, mx = Math.max(0.2, path[0].rb * 1.1);
+    var X = function (t) { return x0 + (t - 1) / 14 * (x1 - x0); }, Yv = function (v) { return y0 + h - Math.max(0, Math.min(v, mx)) / mx * h; };
+    [0, 0.05, 0.10, 0.15, 0.20].filter(function (v) { return v <= mx; }).forEach(function (v) {
+      el('line', { x1: x0, x2: x1, y1: Yv(v), y2: Yv(v), stroke: 'var(--line)', 'stroke-width': 0.6 });
+      el('text', { x: x0 - 8, y: Yv(v) + 4, 'text-anchor': 'end' }, Math.round(v * 100) + '%');
+    });
+    el('line', { x1: x0, x2: x1, y1: Yv(w), y2: Yv(w), stroke: 'var(--muted)', 'stroke-width': 2, 'stroke-dasharray': '7 5' });
+    var yW = Yv(w), yP = Yv(path[14].rp), yB = Yv(path[14].rb);
+    if (Math.abs(yW - yP) < 20) { if (yP >= yW) yP = yW + 20; else yP = yW - 20; }
+    if (Math.abs(yB - yW) < 20) { yB = yB < yW ? yW - 20 : yW + 20; }
+    el('text', { x: x1 + 10, y: yW + 5, style: 'fill:var(--muted);font-size:15px' }, 'WACC ' + (w * 100).toFixed(1) + '%');
+    el('polyline', { points: path.map(function (p) { return X(p.t) + ',' + Yv(p.rb); }).join(' '), fill: 'none', stroke: 'var(--blue)', 'stroke-width': 3, 'stroke-dasharray': '10 6' });
+    el('text', { x: x1 + 10, y: yB + 5, style: 'fill:var(--blue);font-size:15px' }, 'on SAB\u2019s own capital');
+    el('polyline', { points: path.map(function (p) { return X(p.t) + ',' + Yv(p.rp); }).join(' '), fill: 'none', stroke: 'var(--gold)', 'stroke-width': 4 });
+    el('text', { x: x1 + 10, y: yP + 5, style: 'fill:var(--gold);font-size:15px' }, 'on what was paid');
+    [1, 5, 10, 15].forEach(function (t) { el('text', { x: X(t), y: y0 + h + 22, 'text-anchor': 'middle' }, 'year ' + t); });
+  }
+  Object.keys(I).forEach(function (k) { I[k].addEventListener('input', calc); });
+  calc();
+
+  $('showHind').addEventListener('click', function () { var o = $('hind').className === 'open'; $('hind').className = o ? 'locked' : 'open'; this.textContent = o ? 'Show what happened, 2016–2025' : 'Hide'; });
+
+  // AI red-team through the sample capability
+  var PROMPTS = {
+    red: 'Red-team the walk-away rule below. Find its three weakest points, in order of how much value they put at risk, and propose one change to the rule for each. Then say whether you would sign it.',
+    flip: 'Which single assumption above, moved by a plausible amount, flips the verdict? Give the amount, why it is plausible, and what evidence the Chair should ask for before relying on it.',
+    sd: 'The Santo Domingo family (about 14%) must accept for the deal to proceed. What would they need, given the partial share alternative (0.48 AB InBev share + £2.37 per SAB share), their tax position and their wish to stay exposed to brewing? How much of the spread does that hand them, and does the walk-away rule survive it?'
+  };
+  function context() {
+    return 'Case: AB InBev considering its third proposal for SABMiller, 7 October 2015. Current assumptions from the class tool:\n' +
+      '- Offer $' + S.offer.toFixed(1) + ' per share; equity value ' + bn(S.eq) + '; undisturbed value ' + bn(S.und) + '; premium ' + bn(S.prem) + '.\n' +
+      '- Synergies $' + S.syn.toFixed(1) + ' bn a year, ' + Math.round(S.dis * 100) + '% lost to disposals, taxed at ' + Math.round(S.tax * 100) + '%, WACC ' + pc(S.w) + ', synergy growth ' + pc(S.g) + ', integration cost ' + bn(S.integ) + '.\n' +
+      '- Value of synergies ' + bn(S.pv) + '; value left for AB InBev after the premium ' + bn(S.left) + '; break-even synergy growth ' + (S.beG === null ? 'n/a' : pc(S.beG)) + '.\n' +
+      '- Enterprise value paid ' + bn(S.ev) + ', of which ' + bn(S.above) + ' above SABMiller\u2019s book capital. Year-1 ROIC on the price ' + pc(S.rp1) + ' (on SAB\u2019s own capital ' + pc(S.rb1) + '); year-1 economic profit ' + bn(S.ep1) + '; at ' + pc(S.gr) + ' growth the return on the price ' + (S.cross ? 'reaches WACC in year ' + S.cross : 'does not reach WACC within 15 years') + '.\n' +
+      '- Largest SABMiller holders: Altria 27%, Santo Domingo family 14%. Regulators may require disposals of about a third of SABMiller\u2019s enterprise value.\n' +
+      'Walk-away rule proposed by the table: "' + $('rule').value.trim() + '"\n\n';
+  }
+  var TAIL = '\nAnswer in plain text, under 220 words, no headings. Reason from value created (ROIC against WACC, premium against synergies), not earnings per share. Use the theories of value (operational efficiency, intangible capital, innovation and IP, platform and ecosystem, capital redeployment, risk and resilience, regulatory and political) and Teece (complementary assets) where they help. Do not use knowledge of what happened after October 2015.';
+  var sample = null, ctl = null;
+  var btns = Array.prototype.slice.call(document.querySelectorAll('[data-q]'));
+  btns.forEach(function (b) {
+    b.addEventListener('click', async function () {
+      var q = b.getAttribute('data-q');
+      if (!sample) {
+        $('aiOut').textContent = context() + PROMPTS[q] + TAIL;
+        $('aiNote').textContent = 'The prompt above carries your numbers: copy it into any assistant.';
+        $('copyPrompt').hidden = false;
+        return;
+      }
+      btns.forEach(function (x) { x.disabled = true; }); $('stop').hidden = false; $('aiNote').textContent = '';
+      $('aiOut').textContent = 'Thinking...'; ctl = new AbortController();
+      try {
+        var res = await sample(context() + PROMPTS[q] + TAIL, { signal: ctl.signal, onText: function (e) { $('aiOut').textContent = e.text; } });
+        if (res.truncated) $('aiNote').textContent = 'Cut short. Ask a narrower question.';
+      } catch (e) {
+        $('aiOut').textContent = (e && e.text) || '';
+        var c = e && e.code;
+        $('aiNote').textContent = c === 'cancelled' ? 'Stopped.' : c === 'not_granted' ? 'Claude access was declined for this view.' : c === 'rate_limited' ? 'Too many requests at once. Wait a minute, then ask again.' : 'The request did not complete (' + (c || 'error') + ').';
+        if (c === 'not_granted') sample = null;
+      } finally { btns.forEach(function (x) { x.disabled = false; }); $('stop').hidden = true; }
+    });
+  });
+  $('stop').addEventListener('click', function () { if (ctl) ctl.abort(); });
+  $('copyPrompt').addEventListener('click', function () {
+    var t = $('aiOut').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { $('aiNote').textContent = 'Copied. Paste it into any assistant.'; }, function () { $('aiNote').textContent = 'Select the text above and copy it.'; });
+    else $('aiNote').textContent = 'Select the text above and copy it.';
+  });
+  if (!(window.claude && typeof window.claude.use === 'function')) {
+    $('aiOut').textContent = 'Pick a question. You get a prompt carrying your rule and your numbers, ready to paste into any assistant.';
+  }
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('sample').then(function (x) { sample = x; }).catch(function () { sample = null; });
+  }
+})();
+</script>
+</body>
+</html>
