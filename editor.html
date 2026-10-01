@@ -185,8 +185,8 @@
   <h2>Editor Access</h2>
   <p>The AI Minute</p>
   <div class="lock-form">
-    <input type="password" id="password-input" placeholder="Password" onkeydown="if(event.key==='Enter')unlock()">
-    <button class="btn btn-primary" onclick="unlock()">Enter</button>
+    <input type="email" id="email-input" placeholder="Your email" autocomplete="email" onkeydown="if(event.key==='Enter')sendSignInLink()">
+    <button class="btn btn-primary" id="signin-btn" onclick="sendSignInLink()">Send sign-in link</button>
     <div id="lock-error"></div>
   </div>
 </div>
@@ -409,14 +409,15 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   /* ══ CONFIG ══ */
-  const PASSWORDS = {
-    stephane: 'changeme-stephane',
-    hanne:    'changeme-hanne'
-  };
-  const SUPABASE_URL     = 'https://kcobpakjfluuyfzswtoq.supabase.co';
-  const SUPABASE_SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjb2JwYWtqZmx1dXlmenN3dG9xIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzQxMTIxOCwiZXhwIjoyMDkyOTg3MjE4fQ.zMmm3_LVan5Ukk1_0LSBP_61BlgpypVx0vxw8g_yT1E';
+  // Editors sign in by email link (Supabase Auth). What a signed-in editor may
+  // do is decided by row-level security (supabase/migrations/0002_editor_access.sql);
+  // this page holds only the public anon key.
+  const SUPABASE_URL  = 'https://kcobpakjfluuyfzswtoq.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjb2JwYWtqZmx1dXlmenN3dG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MTEyMTgsImV4cCI6MjA5Mjk4NzIxOH0.qSlZOSGMtfBWfNlrJrO-SWLRumLFZb0qVkZPWh1dRWM';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   const SITE_URL         = 'https://theaiminute.blog';
 
   const AUTHOR_META = {
@@ -488,15 +489,46 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
       .replace(/\n{3,}/g,'\n\n').trim();
   }
 
-  /* ══ LOCK ══ */
-  function unlock() {
-    const val = document.getElementById('password-input').value;
-    if (val === PASSWORDS.stephane) { login('stephane'); }
-    else if (val === PASSWORDS.hanne) { login('hanne'); }
-    else {
-      document.getElementById('lock-error').textContent = 'Incorrect password';
-      document.getElementById('password-input').value = '';
-    }
+  /* ══ SIGN-IN (email link) ══ */
+  function lockMessage(t) { document.getElementById('lock-error').textContent = t || ''; }
+
+  async function sendSignInLink() {
+    const email = document.getElementById('email-input').value.trim();
+    if (!email) { lockMessage('Enter your email'); return; }
+    const btn = document.getElementById('signin-btn'); btn.disabled = true;
+    const { error } = await sb.auth.signInWithOtp({
+      email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false }
+    });
+    btn.disabled = false;
+    lockMessage(error ? error.message : 'Check your inbox for the sign-in link.');
+  }
+
+  // A session alone is not enough: the address must be in public.editors.
+  let resuming = false;
+  async function resumeSession() {
+    if (resuming || currentAuthor) return;
+    resuming = true;
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) return;
+      try {
+        const rows = await sbFetch('editors?select=author');
+        if (rows && rows.length && AUTHOR_META[rows[0].author]) { login(rows[0].author); return; }
+        lockMessage(`${session.user.email} is not an editor.`);
+      } catch (e) { console.error(e); lockMessage('Could not check editor access.'); }
+      await sb.auth.signOut();
+    } finally { resuming = false; }
+  }
+  // Fires on page load with any saved session, and when an email link signs in.
+  // Deferred, because supabase-js must not be called from inside this callback.
+  sb.auth.onAuthStateChange((event, session) => {
+    if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && session) setTimeout(resumeSession, 0);
+  });
+
+  async function authToken() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { logout(); throw new Error('Signed out. Sign in again.'); }
+    return session.access_token;
   }
 
   function login(author) {
@@ -511,10 +543,10 @@ Tone: candid, experienced, slightly impatient with hype. No em-dashes. Ends post
 
   function logout() {
     currentAuthor = null;
+    sb.auth.signOut();
     document.getElementById('app').style.display = 'none';
     document.getElementById('lock-screen').style.display = 'flex';
-    document.getElementById('password-input').value = '';
-    document.getElementById('lock-error').textContent = '';
+    lockMessage('');
   }
 
   /* ══ JOINT TOGGLE ══ */
@@ -580,23 +612,18 @@ Respond ONLY with JSON, no markdown:
 }`;
 
     try {
-      const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/compose`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyQwREkXBvvVI85qrIXPJ6PifZZigRrj'
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${await authToken()}`
         },
-        body: JSON.stringify({
-          model: 'mistral-small-latest',
-          max_tokens: 1000,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Post type: ${type}\nIdea: ${idea}` }
-          ]
-        })
+        body: JSON.stringify({ system: systemPrompt, user: `Post type: ${type}\nIdea: ${idea}` })
       });
       const data = await res.json();
-      const text = data.choices[0].message.content;
+      if (!res.ok) throw new Error(data.error || ('compose ' + res.status));
+      const text = data.text;
       composerData = JSON.parse(text.replace(/```json|```/g,'').trim());
       result.classList.remove('loading-text');
       if (isJoint) {
@@ -669,8 +696,8 @@ Respond ONLY with JSON, no markdown:
     const opts = {
       method,
       headers: {
-        apikey: SUPABASE_SERVICE,
-        Authorization: `Bearer ${SUPABASE_SERVICE}`,
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${await authToken()}`,
         'Content-Type': 'application/json',
         Prefer: method==='POST' ? 'return=representation' : ''
       }
@@ -696,8 +723,8 @@ Respond ONLY with JSON, no markdown:
     const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path}`, {
       method: 'POST',
       headers: {
-        apikey: SUPABASE_SERVICE,
-        Authorization: `Bearer ${SUPABASE_SERVICE}`,
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${await authToken()}`,
         'Content-Type': contentType || blob.type || 'application/octet-stream',
         'x-upsert': 'true',
         'Cache-Control': 'max-age=31536000'
