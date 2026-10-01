@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Live AI Control Room</title>
+<style>
+  :root{
+    --teal:#193C3F; --teal2:#21504F; --teal3:#2C615F;
+    --cream:#F4F0E9; --cream2:#E9E2D4;
+    --gold:#C6A553; --gold-soft:#E7D6A6;
+    --ink:#15302E; --muted:#5E726F; --red:#B0492F; --green:#3E8E5A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.45;padding:clamp(16px,3vw,36px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto}
+  .eyebrow{font:600 13px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.1}
+  .who{margin-top:6px;font-size:14px;color:#AFC3BC}
+  .who button{background:none;border:none;color:var(--gold-soft);text-decoration:underline;cursor:pointer;font:inherit}
+  h2{font-family:Georgia,serif;font-size:20px;color:var(--teal);margin-bottom:10px}
+  .card{background:var(--cream);color:var(--ink);border-radius:14px;padding:20px 22px;margin-top:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .grid .card{margin-top:0}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:11px;padding:12px 20px;font:700 16px "Calibri";cursor:pointer}
+  .btn:hover{background:#D4B868}
+  .btn.ghost{background:transparent;color:var(--teal);border:1.5px solid #CFC6B5}
+  .btn.ghost:hover{border-color:var(--gold)}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  input[type=email],input[type=number],input[type=datetime-local]{background:#fff;border:1.5px solid #CFC6B5;border-radius:10px;padding:11px 12px;font:600 16px "Calibri";color:var(--ink)}
+  label.f{display:block;font:700 12px "Calibri";letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+
+  /* the switch */
+  .switch{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+  .toggle{width:220px;height:96px;border-radius:999px;border:none;cursor:pointer;position:relative;background:#B9B2A4;transition:background .2s}
+  .toggle::after{content:"";position:absolute;top:8px;left:8px;width:80px;height:80px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:left .2s}
+  .toggle.on{background:var(--green)} .toggle.on::after{left:132px}
+  .toggle span{position:absolute;top:50%;transform:translateY(-50%);font:800 26px "Calibri";letter-spacing:.06em;color:#fff}
+  .toggle .l-on{left:28px;display:none} .toggle .l-off{right:26px}
+  .toggle.on .l-on{display:block} .toggle.on .l-off{display:none}
+  .state{font-family:Georgia,serif;font-size:30px;font-weight:700}
+  .state.live{color:var(--green)} .state.dead{color:var(--red)}
+  .reason{font-size:16px;color:var(--muted);margin-top:4px}
+
+  .money{font-family:Georgia,serif;font-size:34px;font-weight:700;color:var(--teal)}
+  .money small{font-size:16px;color:var(--muted);font-weight:400}
+  .bar{height:12px;border-radius:999px;background:var(--cream2);overflow:hidden;margin:10px 0 6px}
+  .bar div{height:100%;background:var(--gold);width:0}
+  .bar div.over{background:var(--red)}
+  .split{font-size:14px;color:var(--ink)} .split b{color:var(--teal)}
+
+  .code{font:700 44px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.18em;color:var(--teal)}
+  .code.none{font:400 16px "Calibri";letter-spacing:0;color:var(--muted)}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th{text-align:left;font:700 11px "Calibri";letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 6px;border-bottom:1.5px solid #D8CFBE}
+  td{padding:6px;border-bottom:1px solid #E4DCCD}
+  th.num,td.num{text-align:right}
+  .s200{color:var(--green);font-weight:700} .sbad{color:var(--red);font-weight:700}
+  .logwrap{overflow-x:auto}
+  .msg{margin-top:12px;font-size:14px;color:var(--gold-soft);min-height:20px}
+  .msg.err{color:#F0B8A6}
+  #signin .card{max-width:520px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">theaiminute.blog · artifacts 03 and 06</div>
+  <h1>Live AI control room</h1>
+  <div class="who" id="who"></div>
+
+  <section id="signin" style="display:none">
+    <div class="card">
+      <h2>Sign in</h2>
+      <p class="note">A sign-in link goes to the admin address. Other addresses can sign in but cannot change anything.</p>
+      <div class="row"><input type="email" id="email" placeholder="you@example.com" autocomplete="email" style="flex:1;min-width:220px">
+        <button class="btn" id="sendLink">Send link</button></div>
+    </div>
+  </section>
+
+  <section id="room" style="display:none">
+    <div class="card">
+      <div class="switch">
+        <button class="toggle" id="toggle" aria-label="Live AI switch"><span class="l-on">ON</span><span class="l-off">OFF</span></button>
+        <div>
+          <div class="state" id="state">…</div>
+          <div class="reason" id="reason"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:18px">
+      <div class="card">
+        <h2>Session window</h2>
+        <p class="note" style="margin:0 0 10px">Copenhagen time. Outside the window the switch has no effect, so live AI ends with the day.</p>
+        <div class="row" style="margin-top:0">
+          <div><label class="f" for="opens">Opens</label><input type="datetime-local" id="opens"></div>
+          <div><label class="f" for="closes">Closes</label><input type="datetime-local" id="closes"></div>
+        </div>
+        <div class="row">
+          <button class="btn ghost" id="today">Today 08:30–16:30</button>
+          <button class="btn ghost" id="tomorrow">Tomorrow 08:30–16:30</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="saveWindow">Save window</button>
+          <button class="btn ghost" id="clearWindow">No window</button>
+        </div>
+        <div class="note" id="windowNow"></div>
+      </div>
+
+      <div class="card">
+        <h2>Budget</h2>
+        <div class="money" id="spent">$0.00 <small>of $0.00</small></div>
+        <div class="bar"><div id="bar"></div></div>
+        <div class="split" id="split"></div>
+        <div class="note" id="since"></div>
+        <div class="row">
+          <div><label class="f" for="budget">Budget, USD</label><input type="number" id="budget" min="0" max="1000" step="0.5" style="width:120px"></div>
+          <button class="btn" id="saveBudget" style="align-self:flex-end">Save</button>
+          <button class="btn ghost" id="resetBudget" style="align-self:flex-end">Reset spend</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Class code</h2>
+      <div class="row" style="margin-top:0;gap:22px">
+        <div class="code" id="code">——————</div>
+        <button class="btn" id="rotate">Rotate</button>
+        <button class="btn ghost" id="copyCode">Copy</button>
+      </div>
+      <p class="note">The server keeps only a salted hash. The code shows here, on this device, after you rotate it; rotating replaces the old code at once.</p>
+    </div>
+
+    <div class="card">
+      <h2>Live log <span style="font:400 13px Calibri;color:var(--muted)">· last 25 calls · refreshes every 10 seconds</span></h2>
+      <div class="logwrap"><table>
+        <thead><tr><th>Time</th><th>Artifact</th><th>Kind</th><th>Device</th><th>Status</th><th class="num">In</th><th class="num">Out</th><th class="num">Cost</th></tr></thead>
+        <tbody id="log"></tbody>
+      </table></div>
+    </div>
+  </section>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const TZ = "Europe/Copenhagen";
+const ADMIN_URL = SUPABASE_URL + "/functions/v1/admin";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = (id) => document.getElementById(id);
+let S = null; // last state from the server
+
+function say(t, err) { $("msg").textContent = t || ""; $("msg").className = "msg" + (err ? " err" : ""); }
+
+/* ---------- Copenhagen wall time <-> UTC ---------- */
+function parts(d) {
+  const f = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+  return Object.fromEntries(f.formatToParts(d).map((x) => [x.type, x.value]));
+}
+function toInput(iso) { if (!iso) return ""; const p = parts(new Date(iso)); return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`; }
+function fromInput(v) {
+  if (!v) return null;
+  const [d, t] = v.split("T"), [Y, M, D] = d.split("-").map(Number), [h, m] = t.split(":").map(Number);
+  const want = Date.UTC(Y, M - 1, D, h, m);
+  let guess = want;
+  for (let i = 0; i < 3; i++) { const p = parts(new Date(guess)); guess += want - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute); }
+  return new Date(guess).toISOString();
+}
+function dayPreset(offsetDays) {
+  const p = parts(new Date()), d = new Date(Date.UTC(+p.year, +p.month - 1, +p.day + offsetDays));
+  const ds = d.toISOString().slice(0, 10);
+  $("opens").value = ds + "T08:30"; $("closes").value = ds + "T16:30";
+}
+function nice(iso) {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+}
+function clock(iso) { const p = parts(new Date(iso)); return `${p.hour}:${p.minute}:${p.second}`; }
+const usd = (n, dp = 2) => "$" + Number(n || 0).toFixed(dp);
+
+/* ---------- talking to the admin function ---------- */
+async function api(body) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showSignin(); throw new Error("signed out"); }
+  const res = await fetch(ADMIN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token, "apikey": SUPABASE_ANON },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ("error " + res.status));
+  return data;
+}
+async function act(body, done) {
+  try { const d = await api(body); render(d); if (done) say(done); return d; }
+  catch (e) { say(e.message, true); }
+}
+
+/* ---------- rendering ---------- */
+const REASON = {
+  on: "Students can call Claude now.",
+  off: "Switched off. Pages run their offline fallbacks.",
+  "outside window": "Switched on, but outside the session window.",
+  budget: "Switched on, but the budget is spent.",
+};
+function render(d) {
+  S = d;
+  const c = d.control, live = d.status.live;
+  $("toggle").classList.toggle("on", c.enabled);
+  $("state").textContent = live ? "Live AI on" : "Live AI off";
+  $("state").className = "state " + (live ? "live" : "dead");
+  $("reason").textContent = REASON[d.status.reason] || d.status.reason;
+
+  if (document.activeElement !== $("opens") && document.activeElement !== $("closes")) {
+    $("opens").value = toInput(c.opens_at); $("closes").value = toInput(c.closes_at);
+  }
+  $("windowNow").textContent = c.opens_at || c.closes_at
+    ? `Saved: ${c.opens_at ? nice(c.opens_at) : "any time"} → ${c.closes_at ? nice(c.closes_at) : "no end"}`
+    : "Saved: no window. The switch alone decides.";
+
+  const spent = d.spend.total, budget = c.budget_usd;
+  $("spent").innerHTML = `${usd(spent, 3)} <small>of ${usd(budget)}</small>`;
+  const pct = budget > 0 ? Math.min(100, (spent / budget) * 100) : 100;
+  $("bar").style.width = pct + "%"; $("bar").classList.toggle("over", spent >= budget);
+  const by = Object.fromEntries(d.spend.by_artifact.map((l) => [l.artifact, l]));
+  $("split").innerHTML = ["03", "06"].map((a) => `Artifact ${a}: <b>${usd(by[a]?.spend, 3)}</b> · ${by[a]?.calls || 0} calls`).join(" &nbsp;|&nbsp; ");
+  $("since").textContent = "Since " + nice(c.budget_since);
+  if (document.activeElement !== $("budget")) $("budget").value = budget;
+
+  let code = null; try { code = localStorage.getItem("aim_admin_code"); } catch (e) {}
+  if (!c.has_code) code = null;
+  $("code").textContent = code || (c.has_code ? "Set on another device. Rotate to see a new one." : "No code yet. Rotate to create one.");
+  $("code").classList.toggle("none", !code);
+
+  $("log").innerHTML = d.log.map((r) => `<tr><td>${clock(r.at)}</td><td>${r.artifact}</td><td>${r.kind}</td><td>${String(r.device).slice(0, 8)}</td>
+    <td class="${r.status === 200 ? "s200" : "sbad"}">${r.status}${r.reason ? " " + r.reason : ""}</td>
+    <td class="num">${r.input_tokens || ""}</td><td class="num">${r.output_tokens || ""}</td><td class="num">${r.cost_usd ? usd(r.cost_usd, 4) : ""}</td></tr>`).join("")
+    || `<tr><td colspan="8" style="color:var(--muted)">No calls yet.</td></tr>`;
+}
+
+/* ---------- controls ---------- */
+$("toggle").onclick = () => S && act({ action: "set", enabled: !S.control.enabled }, S.control.enabled ? "Switched off." : "Switched on.");
+$("today").onclick = () => dayPreset(0);
+$("tomorrow").onclick = () => dayPreset(1);
+$("saveWindow").onclick = () => {
+  const o = fromInput($("opens").value), c = fromInput($("closes").value);
+  act({ action: "set", opens_at: o, closes_at: c }, "Window saved.");
+};
+$("clearWindow").onclick = () => { $("opens").value = ""; $("closes").value = ""; act({ action: "set", opens_at: null, closes_at: null }, "Window cleared."); };
+$("saveBudget").onclick = () => act({ action: "set", budget_usd: Number($("budget").value) }, "Budget saved.");
+$("resetBudget").onclick = () => { if (confirm("Reset spend to zero from now?")) act({ action: "reset_budget" }, "Spend reset."); };
+$("rotate").onclick = async () => {
+  if (S && S.control.has_code && !confirm("Rotate the class code? The old code stops working at once.")) return;
+  const d = await act({ action: "rotate_code" });
+  if (d && d.code) { try { localStorage.setItem("aim_admin_code", d.code); } catch (e) {} render(d); say("New class code: " + d.code); }
+};
+$("copyCode").onclick = () => {
+  const t = $("code").textContent;
+  if (!/^[A-Z0-9]{6}$/.test(t)) return say("Rotate first to get a code to copy.", true);
+  navigator.clipboard.writeText(t).then(() => say("Code copied."), () => say("Copy blocked; select the code and copy it.", true));
+};
+
+/* ---------- sign-in ---------- */
+function showSignin() { $("signin").style.display = "block"; $("room").style.display = "none"; $("who").textContent = ""; }
+$("sendLink").onclick = async () => {
+  const email = $("email").value.trim();
+  if (!email) return say("Enter your email.", true);
+  $("sendLink").disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + "/admin/", shouldCreateUser: false } });
+  $("sendLink").disabled = false;
+  say(error ? error.message : "Check your inbox for the sign-in link.", !!error);
+};
+let timer = null;
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return showSignin();
+  $("who").innerHTML = `Signed in as ${session.user.email} · <button id="out">sign out</button>`;
+  $("out").onclick = async () => { await sb.auth.signOut(); clearInterval(timer); showSignin(); say(""); };
+  $("signin").style.display = "none"; $("room").style.display = "block";
+  await act({ action: "state" });
+  clearInterval(timer);
+  timer = setInterval(() => act({ action: "state" }), 10000);
+}
+sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN") start(); });
+start();
+</script>
+</body>
+</html>

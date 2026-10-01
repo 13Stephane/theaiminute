@@ -118,6 +118,13 @@
   .fwdverdict.warn{border-left-color:var(--red);background:linear-gradient(90deg,rgba(176,73,47,.12),transparent)}
   .fwdnote{margin-top:9px;font-size:12.5px;color:var(--muted);font-style:italic;max-width:80ch}
 
+  /* live-AI badge and class code */
+  .live{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#AFC3BC}
+  .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(244,240,233,.28);border-radius:999px;padding:3px 10px;font:600 11.5px "Calibri"}
+  .badge::before{content:"";width:8px;height:8px;border-radius:50%;background:#8FA09D}
+  .badge.on{border-color:var(--gold);color:var(--gold-soft)} .badge.on::before{background:var(--gold)}
+  .live input{width:92px;margin-left:6px;background:var(--cream);border:none;border-radius:7px;padding:5px 8px;font:700 12.5px "Calibri";letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
+
   .footnote{margin-top:20px;color:#9FB0AD;font-size:11.5px;max-width:90ch}
   .footnote b{color:var(--gold-soft)}
 </style>
@@ -128,6 +135,10 @@
     <div>
       <div class="eyebrow">Future-Back Finance · Policy Simulation</div>
       <h1>The Pandemic Policy Room</h1>
+      <div class="live" id="live" style="display:none">
+        <span class="badge" id="badge">Offline mode</span>
+        <label id="codeWrap" style="display:none">Class code<input id="classCode" maxlength="8" autocomplete="off" spellcheck="false" placeholder="ABC123"></label>
+      </div>
     </div>
     <div class="qbadge">
       <div class="ql" id="qLabel">2020 Q1</div>
@@ -174,6 +185,48 @@
 </div>
 
 <script>
+const AI_URL = ""; // live-AI function address; empty = offline only
+
+/* ---------- live AI through the course proxy (only when AI_URL is set) ---------- */
+const REASONS={"off":"Live AI is off","outside window":"Live AI is outside today\u2019s session window",
+  "class code":"That class code was not accepted","budget":"Today\u2019s live-AI budget is spent",
+  "rate":"This device has reached its live-AI limit for now","upstream":"Claude did not answer in time",
+  "refused":"Claude declined this one","bad output":"Claude\u2019s answer could not be used"};
+const DEVICE_ID=(()=>{let id="";try{id=localStorage.getItem("aim_device_id")||"";}catch(e){}
+  if(!/^[A-Za-z0-9-]{8,64}$/.test(id)){id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+"-"+Math.random().toString(36).slice(2));
+    try{localStorage.setItem("aim_device_id",id);}catch(e){}}return id;})();
+function classCode(){return (document.getElementById("classCode").value||"").trim();}
+async function callAI(kind,inputs){
+  if(!AI_URL) return {ok:false,why:""};
+  const code=classCode();
+  try{
+    const res=await fetch(AI_URL,{method:"POST",
+      headers:{"Content-Type":"application/json","X-Class-Code":code,"X-Device-Id":DEVICE_ID},
+      body:JSON.stringify({kind,inputs}),
+      signal:AbortSignal.timeout?AbortSignal.timeout(70000):undefined});
+    let data=null; try{data=await res.json();}catch(e){}
+    if(res.ok&&data&&data.result!==undefined) return {ok:true,result:data.result};
+    if(res.status===401&&!code) return {ok:false,why:"Enter the class code from the slide"};
+    return {ok:false,why:REASONS[data&&data.reason]||(res.status===400?"That request was not accepted":"Live AI is unavailable")};
+  }catch(e){return {ok:false,why:"Could not reach the live-AI service"};}
+}
+async function refreshStatus(){
+  let live=false;
+  try{const r=await fetch(AI_URL.replace(/\/+$/,"")+"/status",{cache:"no-store"});live=!!(await r.json()).live;}catch(e){}
+  document.getElementById("badge").textContent=live?"Live AI on":"Offline mode";
+  document.getElementById("badge").classList.toggle("on",live);
+  document.getElementById("codeWrap").style.display=live?"":"none";
+}
+if(AI_URL){
+  document.getElementById("live").style.display="flex";
+  try{document.getElementById("classCode").value=localStorage.getItem("aim_class_code")||"";}catch(e){}
+  document.getElementById("classCode").addEventListener("input",e=>{try{localStorage.setItem("aim_class_code",e.target.value.trim());}catch(x){}});
+  refreshStatus(); setInterval(refreshStatus,60000);
+}
+// The structured inputs the server's templates expect.
+const aiDecision=d=>({r:d.r,qe:d.qe,stim:d.stim,mix:{cheques:d.mix.cheques,retention:d.mix.retention,liquidity:d.mix.liquidity,health:d.mix.health,infra:d.mix.infra}});
+const aiEcon=e=>({Y:e.Y,U:e.U,pi:e.pi});
+
 /* =================== ENGINE (validated) =================== */
 const QLABEL=["2020 Q1","2020 Q2","2020 Q3","2020 Q4","2021 Q1","2021 Q2","2021 Q3","2021 Q4"];
 const PANDEMIC={US:[-2.5,-11,-4,-3.5,-2,-1,-1.2,-0.5,-0.2,0,0,0],EU:[-2.5,-13,-3,-5.5,-4,-2,-1.2,-1.0,-0.2,0,0,0]};
@@ -321,11 +374,6 @@ THIS TEAM ENDED AT: US unemployment ${e.US.U}% inflation ${e.US.pi}%; euro-area 
 
 Write a debrief of 5-7 sentences in plain prose. No lists, no preamble. Cover: how this path differs from the real one and why; the single decision that mattered most; what the US and euro-area contrast in this run shows about cheques versus furlough; and one lesson about the lag between a fiscal decision and the inflation it produces. Be specific and use their numbers. If they stabilised better than reality did, say what they gave up to get it.`;
 }
-/* ---- call budget: 6 per hour per open instance, in memory only ---- */
-const CALLS=[], CALL_LIMIT=6, CALL_WINDOW=3600000;
-function callsLeft(){const t=Date.now();while(CALLS.length&&t-CALLS[0]>CALL_WINDOW)CALLS.shift();return CALL_LIMIT-CALLS.length;}
-function nextFreeIn(){if(!CALLS.length)return 0;return Math.ceil((CALL_WINDOW-(Date.now()-CALLS[0]))/60000);}
-function takeCall(){if(callsLeft()<=0)return false;CALLS.push(Date.now());return true;}
 
 /* =================== STATE & UI =================== */
 let G=newGame();
@@ -447,24 +495,14 @@ async function briefing(t){
   const r=G.hist[t];
   $("briefStatus").textContent="Reading the quarter\u2026"; $("briefBody").textContent=""; $("nextRow").style.display="none";
   const dUS=G.decisions[t].US, dEU=G.decisions[t].EU;
-  const topMix=d=>{let best="cheques",bv=-1;ARCH_KEYS.forEach(k=>{if(d.mix[k]>bv){bv=d.mix[k];best=k;}});return ARCH[best].label;};
-  const prompt=`You are an economic advisor debriefing a policy game on the 2020-21 pandemic. Quarter just resolved: ${QLABEL[t]}.
-Decisions — Fed: rate ${dUS.r}%, QE ${qeLabel(dUS.qe)}; US fiscal ${dUS.stim}% GDP, mostly ${topMix(dUS)}. ECB: rate ${dEU.r}%, QE ${qeLabel(dEU.qe)}; EU fiscal ${dEU.stim}% GDP, mostly ${topMix(dEU)}.
-Resulting gauges — US: output gap ${r.US.Y}%, unemployment ${r.US.U}%, inflation ${r.US.pi}%. EU: output gap ${r.EU.Y}%, unemployment ${r.EU.U}%, inflation ${r.EU.pi}%. Equities ${r.SPX}, EUR/USD ${r.FX}, financial stress ${r.stress}, EU spread ${r.spread}pp.
-In 3-4 sentences, plain and concrete: what these decisions did this quarter, the key US-vs-EU contrast, and what is building with a lag that they should watch. No preamble, no lists.`;
-  try{
-    if(callsLeft()<=1) throw 0;              // keep one in reserve for the debrief
-    if(!takeCall()) throw 0;
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-    if(!res.ok)throw 0;
-    const data=await res.json();
-    const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
-    if(!txt)throw 0;
-    $("briefStatus").textContent=`AI briefing \u00b7 ${callsLeft()} of ${CALL_LIMIT} calls left this hour`;
+  const ai=await callAI("06.briefing",{t,US:aiDecision(dUS),EU:aiDecision(dEU),
+    gauges:{US:aiEcon(r.US),EU:aiEcon(r.EU),SPX:r.SPX,FX:r.FX,stress:r.stress,spread:r.spread}});
+  const txt=ai.ok&&typeof ai.result==="string"?ai.result.trim():"";
+  if(txt){
+    $("briefStatus").textContent="AI briefing";
     $("briefBody").textContent=txt;
-  }catch(e){
-    $("briefStatus").textContent="(offline summary)";
+  }else{
+    $("briefStatus").textContent="(offline summary"+(ai.why?" \u00b7 "+ai.why:"")+")";
     $("briefBody").textContent=fallbackBrief(t,r,dUS,dEU);
   }
   if(G.t>=8){ $("nextRow").innerHTML='<button class="btn" id="toDebrief">See the debrief &rarr;</button>';
@@ -581,20 +619,9 @@ function exportJSON(){
 }
 async function debriefAI(){
   const you=G.hist[7], act=ACTUAL_HIST[7];
-  const path=G.hist.map(h=>`${h.q}: US gap ${h.US.Y} U ${h.US.U} pi ${h.US.pi} | EU gap ${h.EU.Y} U ${h.EU.U} pi ${h.EU.pi}`).join("\n");
-  const prompt=`You are debriefing players of a 2020-21 pandemic policy game (roles: Fed, ECB, US & EU governments). Their quarter-by-quarter outcomes:
-${path}
-Real end-2021 outcomes: US unemployment ~3.9%, inflation ~7%; euro area unemployment ~7%, inflation ~5%.
-Their end-2021: US U ${you.US.U}% pi ${you.US.pi}%; EU U ${you.EU.U}% pi ${you.EU.pi}%.
-Write a short debrief (4-6 sentences, plain prose, no lists): how their path compares to the real one, the single biggest difference their decisions made, the clearest US-vs-EU lesson their game shows, and one thing to take home about fiscal-monetary timing and lags. Be specific and constructive.`;
-  try{
-    if(!takeCall()) throw 0;
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-    if(!res.ok)throw 0;
-    const data=await res.json(); const txt=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
-    $("assessBody").textContent=txt||fallbackDebrief(you,act);
-  }catch(e){ $("assessBody").textContent=fallbackDebrief(you,act); }
+  const ai=await callAI("06.debrief",{hist:G.hist.map(h=>({US:aiEcon(h.US),EU:aiEcon(h.EU)}))});
+  const txt=ai.ok&&typeof ai.result==="string"?ai.result.trim():"";
+  $("assessBody").textContent=txt||((ai.why?"(offline assessment \u00b7 "+ai.why+")\n":"")+fallbackDebrief(you,act));
 }
 function fallbackDebrief(you,act){
   let s="";
