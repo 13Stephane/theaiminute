@@ -1,0 +1,8 @@
+# Kept in the repo, not published on the site.
+supabase
+tests
+README.md
+.env
+.env.example
+.gitignore
+.assetsignore
