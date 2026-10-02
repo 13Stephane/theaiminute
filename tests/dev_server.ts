@@ -68,7 +68,7 @@ Deno.serve({ port: PORT, hostname: "127.0.0.1" }, async (req) => {
     const ext = path.split(".").pop()!;
     if (ext === "html" && url.searchParams.has("live")) {
       body = new TextDecoder().decode(body as Uint8Array<ArrayBuffer>)
-        .replace('const AI_URL = "";', `const AI_URL = "${url.origin}/ai";`)
+        .replace(/^const AI_URL = "[^"]*";/m, `const AI_URL = "${url.origin}/ai";`)
         .replace('const ADMIN_URL = SUPABASE_URL + "/functions/v1/admin";', `const ADMIN_URL = "${url.origin}/admin-fn";`);
     }
     return new Response(body, { headers: { "content-type": TYPES[ext] ?? "application/octet-stream" } });

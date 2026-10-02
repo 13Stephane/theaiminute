@@ -52,7 +52,7 @@ Deno.test("06: no direct Anthropic calls remain in 03 or 06", () => {
   for (const f of [FILE, "03_jobs_vs_tasks.html"]) {
     const s = Deno.readTextFileSync(ROOT + f);
     assertEquals(/api\.anthropic\.com|claude-sonnet-4-6|CALL_LIMIT/.test(s), false, f);
-    assertEquals(s.includes('const AI_URL = "";'), true, f);
+    assertEquals(/^const AI_URL = "(https:\/\/[a-z0-9]+\.supabase\.co\/functions\/v1\/ai)?";/m.test(s), true, f);
   }
 });
 
