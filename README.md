@@ -4,7 +4,7 @@ Static pages for theaiminute.blog, served by Cloudflare from `main`. This README
 
 | Piece | Where |
 |---|---|
-| Artifact 03, jobs vs tasks | `03_jobs_vs_tasks.html` (also served at `/artifacts/03_jobs_vs_tasks_decomposer`) |
+| Artifact 03, jobs vs tasks | `03_jobs_vs_tasks.html` and an identical copy, `artifacts/03_jobs_vs_tasks_decomposer.html` (a test keeps them in sync) |
 | Artifact 06, pandemic policy room | `artifacts/06_pandemic_policy_room.html` |
 | Control room | `admin/index.html`, at `/admin/` |
 | Proxy, the only caller of Anthropic | `supabase/functions/ai/` |
@@ -38,7 +38,7 @@ The functions run in the existing Supabase project `kcobpakjfluuyfzswtoq`, besid
    supabase functions deploy ai --no-verify-jwt
    supabase functions deploy admin
    ```
-5. **Point the pages at the proxy.** In both `03_jobs_vs_tasks.html` and `artifacts/06_pandemic_policy_room.html` set
+5. **Point the pages at the proxy.** In `03_jobs_vs_tasks.html`, its copy `artifacts/03_jobs_vs_tasks_decomposer.html`, and `artifacts/06_pandemic_policy_room.html`, set
    ```js
    const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";
    ```

@@ -80,6 +80,16 @@
   .insight p{font-size:13.5px;color:#CBD6D4}
   .insight b{color:var(--cream)}
 
+  /* live AI: badge, class code, and the bring-your-own-AI fallback */
+  .aibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+  .aibadge{font:700 11px "Calibri";letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:rgba(244,240,233,.1);color:#BCC9C7}
+  .aibadge.on{background:var(--gold);color:var(--teal)}
+  #classCode{width:130px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:8px;padding:6px 10px;font:600 13px "Calibri";color:var(--ink);letter-spacing:.1em}
+  .byo{display:none;margin:4px 0 16px}
+  .byo textarea{display:block;width:100%;min-height:84px;margin-top:10px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:11px;padding:11px 14px;font:400 13px "Calibri";color:var(--ink);resize:vertical}
+  .byo .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .byo .copied{font-size:12.5px;color:var(--gold-soft)}
+
   .footnote{margin-top:24px;color:#A9B7B5;font-size:12.5px;max-width:78ch}
   .footnote b{color:var(--gold-soft)}
 </style>
@@ -90,12 +100,22 @@
   <h1>No job is automated — only its tasks</h1>
   <p class="lede">A role is a bundle of tasks. AI rarely takes a whole job; it reshapes the bundle. Decompose a role, sort each task &mdash; <b>automate</b>, <b>augment</b>, or <b>keep human</b> &mdash; then weight each by its share of the <b>week</b> and of the role&rsquo;s <b>value</b>. Counting tasks flatters automation; weighting reveals where the time and the worth actually sit. Tap a card to re-classify; drag to re-weight.</p>
 
+  <div class="aibar" id="aiBar" style="display:none">
+    <span class="aibadge" id="aiBadge">Offline mode</span>
+    <input id="classCode" type="text" placeholder="Class code" maxlength="12" autocomplete="off" spellcheck="false" style="display:none">
+  </div>
   <div class="examples" id="examples"></div>
   <div class="input-row">
     <input id="job" type="text" placeholder="Enter a role — e.g. Financial controller" autocomplete="off">
     <button class="btn" id="go">Decompose with Claude</button>
   </div>
   <div class="status" id="status"></div>
+  <div class="byo" id="byo">
+    <div class="row"><button class="ex" id="copyPrompt">Copy a prompt for any AI</button><span class="copied" id="copied"></span></div>
+    <textarea id="promptBox" readonly style="display:none"></textarea>
+    <textarea id="pasteBox" placeholder="Paste the AI&rsquo;s answer here: the JSON array of tasks"></textarea>
+    <div class="row"><button class="btn" id="useAnswer">Use this answer</button></div>
+  </div>
 
   <div id="results" style="display:none">
     <div class="weighting">
@@ -135,6 +155,8 @@
 </div>
 
 <script>
+const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // the course proxy, e.g. "https://<project>.supabase.co/functions/v1/ai". Empty: offline only.
+
 const FALLBACK = {
   "radiologist":[
     {task:"Detect nodules on scans",type:"automate",why:"Pattern recognition matches or beats experts",time:16,value:8},
@@ -239,34 +261,105 @@ $("toggle").querySelectorAll("button").forEach(b=>{
 
 function show(){$("results").style.display="block";renderAll();}
 
+/* ---- live AI through the course proxy; every failure falls back as before ---- */
+const AI={live:false,reason:"off"};
+let AI_DEVICE=null;
+function aiStore(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){}return null;}
+function aiDevice(){
+  if(AI_DEVICE)return AI_DEVICE;
+  let d=aiStore("aim_device");
+  if(!d||!/^[A-Za-z0-9_-]{8,64}$/.test(d)){d=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,"0")).join("");aiStore("aim_device",d);}
+  return AI_DEVICE=d;
+}
+const AI_WHY={"off":"Live AI is off","outside window":"Live AI is outside today\u2019s session hours","class code":"That class code was not accepted",
+  "no code":"Enter the class code to use live AI","budget":"Today\u2019s live AI budget is used up","rate":"This device has used its live AI calls for now; try again in a few minutes",
+  "inputs":"Live AI could not use that role title","origin":"Live AI only works on theaiminute.blog","network":"Couldn\u2019t reach the live AI","unavailable":"Live AI is unavailable"};
+const aiWhy=r=>AI_WHY[r]||"Live AI did not answer";
+async function aiStatus(){
+  if(!AI_URL)return;
+  $("aiBar").style.display="flex";
+  try{const s=await (await fetch(AI_URL.replace(/\/+$/,"")+"/status")).json();AI.live=!!s.live;AI.reason=s.reason||"off";}
+  catch(e){AI.live=false;AI.reason="network";}
+  $("aiBadge").textContent=AI.live?"Live AI on":"Offline mode";
+  $("aiBadge").classList.toggle("on",AI.live);
+  $("classCode").style.display=AI.live?"":"none";
+}
+async function aiCall(kind,inputs){
+  if(!AI_URL)return {ok:false,why:null};
+  if(!AI.live)await aiStatus();
+  if(!AI.live)return {ok:false,why:aiWhy(AI.reason)};
+  const code=$("classCode").value.trim();
+  if(!code)return {ok:false,why:aiWhy("no code")};
+  aiStore("aim_class_code",code);
+  try{
+    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Class-Code":code,"X-Device-Id":aiDevice()},body:JSON.stringify({kind,inputs})});
+    const b=await r.json().catch(()=>({}));
+    if(r.ok&&b.result!==undefined)return {ok:true,result:b.result};
+    if(r.status===423||b.reason==="budget")aiStatus();
+    return {ok:false,why:aiWhy(b.reason)};
+  }catch(e){return {ok:false,why:aiWhy("network")};}
+}
+$("classCode").value=aiStore("aim_class_code")||"";
+aiStatus();
+if(AI_URL)setInterval(aiStatus,120000);
+
+/* ---- the same prompt the server uses, for any AI ---- */
+function decomposePrompt(job){
+  return `You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. Decompose the role of "${job}" into 8 to 11 concrete constituent tasks. Classify each as exactly one of: "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop), or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill). Also estimate two weights per task: "time" = its share of the working week, and "value" = its share of the role's economic value; across all tasks time should sum to roughly 100 and value to roughly 100. Order tasks roughly automate first, human last. Return ONLY a JSON array, no prose and no markdown fences. Each element: {"task": string max 7 words, "type": "automate"|"augment"|"human", "why": string max 12 words, "time": integer, "value": integer}.`;
+}
+function toTasks(arr){
+  if(!Array.isArray(arr))throw new Error("not an array");
+  const out=arr.filter(t=>t&&t.task&&order.includes(t.type)).map(t=>({task:String(t.task),type:t.type,why:t.why?String(t.why):"",time:+t.time||8,value:+t.value||8}));
+  if(!out.length)throw new Error("empty");
+  return out;
+}
+function parsePasted(text){
+  let t=(text||"").trim().replace(/```json|```/g,"").trim();
+  const a=t.indexOf("["), b=t.lastIndexOf("]");
+  if(a>=0&&b>a)t=t.slice(a,b+1);
+  return toTasks(JSON.parse(t));
+}
+$("copyPrompt").onclick=()=>{
+  const p=decomposePrompt($("job").value.trim()||"Financial controller");
+  const inBox=()=>{const b=$("promptBox");b.value=p;b.style.display="block";b.focus();b.select();$("copied").textContent="press \u2318/Ctrl-C to copy the prompt below";};
+  try{navigator.clipboard.writeText(p).then(()=>{$("copied").textContent="prompt copied \u2014 paste it into any assistant, then paste its answer below";},inBox);}
+  catch(e){inBox();}
+};
+$("useAnswer").onclick=()=>{
+  try{
+    tasks=parsePasted($("pasteBox").value);show();
+    $("byo").style.display="none";
+    $("status").className="status";
+    $("status").textContent="Your AI\u2019s first pass \u2014 now debate it. Tap a card to re-classify, drag to re-weight, and switch the toggle from count to time to value.";
+  }catch(e){
+    $("status").className="status err";
+    $("status").textContent="That answer isn\u2019t a JSON array of tasks. Ask the AI to return only the JSON array, then paste it again.";
+  }
+};
+
 async function run(){
   const job=$("job").value.trim();
   if(!job){$("status").textContent="Enter a role first.";return;}
   $("status").className="status";$("status").textContent="Asking Claude to decompose the role\u2026";
+  $("byo").style.display="none";
   $("go").disabled=true;
-  const prompt=`You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. Decompose the role of "${job}" into 8 to 11 concrete constituent tasks. Classify each as exactly one of: "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop), or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill). Also estimate two weights per task: "time" = its share of the working week, and "value" = its share of the role's economic value; across all tasks time should sum to roughly 100 and value to roughly 100. Order tasks roughly automate first, human last. Return ONLY a JSON array, no prose and no markdown fences. Each element: {"task": string max 7 words, "type": "automate"|"augment"|"human", "why": string max 12 words, "time": integer, "value": integer}.`;
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
-    });
-    if(!res.ok) throw new Error("status "+res.status);
-    const data=await res.json();
-    let text=data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n").trim().replace(/```json|```/g,"").trim();
-    const arr=JSON.parse(text);
-    tasks=arr.filter(t=>t&&t.task&&order.includes(t.type)).map(t=>({task:t.task,type:t.type,why:t.why||"",time:+t.time||8,value:+t.value||8}));
-    if(!tasks.length) throw new Error("empty");
+    const ai=await aiCall("03.decompose",{job});
+    if(!ai.ok) throw ai.why;
+    tasks=toTasks(ai.result);
     $("status").textContent="Claude's first pass \u2014 now debate it. Tap a card to re-classify, drag to re-weight, and switch the toggle from count to time to value.";
     show();
-  }catch(e){
+  }catch(why){
+    const lead=typeof why==="string"&&why?why:"Couldn't reach Claude live";
     const key=job.toLowerCase();
     const fb=FALLBACK[key]||(key.includes("radiolog")?FALLBACK["radiologist"]:key.includes("controll")||key.includes("financ")?FALLBACK["financial controller"]:null);
     if(fb){tasks=fb.map(t=>({...t}));show();
       $("status").className="status err";
-      $("status").textContent="Couldn't reach Claude live \u2014 loaded a worked example so you can still run the exercise.";
+      $("status").textContent=lead+" \u2014 loaded a worked example so you can still run the exercise.";
     }else{
       $("status").className="status err";
-      $("status").innerHTML="Couldn't reach Claude live. Try the example chips above, or open this as a published Claude artifact where the live decomposition works.";
+      $("status").textContent=lead+". Try the example chips above, or copy a prompt into any AI and paste its answer below.";
+      $("byo").style.display="block";
     }
   }finally{$("go").disabled=false;}
 }

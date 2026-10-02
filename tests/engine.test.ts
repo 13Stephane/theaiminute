@@ -49,7 +49,7 @@ Deno.test("06: engine, ACTUAL, scoring, export and fallbacks are byte-identical"
 });
 
 Deno.test("06: no direct Anthropic calls remain in 03 or 06", () => {
-  for (const f of [FILE, "03_jobs_vs_tasks.html"]) {
+  for (const f of [FILE, "03_jobs_vs_tasks.html", "artifacts/03_jobs_vs_tasks_decomposer.html"]) {
     const s = Deno.readTextFileSync(ROOT + f);
     assertEquals(/api\.anthropic\.com|claude-sonnet-4-6|CALL_LIMIT/.test(s), false, f);
     assertEquals(/^const AI_URL = "(https:\/\/[a-z0-9]+\.supabase\.co\/functions\/v1\/ai)?";/m.test(s), true, f);
@@ -85,4 +85,11 @@ Deno.test("06: random extreme games always pass the server's validators", () => 
     // deno-lint-ignore no-explicit-any
     KINDS["06.debrief"].validate({ path: g.hist.map((h: any) => ({ US: econ(h.US), EU: econ(h.EU) })) });
   }
+});
+
+Deno.test("03 is served from two addresses; both files must stay identical", () => {
+  assertEquals(
+    Deno.readTextFileSync(ROOT + "artifacts/03_jobs_vs_tasks_decomposer.html"),
+    Deno.readTextFileSync(ROOT + "03_jobs_vs_tasks.html"),
+  );
 });
