@@ -69,6 +69,20 @@ const jobTitle: V<string> = (v, p = "inputs") => {
   return s;
 };
 
+// One task from a participant's own list: their wording, so a little more
+// punctuation than a role title, still no quotes, braces or newlines.
+const TASK_RE = /^[\p{L}\p{M}\p{N} &'’.,\/()+\-:;%?!#]{2,90}$/u;
+const taskText: V<string> = (v, p = "inputs") => {
+  if (typeof v !== "string") throw new InputError(`${p} must be a string`);
+  const s = v.trim().replace(/\s+/g, " ");
+  if (!TASK_RE.test(s)) throw new InputError(`${p} must be 2-90 letters, digits, spaces or simple punctuation`);
+  return s;
+};
+const TASK_TYPE: V<string> = (v, p = "inputs") => {
+  if (v !== "automate" && v !== "augment" && v !== "human") throw new InputError(`${p} must be automate, augment or human`);
+  return v;
+};
+
 // ---------- 06 shared shapes (ranges match the page's sliders, gauges generous) ----------
 const MIX_KEYS = ["cheques", "retention", "liquidity", "health", "infra"] as const;
 const mix = obj({
@@ -162,10 +176,14 @@ export type KindSpec = {
   maxTokens: number;
   validate: (inputs: unknown) => unknown;
   prompt: (inputs: never) => string;
-  parse: (text: string) => unknown;
+  parse: (text: string, inputs?: unknown) => unknown;
 };
 
 const validate03 = obj({ job: jobTitle });
+const validateReview = obj({
+  job: jobTitle,
+  tasks: arr(obj({ task: taskText, type: TASK_TYPE, time: int(0, 100), value: int(0, 100) }), 3, 15),
+});
 const validateBrief = obj({
   quarter: int(0, 7),
   decisions: obj({ US: decision, EU: decision }),
@@ -178,11 +196,60 @@ const validateBrief = obj({
 const validateDebrief = obj({ path: arr(obj({ US: econ, EU: econ }), 8, 8) });
 
 type In03 = ReturnType<typeof validate03>;
+type InReview = ReturnType<typeof validateReview>;
 type InBrief = ReturnType<typeof validateBrief>;
 type InDebrief = ReturnType<typeof validateDebrief>;
 
 export function prompt03({ job }: In03): string {
   return `You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. Decompose the role of "${job}" into 8 to 11 concrete constituent tasks. Classify each as exactly one of: "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop), or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill). Also estimate two weights per task: "time" = its share of the working week, and "value" = its share of the role's economic value; across all tasks time should sum to roughly 100 and value to roughly 100. Order tasks roughly automate first, human last. Return ONLY a JSON array, no prose and no markdown fences. Each element: {"task": string max 7 words, "type": "automate"|"augment"|"human", "why": string max 12 words, "time": integer, "value": integer}.`;
+}
+
+// A second opinion on a participant's own decomposition: they sort and weight
+// first, then Claude gives its own sort and weights and names the
+// disagreements worth arguing about. The page's copy-a-prompt uses the same words.
+export function promptReview({ job, tasks }: InReview): string {
+  const share = (k: "time" | "value") => {
+    const tot = tasks.reduce((a, t) => a + t[k], 0) || 1;
+    return tasks.map((t) => Math.round((t[k] / tot) * 100));
+  };
+  const time = share("time"), value = share("value");
+  const list = tasks.map((t, i) => `${i + 1}. ${t.task}: their call ${t.type}, ${time[i]}% of the week, ${value[i]}% of the value`).join("\n");
+  return `You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. A participant has decomposed their own role, "${job}", into the tasks below. They classified each as "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop) or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill), and weighted each by its share of the working week and of the role's economic value.
+
+${list}
+
+Give a second opinion. For every task, in the same order and keeping their wording, give your own classification and your own two weights: "time" = its share of the working week, "value" = its share of the role's economic value, each set summing to roughly 100. Then name the two or three disagreements most worth arguing about: where your classification differs from theirs, or where your weights differ most, and why it matters for how much of this role is really exposed to AI. Be specific to this role and do not soften a disagreement. Return ONLY a JSON object, no prose and no markdown fences: {"tasks": [{"i": task number, "type": "automate"|"augment"|"human", "time": integer, "value": integer, "why": string max 12 words}], "disagreements": [{"i": task number, "point": string max 30 words}], "summary": string max 30 words}.`;
+}
+
+export type Review = {
+  tasks: { type: string; time: number; value: number; why: string }[];
+  disagreements: { i: number; point: string }[];
+  summary: string;
+};
+
+// Claude's answer to a review, checked against the number of tasks sent.
+export function parseReview(text: string, n: number): Review {
+  let t = text.trim().replace(/```json|```/g, "").trim();
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) t = t.slice(a, b + 1);
+  let o: Record<string, unknown>;
+  try { o = JSON.parse(t); } catch { throw new Error("not JSON"); }
+  if (!o || typeof o !== "object" || !Array.isArray(o.tasks)) throw new Error("no tasks");
+  const byI = new Map<number, Record<string, unknown>>();
+  for (const x of o.tasks as Record<string, unknown>[]) {
+    const i = Number(x?.i);
+    if (Number.isInteger(i) && i >= 1 && i <= n && !byI.has(i) && TYPES.includes(x.type as string)) byI.set(i, x);
+  }
+  if (byI.size !== n) throw new Error("tasks do not match");
+  const w = (x: unknown) => { const v = Math.round(Number(x)); return Number.isFinite(v) && v >= 0 ? Math.min(v, 100) : 0; };
+  const tasks = Array.from({ length: n }, (_, k) => {
+    const x = byI.get(k + 1)!;
+    return { type: String(x.type), time: w(x.time), value: w(x.value), why: typeof x.why === "string" ? x.why.slice(0, 160) : "" };
+  });
+  const disagreements = (Array.isArray(o.disagreements) ? o.disagreements as Record<string, unknown>[] : [])
+    .filter((d) => Number.isInteger(Number(d?.i)) && Number(d.i) >= 1 && Number(d.i) <= n && typeof d.point === "string")
+    .slice(0, 4).map((d) => ({ i: Number(d.i), point: String(d.point).slice(0, 300) }));
+  return { tasks, disagreements, summary: typeof o.summary === "string" ? o.summary.slice(0, 300) : "" };
 }
 
 export function promptBriefing({ quarter: t, decisions, gauges: r, rationale: why6 }: InBrief): string {
@@ -215,6 +282,11 @@ export const KINDS: Record<string, KindSpec> = {
   "03.decompose": {
     artifact: "03", bucket: "03", limit: 4, windowSeconds: 600, maxTokens: 3000,
     validate: validate03, prompt: prompt03 as (i: never) => string, parse: parseTasks,
+  },
+  "03.review": {
+    artifact: "03", bucket: "03.review", limit: 3, windowSeconds: 600, maxTokens: 4000,
+    validate: validateReview, prompt: promptReview as (i: never) => string,
+    parse: (text: string, inputs?: unknown) => parseReview(text, (inputs as InReview).tasks.length),
   },
   "06.briefing": {
     artifact: "06", bucket: "06.briefing", limit: 10, windowSeconds: 3600, maxTokens: 2000,

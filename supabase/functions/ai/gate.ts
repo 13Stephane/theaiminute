@@ -179,7 +179,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     if (reply.stopReason === "refusal") why = "refused";
     else if (reply.stopReason === "max_tokens") why = "truncated";
     else {
-      try { result = spec.parse(reply.text); } catch { why = "bad output"; }
+      try { result = spec.parse(reply.text, inputs); } catch { why = "bad output"; }
     }
     if (why) {
       await deps.store.finish(id!, { ...paid, status: 502, reason: why });

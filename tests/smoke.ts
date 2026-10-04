@@ -56,6 +56,21 @@ if (!status.live) {
       t03.status === 200 ? `${t03.body.result.length} tasks, ${JSON.stringify(t03.body.usage)}, $${t03.body.cost_usd}` : t03);
     if (t03.status === 200) console.log("      e.g.", JSON.stringify(t03.body.result[0]));
 
+    const own = await call({
+      kind: "03.review",
+      inputs: {
+        job: "Financial controller",
+        tasks: [
+          ["Close the monthly accounts", "automate", 30, 10], ["Explain variances to budget holders", "augment", 20, 20],
+          ["Brief the CFO before the board", "human", 10, 30], ["Set accounting policy", "human", 10, 25],
+          ["Reconcile intercompany balances", "automate", 30, 15],
+        ].map(([task, type, time, value]) => ({ task, type, time, value })),
+      },
+    });
+    check("03 own list gets a second opinion", own.status === 200 && own.body.result?.tasks?.length === 5,
+      own.status === 200 ? `${own.body.result.disagreements.length} disagreements, ${JSON.stringify(own.body.usage)}, $${own.body.cost_usd}` : own);
+    if (own.status === 200) console.log("      " + own.body.result.summary);
+
     const mix = { cheques: 50, retention: 10, liquidity: 25, health: 15, infra: 0 };
     const brief = await call({
       kind: "06.briefing",

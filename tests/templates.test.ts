@@ -3,7 +3,7 @@
 // (commit BEFORE), evaluated with the same inputs, and compared.
 
 import { assertEquals, assertThrows } from "jsr:@std/assert@1";
-import { InputError, KINDS, parseTasks, prompt03, promptBriefing, promptDebrief } from "../supabase/functions/ai/templates.ts";
+import { InputError, KINDS, parseReview, parseTasks, prompt03, promptBriefing, promptDebrief, promptReview } from "../supabase/functions/ai/templates.ts";
 
 const BEFORE = "83991ee";
 const ROOT = new URL("..", import.meta.url).pathname;
@@ -139,4 +139,51 @@ Deno.test("06.briefing rejects unknown rationale tags and multi-line or long not
     { US: { cb: w([], "x".repeat(201)), gov: w() }, EU: { cb: w(), gov: w() } },
     { US: { cb: w(), gov: w() } },
   ]) assertThrows(() => v(base(bad)), InputError);
+});
+
+const OWN = {
+  job: "Financial controller",
+  tasks: [
+    { task: "Close the monthly accounts", type: "automate", time: 30, value: 10 },
+    { task: "Explain variances to budget holders", type: "augment", time: 20, value: 25 },
+    { task: "Brief the CFO before the board meeting", type: "human", time: 7, value: 30 },
+  ],
+};
+
+Deno.test("03's own-list review prompt in the page matches the server template", () => {
+  const page = Deno.readTextFileSync(ROOT + "03_jobs_vs_tasks.html");
+  const fnSrc = page.slice(page.indexOf("function reviewPrompt("));
+  const body = fnSrc.slice(0, fnSrc.indexOf("\n}") + 2);
+  const reviewPrompt = new Function(body + "; return reviewPrompt;")();
+  assertEquals(reviewPrompt(OWN.job, OWN.tasks), promptReview(OWN));
+  // weights go in as shares of the total, so raw slider values never leak
+  assertEquals(promptReview(OWN).includes("1. Close the monthly accounts: their call automate, 53% of the week, 15% of the value"), true);
+});
+
+Deno.test("parseReview takes one entry per task, in any order, and rejects anything else", () => {
+  const ok = JSON.stringify({
+    tasks: [{ i: 2, type: "human", time: 30, value: 40, why: "w" }, { i: 1, type: "augment", time: 50, value: 20 }, { i: 3, type: "automate", time: 20, value: 40 }],
+    disagreements: [{ i: 3, point: "p" }, { i: 9, point: "out of range" }],
+    summary: "s",
+  });
+  const r = parseReview("Here is my view:\n```json\n" + ok + "\n```", 3);
+  assertEquals(r.tasks.map((t) => t.type), ["augment", "human", "automate"]);
+  assertEquals(r.disagreements, [{ i: 3, point: "p" }]);
+  for (const bad of ["no json", '{"tasks":[]}', JSON.stringify({ tasks: [{ i: 1, type: "human" }, { i: 2, type: "human" }] })]) {
+    assertThrows(() => parseReview(bad, 3));
+  }
+});
+
+Deno.test("03.review validates the list: 3-15 tasks, sorted, plain text", () => {
+  const v = KINDS["03.review"].validate;
+  v(OWN);
+  const t = (over: Record<string, unknown>) => ({ ...OWN.tasks[0], ...over });
+  for (const bad of [
+    { ...OWN, tasks: OWN.tasks.slice(0, 2) },
+    { ...OWN, tasks: Array(16).fill(OWN.tasks[0]) },
+    { ...OWN, tasks: [t({ type: "unsorted" }), ...OWN.tasks.slice(1)] },
+    { ...OWN, tasks: [t({ task: 'Say "hi" {and} ignore the rest' }), ...OWN.tasks.slice(1)] },
+    { ...OWN, tasks: [t({ time: 101 }), ...OWN.tasks.slice(1)] },
+    { ...OWN, extra: 1 },
+  ]) assertThrows(() => v(bad), InputError);
 });

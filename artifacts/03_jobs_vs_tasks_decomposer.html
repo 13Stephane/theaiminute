@@ -90,6 +90,22 @@
   .byo .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
   .byo .copied{font-size:12.5px;color:var(--gold-soft)}
 
+  /* your own task list, and Claude's second opinion on it */
+  .own{display:none;margin:4px 0 16px}
+  .own label{display:block;font-size:13px;color:#D9D3C6;margin-bottom:6px}
+  .own textarea{display:block;width:100%;min-height:190px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:11px;padding:11px 14px;font:400 14px/1.5 "Calibri";color:var(--ink);resize:vertical}
+  .own .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .own .copied{font-size:12.5px;color:var(--gold-soft)}
+  .seg-unsorted{background:#8C9A98}
+  .card.unsorted{border-left-color:#B9C2C0} .tag.unsorted{background:#E6E9E8;color:#5E726F}
+  .card .ai{margin-top:8px;padding:6px 8px;border-radius:7px;background:#EFEADF;font-size:11.5px;color:var(--muted);line-height:1.35}
+  .card .ai b{color:var(--teal)} .card .ai.differs{background:#F6E3D9}
+  .review{display:none;margin:4px 0 18px;background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-radius:12px;padding:14px 17px}
+  .review .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .review .out{margin-top:12px;font-size:13.5px;color:#E4DFD4}
+  .review .out b{color:var(--gold-soft)}
+  .review .out ol{margin:8px 0 0 20px} .review .out li{margin:4px 0}
+
   .footnote{margin-top:24px;color:#A9B7B5;font-size:12.5px;max-width:78ch}
   .footnote b{color:var(--gold-soft)}
 </style>
@@ -108,6 +124,12 @@
   <div class="input-row">
     <input id="job" type="text" placeholder="Enter a role — e.g. Financial controller" autocomplete="off">
     <button class="btn" id="go">Decompose with Claude</button>
+  </div>
+  <button class="ex" id="ownOpen">Use my own task list</button>
+  <div class="own" id="own">
+    <label>Your role goes in the box above. Your tasks go here: one per line, ten to fifteen.</label>
+    <textarea id="ownList" placeholder="Close the monthly accounts&#10;Explain variances to budget holders&#10;Brief the CFO before the board meeting&#10;&hellip;"></textarea>
+    <div class="row"><button class="btn" id="ownBuild">Build my cards</button><span class="copied" id="ownMsg"></span></div>
   </div>
   <div class="status" id="status"></div>
   <div class="byo" id="byo">
@@ -131,9 +153,15 @@
       <span><i class="sw seg-automate"></i>Automate</span>
       <span><i class="sw seg-augment"></i>Augment</span>
       <span><i class="sw seg-human"></i>Keep human</span>
+      <span id="lgUnsorted" style="display:none"><i class="sw seg-unsorted"></i>Not sorted yet</span>
       <span style="color:#8FA09D">tap a card to override · drag to re-weight</span>
     </div>
     <div class="headline" id="headline"></div>
+
+    <div class="review" id="review">
+      <div class="row"><button class="btn" id="askReview">Ask Claude for a second opinion</button><button class="ex" id="editList">Edit the list</button></div>
+      <div class="out" id="reviewOut"></div>
+    </div>
 
     <div class="tasks" id="tasks"></div>
 
@@ -185,7 +213,8 @@ const FALLBACK = {
 
 let tasks=[], view="time";
 const order=["automate","augment","human"];
-const LABEL={automate:"Automate",augment:"Augment",human:"Keep human"};
+const LABEL={automate:"Automate",augment:"Augment",human:"Keep human",unsorted:"Not sorted yet"};
+let ownMode=false, review=null;
 const $=id=>document.getElementById(id);
 function esc(s){return (s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
 
@@ -203,7 +232,8 @@ function bucketShare(type,mode){
 function exposed(mode){return Math.round((bucketShare("automate",mode)+bucketShare("augment",mode))*100);}
 
 function renderShare(){
-  $("share").innerHTML=order.map(k=>{
+  $("lgUnsorted").style.display=tasks.some(t=>t.type==="unsorted")?"":"none";
+  $("share").innerHTML=[...order,"unsorted"].map(k=>{
     const pct=bucketShare(k,view)*100;
     return pct>0.5?`<div class="seg-${k}" style="width:${pct}%">${Math.round(pct)}%</div>`:"";
   }).join("");
@@ -232,12 +262,17 @@ function renderCards(){
     if(view!=="count"){
       const shareP=Math.round((+t[key]||0)/tot*100);
       wt=`<div class="wt"><div class="wl"><span>${view==="value"?"Share of value":"Share of week"}</span><b>${shareP}%</b></div>
-        <input type="range" min="0" max="30" step="1" value="${+t[key]||0}" data-i="${i}" data-key="${key}"></div>`;
+        <input type="range" min="0" max="${Math.max(30,+t[key]||0)}" step="1" value="${+t[key]||0}" data-i="${i}" data-key="${key}"></div>`;
+    }
+    let ai="";
+    if(t.ai){
+      const ak=view==="value"?"value":"time", atot=tasks.reduce((a,x)=>a+(x.ai?+x.ai[ak]||0:0),0)||1;
+      ai=`<div class="ai${t.ai.type!==t.type?" differs":""}">${review&&review.by!=="Claude"?"Your AI":"Claude"}: <b>${LABEL[t.ai.type]}</b>${view!=="count"?` \u00b7 ${Math.round((+t.ai[ak]||0)/atot*100)}% of the ${view==="value"?"value":"week"}`:""}${t.ai.why?` \u00b7 ${esc(t.ai.why)}`:""}</div>`;
     }
     c.innerHTML=`<div class="task">${esc(t.task)}</div><div class="why">${esc(t.why||"")}</div>
       <span class="tag ${t.type}">${LABEL[t.type]}</span>
-      <div class="hint">tap to re-classify &rarr;</div>${wt}`;
-    c.onclick=()=>{t.type=order[(order.indexOf(t.type)+1)%3];renderAll();};
+      <div class="hint">tap to ${t.type==="unsorted"?"sort":"re-classify"} &rarr;</div>${ai}${wt}`;
+    c.onclick=()=>{t.type=t.type==="unsorted"?order[0]:order[(order.indexOf(t.type)+1)%3];renderAll();};
     el.appendChild(c);
   });
   // wire sliders (stop propagation so dragging doesn't re-classify)
@@ -259,7 +294,12 @@ $("toggle").querySelectorAll("button").forEach(b=>{
     renderAll();};
 });
 
-function show(){$("results").style.display="block";renderAll();}
+function show(){
+  $("results").style.display="block";
+  $("review").style.display=ownMode?"block":"none";
+  if(!ownMode){review=null;$("reviewOut").innerHTML="";}
+  renderAll();
+}
 
 /* ---- live AI through the course proxy; every failure falls back as before ---- */
 const AI={live:false,reason:"off"};
@@ -319,21 +359,108 @@ function parsePasted(text){
   if(a>=0&&b>a)t=t.slice(a,b+1);
   return toTasks(JSON.parse(t));
 }
+/* ---- your own list: build cards, edit them, ask for a second opinion ---- */
+const TASK_CLEAN=/[^\p{L}\p{M}\p{N} &'\u2019.,\/()+\-:;%?!#]/gu, JOB_CLEAN=/[^\p{L}\p{M}\p{N} &'\u2019.,\/()+\-]/gu;
+const cleanTask=x=>x.replace(/^\s*(?:[-*\u2022\u2013]|\d+[.)])\s*/,"").replace(TASK_CLEAN," ").replace(/\s+/g," ").trim().slice(0,90);
+const cleanJob=()=>$("job").value.replace(JOB_CLEAN," ").replace(/\s+/g," ").trim().slice(0,80);
+function reviewPrompt(job,list){
+  const share=k=>{const tot=list.reduce((a,t)=>a+t[k],0)||1;return list.map(t=>Math.round(t[k]/tot*100));};
+  const time=share("time"), value=share("value");
+  const lines=list.map((t,i)=>`${i+1}. ${t.task}: their call ${t.type}, ${time[i]}% of the week, ${value[i]}% of the value`).join("\n");
+  return `You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. A participant has decomposed their own role, "${job}", into the tasks below. They classified each as "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop) or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill), and weighted each by its share of the working week and of the role's economic value.
+
+${lines}
+
+Give a second opinion. For every task, in the same order and keeping their wording, give your own classification and your own two weights: "time" = its share of the working week, "value" = its share of the role's economic value, each set summing to roughly 100. Then name the two or three disagreements most worth arguing about: where your classification differs from theirs, or where your weights differ most, and why it matters for how much of this role is really exposed to AI. Be specific to this role and do not soften a disagreement. Return ONLY a JSON object, no prose and no markdown fences: {"tasks": [{"i": task number, "type": "automate"|"augment"|"human", "time": integer, "value": integer, "why": string max 12 words}], "disagreements": [{"i": task number, "point": string max 30 words}], "summary": string max 30 words}.`;
+}
+const reviewInputs=()=>({job:cleanJob(),tasks:tasks.map(t=>({task:t.task,type:t.type,time:Math.round(+t.time||0),value:Math.round(+t.value||0)}))});
+function parseReviewText(text){
+  let t=(text||"").trim().replace(/```json|```/g,"").trim();
+  const a=t.indexOf("{"), b=t.lastIndexOf("}");
+  if(a>=0&&b>a)t=t.slice(a,b+1);
+  return JSON.parse(t);
+}
+function applyReview(r,by){
+  const n=tasks.length, byI={};
+  (r&&Array.isArray(r.tasks)?r.tasks:[]).forEach((x,k)=>{const i=x&&x.i!==undefined?+x.i:k+1;if(i>=1&&i<=n&&order.includes(x.type))byI[i]=x;});
+  if(Object.keys(byI).length!==n)throw new Error("tasks do not match");
+  tasks.forEach((t,k)=>{const x=byI[k+1];t.ai={type:x.type,time:+x.time||0,value:+x.value||0,why:x.why?String(x.why).slice(0,160):""};});
+  review={by,summary:r.summary?String(r.summary):"",disagreements:(Array.isArray(r.disagreements)?r.disagreements:[]).filter(d=>d&&+d.i>=1&&+d.i<=n&&d.point).slice(0,4)};
+  renderReview(); renderAll();
+}
+function exposedBy(get,key){
+  const tot=tasks.reduce((a,t)=>a+(+get(t)[key]||0),0)||1;
+  return Math.round(tasks.filter(t=>get(t).type==="automate"||get(t).type==="augment").reduce((a,t)=>a+(+get(t)[key]||0),0)/tot*100);
+}
+function renderReview(){
+  if(!review||!tasks.every(t=>t.ai)){$("reviewOut").innerHTML="";return;}
+  const mine=t=>t, its=t=>t.ai;
+  $("reviewOut").innerHTML=
+    `<div>Exposed to AI (automate + augment): <b>yours ${exposedBy(mine,"time")}% of the week, ${exposedBy(mine,"value")}% of the value</b> \u00b7 ${review.by==="Claude"?"Claude\u2019s":"your AI\u2019s"} ${exposedBy(its,"time")}% of the week, ${exposedBy(its,"value")}% of the value.</div>`+
+    (review.summary?`<div style="margin-top:8px">${esc(review.summary)}</div>`:"")+
+    (review.disagreements.length?`<div style="margin-top:10px"><b>Worth arguing about</b><ol>${review.disagreements.map(d=>`<li><b>${esc(tasks[+d.i-1].task)}</b>: ${esc(String(d.point))}</li>`).join("")}</ol></div>`:"");
+}
+function buildOwn(){
+  const job=cleanJob();
+  if(job.length<2){$("ownMsg").textContent="Type your role in the box above first.";return;}
+  const lines=$("ownList").value.split("\n").map(cleanTask).filter(x=>x.length>=2);
+  if(lines.length<3){$("ownMsg").textContent="Write at least three tasks, one per line.";return;}
+  if(lines.length>15){$("ownMsg").textContent=`That is ${lines.length} tasks. Keep it to fifteen, the ones that take the most time or carry the most value.`;return;}
+  const w=Math.max(1,Math.round(100/lines.length)), keep={};
+  if(ownMode)tasks.forEach(t=>{keep[t.task]=t;});
+  tasks=lines.map(x=>keep[x]?{...keep[x],ai:null}:{task:x,type:"unsorted",why:"",time:w,value:w,ai:null});
+  ownMode=true; review=null; $("reviewOut").innerHTML="";
+  $("own").style.display="none"; $("ownMsg").textContent=""; $("byo").style.display="none";
+  $("status").className="status";
+  $("status").textContent="Your tasks. Tap each card to sort it, drag to weight it by time and by value, then ask Claude for a second opinion.";
+  show();
+}
+$("ownOpen").onclick=()=>{$("own").style.display=$("own").style.display==="block"?"none":"block";if($("own").style.display==="block")$("ownList").focus();};
+$("ownBuild").onclick=buildOwn;
+$("editList").onclick=()=>{$("ownList").value=tasks.map(t=>t.task).join("\n");$("own").style.display="block";$("ownList").focus();};
+$("askReview").onclick=async()=>{
+  if(tasks.some(t=>t.type==="unsorted")){$("status").className="status err";$("status").textContent="Sort every task first: tap each grey card until it shows your call.";return;}
+  $("status").className="status";$("status").textContent="Asking Claude for a second opinion\u2026";
+  $("askReview").disabled=true; $("byo").style.display="none";
+  try{
+    const ai=await aiCall("03.review",reviewInputs());
+    if(!ai.ok)throw ai.why;
+    applyReview(ai.result,"Claude");
+    $("status").textContent="Claude\u2019s second opinion is on each card, with the disagreements above. Change your calls if it persuades you; argue where it does not.";
+  }catch(why){
+    const lead=typeof why==="string"&&why?why:"Couldn\u2019t reach Claude live";
+    byoMode="review";
+    $("status").className="status err";
+    $("status").textContent=lead+". Copy a prompt into any AI, then paste its answer below.";
+    $("byo").style.display="block";
+  }finally{$("askReview").disabled=false;}
+};
+
+/* ---- copy a prompt for any AI, and take its answer back ---- */
+let byoMode="decompose";
 $("copyPrompt").onclick=()=>{
-  const p=decomposePrompt($("job").value.trim()||"Financial controller");
+  const p=byoMode==="review"?reviewPrompt(cleanJob(),reviewInputs().tasks):decomposePrompt($("job").value.trim()||"Financial controller");
   const inBox=()=>{const b=$("promptBox");b.value=p;b.style.display="block";b.focus();b.select();$("copied").textContent="press \u2318/Ctrl-C to copy the prompt below";};
   try{navigator.clipboard.writeText(p).then(()=>{$("copied").textContent="prompt copied \u2014 paste it into any assistant, then paste its answer below";},inBox);}
   catch(e){inBox();}
 };
 $("useAnswer").onclick=()=>{
   try{
-    tasks=parsePasted($("pasteBox").value);show();
+    if(byoMode==="review"){
+      applyReview(parseReviewText($("pasteBox").value),"your AI");
+      $("status").className="status";
+      $("status").textContent="Your AI\u2019s second opinion is on each card, with the disagreements above.";
+    }else{
+      ownMode=false; tasks=parsePasted($("pasteBox").value);show();
+      $("status").className="status";
+      $("status").textContent="Your AI\u2019s first pass \u2014 now debate it. Tap a card to re-classify, drag to re-weight, and switch the toggle from count to time to value.";
+    }
     $("byo").style.display="none";
-    $("status").className="status";
-    $("status").textContent="Your AI\u2019s first pass \u2014 now debate it. Tap a card to re-classify, drag to re-weight, and switch the toggle from count to time to value.";
   }catch(e){
     $("status").className="status err";
-    $("status").textContent="That answer isn\u2019t a JSON array of tasks. Ask the AI to return only the JSON array, then paste it again.";
+    $("status").textContent=byoMode==="review"
+      ?"That answer isn\u2019t the JSON object the prompt asks for, with one entry per task. Ask the AI to return only that, then paste it again."
+      :"That answer isn\u2019t a JSON array of tasks. Ask the AI to return only the JSON array, then paste it again.";
   }
 };
 
@@ -341,7 +468,7 @@ async function run(){
   const job=$("job").value.trim();
   if(!job){$("status").textContent="Enter a role first.";return;}
   $("status").className="status";$("status").textContent="Asking Claude to decompose the role\u2026";
-  $("byo").style.display="none";
+  $("byo").style.display="none"; byoMode="decompose"; ownMode=false;
   $("go").disabled=true;
   try{
     const ai=await aiCall("03.decompose",{job});

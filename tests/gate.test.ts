@@ -258,3 +258,22 @@ Deno.test("CORS preflight", async () => {
   assert(ok.headers.get("access-control-allow-headers")!.includes("x-class-code"));
   assertEquals((await send(null, { method: "OPTIONS", origin: "https://evil.example" })).status, 403);
 });
+
+Deno.test("happy path 03.review: Claude's view per task, the disagreements, a summary", async () => {
+  const { db, send } = await setup();
+  const tasks = [
+    { task: "Close the monthly accounts", type: "automate", time: 30, value: 10 },
+    { task: "Explain variances", type: "augment", time: 20, value: 25 },
+    { task: "Brief the CFO", type: "human", time: 7, value: 30 },
+    { task: "Set accounting policy", type: "human", time: 5, value: 20 },
+  ];
+  const res = await send({ kind: "03.review", inputs: { job: "Financial controller", tasks } });
+  assertEquals(res.status, 200);
+  const b = await res.json();
+  assertEquals(b.result.tasks.length, 4);
+  assertEquals(b.result.disagreements[0].i, 1);
+  assertEquals([db.rows.at(-1)!.kind, db.rows.at(-1)!.bucket], ["03.review", "03.review"]);
+  for (let i = 0; i < 2; i++) assertEquals((await send({ kind: "03.review", inputs: { job: "Financial controller", tasks } })).status, 200);
+  assertEquals((await send({ kind: "03.review", inputs: { job: "Financial controller", tasks } })).status, 429); // 3 per 10 min
+  assertEquals((await send(decompose)).status, 200); // its own allowance, separate from decompositions
+});

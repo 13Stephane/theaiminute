@@ -71,7 +71,14 @@ export const SAMPLE_TASKS = JSON.stringify([
 export function fakeModel(log: { model: string; maxTokens: number; prompt: string }[]): CallModel {
   return (a) => {
     log.push(a);
-    const text = a.prompt.includes("JSON array") ? SAMPLE_TASKS : "Fiscal support arrived fast; inflation is building with a lag.";
+    const n = (a.prompt.match(/^\d+\. /gm) || []).length;
+    const text = a.prompt.includes("Give a second opinion")
+      ? JSON.stringify({
+        tasks: Array.from({ length: n }, (_, k) => ({ i: k + 1, type: ["automate", "augment", "human"][k % 3], time: 10, value: 10, why: "fake view" })),
+        disagreements: [{ i: 1, point: "This takes judgement you are underrating." }],
+        summary: "More of this role is exposed than you think.",
+      })
+      : a.prompt.includes("JSON array") ? SAMPLE_TASKS : "Fiscal support arrived fast; inflation is building with a lag.";
     return Promise.resolve({ text, stopReason: "end_turn", inputTokens: 400, outputTokens: 600 });
   };
 }
