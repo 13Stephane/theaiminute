@@ -5,7 +5,7 @@ Static pages for theaiminute.blog, served by Cloudflare from `main`. This README
 | Piece | Where |
 |---|---|
 | Artifact 03, jobs vs tasks | `03_jobs_vs_tasks.html` and an identical copy, `artifacts/03_jobs_vs_tasks_decomposer.html` (a test keeps them in sync) |
-| Artifact 06, pandemic policy room | `artifacts/06_pandemic_policy_room.html` |
+| Artifact 06, pandemic policy room (v2.5) | `06_policy_room.html` and an identical copy, `artifacts/06_pandemic_policy_room.html` (a test keeps them in sync) |
 | Control room | `admin/index.html`, at `/admin/` |
 | Proxy, the only caller of Anthropic | `supabase/functions/ai/` |
 | Control-room actions | `supabase/functions/admin/` |
@@ -81,12 +81,12 @@ deno run --allow-net tests/smoke.ts https://kcobpakjfluuyfzswtoq.supabase.co/fun
 | 3 | Now is inside `opens_at`..`closes_at`, when set | 423 `{reason: "outside window"}` |
 | 4 | The class code matches | 401 |
 | 5 | Spend since the last reset is below the budget | 429 `{reason: "budget"}` |
-| 6 | The device is under its limit: 03 gets 4 calls per 10 minutes; 06 gets 10 briefings and 1 debrief an hour | 429 `{reason: "rate"}` |
-| 7 | The kind is `03.decompose`, `06.briefing` or `06.debrief`, and every input has the right type, length and range | 400 |
+| 6 | The device is under its limit: 03 gets 4 decompositions and 3 second opinions per 10 minutes; 06 gets 10 briefings and 1 debrief an hour | 429 `{reason: "rate"}` |
+| 7 | The kind is `03.decompose`, `03.review`, `06.briefing` or `06.debrief`, and every input has the right type, length and range | 400 |
 
-Only then does it call Anthropic. It logs the call to `ai_usage` and returns `{result, usage, cost_usd}`. For 03 the result is the parsed task array, validated on the server. Failed and refused calls do not use up a device's allowance. `GET /functions/v1/ai/status` returns `{live, reason}` with no secrets; the pages use it for the badge.
+Only then does it call Anthropic. It logs the call to `ai_usage` and returns `{result, usage, cost_usd}`. For `03.decompose` the result is the parsed task array; for `03.review`, Claude's call and weights per task plus the disagreements worth arguing about. Both are validated on the server. Failed and refused calls do not use up a device's allowance. `GET /functions/v1/ai/status` returns `{live, reason}` with no secrets; the pages use it for the badge.
 
-The prompts live in `supabase/functions/ai/templates.ts`, moved verbatim from the pages (a test checks this against the pages as they were). The server fixes the model and `max_tokens` per kind; anything else in the request body is ignored.
+The prompts live in `supabase/functions/ai/templates.ts`. The 03 decomposition and both 06 prompts are moved verbatim from the pages (a test checks this against the pages as they were); the 03 second-opinion prompt is new, and the page's copy-a-prompt version is tested to match it. The server fixes the model and `max_tokens` per kind; anything else in the request body is ignored.
 
 **The class code** is never stored. `ai_control` holds a random salt, and the code is `HMAC-SHA256(CLASS_CODE_PEPPER, salt)` mapped to six characters. The database alone cannot reveal the code, and the control room can still show the current one at any time. Rotating writes a new salt.
 
@@ -101,16 +101,16 @@ The prompts live in `supabase/functions/ai/templates.ts`, moved verbatim from th
 | Price | $2 per million input tokens, $10 per million output tokens ([pricing](https://platform.claude.com/docs/en/about-claude/pricing)), kept in one constant, `PRICE_PER_MTOK` in `templates.ts` |
 | Thinking | On by default for Sonnet 5.5 (adaptive). Thinking tokens count as output: `max_tokens` caps thinking and answer together, and they are billed at the output rate. |
 | Effort | `output_config: {effort: "low"}`, which the [effort docs](https://platform.claude.com/docs/en/build-with-claude/effort) recommend for short, scoped, latency-sensitive tasks |
-| `max_tokens` | 03: 3000 · 06 briefing: 1500 · 06 debrief: 2000. The old pages used 1000, sized for a model without thinking. |
+| `max_tokens` | 03 decomposition: 3000 · 03 second opinion: 4000 · 06 briefing: 2000 · 06 debrief: 2000. The old pages used 1000, sized for a model without thinking. |
 
-**Expected cost for a course day**, with the prompts at about 200 to 300 input tokens each:
+**Cost for a course day**, from real calls on 4 October 2026:
 
-| Calls | Typical tokens out | Typical cost | Ceiling (every call at `max_tokens`) |
+| Calls | Tokens in / out | Cost each | Day |
 |---|---|---|---|
-| 20 decompositions | ~650 | ~$0.14 | $0.61 |
-| 40 briefings (5 tables × 8) | ~300 | ~$0.14 | $0.62 |
-| 5 debriefs | ~400 | ~$0.02 | $0.10 |
-| **Total** | | **~$0.30** | **$1.33** |
+| 20 decompositions or second opinions (03) | ~320-590 / ~600 | ~$0.007 | ~$0.14 |
+| 40 briefings (5 tables × 8 quarters) | ~545 / ~585 | ~$0.0069 | ~$0.28 |
+| 5 debriefs | ~640 / ~620 | ~$0.0075 | ~$0.04 |
+| **Total** | | | **~$0.46** |
 
 Set a **daily budget of $5**. A full day costs well under that even at the ceiling. The control room shows the real figures per call as they come in.
 
