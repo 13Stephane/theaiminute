@@ -21,6 +21,10 @@ const BRIEF = {
     US: { Y: -9.1, U: 13.2, pi: 0.6 }, EU: { Y: -12.4, U: 7.8, pi: 0.3 },
     SPX: 92, FX: 1.124, stress: 41, spread: 2.1,
   },
+  rationale: {
+    US: { cb: { tags: ["Protect financial system"], note: "" }, gov: { tags: ["Fight the downturn"], note: "cheques first" } },
+    EU: { cb: { tags: ["Defend the spread"], note: "" }, gov: { tags: [], note: "" } },
+  },
 };
 const ROW = { US: { Y: -1, U: 5, pi: 3 }, EU: { Y: -2, U: 8, pi: 2 } };
 const DEBRIEF = { path: Array(8).fill(ROW) };

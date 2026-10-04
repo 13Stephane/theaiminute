@@ -6,7 +6,8 @@ import { KINDS } from "../supabase/functions/ai/templates.ts";
 
 const BEFORE = "83991ee";
 const ROOT = new URL("..", import.meta.url).pathname;
-const FILE = "artifacts/06_pandemic_policy_room.html";
+const FILE = "06_policy_room.html"; // the policy room the course uses (v2.5)
+const COPY = "artifacts/06_pandemic_policy_room.html"; // same page at a second address
 
 const before = new TextDecoder().decode(
   new Deno.Command("git", { args: ["show", `${BEFORE}:${FILE}`], cwd: ROOT }).outputSync().stdout,
@@ -25,31 +26,32 @@ function block(src: string, head: string): string {
   return src.slice(i, j + 1);
 }
 
-const PARTS = [
-  "const QLABEL=", "const PANDEMIC=", "const SUPPLY=", "const NAT=", "const ARCH=", "const ARCH_KEYS=",
-  "function newGame(", "function mixShares(", "function stepEconomy(", "function resolveQuarter(",
-  "const ACTUAL=", "function actualRun(", "function scoreFromHist(", "function exportJSON(",
-  "function forwardRun(", "function renderFwd(", "function fallbackBrief(", "function fallbackDebrief(",
-  "function llmPromptDebrief(", "function qeLabel(",
+const LINES = ["const QLABEL=", "const PANDEMIC=", "const SUPPLY=", "const NAT=", "const SENT_K=", "const ARCH_KEYS=", "const NATURAL_S=", "function qeBn(", "function qeLabel("];
+const BLOCKS = [
+  "const ARCH=", "const INIT=", "function newGame(", "function mixShares(", "function stepEconomy(", "function resolveQuarter(",
+  "const ACTUAL=", "function actualRun(", "function scoreFromHist(", "function exportJSON(", "function forwardRun(",
+  "function renderFwd(", "function fallbackBrief(", "function fallbackDebrief(", "function explainScores(", "function showDebrief(",
 ];
+const line = (s: string, head: string) => {
+  const i = s.indexOf(head);
+  if (i < 0) throw new Error("not found: " + head);
+  return s.slice(i, s.indexOf("\n", i));
+};
 
 Deno.test("06: engine, ACTUAL, scoring, export and fallbacks are byte-identical", () => {
-  for (const head of PARTS) {
-    const b = head.startsWith("const") && !head.includes("ARCH=") && !head.includes("ACTUAL=")
-      ? before.slice(before.indexOf(head), before.indexOf("\n", before.indexOf(head)))
-      : block(before, head);
-    const a = head.startsWith("const") && !head.includes("ARCH=") && !head.includes("ACTUAL=")
-      ? after.slice(after.indexOf(head), after.indexOf("\n", after.indexOf(head)))
-      : block(after, head);
-    assertEquals(a, b, head);
-  }
-  // The whole engine section, start to end, as one unbroken string.
-  const engine = (s: string) => s.slice(s.indexOf("/* =================== ENGINE"), s.indexOf("/* ---- a prompt any model can answer"));
+  for (const head of LINES) assertEquals(line(after, head), line(before, head), head);
+  for (const head of BLOCKS) assertEquals(block(after, head), block(before, head), head);
+  // Engine, scoring and content sections, start to end, as one unbroken string.
+  const engine = (s: string) => s.slice(s.indexOf("/* =================== ENGINE"), s.indexOf("/* =================== STATE & UI"));
   assertEquals(engine(after), engine(before));
 });
 
+Deno.test("06 is served from two addresses; both files must stay identical", () => {
+  assertEquals(Deno.readTextFileSync(ROOT + COPY), after);
+});
+
 Deno.test("06: no direct Anthropic calls remain in 03 or 06", () => {
-  for (const f of [FILE, "03_jobs_vs_tasks.html", "artifacts/03_jobs_vs_tasks_decomposer.html"]) {
+  for (const f of [FILE, COPY, "03_jobs_vs_tasks.html", "artifacts/03_jobs_vs_tasks_decomposer.html"]) {
     const s = Deno.readTextFileSync(ROOT + f);
     assertEquals(/api\.anthropic\.com|claude-sonnet-4-6|CALL_LIMIT/.test(s), false, f);
     assertEquals(/^const AI_URL = "(https:\/\/[a-z0-9]+\.supabase\.co\/functions\/v1\/ai)?";/m.test(s), true, f);
@@ -58,7 +60,7 @@ Deno.test("06: no direct Anthropic calls remain in 03 or 06", () => {
 
 Deno.test("06: random extreme games always pass the server's validators", () => {
   // Load the engine from the page and play it with random slider positions.
-  const src = after.slice(after.indexOf("/* =================== ENGINE"), after.indexOf("/* ---- a prompt any model can answer"));
+  const src = after.slice(after.indexOf("/* =================== ENGINE"), after.indexOf("/* =================== SCORING"));
   // deno-lint-ignore no-explicit-any
   const E: any = new Function(src + "; return {newGame, resolveQuarter, QLABEL};")();
   const pick = (lo: number, hi: number, step: number) => lo + step * Math.floor(Math.random() * ((hi - lo) / step + 1));
@@ -80,6 +82,10 @@ Deno.test("06: random extreme games always pass the server's validators", () => 
       KINDS["06.briefing"].validate({
         quarter: t, decisions: { US: strip(us), EU: strip(eu) },
         gauges: { US: econ(r.US), EU: econ(r.EU), SPX: r.SPX, FX: r.FX, stress: r.stress, spread: r.spread },
+        rationale: {
+          US: { cb: { tags: ["Fear overheating"], note: "" }, gov: { tags: [], note: "" } },
+          EU: { cb: { tags: [], note: "" }, gov: { tags: ["Defend the spread", "Save fiscal space"], note: "hold" } },
+        },
       });
     }
     // deno-lint-ignore no-explicit-any

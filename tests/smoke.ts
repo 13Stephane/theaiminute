@@ -63,6 +63,10 @@ if (!status.live) {
         quarter: 1,
         decisions: { US: { r: 0.25, qe: 10, stim: 9, mix }, EU: { r: 0, qe: 6, stim: 4, mix: { ...mix, cheques: 10, retention: 55 } } },
         gauges: { US: { Y: -9.1, U: 13.2, pi: 0.6 }, EU: { Y: -12.4, U: 7.8, pi: 0.3 }, SPX: 92, FX: 1.124, stress: 41, spread: 2.1 },
+        rationale: {
+          US: { cb: { tags: ["Protect financial system"], note: "" }, gov: { tags: ["Fight the downturn"], note: "cheques first, taper later" } },
+          EU: { cb: { tags: ["Defend the spread"], note: "" }, gov: { tags: ["Save fiscal space"], note: "" } },
+        },
       },
     });
     check("06 returns a briefing", brief.status === 200 && typeof brief.body.result === "string",

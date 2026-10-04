@@ -82,10 +82,39 @@ const ARCH_LABEL: Record<string, string> = {
   cheques: "Household transfers", retention: "Job retention (furlough)", liquidity: "Business liquidity",
   health: "Health & vaccines", infra: "Investment / infrastructure",
 };
-// Same as qeLabel() in the page.
+// Same as qeBn() and qeLabel() in 06_policy_room.html.
 function qeLabel(q: number) {
-  return q <= 0.5 ? "none" : q < 3 ? "light" : q < 6 ? "moderate" : q < 9 ? "heavy" : "massive";
+  const b = Math.round(q * 50);
+  const w = q <= 0.5 ? "none" : q < 3 ? "light" : q < 6 ? "moderate" : q < 9 ? "heavy" : "massive";
+  return q <= 0.5 ? "none (\u20AC0bn/q)" : `\u20AC${b}bn/q \u00B7 ${w}`;
 }
+
+// The "Why this decision?" tags each role can pick, as in RATIONALE in the page,
+// plus an optional one-line note the players type.
+const RATIONALE_TAGS = {
+  US: ["Fight the downturn", "Fear overheating", "Protect financial system", "Save fiscal space", "Match the ECB/Fed"],
+  EU: ["Fight the downturn", "Fear overheating", "Defend the spread", "Save fiscal space", "Match the ECB/Fed"],
+};
+const NOTE_MAX = 200;
+const note: V<string> = (v, p = "inputs") => {
+  if (typeof v !== "string" || v.length > NOTE_MAX || /\p{Cc}/u.test(v)) {
+    throw new InputError(`${p} must be one line of at most ${NOTE_MAX} characters`);
+  }
+  return v;
+};
+const tags = (allowed: string[]): V<string[]> => (v, p = "inputs") => {
+  const a = arr<string>((x, q) => {
+    if (typeof x !== "string" || !allowed.includes(x)) throw new InputError(`${q} is not a known rationale tag`);
+    return x;
+  }, 0, allowed.length)(v, p);
+  if (new Set(a).size !== a.length) throw new InputError(`${p} repeats a tag`);
+  return a;
+};
+const rationale = (region: "US" | "EU") =>
+  obj({ cb: obj({ tags: tags(RATIONALE_TAGS[region]), note }), gov: obj({ tags: tags(RATIONALE_TAGS[region]), note }) });
+type Why = { tags: string[]; note: string };
+// Same expression as the page: tags joined, or "none", then the note in brackets if any.
+const why = (w: Why) => `${w.tags.join(", ") || "none"}${w.note ? " (" + w.note + ")" : ""}`;
 // Same as topMix() in the page: first key with the largest weight wins.
 function topMix(d: { mix: Record<string, number> }) {
   let best = "cheques", bv = -1;
@@ -144,6 +173,7 @@ const validateBrief = obj({
     US: econ, EU: econ,
     SPX: num(0, 2000), FX: num(0, 5), stress: num(0, 500), spread: num(-10, 50),
   }),
+  rationale: obj({ US: rationale("US"), EU: rationale("EU") }),
 });
 const validateDebrief = obj({ path: arr(obj({ US: econ, EU: econ }), 8, 8) });
 
@@ -155,12 +185,13 @@ export function prompt03({ job }: In03): string {
   return `You are helping an executive MBA class apply Erik Brynjolfsson's jobs-vs-tasks framework. Decompose the role of "${job}" into 8 to 11 concrete constituent tasks. Classify each as exactly one of: "automate" (AI can do it end-to-end better or cheaper), "augment" (AI assists but a human stays in the loop), or "human" (best kept human: judgement, accountability, relationships, physical or tacit skill). Also estimate two weights per task: "time" = its share of the working week, and "value" = its share of the role's economic value; across all tasks time should sum to roughly 100 and value to roughly 100. Order tasks roughly automate first, human last. Return ONLY a JSON array, no prose and no markdown fences. Each element: {"task": string max 7 words, "type": "automate"|"augment"|"human", "why": string max 12 words, "time": integer, "value": integer}.`;
 }
 
-export function promptBriefing({ quarter: t, decisions, gauges: r }: InBrief): string {
+export function promptBriefing({ quarter: t, decisions, gauges: r, rationale: why6 }: InBrief): string {
   const dUS = decisions.US, dEU = decisions.EU;
   return `You are an economic advisor debriefing a policy game on the 2020-21 pandemic. Quarter just resolved: ${QLABEL[t]}.
 Decisions — Fed: rate ${dUS.r}%, QE ${qeLabel(dUS.qe)}; US fiscal ${dUS.stim}% GDP, mostly ${topMix(dUS)}. ECB: rate ${dEU.r}%, QE ${qeLabel(dEU.qe)}; EU fiscal ${dEU.stim}% GDP, mostly ${topMix(dEU)}.
 Resulting gauges — US: output gap ${r.US.Y}%, unemployment ${r.US.U}%, inflation ${r.US.pi}%. EU: output gap ${r.EU.Y}%, unemployment ${r.EU.U}%, inflation ${r.EU.pi}%. Equities ${r.SPX}, EUR/USD ${r.FX}, financial stress ${r.stress}, EU spread ${r.spread}pp.
-In 3-4 sentences, plain and concrete: what these decisions did this quarter, the key US-vs-EU contrast, and what is building with a lag that they should watch. No preamble, no lists.`;
+In 4-5 sentences, plain and concrete: what these decisions did this quarter, naming the mechanism loops at work (demand support; the 3-6 quarter inflation pipe; the labour channel, furlough vs transfers; euro-area fragmentation and the spread; shock attenuation via health spending). Comment briefly on the contribution of each role - central banks and governments, US and EU - so every player learns from what the others did. End with the one thing building with a lag they should watch. Where a role gave a rationale (below), say whether the result vindicates or challenges that reasoning \u2014 a good outcome with flawed reasoning still deserves a flag. No preamble, no lists.
+Stated rationales this quarter: Fed \u2014 ${why(why6.US.cb)}; ECB \u2014 ${why(why6.EU.cb)}; US Gov \u2014 ${why(why6.US.gov)}; EU Govs \u2014 ${why(why6.EU.gov)}.`;
 }
 
 export function promptDebrief({ path: hist }: InDebrief): string {
@@ -186,7 +217,7 @@ export const KINDS: Record<string, KindSpec> = {
     validate: validate03, prompt: prompt03 as (i: never) => string, parse: parseTasks,
   },
   "06.briefing": {
-    artifact: "06", bucket: "06.briefing", limit: 10, windowSeconds: 3600, maxTokens: 1500,
+    artifact: "06", bucket: "06.briefing", limit: 10, windowSeconds: 3600, maxTokens: 2000,
     validate: validateBrief, prompt: promptBriefing as (i: never) => string, parse: text,
   },
   "06.debrief": {
