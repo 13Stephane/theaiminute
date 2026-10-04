@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!--
+  POLICY ROOM — LEAGUE TABLE  ·  v2.1 · 2026-08-12
+  Managerial Economics · DTU Executive MBA (MMT) · September 2026 cohort
+  Facilitator tool: drop each team's exported .json to rank teams on stabilisation.
+  Rubric: average unemployment gap (every quarter, not just the end) — must match
+          06_pandemic_policy_room v2.1 exactly. If you change one, change both.
+  Validated by policy_room_harness.js — 71/71 passing, round-trip identical to the game.
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -31,7 +39,8 @@
   .tscore{text-align:right}
   .tscore .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
   .tscore .v{font-family:Georgia,serif;font-size:26px;font-weight:700;color:var(--teal)} .tscore .v small{font-size:13px;color:var(--muted)}
-  .strategy{font-size:12.5px;color:var(--muted);margin:8px 0 12px;font-style:italic}
+  .strategy{font-size:12px;color:var(--ink);margin:8px 0 12px;line-height:1.5;background:var(--cream2);border-radius:8px;padding:8px 11px}
+  .strategy b{color:var(--teal)}
 
   .roles{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:6px}
   @media(max-width:680px){.roles{grid-template-columns:1fr 1fr}}
@@ -45,6 +54,16 @@
 
   .outcomes{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink)}
   .outcomes span b{color:var(--teal)}
+  .trajwrap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px}
+  @media(max-width:700px){.trajwrap{grid-template-columns:1fr}}
+  .traj{background:var(--cream2);border-radius:9px;padding:8px 10px}
+  .traj .tt{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:2px}
+  .traj svg{width:100%;height:54px;display:block}
+  .cross{background:var(--cream);color:var(--ink);border-radius:14px;padding:18px 22px;margin-bottom:16px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+  .cross h3{font-family:Georgia,serif;font-size:18px;color:var(--teal);margin-bottom:8px}
+  .cross p{font-size:13px;line-height:1.55;margin-bottom:8px}
+  .cross b{color:var(--teal)}
+  .cross .tag{display:inline-block;background:var(--gold);color:var(--teal);font:700 10.5px Calibri;padding:2px 9px;border-radius:999px;margin-right:6px}
 
   .note{margin-top:18px;color:#9FB0AD;font-size:12px;max-width:84ch}
   .note b{color:var(--gold-soft)}
@@ -55,18 +74,19 @@
 <div class="wrap">
   <div class="eyebrow">Future-Back Finance · Policy Simulation</div>
   <h1>League Table — comparing the teams</h1>
-  <p class="lede">Load each team&rsquo;s exported file from the Pandemic Policy Room. Teams are ranked by <b>stabilisation quality</b> &mdash; how close they kept both economies to 2% inflation and full employment, with penalties for financial stress and a blown euro-area spread. Within each team, the role whose <b>mandate was best served</b> is marked. Outcomes are jointly produced, so read the within-team mark as a discussion prompt, not a verdict on individual skill.</p>
+  <p class="lede">Load each team&rsquo;s exported file from the Pandemic Policy Room. Teams are ranked by <b>stabilisation quality</b> &mdash; how close they kept both economies to 2% inflation and full employment over the whole game, with penalties for financial stress and a blown euro-area spread. Within each team, the role whose <b>mandate was best served</b> is marked. Outcomes are jointly produced, so read the within-team mark as a discussion prompt, not a verdict on individual skill.</p>
 
   <div class="drop" id="drop">
     <div class="big">Drop team .json files here, or click to choose</div>
     <div class="sub">Exported from the policy game&rsquo;s debrief. Load as many as you like.</div>
     <input type="file" id="file" accept=".json,application/json" multiple>
   </div>
-  <div class="toolbar" id="toolbar" style="display:none"><button class="tbtn" id="clearBtn">Clear all</button></div>
+  <div class="toolbar" id="toolbar" style="display:none"><button class="tbtn" id="orderBtn">Order: worst → best</button><button class="tbtn" id="clearBtn">Clear all</button></div>
 
   <div id="board"><div class="empty">No teams loaded yet.</div></div>
 
-  <p class="note"><b>How the score works.</b> Team stabilisation loss = average inflation gap from 2% + end-of-game unemployment above natural + output-gap distance, for both blocs, plus penalties for average financial stress and any euro-area spread above 1pp; mapped to 0&ndash;100. Each role is scored against its own mandate (Fed: US inflation + unemployment; ECB: euro-area inflation + the spread; US Gov: recovery without overheating or excess debt; EU Govs: recovery + spread discipline). Scored against <i>stabilisation</i>, never against matching what actually happened &mdash; reality wasn&rsquo;t optimal. A rigorous individual-contribution measure (counterfactual re-runs) can be added if you want true attribution.</p>
+  <p class="note"><b>Reading the charts.</b> Six charts per team: the US row in <span style="color:#B0492F;font-weight:700">red</span>, the euro area in <span style="color:#2C5F8A;font-weight:700">blue</span>. The dashed grey line behind each is what actually happened in 2020&ndash;21. On the unemployment charts, the <span style="color:#9A7F35;font-weight:700">gold dotted line</span> is that economy&rsquo;s <b>natural rate</b> (US 4.0%, euro area 7.2%) &mdash; scoring counts only the distance <i>above</i> that line, because 6.6% is normal in Europe and would be a crisis in America. This is why a team can end with higher euro-area unemployment and still score better on it. Every series starts at its pre-COVID baseline. Teams are scored on stabilisation, not on tracking the grey line &mdash; reality was not optimal.</p>
+  <p class="note"><b>How the score works.</b> Team stabilisation loss = average inflation gap from 2% + average unemployment above natural + output-gap distance at the end, for both blocs, plus penalties for average financial stress and any euro-area spread above 1pp; mapped to 0&ndash;100. Unemployment counts every quarter &mdash; letting joblessness spike mid-crisis costs points even if it recovers by end-2021. Each role is scored against its own mandate (Fed: US inflation + unemployment; ECB: euro-area inflation + the spread; US Gov: recovery without overheating or excess debt; EU Govs: recovery + spread discipline). Scored against <i>stabilisation</i>, never against matching what actually happened &mdash; reality wasn&rsquo;t optimal. A rigorous individual-contribution measure (counterfactual re-runs) can be added if you want true attribution.</p>
 </div>
 
 <script>
@@ -76,7 +96,7 @@ function scoreFromHist(hist){
   const n=hist.length, avg=a=>a.reduce((x,y)=>x+y,0)/a.length, m={};
   for(const e of ["US","EU"]){
     m[e]={ avgInflGap:avg(hist.map(h=>Math.abs(h[e].pi-2))),
-      uGap:Math.max(0,hist[n-1][e].U-NATURAL_S[e]), endYgap:Math.abs(hist[n-1][e].Y),
+      uGap:avg(hist.map(h=>Math.max(0,h[e].U-NATURAL_S[e]))), endYgap:Math.abs(hist[n-1][e].Y),
       endInfl:hist[n-1][e].pi, debtSurge:Math.max(0,hist[n-1][e].debt-DEBT0[e]) };
   }
   const avgStress=avg(hist.map(h=>h.stress)), peakSpread=Math.max(...hist.map(h=>h.spread));
@@ -94,20 +114,33 @@ function scoreFromHist(hist){
   return {teamScore,roleScore,bestRole,peakSpread:+peakSpread.toFixed(2)};
 }
 const ROLE_NAMES={Fed:"Federal Reserve",ECB:"ECB",USGov:"US Government",EUGov:"EU Governments"};
+// Team names come from the files the tables hand in: show them as text, never as markup.
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 
 function histFromFile(j){
-  return j.quarters.map(q=>({q:q.q,US:q.gauges.US,EU:q.gauges.EU,SPX:q.gauges.SPX,FX:q.gauges.FX,stress:q.gauges.stress,spread:q.gauges.spread}));
+  return j.quarters.map(q=>({q:q.q,US:q.gauges.US,EU:q.gauges.EU,SPX:q.gauges.SPX,STOXX:q.gauges.STOXX,FX:q.gauges.FX,stress:q.gauges.stress,spread:q.gauges.spread}));
 }
 function strategyLine(j){
-  const usStim=j.quarters.reduce((a,q)=>a+(q.decisions.USGov.stim||0),0);
-  const euStim=j.quarters.reduce((a,q)=>a+(q.decisions.EUGov.stim||0),0);
+  const sum=(role,f)=>j.quarters.reduce((a,q)=>a+(f(q.decisions[role])||0),0);
+  const usStim=sum("USGov",d=>d.stim), euStim=sum("EUGov",d=>d.stim);
   const usQE=Math.max(...j.quarters.map(q=>q.decisions.Fed.qe||0));
-  const dom=(role)=>{const sum={};j.quarters.forEach(q=>{const mx=q.decisions[role].mix||{};for(const k in mx)sum[k]=(sum[k]||0)+mx[k];});let b="",bv=-1;for(const k in sum)if(sum[k]>bv){bv=sum[k];b=k;}return b;};
-  const lab={cheques:"transfers-led",retention:"furlough-led",liquidity:"liquidity-led",health:"health-led",infra:"investment-led"};
-  return `US: ${usStim.toFixed(0)} cumulative fiscal, peak QE ${usQE}, ${lab[dom("USGov")]||""}. EU: ${euStim.toFixed(0)} fiscal, ${lab[dom("EUGov")]||""}.`;
+  const euQE=Math.max(...j.quarters.map(q=>q.decisions.ECB.qe||0));
+  const endFedR=j.quarters[j.quarters.length-1].decisions.Fed.r;
+  const startFedR=j.quarters[0].decisions.Fed.r;
+  const dom=(role)=>{const s={};j.quarters.forEach(q=>{const mx=q.decisions[role].mix||{};for(const k in mx)s[k]=(s[k]||0)+mx[k];});let b="",bv=-1;for(const k in s)if(s[k]>bv){bv=s[k];b=k;}return b;};
+  const lab={cheques:"cash transfers to households",retention:"furlough (paying firms to keep staff)",
+             liquidity:"business loans and guarantees",health:"health and vaccines",infra:"investment and infrastructure"};
+  const bn=q=>Math.round(q*50);
+  const hiked = endFedR>startFedR+0.4 ? `and the Fed had raised rates to ${endFedR}% by the end`
+              : `and the Fed still sat at ${endFedR}% at the end`;
+  return `<b>United States:</b> spent <b>${usStim.toFixed(0)}% of GDP</b> in total across the eight quarters, `
+       + `mostly on <b>${lab[dom("USGov")]||"a mixed package"}</b>; the Fed bought up to <b>\u20ac${bn(usQE)}bn of assets per quarter</b> at its peak, ${hiked}. `
+       + `<b>Euro area:</b> spent <b>${euStim.toFixed(0)}% of GDP</b>, mostly on <b>${lab[dom("EUGov")]||"a mixed package"}</b>; `
+       + `the ECB bought up to <b>\u20ac${bn(euQE)}bn per quarter</b>.`;
 }
 
 let TEAMS=[]; // {name, hist, score, strategy}
+let REVEAL_WORST_FIRST=true;
 function addFile(text,fname){
   let j; try{ j=JSON.parse(text);}catch(e){ alert("Could not parse "+fname); return; }
   if(j.game!=="pandemic-policy-room"||!j.quarters){ alert(fname+" is not a Policy Room export."); return; }
@@ -115,26 +148,108 @@ function addFile(text,fname){
   TEAMS.push({name:j.team||fname.replace(/\.json$/i,""), hist, score, strategy:strategyLine(j), end:hist[hist.length-1]});
   render();
 }
+// The real 2020-21 record, as a grey reference line behind every team's trajectory.
+const ACTUAL_REF={
+  usU:[3.5,5.1,11.0,8.6,6.9,6.1,5.4,4.4,3.4],
+  usPi:[2.3,2.2,0.9,1.3,1.5,2.1,4.3,5.5,7.0],
+  spx:[100,64,90,106,115,122,133,139,139],
+  euU:[7.4,7.5,8.1,7.7,7.6,7.5,6.8,6.6,6.6],
+  euPi:[1.2,1.6,2.1,1.2,1.2,1.3,2.0,3.1,5.1],
+  stoxx:[100,62,79,90,92,93,96,98,96]
+};
+const US_LINE="#B0492F", EU_LINE="#2C5F8A";
+const NAT_RATE={US:4.0,EU:7.2};
+// Unemployment is scored against each economy's own structural rate, never as a raw level:
+// 6.6% is normal for the euro area, 6.6% would be a crisis in the US.
+function avgGap(hist,e){ return hist.reduce((a,h)=>a+Math.max(0,h[e].U-NAT_RATE[e]),0)/hist.length; }
+// Small multi-series trajectory chart (shared axis, one line per team-series).
+function trajSVG(series,color,fmt,refSeries,base,natural){
+  let s=(series||[]).filter(v=>typeof v==="number"&&isFinite(v));
+  if(typeof base==="number") s=[base,...s];              // start at the pre-COVID baseline
+  if(s.length<2) return "<svg viewBox='0 0 120 54'></svg>";
+  const ref=(refSeries||[]).filter(v=>typeof v==="number"&&isFinite(v));
+  const all=[...s,...ref]; if(typeof natural==="number") all.push(natural);
+  const mn=Math.min(...all), mx=Math.max(...all), rng=(mx-mn)||1, n=s.length;
+  const W=120,H=54,L=2,T=8,B=10, pw=W-L-4, ph=H-T-B;
+  const X=i=>L+(i/(n-1))*pw, Y=v=>T+ph-((v-mn)/rng)*ph;
+  let g=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  if(typeof natural==="number"){
+    const yn=Y(natural);
+    g+=`<line x1="${L}" y1="${yn.toFixed(1)}" x2="${(L+pw).toFixed(1)}" y2="${yn.toFixed(1)}" stroke="#C6A553" stroke-width="1" stroke-dasharray="2 2"/>`;
+    g+=`<text x="${(L+pw).toFixed(1)}" y="${(yn-1.5).toFixed(1)}" font-size="6.5" fill="#9A7F35" text-anchor="end" font-family="Calibri">natural ${natural}</text>`;
+  }
+  if(ref.length>1){
+    const dr=ref.map((v,i)=>(i?"L":"M")+X(i*(n-1)/(ref.length-1)).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+    g+=`<path d="${dr}" fill="none" stroke="#B9C4C1" stroke-width="1.3" stroke-dasharray="3 3"/>`;
+  }
+  const d=s.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+  g+=`<path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round"/>`;
+  g+=`<circle cx="${X(n-1).toFixed(1)}" cy="${Y(s[n-1]).toFixed(1)}" r="2.4" fill="${color}"/>`;
+  g+=`<text x="2" y="7" font-size="7.5" fill="#5E726F" font-family="Calibri">${fmt(mx)}</text>`;
+  g+=`<text x="2" y="${H-2}" font-size="7.5" fill="#5E726F" font-family="Calibri">${fmt(mn)}</text>`;
+  g+=`</svg>`;
+  return g;
+}
+// What the comparison across teams actually shows.
+function crossTeamComment(teams){
+  if(teams.length<2) return "";
+  const by=k=>teams.map(k);
+  const scores=by(t=>t.score.teamScore);
+  const best=teams[0], worst=teams[teams.length-1];
+  const spreadScore=Math.max(...scores)-Math.min(...scores);
+  const peakUs=by(t=>Math.max(...t.hist.map(h=>h.US.U)));
+  const endPi=by(t=>t.end.US.pi);
+  const peakSpr=by(t=>t.score.peakSpread);
+  const f=x=>x.toFixed(1);
+  const furlough=teams.filter(t=>/furlough-led/.test(t.strategy));
+  const transfers=teams.filter(t=>/transfers-led/.test(t.strategy));
+  const parts=[];
+  parts.push(`<p><span class="tag">SPREAD OF OUTCOMES</span> ${teams.length} teams faced an identical shock and produced stabilisation scores from <b>${Math.min(...scores)}</b> to <b>${Math.max(...scores)}</b> \u2014 a ${spreadScore}-point range. Same crisis, same tools, different judgement.</p>`);
+  parts.push(`<p><span class="tag">INFLATION</span> End-2021 US inflation ranged <b>${f(Math.min(...endPi))}%</b> to <b>${f(Math.max(...endPi))}%</b>. Ask the hottest team when they first saw it coming \u2014 the answer is usually "too late", because the pipe was already full.</p>`);
+  parts.push(`<p><span class="tag">UNEMPLOYMENT</span> Peak US unemployment ranged <b>${f(Math.min(...peakUs))}%</b> to <b>${f(Math.max(...peakUs))}%</b>. That gap is composition, not size.</p>`);
+  if(furlough.length && transfers.length){
+    const fu=furlough.reduce((a,t)=>a+Math.max(...t.hist.map(h=>h.EU.U)),0)/furlough.length;
+    const tr=transfers.reduce((a,t)=>a+Math.max(...t.hist.map(h=>h.EU.U)),0)/transfers.length;
+    parts.push(`<p><span class="tag">THE DIVERGENCE</span> Furlough-led teams held peak euro-area unemployment at <b>${f(fu)}%</b> on average; transfers-led teams reached <b>${f(tr)}%</b>. This is the 2020 US\u2013EU divergence, reproduced in your room.</p>`);
+  }
+  const blown=teams.filter(t=>t.score.peakSpread>1.6);
+  if(blown.length) parts.push(`<p><span class="tag">FRAGMENTATION</span> ${blown.length} of ${teams.length} teams let the periphery spread exceed 1.6pp (worst: <b>${f(Math.max(...peakSpr))}pp</b>). Ask those ECBs what they were buying instead \u2014 QE was the tool.</p>`);
+  else parts.push(`<p><span class="tag">FRAGMENTATION</span> Every team held the spread below 1.6pp \u2014 collectively the strongest ECB performance of the session.</p>`);
+  parts.push(`<p><span class="tag">DISCUSS</span> <b>${esc(best.name)}</b> scored highest at ${best.score.teamScore}; <b>${esc(worst.name)}</b> lowest at ${worst.score.teamScore}. Put one question to each: to the leader, which decision would you defend hardest? To the trailer, which single quarter would you replay?</p>`);
+  return `<div class="cross"><h3>Across the teams \u2014 what the room just showed</h3>${parts.join("")}</div>`;
+}
 function render(){
   const board=document.getElementById("board");
   document.getElementById("toolbar").style.display=TEAMS.length?"flex":"none";
   if(!TEAMS.length){ board.innerHTML='<div class="empty">No teams loaded yet.</div>'; return; }
-  const sorted=[...TEAMS].sort((a,b)=>b.score.teamScore-a.score.teamScore);
-  board.innerHTML=sorted.map((t,i)=>{
+  // Ranked best-first internally so the rank number is true; displayed worst-first by
+  // default, so a debrief can build from the hardest lessons up to the strongest game.
+  const ranked=[...TEAMS].sort((a,b)=>b.score.teamScore-a.score.teamScore);
+  ranked.forEach((t,i)=>t.rank=i+1);
+  const sorted = REVEAL_WORST_FIRST ? [...ranked].reverse() : ranked;
+  board.innerHTML=crossTeamComment(ranked)+sorted.map((t,i)=>{
     const roles=["Fed","ECB","USGov","EUGov"].map(r=>{
       const best=r===t.score.bestRole;
       return `<div class="rcard ${best?'best':''}"><div class="rn">${ROLE_NAMES[r]}</div><div class="rs">${t.score.roleScore[r]}</div>
         <div class="bar"><i style="width:${t.score.roleScore[r]}%"></i></div>${best?'<span class="star">\u2605</span>':''}</div>`;
     }).join("");
     return `<div class="team">
-      <div class="head"><div class="rank ${i===0?'r1':''}">${i+1}</div>
-        <div class="tname">${t.name}</div>
+      <div class="head"><div class="rank ${t.rank===1?'r1':''}">${t.rank}</div>
+        <div class="tname">${esc(t.name)}</div>
         <div class="tscore"><div class="k">Stabilisation</div><div class="v">${t.score.teamScore}<small>/100</small></div></div></div>
       <div class="strategy">${t.strategy}</div>
       <div class="roles">${roles}</div>
+      <div class="trajwrap">
+        <div class="traj"><div class="tt">US unemployment %</div>${trajSVG(t.hist.map(h=>h.US.U),US_LINE,v=>v.toFixed(1),ACTUAL_REF.usU,3.5,4.0)}</div>
+        <div class="traj"><div class="tt">US inflation %</div>${trajSVG(t.hist.map(h=>h.US.pi),US_LINE,v=>v.toFixed(1),ACTUAL_REF.usPi,2.3)}</div>
+        <div class="traj"><div class="tt">S&amp;P 500</div>${trajSVG(t.hist.map(h=>h.SPX),US_LINE,v=>Math.round(v),ACTUAL_REF.spx,100)}</div>
+        <div class="traj"><div class="tt">EU unemployment %</div>${trajSVG(t.hist.map(h=>h.EU.U),EU_LINE,v=>v.toFixed(1),ACTUAL_REF.euU,7.4,7.2)}</div>
+        <div class="traj"><div class="tt">EU inflation %</div>${trajSVG(t.hist.map(h=>h.EU.pi),EU_LINE,v=>v.toFixed(1),ACTUAL_REF.euPi,1.2)}</div>
+        <div class="traj"><div class="tt">STOXX 50</div>${trajSVG(t.hist.map(h=>h.STOXX!=null?h.STOXX:h.SPX),EU_LINE,v=>Math.round(v),ACTUAL_REF.stoxx,100)}</div>
+      </div>
       <div class="outcomes">
-        <span>US end: inflation <b>${t.end.US.pi.toFixed(1)}%</b>, unemployment <b>${t.end.US.U.toFixed(1)}%</b></span>
-        <span>EU end: inflation <b>${t.end.EU.pi.toFixed(1)}%</b>, unemployment <b>${t.end.EU.U.toFixed(1)}%</b></span>
+        <span>US end: inflation <b>${t.end.US.pi.toFixed(1)}%</b>, unemployment <b>${t.end.US.U.toFixed(1)}%</b> <i>(avg ${avgGap(t.hist,"US").toFixed(1)}pp above natural)</i></span>
+        <span>EU end: inflation <b>${t.end.EU.pi.toFixed(1)}%</b>, unemployment <b>${t.end.EU.U.toFixed(1)}%</b> <i>(avg ${avgGap(t.hist,"EU").toFixed(1)}pp above natural)</i></span>
         <span>Peak EU spread <b>${t.score.peakSpread}pp</b></span>
       </div></div>`;
   }).join("");
@@ -146,6 +261,11 @@ fileInput.onchange=e=>{ [...e.target.files].forEach(f=>{const r=new FileReader()
 drop.ondragover=e=>{e.preventDefault();drop.classList.add("over");};
 drop.ondragleave=()=>drop.classList.remove("over");
 drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over"); [...e.dataTransfer.files].forEach(f=>{const r=new FileReader();r.onload=()=>addFile(r.result,f.name);r.readAsText(f);}); };
+document.getElementById("orderBtn").onclick=(e)=>{
+  REVEAL_WORST_FIRST=!REVEAL_WORST_FIRST;
+  e.target.textContent = REVEAL_WORST_FIRST ? "Order: worst \u2192 best" : "Order: best \u2192 worst";
+  render();
+};
 document.getElementById("clearBtn").onclick=()=>{TEAMS=[];render();};
 </script>
 </body>

@@ -99,3 +99,11 @@ Deno.test("03 is served from two addresses; both files must stay identical", () 
     Deno.readTextFileSync(ROOT + "03_jobs_vs_tasks.html"),
   );
 });
+
+Deno.test("the league table (07) scores teams with exactly the game's rubric", () => {
+  const league = Deno.readTextFileSync(ROOT + "artifacts/07_policy_room_league_table.html");
+  assertEquals(line(league, "const NATURAL_S="), line(after, "const NATURAL_S="));
+  // The league table returns fewer fields; compare the scoring body up to its return line.
+  const body = (s: string) => { const b = block(s, "function scoreFromHist("); return b.slice(0, b.indexOf("  return {")); };
+  assertEquals(body(league), body(after));
+});

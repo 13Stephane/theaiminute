@@ -80,8 +80,8 @@
   .cohh{font-size:11.5px;font-weight:700;color:var(--teal);margin-bottom:5px}
   .cohrow{font-size:11.5px;line-height:1.45;margin-bottom:3px;padding-left:16px;position:relative;color:var(--ink)}
   .cohrow:before{position:absolute;left:0;font-weight:700}
-  .cohrow.bad:before{content:"\u26A0";color:#B0492F}
-  .cohrow.ok:before{content:"\u2713";color:#3E8E5A}
+  .cohrow.bad:before{content:"⚠";color:#B0492F}
+  .cohrow.ok:before{content:"✓";color:#3E8E5A}
   .cohseat{font-weight:700;color:var(--teal)}
   .cohnote{font-size:10.5px;color:var(--muted);font-style:italic;margin-top:5px;line-height:1.4}
   .cohlist{margin:4px 0 8px 18px;font-size:12px;line-height:1.5;color:var(--ink)}
@@ -234,9 +234,9 @@
     <div>
       <div class="eyebrow">Future-Back Finance · Policy Simulation</div>
       <h1>The Pandemic Policy Room</h1>
-      <button class="modelbtn" id="modelBtn">\u2699 Model &amp; formulas</button>
-      <button class="modelbtn" id="logBtn">\u{1F4CB} Decision log</button>
-      <button class="modelbtn" id="restartBtn">\u21ba Restart</button>
+      <button class="modelbtn" id="modelBtn">⚙ Model &amp; formulas</button>
+      <button class="modelbtn" id="logBtn">📋 Decision log</button>
+      <button class="modelbtn" id="restartBtn">↺ Restart</button>
       <span class="buildstamp">build v2.5</span>
       <div class="aibar" id="aiBar" style="display:none">
         <span class="aibadge" id="aiBadge">Offline mode</span>
@@ -300,8 +300,8 @@
     <div class="status" id="briefStatus"></div>
     <div class="body" id="briefBody"></div>
     <div class="mech" id="mech">
-      <h3>The machine you are driving \u2014 which loops fired this quarter</h3>
-      <div class="sub">Gold = engaged by this quarter\u2019s decisions \u00B7 red = working against you \u00B7 grey = idle. Same five loops every quarter \u2014 learn to see them.</div>
+      <h3>The machine you are driving — which loops fired this quarter</h3>
+      <div class="sub">Gold = engaged by this quarter’s decisions · red = working against you · grey = idle. Same five loops every quarter — learn to see them.</div>
       <div id="loops"></div>
       <div class="mechnotes" id="mechNotes"></div>
     </div>
@@ -313,7 +313,7 @@
     <div class="modelcard">
       <button class="closex" id="logClose">Close</button>
       <h2>Decision log</h2>
-      <div class="msub">Every decision taken so far, by quarter and by seat \u2014 with the reason each seat recorded at the time.</div>
+      <div class="msub">Every decision taken so far, by quarter and by seat — with the reason each seat recorded at the time.</div>
       <div id="logBody"></div>
     </div>
   </div>
@@ -321,44 +321,44 @@
     <div class="modelcard">
       <button class="closex" id="modelClose">Close</button>
       <h2>The model behind the room</h2>
-      <div class="msub">Every equation the simulation uses, in one place. All flows are quarterly; two economies (US, EU) are solved each quarter, then coupled through trade, markets, and sentiment. This is a teaching model \u2014 directionally faithful, not a forecasting tool.</div>
+      <div class="msub">Every equation the simulation uses, in one place. All flows are quarterly; two economies (US, EU) are solved each quarter, then coupled through trade, markets, and sentiment. This is a teaching model — directionally faithful, not a forecasting tool.</div>
 
-      <h3>1 \u00B7 Output \u2014 an IS\u2013LM reduced form</h3>
-      <div class="eq">Y = 0.40\u00B7Y\u208B\u2081 + pandemic + 0.60\u00B7fiscal \u2212 0.30\u00B7(realRate \u2212 r*) + 0.10\u00B7QE + 0.15\u00B7Y_other + 0.06\u00B7sentiment</div>
-      <p><span class="var">IS curve:</span> output falls when the real rate rises above its neutral level r* (\u22120.5% US, \u22121.0% EU). <span class="var">LM / balance-sheet channel:</span> QE adds demand directly \u2014 the lever that still works when the policy rate is stuck at zero. <span class="var">realRate</span> = policy rate \u2212 inflation. Output is then squashed through a tanh so extreme stimulus saturates rather than exploding.</p>
-      <div class="eq">Y = 14\u00B7tanh(Y / 14)</div>
+      <h3>1 · Output — an IS–LM reduced form</h3>
+      <div class="eq">Y = 0.40·Y₋₁ + pandemic + 0.60·fiscal − 0.30·(realRate − r*) + 0.10·QE + 0.15·Y_other + 0.06·sentiment</div>
+      <p><span class="var">IS curve:</span> output falls when the real rate rises above its neutral level r* (−0.5% US, −1.0% EU). <span class="var">LM / balance-sheet channel:</span> QE adds demand directly — the lever that still works when the policy rate is stuck at zero. <span class="var">realRate</span> = policy rate − inflation. Output is then squashed through a tanh so extreme stimulus saturates rather than exploding.</p>
+      <div class="eq">Y = 14·tanh(Y / 14)</div>
 
-      <h3>2 \u00B7 Fiscal impulse \u2014 size \u00D7 composition, with inertia</h3>
-      <div class="eq">fiscalRaw = stim \u00D7 \u03A3(mix\u2096 \u00B7 demand\u2096)     fiscal = 0.25\u00B7fiscalRaw + 0.60\u00B7fiscalRaw\u208B\u2081</div>
-      <p>Stimulus size (% GDP) times the demand-potency of its composition. The five archetypes \u2014 household transfers, job retention, business liquidity, health, investment \u2014 differ in demand, inflation, capacity-preservation, employment-shield and shock-attenuation weights. Spending arrives with inertia (last quarter\u2019s impulse still working).</p>
+      <h3>2 · Fiscal impulse — size × composition, with inertia</h3>
+      <div class="eq">fiscalRaw = stim × Σ(mixₖ · demandₖ)     fiscal = 0.25·fiscalRaw + 0.60·fiscalRaw₋₁</div>
+      <p>Stimulus size (% GDP) times the demand-potency of its composition. The five archetypes — household transfers, job retention, business liquidity, health, investment — differ in demand, inflation, capacity-preservation, employment-shield and shock-attenuation weights. Spending arrives with inertia (last quarter’s impulse still working).</p>
 
-      <h3>3 \u00B7 Unemployment \u2014 Okun, shielded by furlough</h3>
-      <div class="eq">U = U\u208B\u2081 \u2212 1.5\u00B7\u0394Y\u00B7(1 \u2212 shield) + 0.18\u00B7(U* \u2212 U\u208B\u2081)</div>
-      <p>Okun\u2019s law: output growth cuts unemployment. <span class="var">shield</span> comes from the job-retention (furlough) share \u2014 it breaks the link between the output shock and layoffs, which is exactly the US\u2013EU divergence of 2020. U reverts gently toward its natural rate U* (4.0% US, 7.2% EU).</p>
+      <h3>3 · Unemployment — Okun, shielded by furlough</h3>
+      <div class="eq">U = U₋₁ − 1.5·ΔY·(1 − shield) + 0.18·(U* − U₋₁)</div>
+      <p>Okun’s law: output growth cuts unemployment. <span class="var">shield</span> comes from the job-retention (furlough) share — it breaks the link between the output shock and layoffs, which is exactly the US–EU divergence of 2020. U reverts gently toward its natural rate U* (4.0% US, 7.2% EU).</p>
 
-      <h3>4 \u00B7 Inflation \u2014 expectations + the 3\u20136 quarter pipe</h3>
-      <div class="eq">\u03C0 = 0.55\u00B7\u03C0\u208B\u2081 + 0.45\u00B72 + 0.09\u00B7Y\u208B\u2081 + laggedDemand + supplyShock + scarring \u2212 0.50\u00B7max(0, r\u22120.75)</div>
-      <div class="eq">laggedDemand = \u03A3 0.05\u00B7impulse\u209C  for impulses 3\u20136 quarters old</div>
-      <p>Inflation is anchored partly on its past and partly on the 2% target, pushed by the output gap, and \u2014 crucially \u2014 by demand injected <span class="var">3 to 6 quarters earlier</span>. This lag is the core lesson: today\u2019s stimulus shows up in prices next year. Supply shocks (energy, reopening) and scarring add to it; rate hikes above 0.75% subtract, progressively. <b>Why inflation still climbs late:</b> the 2021 energy and reopening shock is exogenous — it happened whatever you do — and the demand you injected in 2020 is landing at exactly that moment. You cannot avoid the rise; you can decide how far it runs. A Fed that hikes early and firmly can hold end-2021 inflation near 4–5% instead of 7–8%, but it pays for that in a wider output gap and higher unemployment along the way — which the score counts, every quarter. That trade-off is the exercise.</p>
+      <h3>4 · Inflation — expectations + the 3–6 quarter pipe</h3>
+      <div class="eq">π = 0.55·π₋₁ + 0.45·2 + 0.09·Y₋₁ + laggedDemand + supplyShock + scarring − 0.50·max(0, r−0.75)</div>
+      <div class="eq">laggedDemand = Σ 0.05·impulseₜ  for impulses 3–6 quarters old</div>
+      <p>Inflation is anchored partly on its past and partly on the 2% target, pushed by the output gap, and — crucially — by demand injected <span class="var">3 to 6 quarters earlier</span>. This lag is the core lesson: today’s stimulus shows up in prices next year. Supply shocks (energy, reopening) and scarring add to it; rate hikes above 0.75% subtract, progressively. <b>Why inflation still climbs late:</b> the 2021 energy and reopening shock is exogenous — it happened whatever you do — and the demand you injected in 2020 is landing at exactly that moment. You cannot avoid the rise; you can decide how far it runs. A Fed that hikes early and firmly can hold end-2021 inflation near 4–5% instead of 7–8%, but it pays for that in a wider output gap and higher unemployment along the way — which the score counts, every quarter. That trade-off is the exercise.</p>
 
-      <h3>5 \u00B7 Financial stress, equities, FX</h3>
-      <div class="eq">stress = max(4, 0.45\u00B7stress\u208B\u2081 + 0.7\u00B7pandemicRisk \u2212 0.5\u00B7(QE_US+QE_EU))</div>
-      <div class="eq">S&amp;P 500 = SPX\u208B\u2081 + 2.2\u00B7totalQE + 1.6\u00B7Y_US \u2212 0.7\u00B7\u0394stress \u2212 0.35\u00B7stress</div><div class="eq">STOXX 50 = STOXX\u208B\u2081 + 1.9\u00B7totalQE + 1.6\u00B7Y_EU \u2212 0.7\u00B7\u0394stress \u2212 0.35\u00B7stress \u2212 1.2\u00B7max(0, spread\u22121)</div><p><b>Why Europe usually lags \u2014 but need not.</b> The two indices share the liquidity and stress channels, so they move together in a crisis. They diverge for three reasons: European equities track euro-area output, they carry a penalty when the periphery spread widens, and they respond slightly less to central-bank liquidity. A furlough-led Europe therefore tends to trail a transfers-led US, because furlough protects jobs rather than driving demand. It is not fixed, though: run stronger euro-area fiscal support with sustained ECB QE and a contained spread, and STOXX ends the game <i>above</i> the S&amp;P. If Europe lagged in your game, that was a consequence of the policy mix, not a rule of the model.</p>
-      <div class="eq">FX(EUR/USD) = FX\u208B\u2081 + 0.006\u00B7QE_US \u2212 0.004\u00B7(Y_US \u2212 Y_EU)</div>
-      <p>QE calms stress and lifts equities; the pandemic shock raises stress. The relative Fed\u2013ECB stance moves the exchange rate.</p>
+      <h3>5 · Financial stress, equities, FX</h3>
+      <div class="eq">stress = max(4, 0.45·stress₋₁ + 0.7·pandemicRisk − 0.5·(QE_US+QE_EU))</div>
+      <div class="eq">S&amp;P 500 = SPX₋₁ + 2.2·totalQE + 1.6·Y_US − 0.7·Δstress − 0.35·stress</div><div class="eq">STOXX 50 = STOXX₋₁ + 1.9·totalQE + 1.6·Y_EU − 0.7·Δstress − 0.35·stress − 1.2·max(0, spread−1)</div><p><b>Why Europe usually lags — but need not.</b> The two indices share the liquidity and stress channels, so they move together in a crisis. They diverge for three reasons: European equities track euro-area output, they carry a penalty when the periphery spread widens, and they respond slightly less to central-bank liquidity. A furlough-led Europe therefore tends to trail a transfers-led US, because furlough protects jobs rather than driving demand. It is not fixed, though: run stronger euro-area fiscal support with sustained ECB QE and a contained spread, and STOXX ends the game <i>above</i> the S&amp;P. If Europe lagged in your game, that was a consequence of the policy mix, not a rule of the model.</p>
+      <div class="eq">FX(EUR/USD) = FX₋₁ + 0.006·QE_US − 0.004·(Y_US − Y_EU)</div>
+      <p>QE calms stress and lifts equities; the pandemic shock raises stress. The relative Fed–ECB stance moves the exchange rate.</p>
 
-      <h3>6 \u00B7 Euro-area fragmentation \u2014 the spread loop</h3>
-      <div class="eq">spread = max(0.4, 0.6\u00B7spread\u208B\u2081 + 0.05\u00B7(debt_EU \u2212 90) \u2212 0.22\u00B7QE_EU)</div>
-      <p>Rising periphery debt widens the spread; ECB QE compresses it. A high spread tightens financial conditions across the euro area regardless of the ECB\u2019s policy rate \u2014 a self-reinforcing loop the EU must actively fight.</p><p><b>Why the spread matters more than inflation for cohesion.</b> Inflation is painful but shared: it hits Germany and Italy alike, and every member faces the same central bank response. The spread is different \u2014 it is a <i>divergence</i> in the price of money <i>inside</i> a single currency. When Italy borrows at 4% and Germany at 1%, one monetary policy produces two different economies: the same ECB rate is restrictive in the south and loose in the north. Sustained, that asks whether the currency union can hold at all \u2014 the question behind 2012\u2019s \u201Cwhatever it takes\u201D and behind the ECB\u2019s anti-fragmentation tools since. You can survive high inflation as a union; you cannot survive a permanent spread. That is why it is scored separately, and why the ECB seat is graded on it.</p>
+      <h3>6 · Euro-area fragmentation — the spread loop</h3>
+      <div class="eq">spread = max(0.4, 0.6·spread₋₁ + 0.05·(debt_EU − 90) − 0.22·QE_EU)</div>
+      <p>Rising periphery debt widens the spread; ECB QE compresses it. A high spread tightens financial conditions across the euro area regardless of the ECB’s policy rate — a self-reinforcing loop the EU must actively fight.</p><p><b>Why the spread matters more than inflation for cohesion.</b> Inflation is painful but shared: it hits Germany and Italy alike, and every member faces the same central bank response. The spread is different — it is a <i>divergence</i> in the price of money <i>inside</i> a single currency. When Italy borrows at 4% and Germany at 1%, one monetary policy produces two different economies: the same ECB rate is restrictive in the south and loose in the north. Sustained, that asks whether the currency union can hold at all — the question behind 2012’s “whatever it takes” and behind the ECB’s anti-fragmentation tools since. You can survive high inflation as a union; you cannot survive a permanent spread. That is why it is scored separately, and why the ECB seat is graded on it.</p>
 
-      <h3>7 \u00B7 Animal spirits \u2014 the sentiment loop</h3>
-      <div class="eq">raw = 0.6\u00B7sentiment\u208B\u2081 + 0.42\u00B7Y + 0.02\u00B7(equities\u2212100) \u2212 0.05\u00B7(stress\u221216) \u2212 0.35\u00B7max(0, spread\u22121)<br/>sentiment = 10\u00B7tanh(raw / 10)</div>
-      <p>Confidence tracks realised output, markets and (inversely) stress, then feeds <i>back</i> into next quarter\u2019s demand (the 0.06\u00B7sentiment term in equation 1). Positive spirits amplify your stimulus; fear dilutes it. Set the gain to zero and the loop switches off.</p>
+      <h3>7 · Animal spirits — the sentiment loop</h3>
+      <div class="eq">raw = 0.6·sentiment₋₁ + 0.42·Y + 0.02·(equities−100) − 0.05·(stress−16) − 0.35·max(0, spread−1)<br/>sentiment = 10·tanh(raw / 10)</div>
+      <p>Confidence tracks realised output, markets and (inversely) stress, then feeds <i>back</i> into next quarter’s demand (the 0.06·sentiment term in equation 1). Positive spirits amplify your stimulus; fear dilutes it. Set the gain to zero and the loop switches off.</p>
 
-      <h3>8 \u00B7 Scoring</h3>
-      <div class="eq">teamLoss = \u03A3\u2091 [ 1.0\u00B7avgInflGap + 0.7\u00B7avgUnempGap + 0.5\u00B7endOutputGap ] + 0.3\u00B7avgStress/10 + 0.6\u00B7max(0, peakSpread\u22121)</div>
-      <div class="eq">teamScore = clamp(100 \u2212 7\u00B7teamLoss, 0, 100)</div>
-      <p>Scored on <span class="var">stabilisation across the whole game</span> \u2014 both economies near 2% inflation and full employment, penalised for stress and a blown spread. Unemployment counts every quarter, not just at the end. Each role is also scored against its own mandate. You are graded against stabilisation, never against copying what actually happened \u2014 reality wasn\u2019t optimal.</p>
+      <h3>8 · Scoring</h3>
+      <div class="eq">teamLoss = Σₑ [ 1.0·avgInflGap + 0.7·avgUnempGap + 0.5·endOutputGap ] + 0.3·avgStress/10 + 0.6·max(0, peakSpread−1)</div>
+      <div class="eq">teamScore = clamp(100 − 7·teamLoss, 0, 100)</div>
+      <p>Scored on <span class="var">stabilisation across the whole game</span> — both economies near 2% inflation and full employment, penalised for stress and a blown spread. Unemployment counts every quarter, not just at the end. Each role is also scored against its own mandate. You are graded against stabilisation, never against copying what actually happened — reality wasn’t optimal.</p>
 
       <p style="margin-top:16px;color:var(--muted);font-size:12px">A full workbook of these formulas, with worked numbers, is available alongside the game.</p>
     </div>
