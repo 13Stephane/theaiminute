@@ -890,10 +890,15 @@ const AI_WHY={"off":"Live AI is off","outside window":"Live AI is outside today\
   "no code":"Enter the class code to use live AI","budget":"Today\u2019s live AI budget is used up","rate":"This device has used its live AI calls for now",
   "inputs":"Live AI could not use these numbers","origin":"Live AI only works on theaiminute.blog","network":"Couldn\u2019t reach the live AI","unavailable":"Live AI is unavailable"};
 const aiWhy=r=>AI_WHY[r]||"Live AI did not answer";
+// A request that hangs (a captive or flaky network) must not hold the page: give up and fall back.
+function aiFetch(url,opts,ms){
+  const c=new AbortController(), t=setTimeout(()=>c.abort(),ms);
+  return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t));
+}
 async function aiStatus(){
   if(!AI_URL)return;
   document.getElementById("aiBar").style.display="flex";
-  try{const s=await (await fetch(AI_URL.replace(/\/+$/,"")+"/status")).json();AI.live=!!s.live;AI.reason=s.reason||"off";}
+  try{const s=await (await aiFetch(AI_URL.replace(/\/+$/,"")+"/status",{},6000)).json();AI.live=!!s.live;AI.reason=s.reason||"off";}
   catch(e){AI.live=false;AI.reason="network";}
   document.getElementById("aiBadge").textContent=AI.live?"Live AI on":"Offline mode";
   document.getElementById("aiBadge").classList.toggle("on",AI.live);
@@ -907,7 +912,7 @@ async function aiCall(kind,inputs){
   if(!code)return {ok:false,why:aiWhy("no code")};
   aiStore("aim_class_code",code);
   try{
-    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Class-Code":code,"X-Device-Id":aiDevice()},body:JSON.stringify({kind,inputs})});
+    const r=await aiFetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Class-Code":code,"X-Device-Id":aiDevice()},body:JSON.stringify({kind,inputs})},45000);
     const b=await r.json().catch(()=>({}));
     if(r.ok&&typeof b.result==="string"&&b.result.trim())return {ok:true,result:b.result.trim()};
     if(r.status===423||b.reason==="budget")aiStatus();
@@ -1083,7 +1088,7 @@ function exportJSON(){
         ECB:{r:G.decisions[i].EU.r,qe:G.decisions[i].EU.qe},
         USGov:{stim:G.decisions[i].US.stim,mix:G.decisions[i].US.mix},
         EUGov:{stim:G.decisions[i].EU.stim,mix:G.decisions[i].EU.mix} },
-      gauges:{US:h.US,EU:h.EU,SPX:h.SPX,FX:h.FX,stress:h.stress,spread:h.spread} })),
+      gauges:{US:h.US,EU:h.EU,SPX:h.SPX,STOXX:h.STOXX,FX:h.FX,stress:h.stress,spread:h.spread} })),
     score:scoreFromHist(G.hist) };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);

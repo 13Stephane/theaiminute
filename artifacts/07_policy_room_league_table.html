@@ -120,6 +120,8 @@ const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 function histFromFile(j){
   return j.quarters.map(q=>({q:q.q,US:q.gauges.US,EU:q.gauges.EU,SPX:q.gauges.SPX,STOXX:q.gauges.STOXX,FX:q.gauges.FX,stress:q.gauges.stress,spread:q.gauges.spread}));
 }
+// The component a seat put most into over the game (summed shares), e.g. "retention".
+function domMix(j,role){const s={};j.quarters.forEach(q=>{const mx=q.decisions[role].mix||{};for(const k in mx)s[k]=(s[k]||0)+mx[k];});let b="",bv=-1;for(const k in s)if(s[k]>bv){bv=s[k];b=k;}return b;}
 function strategyLine(j){
   const sum=(role,f)=>j.quarters.reduce((a,q)=>a+(f(q.decisions[role])||0),0);
   const usStim=sum("USGov",d=>d.stim), euStim=sum("EUGov",d=>d.stim);
@@ -127,7 +129,7 @@ function strategyLine(j){
   const euQE=Math.max(...j.quarters.map(q=>q.decisions.ECB.qe||0));
   const endFedR=j.quarters[j.quarters.length-1].decisions.Fed.r;
   const startFedR=j.quarters[0].decisions.Fed.r;
-  const dom=(role)=>{const s={};j.quarters.forEach(q=>{const mx=q.decisions[role].mix||{};for(const k in mx)s[k]=(s[k]||0)+mx[k];});let b="",bv=-1;for(const k in s)if(s[k]>bv){bv=s[k];b=k;}return b;};
+  const dom=role=>domMix(j,role);
   const lab={cheques:"cash transfers to households",retention:"furlough (paying firms to keep staff)",
              liquidity:"business loans and guarantees",health:"health and vaccines",infra:"investment and infrastructure"};
   const bn=q=>Math.round(q*50);
@@ -145,7 +147,7 @@ function addFile(text,fname){
   let j; try{ j=JSON.parse(text);}catch(e){ alert("Could not parse "+fname); return; }
   if(j.game!=="pandemic-policy-room"||!j.quarters){ alert(fname+" is not a Policy Room export."); return; }
   const hist=histFromFile(j); const score=scoreFromHist(hist);
-  TEAMS.push({name:j.team||fname.replace(/\.json$/i,""), hist, score, strategy:strategyLine(j), end:hist[hist.length-1]});
+  TEAMS.push({name:j.team||fname.replace(/\.json$/i,""), hist, score, strategy:strategyLine(j), euLead:domMix(j,"EUGov"), end:hist[hist.length-1]});
   render();
 }
 // The real 2020-21 record, as a grey reference line behind every team's trajectory.
@@ -201,8 +203,9 @@ function crossTeamComment(teams){
   const endPi=by(t=>t.end.US.pi);
   const peakSpr=by(t=>t.score.peakSpread);
   const f=x=>x.toFixed(1);
-  const furlough=teams.filter(t=>/furlough-led/.test(t.strategy));
-  const transfers=teams.filter(t=>/transfers-led/.test(t.strategy));
+  // Led = what the euro-area governments put most into over the game.
+  const furlough=teams.filter(t=>t.euLead==="retention");
+  const transfers=teams.filter(t=>t.euLead==="cheques");
   const parts=[];
   parts.push(`<p><span class="tag">SPREAD OF OUTCOMES</span> ${teams.length} teams faced an identical shock and produced stabilisation scores from <b>${Math.min(...scores)}</b> to <b>${Math.max(...scores)}</b> \u2014 a ${spreadScore}-point range. Same crisis, same tools, different judgement.</p>`);
   parts.push(`<p><span class="tag">INFLATION</span> End-2021 US inflation ranged <b>${f(Math.min(...endPi))}%</b> to <b>${f(Math.max(...endPi))}%</b>. Ask the hottest team when they first saw it coming \u2014 the answer is usually "too late", because the pipe was already full.</p>`);

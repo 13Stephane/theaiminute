@@ -29,7 +29,7 @@ function block(src: string, head: string): string {
 const LINES = ["const QLABEL=", "const PANDEMIC=", "const SUPPLY=", "const NAT=", "const SENT_K=", "const ARCH_KEYS=", "const NATURAL_S=", "function qeBn(", "function qeLabel("];
 const BLOCKS = [
   "const ARCH=", "const INIT=", "function newGame(", "function mixShares(", "function stepEconomy(", "function resolveQuarter(",
-  "const ACTUAL=", "function actualRun(", "function scoreFromHist(", "function exportJSON(", "function forwardRun(",
+  "const ACTUAL=", "function actualRun(", "function scoreFromHist(", "function forwardRun(",
   "function renderFwd(", "function fallbackBrief(", "function fallbackDebrief(", "function explainScores(", "function showDebrief(",
 ];
 const line = (s: string, head: string) => {
@@ -44,6 +44,13 @@ Deno.test("06: engine, ACTUAL, scoring, export and fallbacks are byte-identical"
   // Engine, scoring and content sections, start to end, as one unbroken string.
   const engine = (s: string) => s.slice(s.indexOf("/* =================== ENGINE"), s.indexOf("/* =================== STATE & UI"));
   assertEquals(engine(after), engine(before));
+});
+
+Deno.test("06's export is unchanged except that it now carries the euro-area index (STOXX)", () => {
+  assertEquals(
+    block(after, "function exportJSON(").replace("SPX:h.SPX,STOXX:h.STOXX,", "SPX:h.SPX,"),
+    block(before, "function exportJSON("),
+  );
 });
 
 Deno.test("06 is served from two addresses; both files must stay identical", () => {
@@ -106,4 +113,50 @@ Deno.test("the league table (07) scores teams with exactly the game's rubric", (
   // The league table returns fewer fields; compare the scoring body up to its return line.
   const body = (s: string) => { const b = block(s, "function scoreFromHist("); return b.slice(0, b.indexOf("  return {")); };
   assertEquals(body(league), body(after));
+});
+
+Deno.test("round trip: two games exported by 06 and loaded into the league table (07)", () => {
+  // The game's engine, scoring and export code, taken from the page itself.
+  const engine = after.slice(after.indexOf("/* =================== ENGINE"), after.indexOf("/* =================== CONTENT"));
+  const exportSrc = block(after, "function exportJSON(");
+  // deno-lint-ignore no-explicit-any
+  const game: any = new Function(engine + "\n" + exportSrc + `
+    ; return { newGame, resolveQuarter, scoreFromHist, run(G, team) {
+        let out = null;
+        const $ = (id) => ({ value: team });
+        const Blob = function (parts) { out = parts.join(""); };
+        const URL = { createObjectURL: () => "blob:x" };
+        const document = { createElement: () => ({ click() {}, remove() {} }), body: { appendChild() {} } };
+        new Function("G", "$", "Blob", "URL", "document", "scoreFromHist", exportJSON.toString() + "; exportJSON();")(G, $, Blob, URL, document, scoreFromHist);
+        return out;
+      } };`)();
+  const play = (euMix: Record<string, number>) => {
+    const g = game.newGame();
+    for (let t = 0; t < 8; t++) {
+      game.resolveQuarter(g,
+        { r: 0.25, qe: 6, stim: 6, mix: { cheques: 60, retention: 10, liquidity: 15, health: 10, infra: 5 } },
+        { r: 0, qe: 5, stim: 6, mix: euMix });
+    }
+    return g;
+  };
+  const gF = play({ cheques: 5, retention: 70, liquidity: 10, health: 10, infra: 5 });
+  const gT = play({ cheques: 70, retention: 5, liquidity: 10, health: 10, infra: 5 });
+  const fileF = game.run(gF, "Table F"), fileT = game.run(gT, "Table T");
+  assertEquals(JSON.parse(fileF).quarters.map((q: { gauges: { STOXX: number } }) => q.gauges.STOXX), gF.hist.map((h: { STOXX: number }) => h.STOXX));
+
+  // The league table's own code, up to its rendering.
+  const league = Deno.readTextFileSync(ROOT + "artifacts/07_policy_room_league_table.html");
+  const src = league.slice(league.indexOf("/* ===== same rubric"), league.indexOf("function render(){"));
+  // deno-lint-ignore no-explicit-any
+  const table: any = new Function("alert", "function render(){}\n" + src + "; return { addFile, crossTeamComment, get TEAMS(){ return TEAMS; } };")(() => {});
+  table.addFile(fileF, "f.json");
+  table.addFile(fileT, "t.json");
+  const [tF, tT] = table.TEAMS;
+  assertEquals([tF.score.teamScore, tT.score.teamScore], [game.scoreFromHist(gF.hist).teamScore, game.scoreFromHist(gT.hist).teamScore]);
+  assertEquals([tF.euLead, tT.euLead], ["retention", "cheques"]);
+  assertEquals(tF.hist.map((h: { STOXX: number }) => h.STOXX), gF.hist.map((h: { STOXX: number }) => h.STOXX)); // the STOXX chart plots STOXX
+  const html = table.crossTeamComment([...table.TEAMS].sort((a: { score: { teamScore: number } }, b: { score: { teamScore: number } }) => b.score.teamScore - a.score.teamScore));
+  const div = html.match(/THE DIVERGENCE<\/span>(.*?)<\/p>/)?.[1] ?? "";
+  console.log("      divergence:", div.replace(/<[^>]+>/g, "").trim());
+  assertEquals(div.includes("Furlough-led teams held peak euro-area unemployment"), true);
 });
