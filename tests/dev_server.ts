@@ -3,7 +3,7 @@
 //   /admin-fn           the real admin handler; sessions "dev-admin" and "dev-other"
 //   /_dev/control?...   flip the switch, window, budget, without the control room
 //   /_dev/usage         the usage rows
-//   everything else     the site's files, with AI_URL pointed at /ai
+//   everything else     the site's files; ?live points AI_URL at /ai, ?offline empties it
 // The model is a fake unless REAL=1 and ANTHROPIC_API_KEY are set.
 //
 //   deno run --allow-net --allow-read --allow-env --allow-run=git tests/dev_server.ts
@@ -66,6 +66,9 @@ Deno.serve({ port: PORT, hostname: "127.0.0.1" }, async (req) => {
   try {
     let body: BodyInit = await Deno.readFile(ROOT + path.slice(1)) as Uint8Array<ArrayBuffer>;
     const ext = path.split(".").pop()!;
+    if (ext === "html" && url.searchParams.has("offline")) {
+      body = new TextDecoder().decode(body as Uint8Array<ArrayBuffer>).replace(/^const AI_URL = "[^"]*";/m, 'const AI_URL = "";');
+    }
     if (ext === "html" && url.searchParams.has("live")) {
       body = new TextDecoder().decode(body as Uint8Array<ArrayBuffer>)
         .replace(/^const AI_URL = "[^"]*";/m, `const AI_URL = "${url.origin}/ai";`)
