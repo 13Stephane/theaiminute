@@ -94,6 +94,37 @@ if (!status.live) {
       de.status === 200 ? `${JSON.stringify(de.body.usage)}, $${de.body.cost_usd}` : de);
     const de2 = await call({ kind: "06.debrief", inputs: { path: Array.from({ length: 8 }, (_, i) => row(i)) } });
     check("a second debrief from the same device -> 429 rate", de2.status === 429 && de2.body.reason === "rate", de2);
+    // 08 · the flood: the worked example, and the inputs the brief says must be refused
+    const flood = {
+      industry: "Health insurance, cooperative", company: "Worked example: a health cooperative, September 2026",
+      activities: [["Appointment scheduling and reminders", 24, 7, 2], ["Drafting the first version of a care protocol", 24, 5, 3],
+        ["Clinical documentation and scribing", 20, 8, 4], ["Choosing which contracts to renegotiate this year", 15, 16, 1],
+        ["Welcoming members who phone in", 11, 14, 9], ["Hospital admissions: diagnosis and care plan", 4, 12, 16],
+        ["Talking to a family after bad news", 4, 9, 20]].map(([n, a, g, h]) => ({ n, a, g, h })),
+      wall: [["Interchange, with doctors who are members", 4, 0, 2], ["A portfolio of specialist doctors", 7, 0, 0],
+        ["Presence in almost every town", 6, 0, 2], ["Tax benefit", 5, 1, 2]].map(([n, kind, bound, esc]) => ({ n, kind, bound, esc })),
+      route: 2, relies: 0,
+      move: "Turn the member-doctor network into exclusive care pathways that a digital-only insurer cannot replicate.",
+      sentence: "In our industry AI floods appointment scheduling and reminders, so price there falls toward the cost of running the machine, and the value migrates to interchange, with doctors who are members \u2014 which we own.",
+    };
+    for (const [name, bad] of [
+      ["8 activities", { ...flood, activities: [...flood.activities, flood.activities[0]] }],
+      ["5 wall cards", { ...flood, wall: [...flood.wall, flood.wall[0]] }],
+      ["a vote of 999", { ...flood, activities: [{ ...flood.activities[0], a: 999 }, ...flood.activities.slice(1)] }],
+      ["a 2,000-character move", { ...flood, move: "m".repeat(2000) }],
+    ] as const) {
+      const r = await call({ kind: "08.feedback", inputs: bad });
+      check(`08 refuses ${name} -> 400`, r.status === 400, r);
+    }
+    const fb = await call({ kind: "08.feedback", inputs: flood });
+    const block = fb.status === 200 ? String(fb.body.text).match(/```json\s*([\s\S]*?)```/i) : null;
+    let parsed: { activities?: unknown[]; wall?: unknown[]; summary?: string } | null = null;
+    try { parsed = block ? JSON.parse(block[1]) : null; } catch { /* reported below */ }
+    check("08 feedback on the worked example: prose plus a readable json block",
+      fb.status === 200 && parsed?.activities?.length === 7 && parsed?.wall?.length === 4,
+      fb.status === 200 ? `${String(fb.body.text).split(/\s+/).length} words, ${JSON.stringify(fb.body.usage)}, $${fb.body.cost_usd}` : fb);
+    if (parsed) console.log("      summary: " + parsed.summary);
+
     console.log("\nThe control room's live log should now show these calls with tokens and cost.");
   }
 }
