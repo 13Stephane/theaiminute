@@ -82,6 +82,7 @@ Deno.test("08: apart from the live-AI route, the page is the file as delivered",
   const strip = (s: string) => s
     .replace(/^.*Two feedback routes.*\n/m, "")
     .replace(/^ {2}\.aibadge.*\n/gm, "")
+    .replace(/^ {2}@media screen and \(max-width:620px\)\{\/\* the report on a phone.*\n/m, "")
     .replace(/^ *<span class="aibadge".*\n/m, "")
     .replace(/\/\* =+ CONFIGURATION =+[\s\S]*?\/\* =+ \*\//, "")
     .replace(/\/\* -+ route 2:[\s\S]*?(?=\/\* -+ report -+ \*\/\n\$\("printBtn"\))/, "");

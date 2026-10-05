@@ -110,6 +110,7 @@
   #report .cav{font-size:10.5px;color:#666;border-top:1px solid #DDD;margin-top:14px;padding-top:8px}
   #report .wl{columns:2;font-size:12px;margin-top:4px}
   #report .wl div{break-inside:avoid;margin-bottom:3px}
+  @media screen and (max-width:620px){/* the report on a phone; print is unchanged */#report{padding:18px 14px}#report .rk{grid-template-columns:repeat(3,1fr)}#report .rk div:nth-child(3n){border-right:none}#report .rk div:nth-child(-n+3){border-bottom:1px solid #DDD}#report table{display:block;overflow-x:auto}#report .wl{columns:1}}
   @media print{
     body{background:#fff;padding:0}
     .noprint{display:none!important}
