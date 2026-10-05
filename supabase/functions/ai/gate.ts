@@ -187,7 +187,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     }
 
     await deps.store.finish(id!, { ...paid, status: 200, reason: null });
-    return json(200, { result, usage, cost_usd: cost });
+    return json(200, { [spec.field ?? "result"]: result, usage, cost_usd: cost });
   } catch (e) {
     console.error("ai gate:", e);
     return json(503, { error: "unavailable", reason: "unavailable" });

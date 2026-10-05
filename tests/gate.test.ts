@@ -277,3 +277,20 @@ Deno.test("happy path 03.review: Claude's view per task, the disagreements, a su
   assertEquals((await send({ kind: "03.review", inputs: { job: "Financial controller", tasks } })).status, 429); // 3 per 10 min
   assertEquals((await send(decompose)).status, 200); // its own allowance, separate from decompositions
 });
+
+Deno.test("happy path 08.feedback: answers {text, usage, cost_usd}, 4 calls per device per hour", async () => {
+  const { db, send } = await setup();
+  const inputs = {
+    industry: "Health insurance", company: "Team 2", route: 2, relies: 0, move: "A move", sentence: "A sentence",
+    activities: [{ n: "Scheduling", a: 24, g: 7, h: 2 }, { n: "Bad news", a: 4, g: 9, h: 20 }],
+    wall: [{ n: "Network", kind: 4, bound: 0, esc: 2 }],
+  };
+  const res = await send({ kind: "08.feedback", inputs });
+  assertEquals(res.status, 200);
+  const b = await res.json();
+  assertEquals(Object.keys(b).sort(), ["cost_usd", "text", "usage"]);
+  assert(b.text.includes("```json"));
+  assertEquals([db.rows.at(-1)!.artifact, db.rows.at(-1)!.bucket], ["08", "08"]);
+  for (let i = 0; i < 3; i++) assertEquals((await send({ kind: "08.feedback", inputs })).status, 200);
+  assertEquals((await send({ kind: "08.feedback", inputs })).status, 429);
+});

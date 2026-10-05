@@ -83,6 +83,85 @@ const TASK_TYPE: V<string> = (v, p = "inputs") => {
   return v;
 };
 
+// ---------- 08 · the flood, the wall, and the way out ----------
+// Free text from the page: a length cap and no control characters; newlines only
+// where the page's own field is a textarea.
+const str = (max: number, opts: { multiline?: boolean; min?: number } = {}): V<string> => (v, p = "inputs") => {
+  if (typeof v !== "string" || v.length > max || v.trim().length < (opts.min ?? 0)) {
+    throw new InputError(`${p} must be text of at most ${max} characters`);
+  }
+  const bad = opts.multiline ? /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/ : /\p{Cc}/u;
+  if (bad.test(v)) throw new InputError(`${p} contains control characters`);
+  return v;
+};
+const validateFlood = (v: unknown, p = "inputs") => {
+  const o = obj({
+    industry: str(80), company: str(80),
+    activities: arr(obj({ n: str(120, { min: 1 }), a: int(0, 60), g: int(0, 60), h: int(0, 60) }), 1, 7),
+    wall: arr(obj({ n: str(120, { min: 1 }), kind: int(0, 7), bound: int(0, 1), esc: int(0, 3) }), 0, 4),
+    route: int(-1, 2), relies: int(-1, 3),
+    move: str(400, { multiline: true }), sentence: str(400, { multiline: true }),
+  })(v, p);
+  if (o.relies >= o.wall.length) throw new InputError(`${p}.relies must point at a card on the wall`);
+  return o;
+};
+type InFlood = ReturnType<typeof validateFlood>;
+
+// The page's lists and arithmetic, as in 08_the_flood_value_chain.html.
+const HZ8 = ["resists", "3 to 7 years", "under 3 years", "already flooding"];
+const KINDS8 = ["Patent or protected IP", "Process know-how or trade secret", "Proprietary data", "Brand and reputation",
+  "Relationships and network", "Regulatory licence or status", "Physical assets and scale", "People and scarce skills"];
+const ESCS8 = ["break fungibility", "block arbitrage", "block free entry", "none"];
+type Act = { n: string; a: number; g: number; h: number };
+const tot8 = (r: Act) => r.a + r.g + r.h;
+const reach8 = (r: Act) => tot8(r) ? (r.a + 0.5 * r.g) / tot8(r) : null;
+const hzOf8 = (x: number | null) => x === null ? -1 : (x >= 0.8 ? 3 : x >= 0.6 ? 2 : x >= 0.4 ? 1 : 0);
+const isKept8 = (r: Act) => tot8(r) > 0 && r.h / tot8(r) > 0.5;
+const f2 = (x: number | null) => x === null ? "\u2014" : x.toFixed(2);
+
+// buildPrompt() from the page, word for word; a test checks the two produce the same text.
+export function promptFlood(i: InFlood): string {
+  const flood = i.activities.map((r, k) => {
+    const x = reach8(r);
+    return `${k + 1}. ${r.n} | votes automate ${r.a}, augment ${r.g}, keep human ${r.h} | reach ${f2(x)} | their call: ${x === null ? "not voted" : HZ8[hzOf8(x)]}${isKept8(r) ? " | KEPT HUMAN by majority" : ""}`;
+  }).join("\n") || "(none listed)";
+  const wall = i.wall.map((c, k) => `${k + 1}. ${c.n} | ${KINDS8[c.kind]} | they say: ${c.bound === 0 ? "bound to them" : "generic"} | escape it enables: ${ESCS8[c.esc]}`).join("\n") || "(none listed)";
+  return `You are a sparring partner for a team of executives on a Managerial Economics course. They have just worked through an exercise on how AI will reshape the economics of their industry, and they want honest, specific feedback on all of it. Be direct. Disagree where the evidence points the other way. Do not flatter them, and do not soften a criticism to be polite.
+
+THE FRAMEWORK THEY USED
+- The flood. AI capability rises like water. An activity the machine can do stops being scarce, so its price falls toward the cost of running the machine. For each activity, each team member voted automate, augment or keep human. Reach = automate share + half the augment share. Their call follows from reach: 0.80 and above = already flooding, 0.60 = under 3 years, 0.40 = 3 to 7 years, below = resists. An activity a strict majority voted to keep human is marked KEPT HUMAN.
+- The wall (David Teece, Profiting from Innovation). When an idea can be copied, value goes to whoever owns the complementary assets it must pass through, above all cospecialised ones. "Bound" means a rival could not rent or copy it within three years.
+- The way out. Price stays above cost only if something breaks one of three conditions: buyers treat products as interchangeable (fungibility), buyers can move freely between prices (arbitrage), rivals can enter freely (free entry). So there are three escapes: break fungibility, block arbitrage, block free entry. Where ideas can be copied, blocking entry is usually the one that lasts.
+
+THEIR WORK
+Industry: ${i.industry || "(not stated)"}
+Company: ${i.company || "(not stated)"}
+
+The flood:
+${flood}
+
+The wall:
+${wall}
+
+The way out:
+Main escape: ${i.route < 0 ? "not decided" : ESCS8[i.route]}
+It depends on: ${i.relies >= 0 ? i.wall[i.relies].n : "no card chosen"}
+The move: ${i.move || "(not stated)"}
+Their sentence: ${i.sentence}
+
+WHAT TO GIVE THEM
+Write plain prose under these five headings, 300 to 450 words in total: they have six minutes to read it. Name specific activities and cards; generalities are no use to them.
+1. The flood. Which of their calls would you challenge, and why? What belongs on their list that is missing?
+2. What they kept human. Are the activities they kept human protected by real constraints (regulation, liability, trust, physical presence) or by preference? Would a competitor keep the same line?
+3. The wall. For each card they marked bound: is it really? Which could a well-funded rival rent, copy or build within three years? Which asset is missing?
+4. The way out. Does their route follow from their wall? Is the move concrete enough to start on Monday? What is most likely to make it fail?
+5. The one thing. The single most important change to their thinking.
+
+Then, after the prose, add this block exactly, inside \`\`\`json fences, so their page can read it. Give your OWN view of each activity, not theirs:
+{"activities":[{"i":1,"horizon":"under 3 years","why":"at most 18 words"}],"wall":[{"i":1,"bound":true,"note":"at most 18 words"}],"summary":"at most 40 words: where the margin sits in three years"}
+Use exactly one of these for horizon: "already flooding", "under 3 years", "3 to 7 years", "resists". Number activities and cards as listed above.`;
+}
+
 // ---------- 06 shared shapes (ranges match the page's sliders, gauges generous) ----------
 const MIX_KEYS = ["cheques", "retention", "liquidity", "health", "infra"] as const;
 const mix = obj({
@@ -169,7 +248,7 @@ export function parseTasks(text: string): Task[] {
 
 // ---------- the kinds ----------
 export type KindSpec = {
-  artifact: "03" | "06";
+  artifact: "03" | "06" | "08";
   bucket: string;
   limit: number;          // calls allowed per device per window
   windowSeconds: number;
@@ -177,6 +256,7 @@ export type KindSpec = {
   validate: (inputs: unknown) => unknown;
   prompt: (inputs: never) => string;
   parse: (text: string, inputs?: unknown) => unknown;
+  field?: "result" | "text"; // the response key for the result; 08 answers {text, usage, cost_usd}
 };
 
 const validate03 = obj({ job: jobTitle });
@@ -287,6 +367,10 @@ export const KINDS: Record<string, KindSpec> = {
     artifact: "03", bucket: "03.review", limit: 3, windowSeconds: 600, maxTokens: 4000,
     validate: validateReview, prompt: promptReview as (i: never) => string,
     parse: (text: string, inputs?: unknown) => parseReview(text, (inputs as InReview).tasks.length),
+  },
+  "08.feedback": {
+    artifact: "08", bucket: "08", limit: 4, windowSeconds: 3600, maxTokens: 4000,
+    validate: validateFlood, prompt: promptFlood as (i: never) => string, parse: text, field: "text",
   },
   "06.briefing": {
     artifact: "06", bucket: "06.briefing", limit: 10, windowSeconds: 3600, maxTokens: 2000,

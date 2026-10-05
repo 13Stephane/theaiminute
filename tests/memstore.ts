@@ -72,7 +72,7 @@ export function fakeModel(log: { model: string; maxTokens: number; prompt: strin
   return (a) => {
     log.push(a);
     const n = (a.prompt.match(/^\d+\. /gm) || []).length;
-    const text = a.prompt.includes("Give a second opinion")
+    const text = a.prompt.includes("You are a sparring partner") ? floodReply(a.prompt) : a.prompt.includes("Give a second opinion")
       ? JSON.stringify({
         tasks: Array.from({ length: n }, (_, k) => ({ i: k + 1, type: ["automate", "augment", "human"][k % 3], time: 10, value: 10, why: "fake view" })),
         disagreements: [{ i: 1, point: "This takes judgement you are underrating." }],
@@ -81,4 +81,18 @@ export function fakeModel(log: { model: string; maxTokens: number; prompt: strin
       : a.prompt.includes("JSON array") ? SAMPLE_TASKS : "Fiscal support arrived fast; inflation is building with a lag.";
     return Promise.resolve({ text, stopReason: "end_turn", inputTokens: 400, outputTokens: 600 });
   };
+}
+
+// A reply in 08's contract: prose under five headings, then the json block.
+function floodReply(prompt: string): string {
+  const section = (h: string, next: string) => prompt.split(h + "\n")[1].split("\n\n" + next)[0];
+  const acts = section("The flood:", "The wall:").split("\n").filter((l) => /^\d+\. /.test(l));
+  const cards = section("The wall:", "The way out:").split("\n").filter((l) => /^\d+\. /.test(l));
+  const hz = ["already flooding", "under 3 years", "3 to 7 years", "resists"];
+  return `## 1. The flood\nScheduling is further along than you think.\n\n## 2. What they kept human\nPreference, not constraint.\n\n## 3. The wall\nThe tax benefit is not yours.\n\n## 4. The way out\nIt follows, but the move is vague.\n\n## 5. The one thing\nOwn the network.\n\n\`\`\`json\n` +
+    JSON.stringify({
+      activities: acts.map((_, k) => ({ i: k + 1, horizon: hz[k % 4], why: "fake view" })),
+      wall: cards.map((_, k) => ({ i: k + 1, bound: k % 2 === 0, note: "fake note" })),
+      summary: "The margin sits with the network.",
+    }) + "\n\`\`\`";
 }
