@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- 08 · The flood, the wall, and the way out · for theaiminute.blog
-     Two feedback routes: copy a full prompt into any assistant, or ask Claude through your own proxy (set PROXY_URL). -->
+     Two feedback routes: copy a full prompt into any assistant, or ask Claude through the course proxy (set AI_URL). -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -89,6 +89,8 @@
   .verdict .v{font-family:Georgia,serif;font-size:19px;font-weight:700;margin:3px 0 6px;line-height:1.25}
   .verdict .s{font-size:13px;color:#DCE4E2}
   .verdict textarea{background:rgba(255,255,255,.95);margin-top:8px;font-size:13px;min-height:62px}
+  .aibadge{display:inline-block;font:700 10px "Calibri";letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:#DDD6C8;color:var(--muted)}
+  .aibadge.on{background:var(--teal);color:var(--gold-soft)}
   .manual{display:none;width:100%;min-height:150px;margin-top:9px;font:400 11px Consolas,monospace;border:1px solid var(--gold)}
   .foot{margin-top:18px;color:#9FB0AD;font-size:11.5px;max-width:84ch}
   .foot b{color:var(--gold-soft)}
@@ -186,6 +188,7 @@
      <div class="qb">
        <div class="btns">
          <button class="btn" id="copyPrompt">Copy the full prompt for any assistant</button>
+         <span class="aibadge" id="aiBadge" style="display:none">Offline mode</span>
          <span id="apiBox" style="display:none;align-items:center;gap:8px">
            <input type="text" id="classCode" placeholder="class code" style="width:130px">
            <button class="btn" id="askClaude">Ask Claude from this page</button>
@@ -229,9 +232,9 @@
 
 <script>
 /* ============ CONFIGURATION ============
-   After deploying the Worker, paste its address below. Leave it empty and the page
-   offers only the copy-a-prompt route, which works with any assistant. */
-const PROXY_URL = "";
+   The course proxy (the ai function behind the control room). Leave it empty and the
+   page offers only the copy-a-prompt route, which works with any assistant. */
+const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";
 const PRICE_IN = 2, PRICE_OUT = 10;   // USD per million tokens, Claude Sonnet 5.5
 const TEAM_CALLS_PER_HOUR = 4;
 /* ======================================= */
@@ -525,28 +528,72 @@ $("readIn").onclick=()=>{
   $("pasteMsg").textContent=r.parsed?`Added. The feedback placed ${r.n} activit${r.n===1?"y":"ies"}.`:"Added the feedback. Its closing block could not be read, so set the table below by hand.";
 };
 
-/* ---------- route 2: Claude, through your proxy ---------- */
-const CALLS=[];
+/* ---------- route 2: Claude, through the course proxy ---------- */
+const CALLS=[];   // a soft guard; the server limits each device to the same number
 function callsLeft(){const t=Date.now();while(CALLS.length&&t-CALLS[0]>3600000)CALLS.shift();return TEAM_CALLS_PER_HOUR-CALLS.length;}
-if(PROXY_URL){$("apiBox").style.display="inline-flex";}
+const AI={live:false,reason:"off"};
+let AI_DEVICE=null;
+function aiStore(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){}return null;}
+function aiDevice(){
+  if(AI_DEVICE)return AI_DEVICE;
+  let d=aiStore("aim_device");
+  if(!d||!/^[A-Za-z0-9_-]{8,64}$/.test(d)){d=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,"0")).join("");aiStore("aim_device",d);}
+  return AI_DEVICE=d;
+}
+const AI_WHY={"off":"Live AI is off","outside window":"Live AI is outside today’s session hours","class code":"That class code was not accepted",
+  "budget":"Today’s live AI budget is used up","rate":"This device has used its "+TEAM_CALLS_PER_HOUR+" calls for the hour",
+  "inputs":"Claude could not take these inputs: keep names under 120 characters, the move and the sentence under 400, and votes under 60",
+  "origin":"Live AI only works on theaiminute.blog","network":"Couldn’t reach the live AI","unavailable":"Live AI is unavailable"};
+const aiWhy=r=>AI_WHY[r]||"The feedback service did not answer";
+// A request that hangs (a captive or flaky network) must not hold the page: give up and fall back.
+function aiFetch(url,opts,ms){
+  const c=new AbortController(), t=setTimeout(()=>c.abort(),ms);
+  return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t));
+}
+async function aiStatus(){
+  if(!AI_URL)return;
+  $("aiBadge").style.display="inline-block";
+  try{const s=await (await aiFetch(AI_URL.replace(/\/+$/,"")+"/status",{},6000)).json();AI.live=!!s.live;AI.reason=s.reason||"off";}
+  catch(e){AI.live=false;AI.reason="network";}
+  $("aiBadge").textContent=AI.live?"Live AI on":"Offline mode";
+  $("aiBadge").classList.toggle("on",AI.live);
+  $("apiBox").style.display=AI.live?"inline-flex":"none";
+}
+// What the server needs to build the same prompt as buildPrompt(): the work, not the text.
+function floodInputs(){
+  const cs=cardsN(), ri=+$("relies").value, rc=ri>=0&&W[ri]&&W[ri].n.trim()?W[ri]:null;
+  return {industry:val("industry"),company:val("company"),
+    activities:named().map(r=>({n:r.n,a:r.a,g:r.g,h:r.h})),
+    wall:cs.map(c=>({n:c.n,kind:c.kind,bound:c.bound,esc:c.esc})),
+    route:+$("route").value,relies:rc?cs.indexOf(rc):-1,
+    move:val("move"),sentence:$("sent")?$("sent").value:draftSentence()};
+}
 $("askClaude").onclick=async()=>{
   if(!named().length){$("fbMsg").textContent="List your activities first.";return;}
   if(!val("classCode")){$("fbMsg").textContent="Enter the class code your instructor gave you.";return;}
   if(callsLeft()<=0){$("fbMsg").textContent=`This page has used its ${TEAM_CALLS_PER_HOUR} calls for the hour. Copy the prompt into any assistant instead.`;return;}
   CALLS.push(Date.now());
-  const btn=$("askClaude");btn.disabled=true;$("fbMsg").textContent="Claude is reading your work. This takes up to a minute\u2026";
+  const btn=$("askClaude");btn.disabled=true;$("fbMsg").textContent="Claude is reading your work. This takes up to a minute…";
   try{
-    const res=await fetch(PROXY_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Class-Code":val("classCode")},body:JSON.stringify({prompt:buildPrompt()})});
+    await aiStatus();
+    if(!AI.live) throw new Error(aiWhy(AI.reason)+".");
+    aiStore("aim_class_code",val("classCode"));
+    let res;
+    try{res=await aiFetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Class-Code":val("classCode"),"X-Device-Id":aiDevice()},
+      body:JSON.stringify({kind:"08.feedback",inputs:floodInputs()})},90000);}
+    catch(e){throw new Error(aiWhy("network")+".");}
     const data=await res.json().catch(()=>({}));
-    if(res.status===401) throw new Error("That class code was not accepted.");
-    if(!res.ok||!data.text) throw new Error(data.error||"The feedback service did not answer.");
+    if(!res.ok||!data.text){if(res.status===423||data.reason==="budget")aiStatus();throw new Error(aiWhy(data.reason)+".");}
     const r=applyReply(data.text), u=data.usage||{};
-    const cost=((u.input_tokens||0)*PRICE_IN+(u.output_tokens||0)*PRICE_OUT)/1e6;
+    const cost=typeof data.cost_usd==="number"?data.cost_usd:((u.input_tokens||0)*PRICE_IN+(u.output_tokens||0)*PRICE_OUT)/1e6;
     $("fbMsg").textContent=`Done. ${r.parsed?`Placed ${r.n} activities.`:"The closing block could not be read; set the table by hand."}`+(u.output_tokens?` This call cost about $${cost.toFixed(3)}.`:"")+` ${callsLeft()} call${callsLeft()===1?"":"s"} left this hour.`;
   }catch(err){
     $("fbMsg").textContent=(err&&err.message?err.message+" ":"")+"Copy the prompt into any assistant instead.";
   }finally{btn.disabled=false;}
 };
+$("classCode").value=aiStore("aim_class_code")||"";
+aiStatus();
+if(AI_URL)setInterval(aiStatus,120000);
 
 /* ---------- report ---------- */
 $("printBtn").onclick=()=>{try{window.print();}catch(e){$("repMsg").textContent="Printing is blocked here. Copy the report as text instead.";}};
