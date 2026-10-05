@@ -569,8 +569,25 @@ function floodInputs(){
     route:+$("route").value,relies:rc?cs.indexOf(rc):-1,
     move:val("move"),sentence:$("sent")?$("sent").value:draftSentence()};
 }
+/* The worked example is for reading, not for spending a team's calls: Claude is
+   asked only once the work is the team's own, or the example has changed enough. */
+const EXAMPLE_MIN_CHANGES=5;
+let EXAMPLE=null;   // the example's answers, recorded when it is loaded
+function exampleSnapshot(){
+  return {fields:{industry:val("industry"),company:val("company"),route:$("route").value,relies:$("relies").value,move:val("move")},
+    acts:R.filter(r=>r.n.trim()).map(r=>`${r.n.trim()}|${r.a}|${r.g}|${r.h}`),
+    cards:W.filter(c=>c.n.trim()).map(c=>`${c.n.trim()}|${c.kind}|${c.bound}|${c.esc}`)};
+}
+// One answer = a field, an activity (name or votes) or a card. Deleting a row is one change.
+function changesFromExample(){
+  if(!EXAMPLE)return Infinity;
+  const now=exampleSnapshot(), diff=(a,b)=>{const left=[...b];let gone=0;a.forEach(x=>{const i=left.indexOf(x);if(i<0)gone++;else left.splice(i,1);});return Math.max(gone,left.length);};
+  return Object.keys(now.fields).filter(k=>now.fields[k]!==EXAMPLE.fields[k]).length+diff(EXAMPLE.acts,now.acts)+diff(EXAMPLE.cards,now.cards);
+}
 $("askClaude").onclick=async()=>{
   if(!named().length){$("fbMsg").textContent="List your activities first.";return;}
+  const changed=changesFromExample();
+  if(changed<EXAMPLE_MIN_CHANGES){$("fbMsg").textContent=`This is still the worked example (${changed} of ${EXAMPLE_MIN_CHANGES} answers changed). Enter your own work, or change at least ${EXAMPLE_MIN_CHANGES} answers, before asking Claude. Copying the prompt works now.`;return;}
   if(!val("classCode")){$("fbMsg").textContent="Enter the class code your instructor gave you.";return;}
   if(callsLeft()<=0){$("fbMsg").textContent=`This page has used its ${TEAM_CALLS_PER_HOUR} calls for the hour. Copy the prompt into any assistant instead.`;return;}
   CALLS.push(Date.now());
@@ -617,7 +634,8 @@ $("loadEx").onclick=()=>{
   $("route").value="2"; $("relies").value="0";
   $("move").value="Turn the member-doctor network into exclusive care pathways that a digital-only insurer cannot replicate.";
   renderAll();
-  $("fbMsg").textContent="Example loaded. Copy the prompt to see what feedback it gets.";
+  EXAMPLE=exampleSnapshot();
+  $("fbMsg").textContent="Example loaded. Copy the prompt to see what feedback it gets. To ask Claude, enter your own work or change at least five answers first.";
 };
 
 drawRows();drawWall();renderAll();

@@ -32,7 +32,7 @@ function loadPage(src: string) {
     upTo("/* ---------- 1 · the flood") + "\n" +
     ["function draftSentence(", "function buildPrompt(", "function drawKpis("].map(fn).join("\n") + "\n" +
     (script.includes("function floodInputs(") ? fn("function floodInputs(") : "") + `
-    const drawRows=()=>{}, drawWall=()=>{}, renderAll=()=>{};
+    const drawRows=()=>{}, drawWall=()=>{}, renderAll=()=>{}, exampleSnapshot=()=>null; var EXAMPLE=null;
     ${exampleSrc}
     return { buildPrompt, drawKpis, draftSentence,
       floodInputs: typeof floodInputs === "function" ? floodInputs : null,
@@ -84,6 +84,8 @@ Deno.test("08: apart from the live-AI route, the page is the file as delivered",
     .replace(/^ {2}\.aibadge.*\n/gm, "")
     .replace(/^ {2}@media screen and \(max-width:620px\)\{\/\* the report on a phone.*\n/m, "")
     .replace(/^ *<span class="aibadge".*\n/m, "")
+    .replace("  EXAMPLE=exampleSnapshot();\n", "")
+    .replace(" To ask Claude, enter your own work or change at least five answers first.", "")
     .replace(/\/\* =+ CONFIGURATION =+[\s\S]*?\/\* =+ \*\//, "")
     .replace(/\/\* -+ route 2:[\s\S]*?(?=\/\* -+ report -+ \*\/\n\$\("printBtn"\))/, "");
   assertEquals(strip(after), strip(before));
