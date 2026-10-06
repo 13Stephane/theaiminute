@@ -136,6 +136,11 @@
     .month-marker::after{content:'';flex:1;height:1px;background:var(--border);}
     .month-marker:first-child{margin-top:0;}
 
+    /* ── PREVIEW BANNER (only on #preview, never on the public page) ── */
+    .preview-banner{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:0 0 1.5rem;padding:.7rem .95rem;border-radius:12px;border:1px dashed rgba(198,165,83,.5);background:rgba(198,165,83,.08);font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--ink);line-height:1.5;}
+    .preview-banner-tag{font-family:'Barlow Condensed',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(198,165,83,.5);border-radius:40px;padding:.15rem .6rem;flex-shrink:0;}
+    .preview-banner-note{color:var(--muted);font-size:.72rem;}
+
     /* ── PAGER ── */
     .pager{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:1rem;}
     .pager-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;}
@@ -302,6 +307,10 @@
      fetches full rows. */
   const PAGE_SIZE = 8;
   const SB_HEADERS = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
+  /* Live posts are the published ones plus the scheduled ones whose hour has come.
+     The row-level policy in Postgres hides a scheduled post until published_at
+     passes, so the gate is the database clock, never the visitor's. */
+  const LIVE_FILTER = 'status=in.(published,scheduled)';
   let pageIndex = [];   // [{page, from, to, label}] newest first
   let currentPage = 1;
   let currentSeries = null;   // active series filter, or null
@@ -329,7 +338,7 @@
 
   async function buildPageIndex() {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/posts?select=id,published_at,series&status=eq.published${seriesQuery()}`,
+      `${SUPABASE_URL}/rest/v1/posts?select=id,published_at,series&${LIVE_FILTER}${seriesQuery()}`,
       { headers: SB_HEADERS }
     );
     const rows = await res.json();
@@ -387,7 +396,7 @@
       c.innerHTML = '<div class="loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
       const offset = (page - 1) * PAGE_SIZE;
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/posts?status=eq.published${seriesQuery()}&limit=${PAGE_SIZE}&offset=${offset}`,
+        `${SUPABASE_URL}/rest/v1/posts?${LIVE_FILTER}${seriesQuery()}&limit=${PAGE_SIZE}&offset=${offset}`,
         { headers: SB_HEADERS }
       );
       renderPosts(await res.json());
@@ -709,6 +718,46 @@
     }
   });
 
+  /* ══ PREVIEW MODE ══
+     The editor hands a post over in localStorage and opens this page at #preview.
+     Nothing is fetched and nothing is written: the draft never touches the
+     database, so unsaved edits read exactly as they will once published, and the
+     preview exists only in the browser that asked for it. */
+  const PREVIEW_KEY = 'aim_preview';
+  const PREVIEW_MAX_AGE = 6 * 60 * 60 * 1000;   // a stale handover is not worth rendering
+
+  function previewNote(p) {
+    if (p.status === 'scheduled' && p.published_at) {
+      const when = new Date(p.published_at);
+      const live = when <= new Date();
+      return live
+        ? `Scheduled for ${when.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})} — that time has passed, so it is already live.`
+        : `Scheduled for ${when.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}. Until then the site does not show it.`;
+    }
+    if (p.status === 'published') return 'This post is published and live on the site.';
+    return 'Draft. Nobody but you can see this.';
+  }
+
+  function renderPreview() {
+    const c = document.getElementById('posts-container');
+    document.querySelector('#posts .section-label').textContent = 'Preview';
+    document.getElementById('pager').innerHTML = '';
+    let payload = null;
+    try { payload = JSON.parse(localStorage.getItem(PREVIEW_KEY) || 'null'); } catch (e) {}
+    if (!payload || !payload.post || Date.now() - (payload.ts || 0) > PREVIEW_MAX_AGE) {
+      c.innerHTML = '<p style="color:var(--muted);font-size:.85rem;padding:2rem 0">Nothing to preview. Open the post in the editor and press Preview.</p>';
+      return;
+    }
+    const p = payload.post;
+    renderPosts([p]);
+    const banner = document.createElement('div');
+    banner.className = 'preview-banner';
+    banner.innerHTML = `<span class="preview-banner-tag">Preview</span>
+      <span>${previewNote(p)}</span>
+      <span class="preview-banner-note">Rendered from the editor, not from the database.</span>`;
+    c.prepend(banner);
+  }
+
   // A post link opened while already on the site may live on another page.
   window.addEventListener('hashchange', () => {
     const id = (location.hash.match(/^#post-(.+)$/) || [])[1];
@@ -718,7 +767,7 @@
     else { const el = document.getElementById(`post-${id}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   });
 
-  loadPosts();
+  if (location.hash.startsWith('#preview')) renderPreview(); else loadPosts();
 </script>
 </body>
 </html>
