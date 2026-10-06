@@ -97,12 +97,15 @@ const str = (max: number, opts: { multiline?: boolean; min?: number } = {}): V<s
 const validateFlood = (v: unknown, p = "inputs") => {
   const o = obj({
     industry: str(80), company: str(80),
-    activities: arr(obj({ n: str(120, { min: 1 }), a: int(0, 60), g: int(0, 60), h: int(0, 60) }), 1, 7),
+    activities: arr(obj({ n: str(120, { min: 1 }), a: int(0, 60), g: int(0, 60), h: int(0, 60), ins: int(-1, 2) }), 1, 7),
     wall: arr(obj({ n: str(120, { min: 1 }), kind: int(0, 7), bound: int(0, 1), esc: int(0, 3) }), 0, 4),
     route: int(-1, 2), relies: int(-1, 3),
     move: str(400, { multiline: true }), sentence: str(400, { multiline: true }),
   })(v, p);
   if (o.relies >= o.wall.length) throw new InputError(`${p}.relies must point at a card on the wall`);
+  o.activities.forEach((r, k) => {
+    if (r.ins >= 0 && [r.a, r.g, r.h][r.ins] === 0) throw new InputError(`${p}.activities[${k}].ins must be one of the votes cast`);
+  });
   return o;
 };
 type InFlood = ReturnType<typeof validateFlood>;
@@ -112,24 +115,30 @@ const HZ8 = ["resists", "3 to 7 years", "under 3 years", "already flooding"];
 const KINDS8 = ["Patent or protected IP", "Process know-how or trade secret", "Proprietary data", "Brand and reputation",
   "Relationships and network", "Regulatory licence or status", "Physical assets and scale", "People and scarce skills"];
 const ESCS8 = ["break fungibility", "block arbitrage", "block free entry", "none"];
-type Act = { n: string; a: number; g: number; h: number };
+type Act = { n: string; a: number; g: number; h: number; ins: number };
+const INS8 = ["automate", "augment", "keep human"];
 const tot8 = (r: Act) => r.a + r.g + r.h;
 const reach8 = (r: Act) => tot8(r) ? (r.a + 0.5 * r.g) / tot8(r) : null;
 const hzOf8 = (x: number | null) => x === null ? -1 : (x >= 0.8 ? 3 : x >= 0.6 ? 2 : x >= 0.4 ? 1 : 0);
 const isKept8 = (r: Act) => tot8(r) > 0 && r.h / tot8(r) > 0.5;
+// As in the page: contested when automate and keep human each draw at least 30% of the votes;
+// the insider stands alone when nobody else voted the way they did.
+const isContested8 = (r: Act) => tot8(r) >= 3 && !isKept8(r) && r.a / tot8(r) >= 0.3 && r.h / tot8(r) >= 0.3;
+const insAlone8 = (r: Act) => r.ins >= 0 && tot8(r) > 1 && [r.a, r.g, r.h][r.ins] === 1;
+const callOf8 = (r: Act) => { const x = reach8(r); return x === null ? "not voted" : isContested8(r) ? "contested" : HZ8[hzOf8(x)]; };
 const f2 = (x: number | null) => x === null ? "\u2014" : x.toFixed(2);
 
 // buildPrompt() from the page, word for word; a test checks the two produce the same text.
 export function promptFlood(i: InFlood): string {
   const flood = i.activities.map((r, k) => {
     const x = reach8(r);
-    return `${k + 1}. ${r.n} | votes automate ${r.a}, augment ${r.g}, keep human ${r.h} | reach ${f2(x)} | their call: ${x === null ? "not voted" : HZ8[hzOf8(x)]}${isKept8(r) ? " | KEPT HUMAN by majority" : ""}`;
+    return `${k + 1}. ${r.n} | votes automate ${r.a}, augment ${r.g}, keep human ${r.h} | reach ${f2(x)} | their call: ${callOf8(r)}${isKept8(r) ? " | KEPT HUMAN by majority" : ""}${r.ins >= 0 ? ` | the member from this industry voted ${INS8[r.ins]}${insAlone8(r) ? ", and nobody else did" : ""}` : ""}`;
   }).join("\n") || "(none listed)";
   const wall = i.wall.map((c, k) => `${k + 1}. ${c.n} | ${KINDS8[c.kind]} | they say: ${c.bound === 0 ? "bound to them" : "generic"} | escape it enables: ${ESCS8[c.esc]}`).join("\n") || "(none listed)";
   return `You are a sparring partner for a team of executives on a Managerial Economics course. They have just worked through an exercise on how AI will reshape the economics of their industry, and they want honest, specific feedback on all of it. Be direct. Disagree where the evidence points the other way. Do not flatter them, and do not soften a criticism to be polite.
 
 THE FRAMEWORK THEY USED
-- The flood. AI capability rises like water. An activity the machine can do stops being scarce, so its price falls toward the cost of running the machine. For each activity, each team member voted automate, augment or keep human. Reach = automate share + half the augment share. Their call follows from reach: 0.80 and above = already flooding, 0.60 = under 3 years, 0.40 = 3 to 7 years, below = resists. An activity a strict majority voted to keep human is marked KEPT HUMAN.
+- The flood. AI capability rises like water. An activity the machine can do stops being scarce, so its price falls toward the cost of running the machine. For each activity, each team member voted automate, augment or keep human. Reach = automate share + half the augment share. Their call follows from reach: 0.80 and above = already flooding, 0.60 = under 3 years, 0.40 = 3 to 7 years, below = resists. An activity a strict majority voted to keep human is marked KEPT HUMAN. When automate and keep human each draw at least 30% of the votes, the activity is marked CONTESTED instead of given a call. Teams have three or four members, and one may work in this industry: their vote is marked where given.
 - The wall (David Teece, Profiting from Innovation). When an idea can be copied, value goes to whoever owns the complementary assets it must pass through, above all cospecialised ones. "Bound" means a rival could not rent or copy it within three years.
 - The way out. Price stays above cost only if something breaks one of three conditions: buyers treat products as interchangeable (fungibility), buyers can move freely between prices (arbitrage), rivals can enter freely (free entry). So there are three escapes: break fungibility, block arbitrage, block free entry. Where ideas can be copied, blocking entry is usually the one that lasts.
 
@@ -151,7 +160,7 @@ Their sentence: ${i.sentence}
 
 WHAT TO GIVE THEM
 Write plain prose under these five headings, 300 to 450 words in total: they have six minutes to read it. Name specific activities and cards; generalities are no use to them.
-1. The flood. Which of their calls would you challenge, and why? What belongs on their list that is missing?
+1. The flood. Which of their calls would you challenge, and why? Where an activity is contested, or the member from the industry voted alone, say which side you think is right. What belongs on their list that is missing?
 2. What they kept human. Are the activities they kept human protected by real constraints (regulation, liability, trust, physical presence) or by preference? Would a competitor keep the same line?
 3. The wall. For each card they marked bound: is it really? Which could a well-funded rival rent, copy or build within three years? Which asset is missing?
 4. The way out. Does their route follow from their wall? Is the move concrete enough to start on Monday? What is most likely to make it fail?

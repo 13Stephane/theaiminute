@@ -100,7 +100,7 @@ if (!status.live) {
       activities: [["Appointment scheduling and reminders", 24, 7, 2], ["Drafting the first version of a care protocol", 24, 5, 3],
         ["Clinical documentation and scribing", 20, 8, 4], ["Choosing which contracts to renegotiate this year", 15, 16, 1],
         ["Welcoming members who phone in", 11, 14, 9], ["Hospital admissions: diagnosis and care plan", 4, 12, 16],
-        ["Talking to a family after bad news", 4, 9, 20]].map(([n, a, g, h]) => ({ n, a, g, h })),
+        ["Talking to a family after bad news", 4, 9, 20]].map(([n, a, g, h]) => ({ n, a, g, h, ins: -1 })),
       wall: [["Interchange, with doctors who are members", 4, 0, 2], ["A portfolio of specialist doctors", 7, 0, 0],
         ["Presence in almost every town", 6, 0, 2], ["Tax benefit", 5, 1, 2]].map(([n, kind, bound, esc]) => ({ n, kind, bound, esc })),
       route: 2, relies: 0,

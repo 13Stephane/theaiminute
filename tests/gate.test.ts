@@ -282,7 +282,7 @@ Deno.test("happy path 08.feedback: answers {text, usage, cost_usd}, 4 calls per 
   const { db, send } = await setup();
   const inputs = {
     industry: "Health insurance", company: "Team 2", route: 2, relies: 0, move: "A move", sentence: "A sentence",
-    activities: [{ n: "Scheduling", a: 24, g: 7, h: 2 }, { n: "Bad news", a: 4, g: 9, h: 20 }],
+    activities: [{ n: "Scheduling", a: 24, g: 7, h: 2, ins: -1 }, { n: "Bad news", a: 4, g: 9, h: 20, ins: 2 }],
     wall: [{ n: "Network", kind: 4, bound: 0, esc: 2 }],
   };
   const res = await send({ kind: "08.feedback", inputs });

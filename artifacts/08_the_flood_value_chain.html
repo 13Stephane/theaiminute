@@ -59,6 +59,7 @@
   .tag.af{background:var(--water);color:#fff}.tag.u3{background:var(--flood);color:#fff}
   .tag.s37{background:var(--mid);color:#fff}.tag.rs{background:var(--rock);color:#fff}
   .tag.pol{background:var(--gold);color:var(--teal)}.tag.none{background:#DDD6C8;color:var(--muted)}
+  .tag.ct{background:var(--warn);color:#fff}.tag.ins{background:#fff;color:var(--warn);border:1px solid var(--warn)}
   .del{background:none;border:none;color:#B0958F;font-size:16px;cursor:pointer}
   .add{background:transparent;border:1px dashed #BDB3A0;color:var(--muted);border-radius:8px;padding:7px 12px;
     font:600 11.5px "Calibri";cursor:pointer;margin-top:9px}
@@ -143,10 +144,10 @@
    <!-- 1 · THE FLOOD -->
    <div class="q">
      <div class="qh"><div class="qn">1</div><div class="qt">The flood</div><span class="msg" style="margin-left:8px">about 7 minutes</span></div>
-     <div class="qa">Not the tasks in one job this time, but the <b>main activities of your industry</b>: the stages a customer’s money passes through. Seven at most. Each member of the team votes once per activity, with the same three choices as Day 1: <b>automate</b>, <b>augment</b>, or <b>keep human</b>. Reach is automate plus half of augment. An activity a strict majority votes to keep human stays out of the flood.</div>
+     <div class="qa">Not the tasks in one job this time, but the <b>main activities of your industry</b>: the stages a customer’s money passes through. Seven at most. Each member of the team votes once per activity, with the same three choices as Day 1: <b>automate</b>, <b>augment</b>, or <b>keep human</b>. Reach is automate plus half of augment. An activity a strict majority votes to keep human stays out of the flood. When automate and keep human each draw at least 30% of the votes, the activity is <b>contested</b>: the table disagrees, and an average would hide it. If one of you works in this industry, mark how that person voted in <b>From the industry</b>.</div>
      <div class="qb">
        <div style="overflow-x:auto"><table>
-         <thead><tr><th style="min-width:190px">Activity</th><th>Automate</th><th>Augment</th><th>Keep human</th><th>Reach</th><th>You say</th><th></th></tr></thead>
+         <thead><tr><th style="min-width:190px">Activity</th><th>Automate</th><th>Augment</th><th>Keep human</th><th>From the industry</th><th>Reach</th><th>You say</th><th></th></tr></thead>
          <tbody id="rows"></tbody></table></div>
        <button class="add" id="addRow">+ add an activity (seven at most)</button>
        <div class="chart" id="chart" style="margin-top:12px"></div>
@@ -251,8 +252,9 @@ const BOUND=["Bound to us \u2014 a rival cannot rent it","Generic \u2014 a rival
 const ESC=["Break fungibility \u2014 make it not interchangeable","Block arbitrage \u2014 price different buyers differently",
            "Block free entry \u2014 keep rivals out","Not an escape, just an asset"];
 const ESCS=["break fungibility","block arbitrage","block free entry","none"];
+const INS=["automate","augment","keep human"];
 
-const newRow=(n="")=>({n,a:0,g:0,h:0,read:-1,why:""});
+const newRow=(n="")=>({n,a:0,g:0,h:0,ins:-1,read:-1,why:""});
 const newCard=(n="")=>({n,kind:4,bound:0,esc:0,note:"",aiBound:null});
 const MAX_ACT=7, MAX_WALL=4;
 let R=[newRow(),newRow(),newRow(),newRow(),newRow()], W=[newCard(),newCard(),newCard()];
@@ -262,12 +264,21 @@ let FEEDBACK="", AISUM="", sentEdited=false;
 const tot=r=>r.a+r.g+r.h, reach=r=>tot(r)?(r.a+0.5*r.g)/tot(r):null;
 const hzOf=x=>x===null?-1:(x>=0.8?3:x>=0.6?2:x>=0.4?1:0);
 const isKept=r=>tot(r)>0&&r.h/tot(r)>0.5, nearKept=r=>tot(r)>0&&r.h/tot(r)===0.5;
+// A table of three or four splits easily. When automate and keep human each draw at least 30%
+// of the votes, the activity is contested: no average horizon that nobody voted for.
+const isContested=r=>tot(r)>=3&&!isKept(r)&&r.a/tot(r)>=0.3&&r.h/tot(r)>=0.3;
+// The vote of the team member who works in this industry: counted only if it is among the votes cast.
+const insOf=r=>{const k=r.ins??-1;return k>=0&&[r.a,r.g,r.h][k]>0?k:-1;};
+// They stand alone when nobody else at the table voted the same way.
+const insAlone=r=>{const k=insOf(r);return k>=0&&tot(r)>1&&[r.a,r.g,r.h][k]===1;};
+const callOf=r=>{const x=reach(r);return x===null?"not voted":isContested(r)?"contested":HZ[hzOf(x)];};
 function median(xs){if(!xs.length)return null;const s=[...xs].sort((a,b)=>a-b),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 const named=()=>R.filter(r=>r.n.trim()), voted=()=>named().filter(r=>tot(r)>0), cardsN=()=>W.filter(c=>c.n.trim());
 const f2=x=>x===null?"\u2014":x.toFixed(2);
-function distOf(r){const room=hzOf(reach(r));return (room<0||r.read<0)?null:room-r.read;}
+function distOf(r){const room=hzOf(reach(r));return (room<0||r.read<0||isContested(r))?null:room-r.read;}
 function distLabel(d){if(d===null)return "\u2014";if(d===0)return "agrees";return d>0?`+${d} more optimistic`:`\u2212${-d} more sceptical`;}
 const tagHz=i=>i<0?'<span class="tag none">not voted</span>':`<span class="tag ${HZC[i]}">${HZ[i]}</span>`;
+const tagCall=r=>isContested(r)?'<span class="tag ct">contested</span>':tagHz(hzOf(reach(r)));
 
 /* ---------- 1 · the flood ---------- */
 function drawRows(){
@@ -276,7 +287,7 @@ function drawRows(){
     const x=reach(r),pol=isKept(r)?' <span class="tag pol">kept human</span>':(nearKept(r)?' <span class="tag none">one vote short</span>':'');
     const st=k=>`<span class="step"><button data-i="${i}" data-k="${k}" data-d="-1">\u2212</button><span>${r[k]}</span><button data-i="${i}" data-k="${k}" data-d="1">+</button></span>`;
     return `<tr><td><input type="text" data-i="${i}" data-f="n" value="${esc(r.n)}" placeholder="e.g. appointment scheduling"></td>
-      <td>${st("a")}</td><td>${st("g")}</td><td>${st("h")}</td><td class="num">${f2(x)}</td><td>${tagHz(hzOf(x))}${pol}</td>
+      <td>${st("a")}</td><td>${st("g")}</td><td>${st("h")}</td><td><select data-ins="${i}" style="width:auto"><option value="-1"${(r.ins??-1)<0?" selected":""}>\u2014</option>${INS.map((o,k)=>`<option value="${k}"${r.ins===k?" selected":""}>${o}</option>`).join("")}</select></td><td class="num">${f2(x)}</td><td>${tagCall(r)}${pol}${insAlone(r)?' <span class="tag ins">insider alone</span>':""}${(r.ins??-1)>=0&&insOf(r)<0?' <span class="tag none">add their vote above</span>':""}</td>
       <td>${R.length>1?`<button class="del" data-del="${i}">&times;</button>`:""}</td></tr>`;}).join("");
 }
 function drawChart(){
@@ -287,7 +298,7 @@ function drawChart(){
   [[0.8,1,"#3E6E78","already flooding"],[0.6,0.8,"#7FA0A6","under 3 years"],[0.4,0.6,"#8A7E5F","3 to 7 years"],[0,0.4,"#4E7E78","resists"]]
    .forEach(([a,b,c,t])=>{s+=`<rect x="${sx(a)}" y="${top-6}" width="${sx(b)-sx(a)}" height="${rs.length*rowH+8}" fill="${c}" opacity=".07"/><text x="${(sx(a)+sx(b))/2}" y="${top-12}" font-size="10" fill="#5E726F" text-anchor="middle">${t}</text>`;});
   rs.forEach((o,i)=>{const y=top+i*rowH,pol=isKept(o.r),nm=o.r.n.length>40?o.r.n.slice(0,39)+"\u2026":o.r.n;
-    s+=`<text x="${L-8}" y="${y+14}" font-size="11.5" fill="#15302E" text-anchor="end">${esc(nm)}</text><rect x="${sx(0)}" y="${y+3}" width="${Math.max(2,sx(o.x)-sx(0))}" height="${rowH-8}" rx="3" fill="${pol?"#C6A553":(o.x>=0.6?"#3E6E78":"#7FA0A6")}"/><text x="${sx(o.x)+6}" y="${y+14}" font-size="11" fill="#15302E">${o.x.toFixed(2)}${pol?"  kept human":""}</text>`;});
+    s+=`<text x="${L-8}" y="${y+14}" font-size="11.5" fill="#15302E" text-anchor="end">${esc(nm)}</text><rect x="${sx(0)}" y="${y+3}" width="${Math.max(2,sx(o.x)-sx(0))}" height="${rowH-8}" rx="3" fill="${pol?"#C6A553":(o.x>=0.6?"#3E6E78":"#7FA0A6")}"/><text x="${sx(o.x)+6}" y="${y+14}" font-size="11" fill="#15302E">${o.x.toFixed(2)}${pol?"  kept human":isContested(o.r)?"  contested":""}</text>`;});
   const xw=sx(wl);
   s+=`<line x1="${xw}" y1="${top-6}" x2="${xw}" y2="${top+rs.length*rowH+2}" stroke="#B05F45" stroke-width="2" stroke-dasharray="5 4"/><text x="${xw}" y="${top+rs.length*rowH+18}" font-size="11" fill="#B05F45" text-anchor="middle" font-weight="700">waterline ${wl.toFixed(2)}</text></svg>`;
   $("chart").innerHTML=s;
@@ -313,7 +324,7 @@ function drawRelies(){
 
 /* ---------- 3 · the way out ---------- */
 function draftSentence(){
-  const fl=voted().filter(r=>hzOf(reach(r))>=2).sort((a,b)=>reach(b)-reach(a))[0];
+  const fl=voted().filter(r=>!isContested(r)&&hzOf(reach(r))>=2).sort((a,b)=>reach(b)-reach(a))[0];
   const cs=cardsN(), bound=cs.filter(c=>c.bound===0);
   const ri=+$("relies").value, pick=ri>=0&&W[ri]&&W[ri].n.trim()?W[ri]:(bound.find(c=>c.esc===2)||bound[0]||cs[0]);
   const owned=pick?pick.bound===0:false;
@@ -346,7 +357,7 @@ function drawRead(){
   $("readWrap").style.display=any?"block":"none";
   $("readRows").innerHTML=R.map((r,i)=>{if(!r.n.trim())return "";
     const d=distOf(r),cls=d===null?"":(d>0?"pos":d<0?"neg":"zero");
-    return `<tr><td>${esc(r.n)}</td><td>${tagHz(hzOf(reach(r)))}</td><td style="min-width:150px"><select data-ri="${i}"><option value="-1"${r.read<0?" selected":""}>not given</option>${HZ.map((h,k)=>`<option value="${k}"${r.read===k?" selected":""}>${h}</option>`).join("")}</select></td>
+    return `<tr><td>${esc(r.n)}</td><td>${tagCall(r)}</td><td style="min-width:150px"><select data-ri="${i}"><option value="-1"${r.read<0?" selected":""}>not given</option>${HZ.map((h,k)=>`<option value="${k}"${r.read===k?" selected":""}>${h}</option>`).join("")}</select></td>
       <td class="dist ${cls}">${distLabel(d)}</td><td class="why">${esc(r.why)}</td></tr>`;}).join("");
 }
 function mdLite(t){
@@ -361,7 +372,7 @@ function drawFeedback(){
 
 /* ---------- 5 · readings ---------- */
 function readings(){
-  const out=[], rs=voted(), withRead=rs.filter(r=>r.read>=0), wl=median(rs.map(reach));
+  const out=[], rs=voted(), withRead=rs.filter(r=>r.read>=0&&!isContested(r)), wl=median(rs.map(reach));
   if(withRead.length){
     const ds=withRead.map(distOf),op=ds.filter(d=>d>0),sc=ds.filter(d=>d<0),ag=ds.filter(d=>d===0);
     const lean=op.length>sc.length?"further along than the feedback does":sc.length>op.length?"less far along than the feedback does":"about where the feedback does";
@@ -377,6 +388,8 @@ function readings(){
   if(near.length) out.push(["A boundary, not a fact",near.map(r=>`<b>${esc(r.n)}</b> missed staying human by one vote: ${r.h} of ${tot(r)}, exactly half`).join("; ")+". Where you draw that line is a decision, not a fact."]);
   const split=rs.filter(r=>tot(r)>=3&&r.a/tot(r)>=0.3&&r.h/tot(r)>=0.3);
   if(split.length) out.push(["The team split",split.map(r=>`<b>${esc(r.n)}</b> (${r.a} automate, ${r.h} hold)`).join("; ")+". The disagreement is the finding."]);
+  const alone=rs.filter(insAlone);
+  if(alone.length) out.push([alone.length===1?"The insider stands alone":`The insider stands alone on ${alone.length} activities`,alone.map(r=>`<b>${esc(r.n)}</b>: the person from the industry voted ${INS[insOf(r)]}, and nobody else did`).join("; ")+". Ask what they can see that the others cannot: a real constraint such as regulation, liability, trust or physical presence, or the habit of how things are done now. A rival from outside the industry will see it the way the others do."]);
   const cs=cardsN(),bound=cs.filter(c=>c.bound===0);
   if(cs.length){
     const ip=cs.filter(c=>IPK.includes(c.kind)).length,nw=n=>n===0?"none":String(n);
@@ -412,7 +425,7 @@ function drawReport(){
   const K=drawKpis(),rs=named(),cs=cardsN(),route=+$("route").value,ri=+$("relies").value;
   const stamp=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const rows=[...rs].sort((a,b)=>(reach(b)??-1)-(reach(a)??-1)).map(r=>{const x=reach(r);
-    return `<tr><td>${esc(r.n)}${isKept(r)?" <b>(kept human)</b>":""}</td><td class="num">${f2(x)}</td><td class="num">${r.a}/${r.g}/${r.h}</td><td>${x===null?"\u2014":HZ[hzOf(x)]}</td><td>${r.read<0?"not given":HZ[r.read]}</td><td>${distLabel(distOf(r))}</td></tr>`;}).join("");
+    return `<tr><td>${esc(r.n)}${isKept(r)?" <b>(kept human)</b>":""}${insAlone(r)?" <b>(insider alone)</b>":""}</td><td class="num">${f2(x)}</td><td class="num">${r.a}/${r.g}/${r.h}</td><td>${x===null?"\u2014":callOf(r)}</td><td>${r.read<0?"not given":HZ[r.read]}</td><td>${distLabel(distOf(r))}</td></tr>`;}).join("");
   const rd=readings();
   $("report").innerHTML=`<h2>The flood, the wall, and the way out</h2>
     <div class="rsub">${esc(val("company")||"Team")}${val("industry")?" \u00b7 "+esc(val("industry")):""} \u00b7 ${stamp}</div>
@@ -427,7 +440,7 @@ function drawReport(){
     <div class="rr"><b>The sentence:</b> ${esc($("sent")?$("sent").value:draftSentence())}</div>
     <h3>What the data says</h3>${rd.map((r,i)=>`<div class="rr"><b>${i+1} \u00b7 ${r[0]}.</b> ${r[1]}</div>`).join("")||'<div class="rr">No readings yet.</div>'}
     ${FEEDBACK?`<h3>The feedback</h3><div class="rr">${mdLite(FEEDBACK)}</div>`:""}
-    <div class="cav"><b>What this data does not say.</b> Reach is automate plus half of augment over the votes cast; it aggregates individual choices and is not a forecast. Votes were public inside the team. The feedback is one model's view, given everything above but nothing the team knows privately. Horizons: 0.80 and above reads as already flooding, 0.60 as under three years, 0.40 as three to seven years, below that as resists. An activity counts as kept human only with a strict majority.</div>`;
+    <div class="cav"><b>What this data does not say.</b> Reach is automate plus half of augment over the votes cast; it aggregates individual choices and is not a forecast. Votes were public inside the team. The feedback is one model's view, given everything above but nothing the team knows privately. Horizons: 0.80 and above reads as already flooding, 0.60 as under three years, 0.40 as three to seven years, below that as resists. An activity counts as kept human only with a strict majority. It is contested, with no horizon, when automate and keep human each draw at least 30% of the votes.</div>`;
 }
 function renderAll(){drawChart();drawVerdict();drawRead();drawFeedback();drawReadings();drawReport();}
 function renderLight(){drawChart();if(!sentEdited&&$("sent"))$("sent").value=draftSentence();drawRead();drawReadings();drawReport();}
@@ -443,6 +456,7 @@ document.addEventListener("input",e=>{const t=e.target;
   else if(["industry","company","move"].includes(t.id)){drawReport();}});
 document.addEventListener("change",e=>{const t=e.target;
   if(t.dataset.ri!==undefined){R[+t.dataset.ri].read=+t.value;renderLight();}
+  if(t.dataset.ins!==undefined){R[+t.dataset.ins].ins=+t.value;drawRows();renderLight();}
   if(t.dataset.wk&&t.dataset.wk!=="n"){W[+t.dataset.wi][t.dataset.wk]=+t.value;drawWall();renderAll();}
   if(t.id==="route"||t.id==="relies"){renderAll();}});
 $("addRow").onclick=()=>{if(R.length<MAX_ACT){R.push(newRow());drawRows();renderLight();}};
@@ -452,12 +466,12 @@ $("addCard").onclick=()=>{if(W.length<MAX_WALL){W.push(newCard());drawWall();ren
 function buildPrompt(){
   const rs=named(), cs=cardsN(), route=+$("route").value, ri=+$("relies").value;
   const flood=rs.map((r,i)=>{const x=reach(r);
-    return `${i+1}. ${r.n} | votes automate ${r.a}, augment ${r.g}, keep human ${r.h} | reach ${f2(x)} | their call: ${x===null?"not voted":HZ[hzOf(x)]}${isKept(r)?" | KEPT HUMAN by majority":""}`;}).join("\n")||"(none listed)";
+    return `${i+1}. ${r.n} | votes automate ${r.a}, augment ${r.g}, keep human ${r.h} | reach ${f2(x)} | their call: ${callOf(r)}${isKept(r)?" | KEPT HUMAN by majority":""}${insOf(r)>=0?` | the member from this industry voted ${INS[insOf(r)]}${insAlone(r)?", and nobody else did":""}`:""}`;}).join("\n")||"(none listed)";
   const wall=cs.map((c,i)=>`${i+1}. ${c.n} | ${KINDS[c.kind]} | they say: ${c.bound===0?"bound to them":"generic"} | escape it enables: ${ESCS[c.esc]}`).join("\n")||"(none listed)";
   return `You are a sparring partner for a team of executives on a Managerial Economics course. They have just worked through an exercise on how AI will reshape the economics of their industry, and they want honest, specific feedback on all of it. Be direct. Disagree where the evidence points the other way. Do not flatter them, and do not soften a criticism to be polite.
 
 THE FRAMEWORK THEY USED
-- The flood. AI capability rises like water. An activity the machine can do stops being scarce, so its price falls toward the cost of running the machine. For each activity, each team member voted automate, augment or keep human. Reach = automate share + half the augment share. Their call follows from reach: 0.80 and above = already flooding, 0.60 = under 3 years, 0.40 = 3 to 7 years, below = resists. An activity a strict majority voted to keep human is marked KEPT HUMAN.
+- The flood. AI capability rises like water. An activity the machine can do stops being scarce, so its price falls toward the cost of running the machine. For each activity, each team member voted automate, augment or keep human. Reach = automate share + half the augment share. Their call follows from reach: 0.80 and above = already flooding, 0.60 = under 3 years, 0.40 = 3 to 7 years, below = resists. An activity a strict majority voted to keep human is marked KEPT HUMAN. When automate and keep human each draw at least 30% of the votes, the activity is marked CONTESTED instead of given a call. Teams have three or four members, and one may work in this industry: their vote is marked where given.
 - The wall (David Teece, Profiting from Innovation). When an idea can be copied, value goes to whoever owns the complementary assets it must pass through, above all cospecialised ones. "Bound" means a rival could not rent or copy it within three years.
 - The way out. Price stays above cost only if something breaks one of three conditions: buyers treat products as interchangeable (fungibility), buyers can move freely between prices (arbitrage), rivals can enter freely (free entry). So there are three escapes: break fungibility, block arbitrage, block free entry. Where ideas can be copied, blocking entry is usually the one that lasts.
 
@@ -479,7 +493,7 @@ Their sentence: ${$("sent")?$("sent").value:draftSentence()}
 
 WHAT TO GIVE THEM
 Write plain prose under these five headings, 300 to 450 words in total: they have six minutes to read it. Name specific activities and cards; generalities are no use to them.
-1. The flood. Which of their calls would you challenge, and why? What belongs on their list that is missing?
+1. The flood. Which of their calls would you challenge, and why? Where an activity is contested, or the member from the industry voted alone, say which side you think is right. What belongs on their list that is missing?
 2. What they kept human. Are the activities they kept human protected by real constraints (regulation, liability, trust, physical presence) or by preference? Would a competitor keep the same line?
 3. The wall. For each card they marked bound: is it really? Which could a well-funded rival rent, copy or build within three years? Which asset is missing?
 4. The way out. Does their route follow from their wall? Is the move concrete enough to start on Monday? What is most likely to make it fail?
@@ -564,7 +578,7 @@ async function aiStatus(){
 function floodInputs(){
   const cs=cardsN(), ri=+$("relies").value, rc=ri>=0&&W[ri]&&W[ri].n.trim()?W[ri]:null;
   return {industry:val("industry"),company:val("company"),
-    activities:named().map(r=>({n:r.n,a:r.a,g:r.g,h:r.h})),
+    activities:named().map(r=>({n:r.n,a:r.a,g:r.g,h:r.h,ins:insOf(r)})),
     wall:cs.map(c=>({n:c.n,kind:c.kind,bound:c.bound,esc:c.esc})),
     route:+$("route").value,relies:rc?cs.indexOf(rc):-1,
     move:val("move"),sentence:$("sent")?$("sent").value:draftSentence()};
@@ -575,7 +589,7 @@ const EXAMPLE_MIN_CHANGES=5;
 let EXAMPLE=null;   // the example's answers, recorded when it is loaded
 function exampleSnapshot(){
   return {fields:{industry:val("industry"),company:val("company"),route:$("route").value,relies:$("relies").value,move:val("move")},
-    acts:R.filter(r=>r.n.trim()).map(r=>`${r.n.trim()}|${r.a}|${r.g}|${r.h}`),
+    acts:R.filter(r=>r.n.trim()).map(r=>`${r.n.trim()}|${r.a}|${r.g}|${r.h}|${insOf(r)}`),
     cards:W.filter(c=>c.n.trim()).map(c=>`${c.n.trim()}|${c.kind}|${c.bound}|${c.esc}`)};
 }
 // One answer = a field, an activity (name or votes) or a card. Deleting a row is one change.
