@@ -15,22 +15,22 @@
 <title>LEGO India: sign the INR 100 m?</title>
 <style>
 :root {
-  --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9;
-  --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123;
-  color-scheme: dark; box-sizing: border-box;
+  --bg: #ECEBE3; --card: #F8F7F2; --card2: #E3E1D6; --line: #B4B9AF; --ink: #193C3F; --muted: #4A6164;
+  --gold: #C6A553; --good: #1A6B4B; --bad: #A6422A; --blue: #2C5F8A; --track: #DAD8CC;
+  color-scheme: light; box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9; --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="light"]) { --bg: #ECEBE3; --card: #F8F7F2; --card2: #E3E1D6; --line: #B4B9AF; --ink: #193C3F; --muted: #4A6164; --gold: #C6A553; --good: #1A6B4B; --bad: #A6422A; --blue: #2C5F8A; --track: #DAD8CC; }
 }
-:root[data-theme="dark"] { --bg: #0F2A2C; --card: #173A3D; --card2: #1F4749; --line: #3C6467; --ink: #F7F3EA; --muted: #CFC8B9; --gold: #D6B45F; --good: #4CC79F; --bad: #E39A7E; --blue: #7FB5E6; --track: #0B2123; }
+:root[data-theme="dark"] { --bg: #ECEBE3; --card: #F8F7F2; --card2: #E3E1D6; --line: #B4B9AF; --ink: #193C3F; --muted: #4A6164; --gold: #C6A553; --good: #1A6B4B; --bad: #A6422A; --blue: #2C5F8A; --track: #DAD8CC; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.55; }
 .num, table, input, button, select, textarea, .ro, .val { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 26px 56px; }
 h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.12; margin: 0 0 10px; }
-h2 { font-size: 27px; margin: 48px 0 8px; color: var(--gold); font-weight: 700; }
+h2 { font-size: 27px; margin: 48px 0 8px; }
 h3 { font-size: 20px; margin: 0 0 6px; }
 p { margin: 0 0 12px; }
 .lede { font-size: 20px; color: var(--muted); max-width: 72ch; }
@@ -49,7 +49,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .legend { display: flex; flex-wrap: wrap; gap: 20px; font-size: 15px; color: var(--muted); margin-left: 214px; }
 .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 7px; }
 .verdict { font-size: 23px; margin: 20px 0 6px; }
-.good { color: var(--good); } .bad { color: var(--bad); } .gold { color: var(--gold); }
+.good { color: var(--good); } .bad { color: var(--bad); } .gold { color: var(--ink); }
 .ro { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 18px 0; }
 .ro > div { background: var(--card); border-radius: 8px; padding: 14px 16px; }
 .ro .k { font-size: 14px; color: var(--muted); }
@@ -72,7 +72,7 @@ td.pos { color: var(--good); } td.neg { color: var(--bad); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .panel { background: var(--card); border-radius: 10px; padding: 18px 20px; }
 .panel ul { margin: 6px 0 0; padding-left: 20px; } .panel li { margin: 6px 0; }
-.btn { background: var(--gold); color: #10292B; border: 0; border-radius: 8px; padding: 11px 18px; font-size: 17px; font-weight: 700; cursor: pointer; }
+.btn { background: var(--gold); color: var(--ink); border: 0; border-radius: 8px; padding: 11px 18px; font-size: 17px; font-weight: 700; cursor: pointer; }
 .btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); font-weight: 600; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; fill: var(--muted); font-size: 13px; }
@@ -87,9 +87,9 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 .seg.base { background: var(--muted); } .seg.lego { background: var(--gold); }
 .flags { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; }
 .chk { border-bottom: 1px solid var(--line); padding: 10px 0; }
-.chk b { color: var(--gold); }
+.chk b { color: var(--ink); }
 details { background: var(--card); border-radius: 10px; padding: 14px 18px; margin: 12px 0; }
-summary { cursor: pointer; font-size: 19px; font-weight: 700; color: var(--gold); }
+summary { cursor: pointer; font-size: 20px; font-weight: 700; color: var(--ink); }
 details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0; }
 .err { color: var(--bad); font-weight: 700; }
 /* commit before reveal, the stress test, and live Claude */
@@ -99,22 +99,40 @@ textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--
 .gate { background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 20px 22px; margin: 22px 0; }
 .gate select { font-size: 18px; padding: 8px 10px; background: var(--bg); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; }
 .rankrow { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-.rankrow b { color: var(--gold); margin-right: 8px; } .rankrow span { color: var(--muted); font-size: 15px; }
+.rankrow b { color: var(--ink); background: var(--gold); border-radius: 4px; padding: 0 7px; margin-right: 10px; } .rankrow span { color: var(--muted); font-size: 15px; }
 .locked { display: none; } .open { display: block; }
 .cmp td:first-child { font-weight: 700; }
-tr.case td { color: var(--gold); font-weight: 700; }
+tr.case td { background: rgba(198,165,83,.30); color: var(--ink); font-weight: 700; }
 .how { font-size: 16px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 14px; margin: 10px 0 0; }
 @media (max-width: 800px) { .row { grid-template-columns: 1fr auto; } }  /* "−232,136" is wider than 110px on a phone */
 .aibar { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
 .aibadge { font: 700 12px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; background: var(--card2); color: var(--muted); }
-.aibadge.on { background: var(--gold); color: #10292B; }
+.aibadge.on { background: var(--gold); color: var(--ink); }
 #classCode { width: 150px; font-size: 17px; padding: 9px 12px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; letter-spacing: .1em; }
+
+/* The programme palette, sized for a projector: rgb(236,235,227) ground, rgb(25,60,63) ink,
+   rgb(198,165,83) gold for fills and highlights only (never as text on cream), Georgia.
+   Dark teal sits only behind the title and the section dividers. */
+body { font-size: 20px; line-height: 1.55; }
+.band { background: var(--ink); color: var(--bg); border-radius: 10px; padding: 24px 28px 20px; margin: 0 0 18px; border-bottom: 6px solid var(--gold); }
+.band h1 { color: var(--bg); margin: 0 0 10px; }
+.band .lede { color: var(--bg); opacity: .92; margin: 0; }
+h2 { background: var(--ink); color: var(--bg); font-size: 26px; font-weight: 700; margin: 48px 0 14px; padding: 12px 18px; border-radius: 8px; border-left: 8px solid var(--gold); }
+h3.gold { color: var(--ink); border-bottom: 3px solid var(--gold); display: inline-block; padding-bottom: 3px; }
+.small, .inp label, table { font-size: 18px; }
+.inp .src, thead th { font-size: 16px; }
+.btn { color: var(--ink); }
+.scen button { color: var(--ink); }
+.scen button[aria-pressed="true"] { background: var(--card); box-shadow: inset 0 0 0 1px var(--gold); }
+.ro > div, .readout > div, .panel, .gate, .ai-out, details { box-shadow: 0 1px 0 var(--line); }
 </style>
 </head>
 <body>
 <div class="wrap">
+<header class="band">
 <h1>LEGO India: sign the INR 100 m?</h1>
 <p class="lede">Start of 2024. Aswath's business case, rebuilt line by line from his spreadsheet. First the model as he built it, then the deal LEGO actually signs.</p>
+</header>
 
 <p class="how">Rank the five assumptions first, alone: which one, changed by a reasonable amount, moves NPV most? The tool opens once your ranking is in.</p>
 
@@ -320,7 +338,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     // left: unit margin
     var x0 = 50, w = 440, y0 = 30, h = 220, mn = -0.06, mxm = 0.16;
     var ys = function (v) { return y0 + h - (v - mn) / (mxm - mn) * h; };
-    el('text', { x: x0, y: 16, style: 'font-size:15px;fill:var(--gold)' }, 'Unit gross margin');
+    el('text', { x: x0, y: 16, style: 'font-size:15px;fill:var(--ink);font-weight:700' }, 'Unit gross margin');
     el('line', { x1: x0, x2: x0 + w, y1: ys(0), y2: ys(0), stroke: 'var(--line)' });
     var pts = R.rows.map(function (r, i) { return (x0 + i * w / 9) + ',' + ys(r.m); }).join(' ');
     el('polyline', { points: pts, fill: 'none', stroke: 'var(--gold)', 'stroke-width': 3 });
@@ -333,7 +351,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     // right: FOCF bars
     var x1 = 580, w1 = 500, max = Math.max.apply(null, R.rows.map(function (r) { return Math.abs(r.focf); })) || 1;
     var zero = y0 + h / 2 + 30;
-    el('text', { x: x1, y: 16, style: 'font-size:15px;fill:var(--gold)' }, 'Free operating cash flow, kINR');
+    el('text', { x: x1, y: 16, style: 'font-size:15px;fill:var(--ink);font-weight:700' }, 'Free operating cash flow, kINR');
     el('line', { x1: x1, x2: x1 + w1, y1: zero, y2: zero, stroke: 'var(--line)' });
     R.rows.forEach(function (r, i) {
       var bw = 34, x = x1 + i * w1 / 10 + 8, bh = Math.abs(r.focf) / max * (h / 2 + 10);

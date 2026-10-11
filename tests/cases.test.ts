@@ -146,3 +146,16 @@ Deno.test("the gate sends case questions at medium effort, and logs them under t
   assertEquals(calls[0].effort, "medium");
   assertEquals([db.rows[0].artifact, db.rows[0].bucket], ["akzo", "akzo.ask"]);
 });
+
+Deno.test("the three pages use the programme palette, with no gold text on cream", () => {
+  for (const f of ["sab", "lego", "akzo"]) {
+    const s = page(f), css = s.slice(0, s.indexOf("</style>"));
+    for (const [v, hex] of [["bg", "#ECEBE3"], ["ink", "#193C3F"], ["gold", "#C6A553"]]) {
+      assert(new RegExp(`--${v}: ${hex}`).test(css), `${f}: --${v}`);
+    }
+    assert(!/#0F2A2C|#173A3D|color-scheme: dark/.test(css), f + ": dark theme left");
+    assert(!/(^|[;{\s])color:\s*var\(--gold\)/m.test(css), f + ": gold used as text colour");
+    assert(!/fill:var\(--gold\)|fill:var\(--bg\)/.test(s), f + ": gold or cream text in a chart");
+    assert(s.includes('<header class="band">') && /body \{[^}]*font-family: Georgia/.test(css), f);
+  }
+});
