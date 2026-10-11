@@ -125,6 +125,17 @@ if (!status.live) {
       fb.status === 200 ? `${String(fb.body.text).split(/\s+/).length} words, ${JSON.stringify(fb.body.usage)}, $${fb.body.cost_usd}` : fb);
     if (parsed) console.log("      summary: " + parsed.summary);
 
+    // the AI & Finance case tools, one free question each, at medium effort
+    for (const [kind, inputs] of [
+      ["akzo.ask", { scenario: "A", sliders: { ppg: 98.74, proc: 8.6, mult: 11.5, eb: 1349, debt: 3585, pay: 100, leak: 0 }, commit: { pc: 47, sc: 34 }, question: "What would PPG have to add for the Boards to open talks?" }],
+      ["sab.ask", { sliders: { offer: 64, und: 75, syn: 2.2, dis: 0, tax: 30, w: 7, g: 0, int: 0, gr: 3, rn: 12 }, rule: "We pay up to $65 per share if synergies reach $2.5 bn; we walk if disposals exceed a third.", q: "free", question: "Would a share alternative change who keeps the spread?" }],
+      ["lego.ask", { sliders: { share: 100, own: false, hq: 6, crp: 4, pg: 0, cg: 2, mg: 8, ss: 100, tax: true, sunk: false, int: false }, ranking: [1, 2, 5, 4, 3], question: "Which assumption decides this case, and why does the discount rate barely matter?" }],
+    ] as const) {
+      const r = await call({ kind, inputs });
+      check(`${kind} answers a question`, r.status === 200 && typeof r.body.result === "string",
+        r.status === 200 ? `${r.body.result.split(/\s+/).length} words, ${JSON.stringify(r.body.usage)}, $${r.body.cost_usd}` : r);
+    }
+
     console.log("\nThe control room's live log should now show these calls with tokens and cost.");
   }
 }
