@@ -7,6 +7,7 @@ Static pages for theaiminute.blog, served by Cloudflare from `main`. This README
 | Artifact 03, jobs vs tasks | `03_jobs_vs_tasks.html` and an identical copy, `artifacts/03_jobs_vs_tasks_decomposer.html` (a test keeps them in sync) |
 | Artifact 06, pandemic policy room (v2.5) | `06_policy_room.html` and an identical copy, `artifacts/06_pandemic_policy_room.html` (a test keeps them in sync) |
 | Artifact 08, the flood, the wall, and the way out | `artifacts/08_the_flood_value_chain.html` |
+| AI & Finance executive programme: AkzoNobel, AB InBev / SABMiller, LEGO India | `artifacts/akzo.html`, `artifacts/sab.html`, `artifacts/lego.html` |
 | Control room | `admin/index.html`, at `/admin/` |
 | Proxy, the only caller of Anthropic | `supabase/functions/ai/` |
 | Control-room actions | `supabase/functions/admin/` |
@@ -82,8 +83,8 @@ deno run --allow-net tests/smoke.ts https://kcobpakjfluuyfzswtoq.supabase.co/fun
 | 3 | Now is inside `opens_at`..`closes_at`, when set | 423 `{reason: "outside window"}` |
 | 4 | The class code matches | 401 |
 | 5 | Spend since the last reset is below the budget | 429 `{reason: "budget"}` |
-| 6 | The device is under its limit: 03 gets 4 decompositions and 3 second opinions per 10 minutes; 06 gets 10 briefings and 1 debrief an hour; 08 gets 4 feedback calls an hour | 429 `{reason: "rate"}` |
-| 7 | The kind is `03.decompose`, `03.review`, `06.briefing`, `06.debrief` or `08.feedback`, and every input has the right type, length and range | 400 |
+| 6 | The device is under its limit: 03 gets 4 decompositions and 3 second opinions per 10 minutes; 06 gets 10 briefings and 1 debrief an hour; 08 gets 4 feedback calls an hour; each case tool (AkzoNobel, SAB, LEGO) gets 8 questions per 10 minutes | 429 `{reason: "rate"}` |
+| 7 | The kind is `03.decompose`, `03.review`, `06.briefing`, `06.debrief`, `08.feedback`, `akzo.ask`, `sab.ask` or `lego.ask`, and every input has the right type, length and range | 400 |
 
 Only then does it call Anthropic. It logs the call to `ai_usage` and returns `{result, usage, cost_usd}`. For `03.decompose` the result is the parsed task array; for `03.review`, Claude's call and weights per task plus the disagreements worth arguing about. Both are validated on the server. `08.feedback` answers `{text, usage, cost_usd}` instead: the page reads the reply's prose and closing JSON block itself, as it does for a reply pasted from any assistant. Failed and refused calls do not use up a device's allowance. `GET /functions/v1/ai/status` returns `{live, reason}` with no secrets; the pages use it for the badge.
 
@@ -95,6 +96,12 @@ The prompts live in `supabase/functions/ai/templates.ts`. The 03 decomposition a
 
 **Allowing localhost** for testing: set the secret `AI_DEV=1`. Without it, only the two production origins are accepted.
 
+## The AI & Finance case tools
+
+`akzo.html`, `sab.html` and `lego.html` serve the five-hour executive programme (Prof. dr. Dennis Vink and Stéphane Guerraz). Each opens on a commit screen, as the deck's "commit before reveal" rule asks: AkzoNobel takes each person's value per share for the two parts (2:05), SAB the table's premium, synergies and walk-away price (3:04), LEGO the A-to-E ranking of the five assumptions (4:06). The model opens after.
+
+Each tool then takes free questions to Claude Sonnet 5.5 at medium effort (`akzo.ask`, `sab.ask`, `lego.ask`); SAB also keeps its three red-team questions, word for word. The page sends its slider values, the table's committed numbers and the question; the server recomputes the page's model and builds the prompt, which tells Claude to answer only questions about the case. Without live AI, the same prompt appears ready to paste into any assistant. LEGO's "One change at a time" panel recomputes the deck's slide 52 (+256 down to −476 INR m) and slide 54's break-evens from the page's own model; `tests/cases.test.ts` checks every figure.
+
 ## Model and cost
 
 | | |
@@ -103,8 +110,8 @@ The prompts live in `supabase/functions/ai/templates.ts`. The 03 decomposition a
 | API version | `anthropic-version: 2023-06-01`, sent by the official SDK |
 | Price | $2 per million input tokens, $10 per million output tokens ([pricing](https://platform.claude.com/docs/en/about-claude/pricing)), kept in one constant, `PRICE_PER_MTOK` in `templates.ts` |
 | Thinking | On by default for Sonnet 5.5 (adaptive). Thinking tokens count as output: `max_tokens` caps thinking and answer together, and they are billed at the output rate. |
-| Effort | `output_config: {effort: "low"}`, which the [effort docs](https://platform.claude.com/docs/en/build-with-claude/effort) recommend for short, scoped, latency-sensitive tasks |
-| `max_tokens` | 03 decomposition: 3000 · 03 second opinion: 4000 · 06 briefing: 2000 · 06 debrief: 2000 · 08 feedback: 4000. The old pages used 1000, sized for a model without thinking. |
+| Effort | `output_config: {effort: "low"}` for 03, 06 and 08, which the [effort docs](https://platform.claude.com/docs/en/build-with-claude/effort) recommend for short, scoped, latency-sensitive tasks; `medium` for the three case tools' questions, as asked for the executive programme |
+| `max_tokens` | 03 decomposition: 3000 · 03 second opinion: 4000 · 06 briefing: 2000 · 06 debrief: 2000 · 08 feedback: 4000 · case questions (akzo, sab, lego): 5000. The old pages used 1000, sized for a model without thinking. |
 
 **Cost for a course day**, from real calls on 4 October 2026:
 
