@@ -109,7 +109,8 @@ Deno.test("the three pages: the programme's footer, the proxy, and the commit sc
   for (const f of ["sab", "lego", "akzo"]) {
     const s = page(f);
     assert(!/Nyenrode|lecture 3|window\.claude/.test(s), f);
-    assert(s.includes("AI &amp; Finance, executive programme") && s.includes("Prof. dr. Dennis Vink and Stéphane Guerraz"), f);
+    assert(f === "akzo" ? s.includes('<p class="note">AI &amp; Finance programme. Case:') && s.includes("Segment margins and returns: shareholder circular, 18 October 2017, annexes 1 and 2.")
+      : s.includes("AI &amp; Finance, executive programme") && s.includes("Prof. dr. Dennis Vink and Stéphane Guerraz"), f);
     assert(/^const AI_URL = "https:\/\/[a-z0-9]+\.supabase\.co\/functions\/v1\/ai";/m.test(s), f);
     assert(s.includes('id="gate"') && s.includes('class="locked" id="model"'), f);
   }
@@ -158,4 +159,35 @@ Deno.test("the three pages use the programme palette, with no gold text on cream
     assert(!/fill:var\(--gold\)|fill:var\(--bg\)/.test(s), f + ": gold or cream text in a chart");
     assert(s.includes('<header class="band">') && /body \{[^}]*font-family: Georgia/.test(css), f);
   }
+});
+
+Deno.test("AkzoNobel: two ways to make a margin, computed from the circular's figures", () => {
+  const src = page("akzo");
+  const a = src.indexOf("/* ---- margin decomposition:"), b = src.indexOf("/* ---- end of the margin decomposition ---- */");
+  const M = new Function(src.slice(a, b) + "; return marginDecomposition(SEG);")();
+  const p1 = (v: number) => (v * 100).toFixed(1) + "%", p0 = (v: number) => Math.round(v * 100) + "%";
+  const got = (k: "sc" | "pc") => {
+    const d = M[k];
+    return [p1(d.gross), p1(d.sga), p1(d.margin), Math.round(d.ic), d.turnover.toFixed(2) + "×", p1(d.roic), p1(d.taxRate), p1(d.roicAfterTax), p1(d.roicTangible),
+      [p0(d.shareRevenue), p0(d.shareOpInc), p0(d.shareIc)].join(" / ")];
+  };
+  //                gross    SG&A     op. margin  IC    turnover pre-tax  tax      after-tax tangible  shares
+  // Turnover: 5,098 / 3,433 = 1.484998..., which rounds to 1.48 (the brief's 1.49 rounds twice, via 1.485).
+  assertEquals(M.sc.turnover.toFixed(4), "1.4850");
+  assertEquals(got("sc"), ["34.0%", "21.9%", "12.0%", 3433, "1.48×", "17.9%", "25.2%", "13.4%", "23.6%", "34% / 38% / 38%"]);
+  assertEquals(got("pc"), ["45.0%", "34.3%", "10.4%", 5624, "1.74×", "18.1%", "25.8%", "13.5%", "45.9%", "66% / 62% / 62%"]);
+  // ROIC is margin × turnover
+  for (const k of ["sc", "pc"]) assert(Math.abs(M[k].roic - M[k].margin * M[k].turnover) < 1e-12);
+});
+
+Deno.test("AkzoNobel: the multiple each ROIC justifies, at the default 2% growth", () => {
+  const src = page("akzo");
+  const a = src.indexOf("/* ---- margin decomposition:"), b = src.indexOf("/* ---- end of the margin decomposition ---- */");
+  const P = new Function(src.slice(a, b) + "; return { M: marginDecomposition(SEG), SEG, justifiedMultiple, CASE_WACC };")();
+  const ms = P.justifiedMultiple(P.M.sc.roicAfterTax, 0.02, P.CASE_WACC), mp = P.justifiedMultiple(P.M.pc.roicAfterTax, 0.02, P.CASE_WACC);
+  const nopatSc = 2 * P.SEG.sc.opInc * (1 - P.M.sc.taxRate);
+  assertEquals([ms.toFixed(1), mp.toFixed(1), Math.round(nopatSc), (ms * nopatSc / 953).toFixed(1)], ["23.0", "23.0", 459, "11.1"]);
+  assertEquals(P.justifiedMultiple(0.1, 0, 0.057).toFixed(2), (1 / 0.057).toFixed(2)); // no growth: 1 / WACC
+  // display only: the multiples never reach the sum of the parts
+  assert(!/justifiedMultiple|iGsc|iGpc/.test(src.slice(src.indexOf("function calc()"), src.indexOf("function sens("))));
 });

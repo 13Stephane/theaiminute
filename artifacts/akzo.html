@@ -122,6 +122,29 @@ textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--
 .cmp td:first-child { font-weight: 700; }
 .how { font-size: 16px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 14px; margin: 10px 0 0; }
 @media (max-width: 800px) { .gate .fields { grid-template-columns: 1fr; } }
+/* what multiple each return justifies */
+details.mult { background: var(--card); border-radius: 10px; padding: 14px 18px; margin: 16px 0; }
+details.mult summary { cursor: pointer; font-weight: 700; font-size: 19px; color: var(--ink); }
+details.mult .res { font: 700 22px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
+/* two ways to make a margin: margin × turnover = return */
+.route { display: grid; grid-template-columns: 190px 1fr 28px 1fr 28px 1fr; align-items: center; gap: 10px; margin: 10px 0; }
+.route .who { font-weight: 700; }
+.route .who i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -1px; margin-right: 8px; }
+.route .op { text-align: center; font: 700 24px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; color: var(--muted); }
+.route .term { background: var(--card); border-radius: 8px; padding: 8px 12px; }
+.route .term .k { font: 600 13px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; color: var(--muted); }
+.route .term .v { font: 700 24px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.route .term .bar { height: 8px; border-radius: 4px; background: var(--bar-bg); margin-top: 6px; overflow: hidden; }
+.route .term .bar i { display: block; height: 100%; }
+.route .term.roic { background: var(--gold); }
+.route .term.roic .k { color: var(--ink); }
+.route .term.roic .bar { background: rgba(25,60,63,.18); }
+@media (max-width: 760px) {
+  .route { grid-template-columns: 1fr 22px 1fr; }
+  .route .who { grid-column: 1 / -1; }
+  .route .term.roic { grid-column: 1 / -1; }
+  .route .op.eq { display: none; }
+}
 .aibar { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
 .aibadge { font: 700 12px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; background: var(--card2); color: var(--muted); }
 .aibadge.on { background: var(--gold); color: var(--ink); }
@@ -229,7 +252,25 @@ h3.gold { color: var(--ink); border-bottom: 3px solid var(--gold); display: inli
     <tr><td>Intangible assets</td><td>831</td><td>3,400</td></tr>
     <tr><td>Business equity (before the planned €2.4 bn debt)</td><td>3,008</td><td>3,763</td></tr>
   </tbody></table></div>
-<p class="small">Source: shareholder circular, 18 October 2017, annexes 1–3. Specialty Chemicals, full year 2016: sales €4.8 bn, operating profit €629 m, EBITDA €953 m (case pp. 2–3). The plan loaded €2.0–2.8 bn of debt onto Specialty Chemicals, paid to AkzoNobel; at the €2.4 bn midpoint its business equity falls from €3,008 m to €608 m.</p>
+<p class="small" id="twoBizSrc">Source: shareholder circular, 18 October 2017, annexes 1–3. Specialty Chemicals, full year 2016: sales €4.8 bn, operating profit €629 m, EBITDA €953 m (case pp. 2–3). The plan loaded €2.0–2.8 bn of debt onto Specialty Chemicals, paid to AkzoNobel; at the €2.4 bn midpoint its business equity falls from €3,008 m to €608 m.</p>
+
+<h3 class="gold" style="margin-top:26px">Two ways to make a margin</h3>
+<p class="small">H1 2017, six months to 30 June, unaudited pro forma; computed on the page from the circular's figures (annex 1, Specialty Chemicals; annex 2, Paints &amp; Coatings).</p>
+<div class="tscroll"><table id="margins"></table></div>
+<div id="routes" aria-label="Pre-tax return on invested capital as operating margin times capital turnover, for each business"></div>
+<div class="panel" style="border-left:5px solid var(--gold);margin-top:14px">Same return, two routes. Specialty Chemicals earns a higher margin on heavy plant: its spread rests on cost position. Paints &amp; Coatings earns a 45% gross margin from brands, spends a third of revenue holding them, and turns its capital faster. On tangible capital, paints returns about twice as much: most of its capital is acquired brands and goodwill. Yet the market paid more per euro of EBITDA for paints (11.5× peers) than ING expected for chemicals (≈ 9×): a margin is a snapshot; value depends on how long the spread lasts.</div>
+<p class="small" style="margin-top:10px">H1 doubled to annualise; paints is seasonal. Pro forma carve-out figures with allocated corporate costs; the circular warns they may not be indicative of a stand-alone business. Invested capital excludes cash, financial assets, provisions and deferred tax; including provisions changes both returns.</p>
+
+<details class="mult">
+  <summary>What multiple does each ROIC justify?</summary>
+  <p class="small" style="margin-top:10px">The value-driver formula: EV / NOPAT = (1 − g / ROIC) / (WACC − g). WACC 5.7%, as in the case; ROIC is the after-tax return above. These multiples are for discussion only: the sum of the parts above stays driven by its own sliders.</p>
+  <div class="inputs">
+    <div class="inp"><label for="iGsc">Growth, Specialty Chemicals</label><output id="oGsc"></output><input type="range" id="iGsc" min="0" max="4" step="0.1" value="2"><span class="src">Assumption: not in the case.</span>
+      <div class="res" id="mSc"></div><span class="src" id="mScE"></span></div>
+    <div class="inp"><label for="iGpc">Growth, Paints &amp; Coatings</label><output id="oGpc"></output><input type="range" id="iGpc" min="0" max="4" step="0.1" value="2"><span class="src">Assumption: not in the case.</span>
+      <div class="res" id="mPc"></div><span class="src" id="mPcE"></span></div>
+  </div>
+</details>
 
 <h2>Where each part earns its spread</h2>
 <div class="two">
@@ -265,7 +306,7 @@ h3.gold { color: var(--ink); border-bottom: 3px solid var(--gold); display: inli
   <li>The re-rating of Paints &amp; Coatings is an assumption about the market, not a cash flow.</li>
 </ul>
 
-<p class="note">AI &amp; Finance, executive programme, Session 1, case 1. Prof. dr. Dennis Vink and Stéphane Guerraz. Case: Dennis Vink, "AkzoNobel business case: Prey or hunter?" (2023), exhibits 2012–2016 and the executive-board exercise. Segment data: AkzoNobel shareholder circular, 18 October 2017. The €10.1 bn in the exercise equals the enterprise value at which the sale to Carlyle and GIC closed on 1 October 2018; on 24 April 2017 the published estimate was ING's ≈ 9× 2016 EBITDA, €8.6 bn. Illustrative; not investment advice.</p>
+<p class="note">AI &amp; Finance programme. Case: Dennis Vink, "AkzoNobel business case: Prey or hunter?" (2023), exhibits 2012–2016 and the executive-board exercise. Segment data: AkzoNobel shareholder circular, 18 October 2017. Segment margins and returns: shareholder circular, 18 October 2017, annexes 1 and 2. The €10.1 bn in the exercise equals the enterprise value at which the sale to Carlyle and GIC closed on 1 October 2018; on 24 April 2017 the published estimate was ING's ≈ 9× 2016 EBITDA, €8.6 bn. Illustrative; not investment advice.</p>
 </div>
 
 <script>
@@ -522,6 +563,76 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     if ($('askQ').value.trim().length < 3) { $('aiNote').textContent = 'Write your question first.'; return; }
     ask('akzo.ask', inputs(), [$('askBtn')]);
   });
+
+  /* ---- margin decomposition: computed from the circular's figures (tests/cases.test.ts); no page elements in here ---- */
+  // € m, H1 2017 (six months to 30 June), unaudited pro forma. Shareholder circular, 18 October 2017:
+  // annex 1 = Specialty Chemicals, annex 2 = Paints & Coatings.
+  var SEG = {
+    sc: { revenue: 2549, cos: 1683, gross: 866, sga: 559, other: -1, opInc: 307, pbt: 301, tax: 76, intang: 831, ppe: 2245, inv: 518, oca: 8, recv: 936, pay: 891, ostl: 214, equity: 3008 },
+    pc: { revenue: 4897, cos: 2691, gross: 2206, sga: 1682, other: -14, opInc: 510, pbt: 489, tax: 126, intang: 3400, ppe: 1818, inv: 1111, oca: 47, recv: 2250, pay: 2629, ostl: 373, equity: 3763 }
+  };
+  function marginDecomposition(D) {
+    var out = {}, tot = { revenue: 0, opInc: 0, ic: 0 };
+    Object.keys(D).forEach(function (k) {
+      var d = D[k];
+      // invested capital: operating assets less operating liabilities; excludes cash, financial assets, provisions and deferred tax
+      var ic = d.intang + d.ppe + d.inv + d.oca + d.recv - d.pay - d.ostl, taxRate = d.tax / d.pbt, roic = 2 * d.opInc / ic;
+      out[k] = { gross: d.gross / d.revenue, sga: d.sga / d.revenue, margin: d.opInc / d.revenue, ic: ic, turnover: 2 * d.revenue / ic,
+        roic: roic, taxRate: taxRate, roicAfterTax: roic * (1 - taxRate), roicTangible: 2 * d.opInc / (ic - d.intang) };
+      tot.revenue += d.revenue; tot.opInc += d.opInc; tot.ic += ic;
+    });
+    Object.keys(D).forEach(function (k) {
+      out[k].shareRevenue = D[k].revenue / tot.revenue; out[k].shareOpInc = D[k].opInc / tot.opInc; out[k].shareIc = out[k].ic / tot.ic;
+    });
+    return out;
+  }
+  // The value-driver formula: EV / NOPAT = (1 − g / ROIC) / (WACC − g).
+  var CASE_WACC = 0.057;
+  function justifiedMultiple(roic, g, wacc) { return (1 - g / roic) / (wacc - g); }
+  /* ---- end of the margin decomposition ---- */
+  (function () {
+    var M = marginDecomposition(SEG), sc = M.sc, pc = M.pc;
+    var p1 = function (v) { return (v * 100).toFixed(1) + '%'; }, p0 = function (v) { return Math.round(v * 100) + '%'; };
+    var x2 = function (v) { return v.toFixed(2) + '\u00d7'; }, m = function (v) { return Math.round(v).toLocaleString('en-GB'); };
+    var rows = [
+      ['Gross margin', p1(sc.gross), p1(pc.gross)],
+      ['SG&amp;A share of revenue', p1(sc.sga), p1(pc.sga)],
+      ['Operating margin', p1(sc.margin), p1(pc.margin), 'em'],
+      ['Invested capital (\u20ac m)', m(sc.ic), m(pc.ic)],
+      ['Capital turnover, annualised', x2(sc.turnover), x2(pc.turnover), 'em'],
+      ['Pre-tax ROIC, annualised', p1(sc.roic), p1(pc.roic), 'em'],
+      ['Tax rate, H1', p1(sc.taxRate), p1(pc.taxRate)],
+      ['After-tax ROIC', p1(sc.roicAfterTax), p1(pc.roicAfterTax)],
+      ['Pre-tax ROIC on tangible capital', p1(sc.roicTangible), p1(pc.roicTangible)],
+      ['Share of revenue / operating income / invested capital', p0(sc.shareRevenue) + ' / ' + p0(sc.shareOpInc) + ' / ' + p0(sc.shareIc), p0(pc.shareRevenue) + ' / ' + p0(pc.shareOpInc) + ' / ' + p0(pc.shareIc)]
+    ];
+    $('margins').innerHTML = '<thead><tr><th>H1 2017, annualised where stated</th><th>Specialty Chemicals</th><th>Paints &amp; Coatings</th></tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr' + (r[3] ? ' class="em"' : '') + '><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('') + '</tbody>';
+    // margin × turnover = return: each bar on its own scale, so the two routes read side by side
+    var bar = function (v, max, colour) { return '<div class="bar"><i style="width:' + Math.min(100, v / max * 100).toFixed(1) + '%;background:' + colour + '"></i></div>'; };
+    var route = function (name, colour, d) {
+      return '<div class="route"><div class="who"><i style="background:' + colour + '"></i>' + name + '</div>' +
+        '<div class="term"><div class="k">operating margin</div><div class="v">' + p1(d.margin) + '</div>' + bar(d.margin, 0.15, colour) + '</div>' +
+        '<div class="op">\u00d7</div>' +
+        '<div class="term"><div class="k">capital turnover</div><div class="v">' + x2(d.turnover) + '</div>' + bar(d.turnover, 2, colour) + '</div>' +
+        '<div class="op eq">=</div>' +
+        '<div class="term roic"><div class="k">pre-tax ROIC</div><div class="v">' + p1(d.roic) + '</div>' + bar(d.roic, 0.2, 'var(--ink)') + '</div></div>';
+    };
+    $('routes').innerHTML = route('Specialty Chemicals', 'var(--chem)', sc) + route('Paints &amp; Coatings', 'var(--paint)', pc);
+    // what multiple each return justifies; display only, never fed into the sum of the parts
+    function multiples() {
+      var gs = +$('iGsc').value / 100, gp = +$('iGpc').value / 100;
+      $('oGsc').textContent = (gs * 100).toFixed(1) + '%'; $('oGpc').textContent = (gp * 100).toFixed(1) + '%';
+      var ms = justifiedMultiple(sc.roicAfterTax, gs, CASE_WACC), mp = justifiedMultiple(pc.roicAfterTax, gp, CASE_WACC);
+      var nopatSc = 2 * SEG.sc.opInc * (1 - sc.taxRate), evSc = ms * nopatSc;
+      $('mSc').textContent = ms.toFixed(1) + '\u00d7 NOPAT';
+      $('mScE').textContent = '\u2248 ' + (evSc / SC_EBITDA).toFixed(1) + '\u00d7 EBITDA: EV \u20ac' + (evSc / 1000).toFixed(1) + ' bn on annualised H1 2017 NOPAT of \u20ac' + Math.round(nopatSc) + ' m, over 2016 EBITDA of \u20ac953 m (two different years; indicative only). ROIC ' + p1(sc.roicAfterTax) + '.';
+      $('mPc').textContent = mp.toFixed(1) + '\u00d7 NOPAT';
+      $('mPcE').textContent = 'EV/NOPAT only: no stand-alone Paints & Coatings EBITDA is used here. ROIC ' + p1(pc.roicAfterTax) + '.';
+    }
+    ['iGsc', 'iGpc'].forEach(function (id) { $(id).addEventListener('input', multiples); });
+    multiples();
+  })();
 
   document.querySelectorAll('.reveal').forEach(function (b) {
     b.addEventListener('click', function () { var a = $(b.getAttribute('data-a')); var o = a.classList.toggle('open'); b.textContent = o ? 'Hide' : (b.getAttribute('data-a') === 'a4' ? 'Show the reasoning' : 'Show the answer'); });
