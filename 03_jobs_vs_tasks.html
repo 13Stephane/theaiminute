@@ -6,115 +6,120 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jobs vs Tasks — Decompose a Role</title>
 <style>
+  /* The programme palette, sized for a projector: rgb(236,235,227) ground, rgb(25,60,63) ink,
+     rgb(198,165,83) gold for fills and highlights only (never as text on cream), Georgia.
+     Dark teal sits only behind the title. */
   :root{
-    --teal:#193C3F; --teal2:#21504F;
-    --cream:#F4F0E9; --cream2:#E9E2D4;
-    --gold:#C6A553; --gold-soft:#E7D6A6;
-    --ink:#15302E; --muted:#5E726F;
-    --automate:#B05F45; --augment:#C6A553; --human:#4E7E78;
+    --paper:#ECEBE3; --ink:#193C3F; --teal:#193C3F; --gold:#C6A553;
+    --card:#F8F7F2; --card2:#E3E1D6; --line:#B4B9AF; --muted:#4A6164; --bad:#A6422A;
+    --automate:#A6422A; --augment:#C6A553; --human:#2F6B64;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--teal);color:var(--cream);font-family:"Calibri","Segoe UI",system-ui,sans-serif;line-height:1.5;padding:clamp(16px,3vw,40px);-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1040px;margin:0 auto}
-  .eyebrow{font:600 13px "Calibri";letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(28px,4.6vw,44px);line-height:1.08;letter-spacing:-.01em}
-  .lede{max-width:68ch;margin-top:14px;color:#D9D3C6;font-size:clamp(15px,1.7vw,17px)}
-  .lede b{color:var(--gold-soft);font-weight:600}
+  body{background:var(--paper);color:var(--ink);font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.5;padding:clamp(16px,3vw,40px);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto}
+  .band{background:var(--ink);border-radius:12px;padding:24px 28px 22px;border-bottom:6px solid var(--gold);margin-bottom:8px}
+  .eyebrow{font:700 13px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.01em;color:var(--paper)}
+  .lede{max-width:72ch;margin-top:14px;color:var(--paper);font-size:clamp(17px,1.8vw,19px)}
+  .lede b{color:var(--gold);font-weight:700}
 
-  .input-row{display:flex;gap:10px;margin:24px 0 8px;flex-wrap:wrap}
-  #job{flex:1;min-width:240px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:11px;padding:14px 16px;font:500 16px "Calibri";color:var(--ink)}
-  #job::placeholder{color:#94A09E}
-  .btn{background:var(--gold);color:var(--teal);border:none;border-radius:11px;padding:14px 22px;font:700 15px "Calibri";cursor:pointer;transition:.15s;white-space:nowrap}
+  .input-row{display:flex;gap:10px;margin:22px 0 8px;flex-wrap:wrap}
+  #job{flex:1;min-width:240px;background:var(--card);border:2px solid var(--line);border-radius:11px;padding:14px 16px;font:500 19px Georgia,serif;color:var(--ink)}
+  #job::placeholder{color:#6E8082}
+  .btn{background:var(--gold);color:var(--ink);border:none;border-radius:11px;padding:14px 22px;font:700 17px var(--sans);cursor:pointer;transition:.15s;white-space:nowrap}
   .btn:hover{background:#D4B868}
   .btn:disabled{opacity:.55;cursor:wait}
-  .examples{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .ex{background:transparent;border:1px solid rgba(244,240,233,.28);color:#D9D3C6;font:500 12.5px "Calibri";padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
-  .ex:hover{border-color:var(--gold);color:var(--cream)}
-  .status{min-height:20px;font-size:13px;color:var(--gold-soft);margin:10px 0}
-  .status.err{color:#E3B6A6}
+  .examples{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+  .ex{background:var(--card);border:2px solid var(--line);color:var(--ink);font:600 15px var(--sans);padding:8px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .ex:hover{border-color:var(--gold)}
+  .status{min-height:24px;font-size:17px;color:var(--ink);margin:10px 0}
+  .status.err{color:var(--bad)}
 
   /* weighting toggle */
   .weighting{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 4px}
-  .weighting .lbl{font-size:12.5px;color:#BCC9C7}
-  .seg-toggle{display:inline-flex;background:rgba(244,240,233,.08);border-radius:10px;padding:3px}
-  .seg-toggle button{background:transparent;border:none;color:#C6D2D0;font:600 13px "Calibri";padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s}
-  .seg-toggle button.active{background:var(--gold);color:var(--teal)}
+  .weighting .lbl{font-size:16px;color:var(--muted)}
+  .seg-toggle{display:inline-flex;background:var(--card2);border-radius:10px;padding:3px}
+  .seg-toggle button{background:transparent;border:none;color:var(--ink);font:600 16px var(--sans);padding:9px 16px;border-radius:8px;cursor:pointer;transition:.15s}
+  .seg-toggle button.active{background:var(--gold);color:var(--ink)}
 
-  .share{display:flex;height:34px;border-radius:8px;overflow:hidden;margin:12px 0 8px;background:rgba(244,240,233,.1)}
-  .share div{display:flex;align-items:center;justify-content:center;font:700 12.5px "Calibri";color:#fff;transition:width .45s ease;min-width:0;overflow:hidden;white-space:nowrap}
-  .seg-automate{background:var(--automate)} .seg-augment{background:var(--augment);color:var(--teal)} .seg-human{background:var(--human)}
-  .share-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:#BCC9C7;margin-bottom:14px}
+  .share{display:flex;height:40px;border-radius:8px;overflow:hidden;margin:12px 0 8px;background:var(--card2)}
+  .share div{display:flex;align-items:center;justify-content:center;font:700 15px var(--sans);color:#fff;transition:width .45s ease;min-width:0;overflow:hidden;white-space:nowrap}
+  .seg-automate{background:var(--automate)} .seg-augment{background:var(--augment);color:var(--ink)} .seg-human{background:var(--human)}
+  .share-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;color:var(--muted);margin-bottom:14px}
   .share-legend span{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:12px;height:12px;border-radius:3px}
+  .sw{width:14px;height:14px;border-radius:3px}
 
-  .headline{background:rgba(198,165,83,.10);border:1px solid rgba(198,165,83,.3);border-radius:12px;padding:14px 17px;margin:6px 0 20px;font-size:14px;color:#EAE3D2}
-  .headline b{color:var(--gold-soft)}
-  .headline .big{font-family:Georgia,serif;font-size:15.5px;color:var(--cream);margin-bottom:3px}
+  .headline{background:var(--card);border:2px solid var(--gold);border-radius:12px;padding:16px 18px;margin:6px 0 20px;font-size:17px;color:var(--ink)}
+  .headline b{color:var(--ink)}
+  .headline .big{font-family:Georgia,serif;font-size:19px;color:var(--ink);margin-bottom:4px}
 
-  .tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px}
-  .card{background:var(--cream);color:var(--ink);border-radius:12px;padding:14px 15px;border-left:5px solid var(--gold);cursor:pointer;transition:.12s;user-select:none}
-  .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.22)}
+  .tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .card{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:15px 16px;border-left:6px solid var(--gold);cursor:pointer;transition:.12s;user-select:none}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(25,60,63,.15)}
   .card.automate{border-left-color:var(--automate)} .card.augment{border-left-color:var(--augment)} .card.human{border-left-color:var(--human)}
-  .card .task{font-weight:700;font-size:14.5px;color:var(--teal);margin-bottom:5px}
-  .card .why{font-size:12.5px;color:var(--muted);line-height:1.4}
-  .card .tag{display:inline-block;margin-top:9px;font:700 10.5px "Calibri";letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
-  .tag.automate{background:#F2DDD3;color:var(--automate)} .tag.augment{background:#F1E6C6;color:#8A6E26} .tag.human{background:#DCE9E5;color:var(--human)}
-  .card .hint{font-size:10.5px;color:#A6B0AD;margin-top:7px}
-  .wt{margin-top:10px;padding-top:9px;border-top:1px solid #E0D8C8}
-  .wt .wl{display:flex;justify-content:space-between;font:600 11px "Calibri";color:var(--muted);margin-bottom:4px}
-  .wt .wl b{color:var(--teal);font-variant-numeric:tabular-nums}
-  .wt input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:999px;background:#DCD3C2;cursor:pointer}
-  .wt input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
-  .wt input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid #fff}
+  .card .task{font-weight:700;font-size:17px;color:var(--ink);margin-bottom:5px}
+  .card .why{font-size:15px;color:var(--muted);line-height:1.4}
+  .card .tag{display:inline-block;margin-top:9px;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
+  .tag.automate{background:#F2DDD3;color:#8E3A24} .tag.augment{background:#F1E6C6;color:#6B5418} .tag.human{background:#DCE9E5;color:#24544E}
+  .card .hint{font-size:13px;color:var(--muted);margin-top:7px}
+  .wt{margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+  .wt .wl{display:flex;justify-content:space-between;font:600 13px var(--sans);color:var(--muted);margin-bottom:4px}
+  .wt .wl b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .wt input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:999px;background:var(--card2);cursor:pointer}
+  .wt input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--gold);border:2px solid var(--ink)}
+  .wt input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--gold);border:2px solid var(--ink)}
 
-  .dividend{margin-top:22px;background:rgba(78,126,120,.14);border:1px solid rgba(78,126,120,.4);border-radius:13px;padding:18px 20px}
-  .dividend h3{font-family:Georgia,serif;font-size:17px;color:var(--gold-soft);margin-bottom:6px}
-  .dividend .freed{font-family:Georgia,serif;font-size:28px;font-weight:700;color:var(--cream);margin:2px 0 8px}
-  .dividend p{font-size:13.5px;color:#CBD6D4}
-  .dividend b{color:var(--cream)}
+  .dividend{margin-top:22px;background:var(--card);border:2px solid var(--human);border-radius:13px;padding:18px 20px}
+  .dividend h3{font-family:Georgia,serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+  .dividend .freed{font-family:Georgia,serif;font-size:30px;font-weight:700;color:var(--ink);margin:2px 0 8px}
+  .dividend p{font-size:17px;color:var(--ink)}
+  .dividend b{color:var(--ink)}
 
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
   @media(max-width:760px){.grid2{grid-template-columns:1fr}}
-  .insight{background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.12);border-radius:13px;padding:18px 20px}
-  .insight h3{font-family:Georgia,serif;font-size:16px;color:var(--gold-soft);margin-bottom:8px}
-  .insight p{font-size:13.5px;color:#CBD6D4}
-  .insight b{color:var(--cream)}
+  .insight{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--gold);border-radius:13px;padding:18px 20px}
+  .insight h3{font-family:Georgia,serif;font-size:19px;color:var(--ink);margin-bottom:8px}
+  .insight p{font-size:16px;color:var(--ink)}
+  .insight b{color:var(--ink)}
 
   /* live AI: badge, class code, and the bring-your-own-AI fallback */
   .aibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 0}
-  .aibadge{font:700 11px "Calibri";letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:rgba(244,240,233,.1);color:#BCC9C7}
-  .aibadge.on{background:var(--gold);color:var(--teal)}
-  #classCode{width:130px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:8px;padding:6px 10px;font:600 13px "Calibri";color:var(--ink);letter-spacing:.1em}
+  .aibadge{font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:999px;background:var(--card2);color:var(--muted)}
+  .aibadge.on{background:var(--gold);color:var(--ink)}
+  #classCode{width:140px;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:7px 10px;font:600 16px var(--sans);color:var(--ink);letter-spacing:.1em}
   .byo{display:none;margin:4px 0 16px}
-  .byo textarea{display:block;width:100%;min-height:84px;margin-top:10px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:11px;padding:11px 14px;font:400 13px "Calibri";color:var(--ink);resize:vertical}
+  .byo textarea{display:block;width:100%;min-height:96px;margin-top:10px;background:var(--card);border:2px solid var(--line);border-radius:11px;padding:11px 14px;font:400 15px var(--sans);color:var(--ink);resize:vertical}
   .byo .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-  .byo .copied{font-size:12.5px;color:var(--gold-soft)}
+  .byo .copied{font-size:15px;color:var(--muted)}
 
   /* your own task list, and Claude's second opinion on it */
   .own{display:none;margin:4px 0 16px}
-  .own label{display:block;font-size:13px;color:#D9D3C6;margin-bottom:6px}
-  .own textarea{display:block;width:100%;min-height:190px;background:var(--cream);border:1px solid rgba(244,240,233,.2);border-radius:11px;padding:11px 14px;font:400 14px/1.5 "Calibri";color:var(--ink);resize:vertical}
+  .own label{display:block;font-size:16px;color:var(--ink);margin-bottom:6px}
+  .own textarea{display:block;width:100%;min-height:200px;background:var(--card);border:2px solid var(--line);border-radius:11px;padding:11px 14px;font:400 17px/1.5 Georgia,serif;color:var(--ink);resize:vertical}
   .own .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-  .own .copied{font-size:12.5px;color:var(--gold-soft)}
-  .seg-unsorted{background:#8C9A98}
-  .card.unsorted{border-left-color:#B9C2C0} .tag.unsorted{background:#E6E9E8;color:#5E726F}
-  .card .ai{margin-top:8px;padding:6px 8px;border-radius:7px;background:#EFEADF;font-size:11.5px;color:var(--muted);line-height:1.35}
-  .card .ai b{color:var(--teal)} .card .ai.differs{background:#F6E3D9}
-  .review{display:none;margin:4px 0 18px;background:rgba(244,240,233,.06);border:1px solid rgba(244,240,233,.14);border-radius:12px;padding:14px 17px}
+  .own .copied{font-size:15px;color:var(--muted)}
+  .seg-unsorted{background:#7B8A88}
+  .card.unsorted{border-left-color:#9AA6A4} .tag.unsorted{background:#E3E6E5;color:#3F5557}
+  .card .ai{margin-top:8px;padding:7px 9px;border-radius:7px;background:var(--card2);font-size:14px;color:var(--ink);line-height:1.35}
+  .card .ai b{color:var(--ink)} .card .ai.differs{background:#F2DDD3}
+  .review{display:none;margin:4px 0 18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 18px}
   .review .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .review .out{margin-top:12px;font-size:13.5px;color:#E4DFD4}
-  .review .out b{color:var(--gold-soft)}
-  .review .out ol{margin:8px 0 0 20px} .review .out li{margin:4px 0}
+  .review .out{margin-top:12px;font-size:17px;color:var(--ink)}
+  .review .out b{color:var(--ink)}
+  .review .out ol{margin:8px 0 0 22px} .review .out li{margin:5px 0}
 
-  .footnote{margin-top:24px;color:#A9B7B5;font-size:12.5px;max-width:78ch}
-  .footnote b{color:var(--gold-soft)}
+  .footnote{margin-top:24px;color:var(--muted);font-size:15px;max-width:80ch}
+  .footnote b{color:var(--ink)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <header class="band">
   <div class="eyebrow">Work in the Age of AI · Brynjolfsson</div>
   <h1>No job is automated — only its tasks</h1>
   <p class="lede">A role is a bundle of tasks. AI rarely takes a whole job; it reshapes the bundle. Decompose a role, sort each task &mdash; <b>automate</b>, <b>augment</b>, or <b>keep human</b> &mdash; then weight each by its share of the <b>week</b> and of the role&rsquo;s <b>value</b>. Counting tasks flatters automation; weighting reveals where the time and the worth actually sit. Tap a card to re-classify; drag to re-weight.</p>
+  </header>
 
   <div class="aibar" id="aiBar" style="display:none">
     <span class="aibadge" id="aiBadge">Offline mode</span>
@@ -154,7 +159,7 @@
       <span><i class="sw seg-augment"></i>Augment</span>
       <span><i class="sw seg-human"></i>Keep human</span>
       <span id="lgUnsorted" style="display:none"><i class="sw seg-unsorted"></i>Not sorted yet</span>
-      <span style="color:#8FA09D">tap a card to override · drag to re-weight</span>
+      <span style="color:var(--muted)">tap a card to override · drag to re-weight</span>
     </div>
     <div class="headline" id="headline"></div>
 
