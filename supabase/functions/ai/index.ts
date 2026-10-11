@@ -3,7 +3,6 @@
 
 import Anthropic from "npm:@anthropic-ai/sdk@0.131.0";
 import { handle } from "./gate.ts";
-import { EFFORT } from "./templates.ts";
 import { supabaseStore } from "./store.ts";
 
 const anthropic = new Anthropic({
@@ -19,11 +18,11 @@ Deno.serve((req) =>
     store,
     pepper: Deno.env.get("CLASS_CODE_PEPPER") ?? "",
     dev: Deno.env.get("AI_DEV") === "1",
-    async callModel({ model, maxTokens, prompt }) {
+    async callModel({ model, maxTokens, effort, prompt }) {
       const msg = await anthropic.messages.create({
         model,
         max_tokens: maxTokens,
-        output_config: { effort: EFFORT },
+        output_config: { effort },
         messages: [{ role: "user", content: prompt }],
       });
       const text = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("\n");

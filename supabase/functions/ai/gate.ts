@@ -9,7 +9,10 @@
 
 import { corsHeaders, originAllowed } from "../_shared/cors.ts";
 import { deriveCode, normalizeCode, sameCode } from "../_shared/classcode.ts";
-import { costUsd, InputError, KINDS, MODEL } from "./templates.ts";
+import { costUsd, EFFORT, type Effort, InputError, KINDS as BASE_KINDS, MODEL } from "./templates.ts";
+import { CASE_KINDS } from "./cases.ts";
+
+const KINDS = { ...BASE_KINDS, ...CASE_KINDS };
 
 export type Control = {
   enabled: boolean;
@@ -47,7 +50,7 @@ export interface Store {
 }
 
 export type ModelReply = { text: string; stopReason: string | null; inputTokens: number; outputTokens: number };
-export type CallModel = (a: { model: string; maxTokens: number; prompt: string }) => Promise<ModelReply>;
+export type CallModel = (a: { model: string; maxTokens: number; effort: Effort; prompt: string }) => Promise<ModelReply>;
 
 export type Deps = {
   store: Store;
@@ -162,7 +165,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     // The model and max_tokens come from the kind; nothing in the body can change them.
     let reply: ModelReply;
     try {
-      reply = await deps.callModel({ model: MODEL, maxTokens: spec.maxTokens, prompt: spec.prompt(inputs as never) });
+      reply = await deps.callModel({ model: MODEL, maxTokens: spec.maxTokens, effort: spec.effort ?? EFFORT, prompt: spec.prompt(inputs as never) });
     } catch (e) {
       await deps.store.finish(id!, {
         status: 502, reason: "upstream: " + String((e as Error)?.message ?? e).slice(0, 200),

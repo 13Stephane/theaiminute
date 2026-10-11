@@ -11,7 +11,6 @@
 import { handle } from "../supabase/functions/ai/gate.ts";
 import { handleAdmin } from "../supabase/functions/admin/handler.ts";
 import { deriveCode } from "../supabase/functions/_shared/classcode.ts";
-import { EFFORT } from "../supabase/functions/ai/templates.ts";
 import { fakeModel, MemDb } from "./memstore.ts";
 import type { CallModel } from "../supabase/functions/ai/gate.ts";
 
@@ -25,9 +24,9 @@ let callModel: CallModel = fakeModel([]);
 if (Deno.env.get("REAL") === "1") {
   const { default: Anthropic } = await import("npm:@anthropic-ai/sdk@0.131.0");
   const client = new Anthropic();
-  callModel = async ({ model, maxTokens, prompt }) => {
+  callModel = async ({ model, maxTokens, effort, prompt }) => {
     const msg = await client.messages.create({
-      model, max_tokens: maxTokens, output_config: { effort: EFFORT }, messages: [{ role: "user", content: prompt }],
+      model, max_tokens: maxTokens, output_config: { effort }, messages: [{ role: "user", content: prompt }],
     });
     return {
       text: msg.content.map((b) => (b.type === "text" ? b.text : "")).join("\n"),

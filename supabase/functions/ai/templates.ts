@@ -17,6 +17,7 @@ export const PRICE_PER_MTOK = { input: 2, output: 10 };
 // limits below leave room above the old 1000.
 // https://platform.claude.com/docs/en/build-with-claude/effort
 export const EFFORT = "low";
+export type Effort = "low" | "medium";
 
 export function costUsd(inputTokens: number, outputTokens: number): number {
   const c = (inputTokens * PRICE_PER_MTOK.input + outputTokens * PRICE_PER_MTOK.output) / 1e6;
@@ -24,22 +25,24 @@ export function costUsd(inputTokens: number, outputTokens: number): number {
 }
 
 export class InputError extends Error {}
+export type { V };
 
 // ---------- tiny strict validators ----------
 type V<T> = (v: unknown, path?: string) => T;
+// Exported for the case kinds (cases.ts).
 
-const num = (min: number, max: number): V<number> => (v, p = "inputs") => {
+export const num = (min: number, max: number): V<number> => (v, p = "inputs") => {
   if (typeof v !== "number" || !Number.isFinite(v) || v < min || v > max) {
     throw new InputError(`${p} must be a number in ${min}..${max}`);
   }
   return v;
 };
-const int = (min: number, max: number): V<number> => (v, p = "inputs") => {
+export const int = (min: number, max: number): V<number> => (v, p = "inputs") => {
   const n = num(min, max)(v, p);
   if (!Number.isInteger(n)) throw new InputError(`${p} must be an integer`);
   return n;
 };
-function obj<S extends Record<string, V<unknown>>>(shape: S): V<{ [K in keyof S]: ReturnType<S[K]> }> {
+export function obj<S extends Record<string, V<unknown>>>(shape: S): V<{ [K in keyof S]: ReturnType<S[K]> }> {
   return (v, p = "inputs") => {
     if (typeof v !== "object" || v === null || Array.isArray(v)) throw new InputError(`${p} must be an object`);
     const rec = v as Record<string, unknown>;
@@ -52,7 +55,7 @@ function obj<S extends Record<string, V<unknown>>>(shape: S): V<{ [K in keyof S]
     return out as { [K in keyof S]: ReturnType<S[K]> };
   };
 }
-const arr = <T>(item: V<T>, min: number, max: number): V<T[]> => (v, p = "inputs") => {
+export const arr = <T>(item: V<T>, min: number, max: number): V<T[]> => (v, p = "inputs") => {
   if (!Array.isArray(v) || v.length < min || v.length > max) {
     throw new InputError(`${p} must be an array of ${min}..${max} items`);
   }
@@ -86,7 +89,7 @@ const TASK_TYPE: V<string> = (v, p = "inputs") => {
 // ---------- 08 · the flood, the wall, and the way out ----------
 // Free text from the page: a length cap and no control characters; newlines only
 // where the page's own field is a textarea.
-const str = (max: number, opts: { multiline?: boolean; min?: number } = {}): V<string> => (v, p = "inputs") => {
+export const str = (max: number, opts: { multiline?: boolean; min?: number } = {}): V<string> => (v, p = "inputs") => {
   if (typeof v !== "string" || v.length > max || v.trim().length < (opts.min ?? 0)) {
     throw new InputError(`${p} must be text of at most ${max} characters`);
   }
@@ -257,7 +260,7 @@ export function parseTasks(text: string): Task[] {
 
 // ---------- the kinds ----------
 export type KindSpec = {
-  artifact: "03" | "06" | "08";
+  artifact: string;
   bucket: string;
   limit: number;          // calls allowed per device per window
   windowSeconds: number;
@@ -266,6 +269,7 @@ export type KindSpec = {
   prompt: (inputs: never) => string;
   parse: (text: string, inputs?: unknown) => unknown;
   field?: "result" | "text"; // the response key for the result; 08 answers {text, usage, cost_usd}
+  effort?: Effort;            // defaults to EFFORT (low)
 };
 
 const validate03 = obj({ job: jobTitle });
