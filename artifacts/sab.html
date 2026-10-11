@@ -97,6 +97,10 @@ textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--
 .cmp td:first-child { font-weight: 700; }
 .how { font-size: 16px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 14px; margin: 10px 0 0; }
 @media (max-width: 800px) { .gate .fields { grid-template-columns: 1fr; } }
+.aibar { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
+.aibadge { font: 700 12px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; background: var(--card2); color: var(--muted); }
+.aibadge.on { background: var(--gold); color: #10292B; }
+#classCode { width: 150px; font-size: 17px; padding: 9px 12px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; letter-spacing: .1em; }
 </style>
 </head>
 <body>
@@ -170,15 +174,17 @@ textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--
 <p class="small">The breweries earn exceptional returns; SABMiller's own acquisitions (Miller, Bavaria, Foster's) put $27 bn of goodwill and brands into the capital base. AB InBev's price adds about $80 bn more on top.</p>
 
 <h2>Your walk-away rule</h2>
-<p class="small">Write the rule your table will give the Chair, then ask Claude to attack it. The prompt carries the numbers above.</p>
-<textarea id="rule" aria-label="Your walk-away rule">We pay up to $__ per share if __ ; we walk if __ .</textarea>
+<p class="small">Write the rule your table will give the Chair, then ask Claude to attack it, or ask your own question. The prompt carries the numbers above.</p>
+<div class="aibar" id="aiBar"><span class="aibadge" id="aiBadge">Offline mode</span><input type="text" id="classCode" placeholder="Class code" maxlength="12" autocomplete="off" spellcheck="false" aria-label="Class code" style="display:none"></div>
+<textarea id="rule" aria-label="Your walk-away rule" maxlength="600">We pay up to $__ per share if __ ; we walk if __ .</textarea>
 <div class="ai-row">
   <button class="btn" data-q="red">Red-team my rule</button>
   <button class="btn ghost" data-q="flip">Which assumption flips the verdict?</button>
   <button class="btn ghost" data-q="sd">What would the Santo Domingo family need?</button>
-  <button class="btn ghost" id="stop" hidden>Stop</button>
 </div>
-<div class="ai-out" id="aiOut">The red-team runs on the viewer's Claude account; the first request asks for consent.</div>
+<textarea id="askQ" aria-label="Your own question for Claude" maxlength="600" style="min-height:64px" placeholder="Or ask your own question about these numbers, e.g. what would make the synergies worth more than the premium?"></textarea>
+<div class="ai-row"><button class="btn" data-q="free">Ask Claude</button></div>
+<div class="ai-out" id="aiOut">Pick a question, or ask your own. You get Claude's answer, or a prompt carrying your rule and your numbers, ready to paste into any assistant.</div>
 <div class="ai-row"><button class="btn ghost" id="copyPrompt" hidden>Copy the prompt</button></div>
 <p class="small" id="aiNote"></p>
 
@@ -240,10 +246,11 @@ textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--
   <div class="callout">AB InBev expected $3.2 bn of synergies and cost savings, more than the case's $2.2 bn. The premium had already paid them to SABMiller's shareholders: a decade later the group earns roughly its cost of capital on everything it paid, with third-party WACC estimates between about 5% and 9%.</div>
 </div>
 
-<p class="note">AI &amp; Corporate Finance, lecture 3, Data Analytics, AI &amp; Finance series, Nyenrode Business University. Case: Dennis Vink, "AB InBev and SABMiller: Raising glasses to a happy future?" (2023) and the SAB select-data pack. Financials: AB InBev Annual Report 2015; SABMiller plc Annual Report 2015. Equity value at the offer uses the case's ≈ $105 bn at $64 (1,640 m shares); the annual report's weighted average is 1,604 m. Hindsight: AB InBev 20-F filings 2016 and 2020, 3Q18 and FY25 results releases; ROIC is a third-party estimate (Alpha Spread, 2026). Illustrative; not investment advice.</p>
+<p class="note">AI &amp; Finance, executive programme, Session 2, case 2. Prof. dr. Dennis Vink and Stéphane Guerraz. Case: Dennis Vink, "AB InBev and SABMiller: Raising glasses to a happy future?" (2023) and the SAB select-data pack. Financials: AB InBev Annual Report 2015; SABMiller plc Annual Report 2015. Equity value at the offer uses the case's ≈ $105 bn at $64 (1,640 m shares); the annual report's weighted average is 1,604 m. Hindsight: AB InBev 20-F filings 2016 and 2020, 3Q18 and FY25 results releases; ROIC is a third-party estimate (Alpha Spread, 2026). Illustrative; not investment advice.</p>
 </div>
 
 <script>
+const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // the course proxy. Empty: copy-a-prompt only.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var SH = 1640, SAB_ND = 11.579, SAB_NCI = 1.183, BOOK = 36.899, SAB_EBIT = 4.459, SAB_JV = 1.083;
@@ -342,58 +349,121 @@ textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--
 
   $('showHind').addEventListener('click', function () { var o = $('hind').className === 'open'; $('hind').className = o ? 'locked' : 'open'; this.textContent = o ? 'Show what happened, 2016–2025' : 'Hide'; });
 
-  // AI red-team through the sample capability
+  /* ---- the prompt: the same text the server builds (tests/cases.test.ts); no page elements in here ---- */
+  var SH_ = 1640, ND_ = 11.579, NCI_ = 1.183, BOOK_ = 36.899, EBIT_ = 4.459, JV_ = 1.083;
+  function sabState(i) {
+    var offer = i.offer, und = i.und, syn = i.syn, dis = i.dis / 100, tax = i.tax / 100, w = i.w / 100, g = i.g / 100,
+        integ = i.int, gr = i.gr / 100, rn = i.rn / 100;
+    var eq = offer * SH_ / 1000, prem = eq - und, s = syn * (1 - dis), at = s * (1 - tax);
+    var pv = (w > g) ? at / (w - g) - integ : Infinity, left = pv - prem;
+    var beG = (prem + integ) > 0 ? w - at / (prem + integ) : null;
+    var ev = eq + ND_ + NCI_, above = ev - BOOK_;
+    var n1 = EBIT_ * (1 - tax) + JV_ + at, rp1 = n1 / ev, ep1 = n1 - w * ev;
+    var icp = ev, icb = BOOK_, n = n1, cross = null;
+    for (var t = 1; t <= 15; t++) { var rp = n / icp; if (cross === null && rp >= w) cross = t; var reinv = n * gr / rn; icp += reinv; icb += reinv; n *= 1 + gr; }
+    return { offer: offer, und: und, eq: eq, prem: prem, syn: syn, dis: dis, tax: tax, w: w, g: g, integ: integ, pv: pv, left: left, beG: beG, ev: ev, above: above, rp1: rp1, rb1: n1 / BOOK_, ep1: ep1, cross: cross, gr: gr };
+  }
+  function bnP(v) { return (v < 0 ? '\u2212$' : '$') + Math.abs(v).toFixed(1) + ' bn'; }
+  function pcP(v) { return (v * 100).toFixed(1) + '%'; }
   var PROMPTS = {
     red: 'Red-team the walk-away rule below. Find its three weakest points, in order of how much value they put at risk, and propose one change to the rule for each. Then say whether you would sign it.',
     flip: 'Which single assumption above, moved by a plausible amount, flips the verdict? Give the amount, why it is plausible, and what evidence the Chair should ask for before relying on it.',
-    sd: 'The Santo Domingo family (about 14%) must accept for the deal to proceed. What would they need, given the partial share alternative (0.48 AB InBev share + £2.37 per SAB share), their tax position and their wish to stay exposed to brewing? How much of the spread does that hand them, and does the walk-away rule survive it?'
+    sd: 'The Santo Domingo family (about 14%) must accept for the deal to proceed. What would they need, given the partial share alternative (0.48 AB InBev share + \u00a32.37 per SAB share), their tax position and their wish to stay exposed to brewing? How much of the spread does that hand them, and does the walk-away rule survive it?'
   };
-  function context() {
-    return 'Case: AB InBev considering its third proposal for SABMiller, 7 October 2015. Current assumptions from the class tool:\n' +
+  var TAIL = '\nAnswer in plain text, under 220 words, no headings. Reason from value created (ROIC against WACC, premium against synergies), not earnings per share. Use the theories of value (operational efficiency, intangible capital, innovation and IP, platform and ecosystem, capital redeployment, risk and resilience, regulatory and political) and Teece (complementary assets) where they help. Do not use knowledge of what happened after October 2015.';
+  var ON_TOPIC = ' Answer it only if it is about this case and the numbers above; otherwise say so in one sentence.';
+  function casePrompt(inp) {
+    var S = sabState(inp.sliders), bn = bnP, pc = pcP;
+    var context = 'Case: AB InBev considering its third proposal for SABMiller, 7 October 2015. Current assumptions from the class tool:\n' +
       '- Offer $' + S.offer.toFixed(1) + ' per share; equity value ' + bn(S.eq) + '; undisturbed value ' + bn(S.und) + '; premium ' + bn(S.prem) + '.\n' +
       '- Synergies $' + S.syn.toFixed(1) + ' bn a year, ' + Math.round(S.dis * 100) + '% lost to disposals, taxed at ' + Math.round(S.tax * 100) + '%, WACC ' + pc(S.w) + ', synergy growth ' + pc(S.g) + ', integration cost ' + bn(S.integ) + '.\n' +
       '- Value of synergies ' + bn(S.pv) + '; value left for AB InBev after the premium ' + bn(S.left) + '; break-even synergy growth ' + (S.beG === null ? 'n/a' : pc(S.beG)) + '.\n' +
       '- Enterprise value paid ' + bn(S.ev) + ', of which ' + bn(S.above) + ' above SABMiller\u2019s book capital. Year-1 ROIC on the price ' + pc(S.rp1) + ' (on SAB\u2019s own capital ' + pc(S.rb1) + '); year-1 economic profit ' + bn(S.ep1) + '; at ' + pc(S.gr) + ' growth the return on the price ' + (S.cross ? 'reaches WACC in year ' + S.cross : 'does not reach WACC within 15 years') + '.\n' +
       '- Largest SABMiller holders: Altria 27%, Santo Domingo family 14%. Regulators may require disposals of about a third of SABMiller\u2019s enterprise value.\n' +
-      'Walk-away rule proposed by the table: "' + $('rule').value.trim() + '"\n\n';
+      'Walk-away rule proposed by the table: "' + inp.rule + '"\n\n';
+    var q = inp.q === 'free' ? 'The table asks: "' + inp.question.trim() + '"' + ON_TOPIC : PROMPTS[inp.q];
+    return context + q + TAIL;
   }
-  var TAIL = '\nAnswer in plain text, under 220 words, no headings. Reason from value created (ROIC against WACC, premium against synergies), not earnings per share. Use the theories of value (operational efficiency, intangible capital, innovation and IP, platform and ecosystem, capital redeployment, risk and resilience, regulatory and political) and Teece (complementary assets) where they help. Do not use knowledge of what happened after October 2015.';
-  var sample = null, ctl = null;
-  var btns = Array.prototype.slice.call(document.querySelectorAll('[data-q]'));
-  btns.forEach(function (b) {
-    b.addEventListener('click', async function () {
-      var q = b.getAttribute('data-q');
-      if (!sample) {
-        $('aiOut').textContent = context() + PROMPTS[q] + TAIL;
-        $('aiNote').textContent = 'The prompt above carries your numbers: copy it into any assistant.';
+  /* ---- end of the prompt ---- */
+
+  function inputs(q) {
+    var sl = {}; ['offer', 'und', 'syn', 'dis', 'tax', 'w', 'g', 'int', 'gr', 'rn'].forEach(function (k) { sl[k] = +I[k].value; });
+    return { sliders: sl, rule: $('rule').value.trim(), q: q, question: q === 'free' ? $('askQ').value : '' };
+  }
+  /* ---- live Claude through the course proxy (same gate, class code and budget as the other tools) ---- */
+  var AI = { live: false, reason: 'off' }, AI_DEVICE = null;
+  function aiStore(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function aiDevice() {
+    if (AI_DEVICE) return AI_DEVICE;
+    var d = aiStore('aim_device');
+    if (!d || !/^[A-Za-z0-9_-]{8,64}$/.test(d)) { d = Array.from(crypto.getRandomValues(new Uint8Array(12)), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); aiStore('aim_device', d); }
+    return AI_DEVICE = d;
+  }
+  var AI_WHY = { 'off': 'Live AI is off', 'outside window': 'Live AI is outside today’s session hours', 'class code': 'That class code was not accepted',
+    'no code': 'Enter the class code to ask Claude from this page', 'budget': 'Today’s live AI budget is used up', 'rate': 'This device has asked its questions for now; wait a few minutes',
+    'inputs': 'Claude could not take this question: keep it under 600 characters', 'origin': 'Live AI only works on theaiminute.blog', 'network': 'Couldn’t reach the live AI', 'unavailable': 'Live AI is unavailable' };
+  function aiWhy(r) { return AI_WHY[r] || 'Claude did not answer'; }
+  // A request that hangs (a captive or flaky network) must not hold the page: give up and fall back.
+  function aiFetch(url, opts, ms) { var c = new AbortController(), t = setTimeout(function () { c.abort(); }, ms); opts.signal = c.signal; return fetch(url, opts).finally(function () { clearTimeout(t); }); }
+  async function aiStatus() {
+    if (!AI_URL) return;
+    $('aiBar').style.display = 'flex';
+    try { var s = await (await aiFetch(AI_URL.replace(/\/+$/, '') + '/status', {}, 6000)).json(); AI.live = !!s.live; AI.reason = s.reason || 'off'; }
+    catch (e) { AI.live = false; AI.reason = 'network'; }
+    $('aiBadge').textContent = AI.live ? 'Live AI on' : 'Offline mode';
+    $('aiBadge').classList.toggle('on', AI.live);
+    $('classCode').style.display = AI.live ? '' : 'none';
+  }
+  async function aiCall(kind, inputs) {
+    if (!AI_URL) return { ok: false, why: null };
+    if (!AI.live) await aiStatus();
+    if (!AI.live) return { ok: false, why: aiWhy(AI.reason) };
+    var code = $('classCode').value.trim();
+    if (!code) return { ok: false, why: aiWhy('no code') };
+    aiStore('aim_class_code', code);
+    try {
+      var r = await aiFetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Class-Code': code, 'X-Device-Id': aiDevice() }, body: JSON.stringify({ kind: kind, inputs: inputs }) }, 90000);
+      var b = await r.json().catch(function () { return {}; });
+      if (r.ok && typeof b.result === 'string' && b.result.trim()) return { ok: true, text: b.result.trim(), cost: b.cost_usd };
+      if (r.status === 423 || b.reason === 'budget') aiStatus();
+      return { ok: false, why: aiWhy(b.reason) };
+    } catch (e) { return { ok: false, why: aiWhy('network') }; }
+  }
+  // Ask Claude live; otherwise show the same prompt, ready to paste into any assistant.
+  var asking = false;
+  async function ask(kind, inputs, buttons) {
+    if (asking) return; asking = true;
+    buttons.forEach(function (x) { x.disabled = true; });
+    $('copyPrompt').hidden = true; $('aiNote').textContent = '';
+    $('aiOut').textContent = AI_URL ? 'Claude is reading your numbers. This takes up to half a minute…' : '';
+    try {
+      var res = await aiCall(kind, inputs);
+      if (res.ok) {
+        $('aiOut').textContent = res.text;
+        $('aiNote').textContent = typeof res.cost === 'number' ? 'Claude Sonnet 5.5. This answer cost about $' + res.cost.toFixed(3) + '.' : '';
+      } else {
+        $('aiOut').textContent = casePrompt(inputs);
+        $('aiNote').textContent = (res.why ? res.why + '. ' : '') + 'The prompt above carries your numbers: copy it into any assistant.';
         $('copyPrompt').hidden = false;
-        return;
       }
-      btns.forEach(function (x) { x.disabled = true; }); $('stop').hidden = false; $('aiNote').textContent = '';
-      $('aiOut').textContent = 'Thinking...'; ctl = new AbortController();
-      try {
-        var res = await sample(context() + PROMPTS[q] + TAIL, { signal: ctl.signal, onText: function (e) { $('aiOut').textContent = e.text; } });
-        if (res.truncated) $('aiNote').textContent = 'Cut short. Ask a narrower question.';
-      } catch (e) {
-        $('aiOut').textContent = (e && e.text) || '';
-        var c = e && e.code;
-        $('aiNote').textContent = c === 'cancelled' ? 'Stopped.' : c === 'not_granted' ? 'Claude access was declined for this view.' : c === 'rate_limited' ? 'Too many requests at once. Wait a minute, then ask again.' : 'The request did not complete (' + (c || 'error') + ').';
-        if (c === 'not_granted') sample = null;
-      } finally { btns.forEach(function (x) { x.disabled = false; }); $('stop').hidden = true; }
-    });
-  });
-  $('stop').addEventListener('click', function () { if (ctl) ctl.abort(); });
+    } finally { asking = false; buttons.forEach(function (x) { x.disabled = false; }); }
+  }
   $('copyPrompt').addEventListener('click', function () {
     var t = $('aiOut').textContent;
     if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { $('aiNote').textContent = 'Copied. Paste it into any assistant.'; }, function () { $('aiNote').textContent = 'Select the text above and copy it.'; });
     else $('aiNote').textContent = 'Select the text above and copy it.';
   });
-  if (!(window.claude && typeof window.claude.use === 'function')) {
-    $('aiOut').textContent = 'Pick a question. You get a prompt carrying your rule and your numbers, ready to paste into any assistant.';
-  }
-  if (window.claude && typeof window.claude.use === 'function') {
-    window.claude.use('sample').then(function (x) { sample = x; }).catch(function () { sample = null; });
-  }
+  $('classCode').value = aiStore('aim_class_code') || '';
+  aiStatus();
+  if (AI_URL) setInterval(aiStatus, 120000);
+  var btns = Array.prototype.slice.call(document.querySelectorAll('[data-q]'));
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var q = b.getAttribute('data-q');
+      if (q === 'free' && $('askQ').value.trim().length < 3) { $('aiNote').textContent = 'Write your question first.'; return; }
+      ask('sab.ask', inputs(q), btns);
+    });
+  });
 })();
 </script>
 </body>

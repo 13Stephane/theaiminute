@@ -106,6 +106,26 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   .legend { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+/* commit before reveal, and live Claude: as in the SAB tool */
+.btn { background: var(--gold); color: #10292B; border: 0; border-radius: 8px; padding: 11px 18px; font-size: 17px; font-weight: 700; cursor: pointer; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); font-weight: 600; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.gold { color: var(--gold); }
+textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 17px; line-height: 1.45; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.ai-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.ai-out { background: var(--card); border-radius: 10px; padding: 16px 18px; font-size: 18px; line-height: 1.55; white-space: pre-wrap; min-height: 80px; }
+.gate { background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 20px 22px; margin: 22px 0; }
+.gate .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 14px 0; }
+.gate label { display: block; font-size: 16px; color: var(--muted); margin-bottom: 6px; }
+.gate input[type=number] { width: 100%; font-size: 24px; padding: 10px 12px; background: var(--bg); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+.locked { display: none; } .open { display: block; }
+.cmp td:first-child { font-weight: 700; }
+.how { font-size: 16px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 14px; margin: 10px 0 0; }
+@media (max-width: 800px) { .gate .fields { grid-template-columns: 1fr; } }
+.aibar { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
+.aibadge { font: 700 12px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; background: var(--card2); color: var(--muted); }
+.aibadge.on { background: var(--gold); color: #10292B; }
+#classCode { width: 150px; font-size: 17px; padding: 9px 12px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; letter-spacing: .1em; }
 </style>
 </head>
 <body>
@@ -113,6 +133,22 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 
 <h1>AkzoNobel: the parts, or the offer?</h1>
 <p class="lede">A decision-time tool. Choose the moment, set what the board believed, and compare the value of separation with what PPG put on the table.</p>
+
+<p class="how">Write your value per share for each of the two parts first, alone. The tool opens once you have committed to them.</p>
+
+<div class="gate" id="gate">
+  <h3 class="gold">Your value per share for the two parts</h3>
+  <div class="fields">
+    <div><label for="uPc">Paints &amp; Coatings (€ a share)</label><input type="number" id="uPc" step="0.1" inputmode="decimal"></div>
+    <div><label for="uSc">Specialty Chemicals (€ a share)</label><input type="number" id="uSc" step="0.1" inputmode="decimal"></div>
+    <div><label>The parts (€ a share)</label><div class="readout" style="margin:0"><div><div class="v num" id="uSum">–</div></div></div></div>
+  </div>
+  <button class="btn" id="unlock" disabled>Compare with the model</button>
+  <span class="small" style="margin-left:12px">Enter both to continue.</span>
+</div>
+
+<div class="locked" id="model">
+<div class="tscroll"><table class="cmp" id="cmp"></table></div>
 
 <div class="scen" role="group" aria-label="Decision moment">
   <button id="scA" aria-pressed="true"><b>24 April 2017 · PPG's third proposal</b><span>€61.50 cash + 0.357 PPG share. Historical.</span></button>
@@ -148,6 +184,16 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 <h2>Sensitivity: sum of the parts per share</h2>
 <p class="small">Rows: Paints &amp; Coatings EV/EBITDA. Columns: Specialty Chemicals value. Green beats the offer; the outlined cell is your current setting (nearest values).</p>
 <div class="tscroll"><table class="grid-sens" id="sens"></table></div>
+
+<h2>Ask Claude about these numbers</h2>
+<p class="small">Your question goes to Claude with the assumptions above and the values your table committed to.</p>
+<div class="aibar" id="aiBar"><span class="aibadge" id="aiBadge">Offline mode</span><input type="text" id="classCode" placeholder="Class code" maxlength="12" autocomplete="off" spellcheck="false" aria-label="Class code" style="display:none"></div>
+<textarea id="askQ" aria-label="Your question for Claude" maxlength="600" placeholder="e.g. What would PPG have to add for the Boards to recommend talks, and why?"></textarea>
+<div class="ai-row"><button class="btn" id="askBtn">Ask Claude</button></div>
+<div class="ai-out" id="aiOut">Ask about the parts, the offer or the vote. You get Claude's answer, or a prompt carrying your numbers, ready to paste into any assistant.</div>
+<div class="ai-row"><button class="btn ghost" id="copyPrompt" hidden>Copy the prompt</button></div>
+<p class="small" id="aiNote"></p>
+</div>
 
 <h2>AkzoNobel before the bid, 2012–2016</h2>
 <p class="small">€ m. Case exhibits (balance sheet, income statement, invested capital, FOCF, ROIC, economic profit). ROIC on invested capital at the start of the year; WACC 5.7% as in the case.</p>
@@ -202,10 +248,11 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   <li>The re-rating of Paints &amp; Coatings is an assumption about the market, not a cash flow.</li>
 </ul>
 
-<p class="note">AI &amp; Corporate Finance, lecture 3, Data Analytics, AI &amp; Finance series, Nyenrode Business University. Case: Dennis Vink, "AkzoNobel business case: Prey or hunter?" (2023), exhibits 2012–2016 and the executive-board exercise. Segment data: AkzoNobel shareholder circular, 18 October 2017. The €10.1 bn in the exercise equals the enterprise value at which the sale to Carlyle and GIC closed on 1 October 2018; on 24 April 2017 the published estimate was ING's ≈ 9× 2016 EBITDA, €8.6 bn. Illustrative; not investment advice.</p>
+<p class="note">AI &amp; Finance, executive programme, Session 1, case 1. Prof. dr. Dennis Vink and Stéphane Guerraz. Case: Dennis Vink, "AkzoNobel business case: Prey or hunter?" (2023), exhibits 2012–2016 and the executive-board exercise. Segment data: AkzoNobel shareholder circular, 18 October 2017. The €10.1 bn in the exercise equals the enterprise value at which the sale to Carlyle and GIC closed on 1 October 2018; on 24 April 2017 the published estimate was ING's ≈ 9× 2016 EBITDA, €8.6 bn. Illustrative; not investment advice.</p>
 </div>
 
 <script>
+const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // the course proxy. Empty: copy-a-prompt only.
 (function () {
   var SH = 252, SC_EBITDA = 953;
   var S = {
@@ -335,6 +382,129 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
       el('text', { x: bx + 20, y: y0 + h + 32, 'text-anchor': 'middle' }, y);
     });
   })();
+
+  /* ---- the prompt: the same text the server builds (tests/cases.test.ts); no page elements in here ---- */
+  var AKP = {
+    A: { when: "PPG's third proposal: \u20ac61.50 in cash plus 0.357 PPG share", ref: 64.42, refLab: 'the \u20ac64.42 undisturbed price', cash: 61.5, shares: 0.357, cutoff: '24 April 2017' },
+    B: { when: 'the executive-board exercise: PPG offers \u20ac89 in cash (a case variant, not the historical offer)', ref: 58, refLab: 'the \u20ac58 share price in the exercise', cash: 89, shares: 0, cutoff: '18 October 2017' }
+  };
+  AKP.A.when = '24 April 2017, ' + AKP.A.when; AKP.B.when = '18 October 2017, ' + AKP.B.when;
+  function akzoState(scenario, i) {
+    var s = AKP[scenario], pay = i.pay / 100, leak = i.leak / 100;
+    var offer = s.cash + s.shares * i.ppg, remain = (i.mult * i.eb - i.debt) / 252, dist = i.proc * 1000 * pay * (1 - leak) / 252, sop = remain + dist;
+    return { offer: offer, remain: remain, dist: dist, sop: sop, be: ((offer - dist) * 252 + i.debt) / i.eb };
+  }
+  function eurP(v, d) { return '\u20ac' + v.toFixed(d === undefined ? 1 : d); }
+  function pctP(v) { return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%'; }
+  var ON_TOPIC = ' Answer it only if it is about this case and the numbers above; otherwise say so in one sentence.';
+  function casePrompt(inp) {
+    var s = AKP[inp.scenario], x = akzoState(inp.scenario, inp.sliders), v = inp.sliders, d = x.sop - x.offer, eur = eurP;
+    return 'Case: AkzoNobel, ' + s.when + '. The choice: separate the company, selling Specialty Chemicals and returning the proceeds, or open talks with PPG. Current assumptions from the class tool, per share on 252 m shares:\n' +
+      '- The offer: ' + eur(x.offer, 2) + ', ' + pctP(x.offer / s.ref - 1) + ' on ' + s.refLab + (s.shares ? ' (PPG share at ' + eur(v.ppg, 2) + ')' : '') + '.\n' +
+      '- Paints & Coatings: ' + v.mult.toFixed(1) + '\u00d7 EBITDA of \u20ac' + v.eb.toLocaleString('en-GB') + ' m, less \u20ac' + v.debt.toLocaleString('en-GB') + ' m of debt: ' + eur(x.remain) + ' a share.\n' +
+      '- Specialty Chemicals sold for \u20ac' + v.proc.toFixed(1) + ' bn (' + (v.proc * 1000 / 953).toFixed(1) + '\u00d7 its 2016 EBITDA of \u20ac953 m), ' + Math.round(v.pay) + '% returned to shareholders after ' + Math.round(v.leak) + '% leakage: ' + eur(x.dist) + ' a share.\n' +
+      '- The parts: ' + eur(x.sop) + ' a share, ' + (d >= 0 ? eur(d) + ' above' : eur(-d) + ' below') + ' the offer; Paints & Coatings would need ' + x.be.toFixed(1) + '\u00d7 for the parts to match it.\n' +
+      '- Before opening the tool, the table committed to ' + eur(inp.commit.pc) + ' a share for Paints & Coatings and ' + eur(inp.commit.sc) + ' for Specialty Chemicals, ' + eur(inp.commit.pc + inp.commit.sc) + ' for the parts.\n\n' +
+      'The table asks: "' + inp.question.trim() + '"' + ON_TOPIC +
+      '\nAnswer in plain text, under 220 words, no headings. Reason from value per share and who keeps the spread (premium against separation upside, synergies, certainty, leakage), not earnings per share. Do not use knowledge of what happened after ' + s.cutoff + '.';
+  }
+  /* ---- end of the prompt ---- */
+
+  // commit before reveal: the two parts, as at 2:05
+  function committed() { return { pc: parseFloat($('uPc').value), sc: parseFloat($('uSc').value) }; }
+  function gateCheck() {
+    var c = committed(), ok = !isNaN(c.pc) && !isNaN(c.sc);
+    $('unlock').disabled = !ok; $('uSum').textContent = ok ? eur(c.pc + c.sc) : '\u2013';
+  }
+  ['uPc', 'uSc'].forEach(function (id) { $(id).addEventListener('input', gateCheck); });
+  $('unlock').addEventListener('click', function () {
+    $('model').className = 'open'; $('gate').style.display = 'none';
+    compare(); $('model').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  function compare() {
+    var c = committed(), m = akzoState('A', { ppg: 98.74, proc: 8.6, mult: 11.5, eb: 1349, debt: 3585, pay: 100, leak: 0 });
+    var row = function (lab, u, mv, d) { return '<tr><td>' + lab + '</td><td>' + (u === null ? '\u2013' : eur(u, d)) + '</td><td>' + eur(mv, d) + '</td><td>' + (u === null ? '\u2013' : ((u - mv >= 0 ? '+' : '\u2212') + eur(Math.abs(u - mv), d))) + '</td></tr>'; };
+    $('cmp').innerHTML = '<thead><tr><th>\u20ac a share, at the case settings</th><th>Your table</th><th>The model</th><th>Difference</th></tr></thead><tbody>' +
+      row('Paints &amp; Coatings: 11.5\u00d7 \u20ac1,349 m EBITDA, less \u20ac3,585 m debt', c.pc, m.remain) +
+      row('Specialty Chemicals: ING\u2019s \u2248 \u20ac8.6 bn', c.sc, m.dist) +
+      row('The parts', c.pc + c.sc, m.sop) +
+      row('PPG\u2019s third proposal', null, m.offer, 2) + '</tbody>';
+  }
+  function inputs() {
+    var sl = {}; Object.keys(inp).forEach(function (k) { sl[k] = +inp[k].value; });
+    var c = committed();
+    return { scenario: cur, sliders: sl, commit: { pc: c.pc, sc: c.sc }, question: $('askQ').value };
+  }
+  /* ---- live Claude through the course proxy (same gate, class code and budget as the other tools) ---- */
+  var AI = { live: false, reason: 'off' }, AI_DEVICE = null;
+  function aiStore(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function aiDevice() {
+    if (AI_DEVICE) return AI_DEVICE;
+    var d = aiStore('aim_device');
+    if (!d || !/^[A-Za-z0-9_-]{8,64}$/.test(d)) { d = Array.from(crypto.getRandomValues(new Uint8Array(12)), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); aiStore('aim_device', d); }
+    return AI_DEVICE = d;
+  }
+  var AI_WHY = { 'off': 'Live AI is off', 'outside window': 'Live AI is outside today’s session hours', 'class code': 'That class code was not accepted',
+    'no code': 'Enter the class code to ask Claude from this page', 'budget': 'Today’s live AI budget is used up', 'rate': 'This device has asked its questions for now; wait a few minutes',
+    'inputs': 'Claude could not take this question: keep it under 600 characters', 'origin': 'Live AI only works on theaiminute.blog', 'network': 'Couldn’t reach the live AI', 'unavailable': 'Live AI is unavailable' };
+  function aiWhy(r) { return AI_WHY[r] || 'Claude did not answer'; }
+  // A request that hangs (a captive or flaky network) must not hold the page: give up and fall back.
+  function aiFetch(url, opts, ms) { var c = new AbortController(), t = setTimeout(function () { c.abort(); }, ms); opts.signal = c.signal; return fetch(url, opts).finally(function () { clearTimeout(t); }); }
+  async function aiStatus() {
+    if (!AI_URL) return;
+    $('aiBar').style.display = 'flex';
+    try { var s = await (await aiFetch(AI_URL.replace(/\/+$/, '') + '/status', {}, 6000)).json(); AI.live = !!s.live; AI.reason = s.reason || 'off'; }
+    catch (e) { AI.live = false; AI.reason = 'network'; }
+    $('aiBadge').textContent = AI.live ? 'Live AI on' : 'Offline mode';
+    $('aiBadge').classList.toggle('on', AI.live);
+    $('classCode').style.display = AI.live ? '' : 'none';
+  }
+  async function aiCall(kind, inputs) {
+    if (!AI_URL) return { ok: false, why: null };
+    if (!AI.live) await aiStatus();
+    if (!AI.live) return { ok: false, why: aiWhy(AI.reason) };
+    var code = $('classCode').value.trim();
+    if (!code) return { ok: false, why: aiWhy('no code') };
+    aiStore('aim_class_code', code);
+    try {
+      var r = await aiFetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Class-Code': code, 'X-Device-Id': aiDevice() }, body: JSON.stringify({ kind: kind, inputs: inputs }) }, 90000);
+      var b = await r.json().catch(function () { return {}; });
+      if (r.ok && typeof b.result === 'string' && b.result.trim()) return { ok: true, text: b.result.trim(), cost: b.cost_usd };
+      if (r.status === 423 || b.reason === 'budget') aiStatus();
+      return { ok: false, why: aiWhy(b.reason) };
+    } catch (e) { return { ok: false, why: aiWhy('network') }; }
+  }
+  // Ask Claude live; otherwise show the same prompt, ready to paste into any assistant.
+  var asking = false;
+  async function ask(kind, inputs, buttons) {
+    if (asking) return; asking = true;
+    buttons.forEach(function (x) { x.disabled = true; });
+    $('copyPrompt').hidden = true; $('aiNote').textContent = '';
+    $('aiOut').textContent = AI_URL ? 'Claude is reading your numbers. This takes up to half a minute…' : '';
+    try {
+      var res = await aiCall(kind, inputs);
+      if (res.ok) {
+        $('aiOut').textContent = res.text;
+        $('aiNote').textContent = typeof res.cost === 'number' ? 'Claude Sonnet 5.5. This answer cost about $' + res.cost.toFixed(3) + '.' : '';
+      } else {
+        $('aiOut').textContent = casePrompt(inputs);
+        $('aiNote').textContent = (res.why ? res.why + '. ' : '') + 'The prompt above carries your numbers: copy it into any assistant.';
+        $('copyPrompt').hidden = false;
+      }
+    } finally { asking = false; buttons.forEach(function (x) { x.disabled = false; }); }
+  }
+  $('copyPrompt').addEventListener('click', function () {
+    var t = $('aiOut').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { $('aiNote').textContent = 'Copied. Paste it into any assistant.'; }, function () { $('aiNote').textContent = 'Select the text above and copy it.'; });
+    else $('aiNote').textContent = 'Select the text above and copy it.';
+  });
+  $('classCode').value = aiStore('aim_class_code') || '';
+  aiStatus();
+  if (AI_URL) setInterval(aiStatus, 120000);
+  $('askBtn').addEventListener('click', function () {
+    if ($('askQ').value.trim().length < 3) { $('aiNote').textContent = 'Write your question first.'; return; }
+    ask('akzo.ask', inputs(), [$('askBtn')]);
+  });
 
   document.querySelectorAll('.reveal').forEach(function (b) {
     b.addEventListener('click', function () { var a = $(b.getAttribute('data-a')); var o = a.classList.toggle('open'); b.textContent = o ? 'Hide' : (b.getAttribute('data-a') === 'a4' ? 'Show the reasoning' : 'Show the answer'); });

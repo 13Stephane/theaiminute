@@ -92,12 +92,41 @@ details { background: var(--card); border-radius: 10px; padding: 14px 18px; marg
 summary { cursor: pointer; font-size: 19px; font-weight: 700; color: var(--gold); }
 details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0; }
 .err { color: var(--bad); font-weight: 700; }
+/* commit before reveal, the stress test, and live Claude */
+textarea { width: 100%; min-height: 96px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 17px; line-height: 1.45; }
+.ai-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.ai-out { background: var(--card); border-radius: 10px; padding: 16px 18px; font-size: 18px; line-height: 1.55; white-space: pre-wrap; min-height: 80px; }
+.gate { background: var(--card); border: 2px solid var(--gold); border-radius: 12px; padding: 20px 22px; margin: 22px 0; }
+.gate select { font-size: 18px; padding: 8px 10px; background: var(--bg); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; }
+.rankrow { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.rankrow b { color: var(--gold); margin-right: 8px; } .rankrow span { color: var(--muted); font-size: 15px; }
+.locked { display: none; } .open { display: block; }
+.cmp td:first-child { font-weight: 700; }
+tr.case td { color: var(--gold); font-weight: 700; }
+.how { font-size: 16px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 14px; margin: 10px 0 0; }
+@media (max-width: 800px) { .row { grid-template-columns: 1fr auto; } }  /* "−232,136" is wider than 110px on a phone */
+.aibar { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
+.aibadge { font: 700 12px system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; background: var(--card2); color: var(--muted); }
+.aibadge.on { background: var(--gold); color: #10292B; }
+#classCode { width: 150px; font-size: 17px; padding: 9px 12px; background: var(--card); color: var(--ink); border: 2px solid var(--line); border-radius: 8px; letter-spacing: .1em; }
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>LEGO India: sign the INR 100 m?</h1>
 <p class="lede">Start of 2024. Aswath's business case, rebuilt line by line from his spreadsheet. First the model as he built it, then the deal LEGO actually signs.</p>
+
+<p class="how">Rank the five assumptions first, alone: which one, changed by a reasonable amount, moves NPV most? The tool opens once your ranking is in.</p>
+
+<div class="gate" id="gate">
+  <h3 class="gold">Your ranking: 1 moves NPV most, 5 least</h3>
+  <p class="small">A reasonable change: about a point on a growth rate, the discount rate anywhere from 6% to 14%, the market share path a quarter up or down.</p>
+  <div id="rankRows"></div>
+  <div style="margin-top:16px"><button class="btn" id="unlock" disabled>Compare with the model</button><span class="small" id="gateMsg" style="margin-left:12px">Give each assumption a different rank.</span></div>
+</div>
+
+<div class="locked" id="model">
+<div class="tscroll"><table class="cmp" id="cmp"></table></div>
 
 <div class="scen" role="group" aria-label="Which view">
   <button id="vA" aria-pressed="true"><b>The controller's model</b><span>100% of project cash flows, as in the spreadsheet</span></button>
@@ -140,6 +169,20 @@ details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0;
 <div class="tscroll"><table id="tbl"></table></div>
 <p class="small">kINR. Free operating cash flow = NOPLAT + depreciation − investment in working capital − reinvestment. 2033 carries the INR 100 m buy-back and the release of all working capital. ROIC = NOPLAT ÷ opening invested capital (factory INR 100 m, held flat by reinvestment, plus working capital).</p>
 
+<h2>One change at a time</h2>
+<p class="small">Each row changes one assumption from the case and holds the rest, as on the stress-test slide. INR m. The whole project, as in the spreadsheet; and LEGO's deal, where LEGO keeps 30%, funds the factory and receives the buy-back.</p>
+<div class="tscroll"><table id="stress"></table></div>
+<div class="callout" id="breakEven" style="background:var(--card2);border-left:5px solid var(--gold);padding:14px 18px;margin:14px 0"></div>
+
+<h2>Ask Claude about this case</h2>
+<p class="small">Your question goes to Claude with the assumptions above and your table's ranking. The case is fictional.</p>
+<div class="aibar" id="aiBar"><span class="aibadge" id="aiBadge">Offline mode</span><input type="text" id="classCode" placeholder="Class code" maxlength="12" autocomplete="off" spellcheck="false" aria-label="Class code" style="display:none"></div>
+<textarea id="askQ" aria-label="Your question for Claude" maxlength="600" placeholder="e.g. Stress-test this NPV: change one assumption at a time and rank them by impact."></textarea>
+<div class="ai-row"><button class="btn" id="askBtn">Ask Claude</button></div>
+<div class="ai-out" id="aiOut">Ask about the model, the deal or the verdict. You get Claude's answer, or a prompt carrying your numbers, ready to paste into any assistant.</div>
+<div class="ai-row"><button class="btn ghost" id="copyPrompt" hidden>Copy the prompt</button></div>
+<p class="small" id="aiNote"></p>
+
 <h2>After your verdict: the reviewer's checklist</h2>
 <details><summary>Show what a careful reviewer, human or AI, should flag</summary><ol>
   <li><b>LEGO keeps 30%.</b> The spreadsheet values 100% of the project. Its "significant minority" row is empty and never used.</li>
@@ -152,11 +195,13 @@ details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0;
   <li><b>Market share.</b> One limited-edition theme reaching 28% of all LEGO units sold in India by 2033 is an assumption to test, not a given.</li>
   <li><b>Mechanics.</b> Tax (30%) and the discount rate (10%) are typed into formulas, not linked to input cells; reinvestment from 2025 references the depreciation row; the buy-back is booked in 2033 although the case dates it 2034.</li>
 </ol></details>
+</div>
 
-<p class="note">AI &amp; Corporate Finance, lecture 3, Data Analytics, AI &amp; Finance series, Nyenrode Business University. Case: Dennis Vink, "LEGO factory investment in India" (2023), a fictional scenario, and its spreadsheet (LEGO_NPV.xls). At the case's settings this page reproduces the spreadsheet's NPV of −232,136 kINR to the unit. Illustrative; not investment advice.</p>
+<p class="note">AI &amp; Finance, executive programme, Session 2, case 3. Prof. dr. Dennis Vink and Stéphane Guerraz. Case: Dennis Vink, "LEGO factory investment in India" (2023), a fictional scenario, and its spreadsheet (LEGO_NPV.xls). At the case's settings this page reproduces the spreadsheet's NPV of −232,136 kINR to the unit. Illustrative; not investment advice.</p>
 </div>
 
 <script>
+const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // the course proxy. Empty: copy-a-prompt only.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var Y = [2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033];
@@ -167,6 +212,7 @@ details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0;
     I.share.value = v === 'A' ? 100 : 30; I.own.checked = v === 'B'; I.hq.value = 6; I.crp.value = 4; I.pg.value = 0; I.cg.value = 2; I.mg.value = 8; I.ss.value = 100;
     I.tax.checked = true; I.sunk.checked = false; I.int.checked = false;
   }
+  /* ---- the prompt: the same text the server builds (tests/cases.test.ts); no page elements in here ---- */
   function model(p) {
     var rate = p.hq + p.crp, nwcPrev = 10000, rows = [];
     for (var i = 0; i < 10; i++) {
@@ -194,6 +240,49 @@ details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0;
     if (f(lo) * f(hi) < 0) { for (var k = 0; k < 200; k++) { var mid = (lo + hi) / 2; if (f(lo) * f(mid) <= 0) hi = mid; else lo = mid; } irr = (lo + hi) / 2; }
     return { rows: rows, npv: npv, npvL: npvL, irr: irr, rate: rate, nominal: cf.reduce(function (a, v) { return a + v; }, 0) };
   }
+  function kP(v) { return (v < 0 ? '\u2212' : '') + Math.round(Math.abs(v)).toLocaleString('en-GB'); }
+  var LETTERS = ['A', 'B', 'C', 'D', 'E'], ASSUMPTIONS = ['Price path', 'Unit cost growth', 'Discount rate', 'Market share path', 'Market growth'];
+  var ON_TOPIC = ' Answer it only if it is about this case and the numbers above; otherwise say so in one sentence.';
+  function casePrompt(inp) {
+    var s = inp.sliders;
+    var p = { share: s.share / 100, own: s.own, hq: s.hq / 100, crp: s.crp / 100, pg: s.pg / 100, cg: s.cg / 100, mg: s.mg / 100, ss: s.ss / 100, tax: s.tax, sunk: s.sunk, int: s.int };
+    var R = model(p), k = kP, pc = function (v) { return (v * 100).toFixed(1) + '%'; };
+    var best = R.rows.reduce(function (a, r) { return r.roic > a.roic ? r : a; });
+    var ranked = LETTERS.map(function (l, n) { return { l: l, n: n, r: inp.ranking[n] }; }).sort(function (a, b) { return a.r - b.r; })
+      .map(function (x) { return x.l + ' ' + ASSUMPTIONS[x.n].toLowerCase(); }).join(', ');
+    return "Case: LEGO India, start of 2024, a fictional teaching case. LEGO is asked to fund an INR 100 m factory in a venture that gives the Indian government 70% of the project cash flows and LEGO 30%; the factory is bought back for INR 100 m after ten years. The controller's spreadsheet values 100% of the project. Current assumptions from the class tool:\n" +
+      "- LEGO's share of project cash flows " + Math.round(p.share * 100) + '%; ' + (p.own ? 'LEGO pays for the factory and receives the buy-back itself' : 'the factory payment and buy-back are shared like the other cash flows') + '.\n' +
+      '- Discount rate ' + pc(R.rate) + ' (' + pc(p.hq) + ' head-office cost of capital + ' + pc(p.crp) + ' India country risk premium); price growth ' + pc(p.pg) + ' a year from INR 120.50; unit cost growth ' + pc(p.cg) + ' a year from INR 105; market growth ' + pc(p.mg) + ' a year from 35 m units; market share path at ' + Math.round(p.ss * 100) + "% of the case's 5% rising to 28%.\n" +
+      '- Losses ' + (p.tax ? 'earn' : 'do not earn') + ' a 30% tax credit; the INR 2 m already spent on R&D is ' + (p.sunk ? 'included (an error)' : 'left out') + '; the INR 1 m a year of interest is ' + (p.int ? 'deducted from the cash flows (an error)' : 'left to the discount rate') + '.\n' +
+      '- NPV of the whole project ' + k(R.npv) + ' kINR; NPV to LEGO ' + k(R.npvL) + ' kINR; IRR ' + (R.irr === null ? 'none' : pc(R.irr)) + '; unit gross margin ' + (R.rows[0].m * 100).toFixed(0) + '% in 2024 and ' + (R.rows[9].m * 100).toFixed(0) + '% in 2033; highest ROIC ' + pc(best.roic) + ' in ' + best.y + ' (the controller said "about 40%").\n' +
+      '- Before opening the tool, the table ranked the five assumptions by how far a reasonable change moves NPV, largest first: ' + ranked + '.\n\n' +
+      'The table asks: "' + inp.question.trim() + '"' + ON_TOPIC +
+      "\nAnswer in plain text, under 220 words, no headings. Reason from value created (NPV, and ROIC against the cost of capital), not accounting profit. The case is fictional: do not bring in facts about LEGO's real operations in India.";
+  }
+  // The stress test on the slide: one assumption at a time from the case, the rest held.
+  var CASE = { share: 1, own: false, hq: .06, crp: .04, pg: 0, cg: .02, mg: .08, ss: 1, tax: true, sunk: false, int: false };
+  var DEAL = { share: .3, own: true };
+  var STRESS = [
+    ['A', 'Price growth 1% a year', { pg: .01 }], ['A', 'Price growth 2% a year', { pg: .02 }],
+    ['B', 'Unit costs flat', { cg: 0 }], ['B', 'Unit cost growth 3% a year', { cg: .03 }],
+    ['C', 'Discount rate 6%: no country premium', { crp: 0 }], ['C', 'Discount rate 14%: country premium 8%', { crp: .08 }],
+    ['D', 'Market share path \u00d70.75', { ss: .75 }], ['D', 'Market share path \u00d71.25', { ss: 1.25 }],
+    ['E', 'Market growth 12% a year', { mg: .12 }]
+  ];
+  function withP(a, b) { var o = {}; [a, b].forEach(function (x) { for (var q in x) o[q] = x[q]; }); return o; }
+  function stressRows() {
+    var base = model(CASE).npv, baseD = model(withP(CASE, DEAL)).npvL;
+    var rows = STRESS.map(function (x) { var c = x[2]; return { letter: x[0], change: x[1], npv: model(withP(CASE, c)).npv, deal: model(withP(withP(CASE, DEAL), c)).npvL }; });
+    var swing = LETTERS.map(function (l) { return Math.max.apply(null, rows.filter(function (r) { return r.letter === l; }).map(function (r) { return Math.abs(r.npv - base); })); });
+    var order = LETTERS.map(function (l, n) { return n; }).sort(function (a, b) { return swing[b] - swing[a]; });
+    var rank = []; order.forEach(function (n, i) { rank[n] = i + 1; });
+    var solve = function (f) { var lo = 0, hi = .05; for (var i = 0; i < 100; i++) { var m = (lo + hi) / 2; if (f(lo) * f(m) <= 0) hi = m; else lo = m; } return (lo + hi) / 2; };
+    return { base: base, baseD: baseD, rows: rows, swing: swing, rank: rank,
+      bePrice: solve(function (x) { return model(withP(CASE, { pg: x })).npv; }),
+      bePriceDeal: solve(function (x) { return model(withP(withP(CASE, DEAL), { pg: x })).npvL; }),
+      beCost: solve(function (x) { return model(withP(CASE, { cg: x })).npv; }) };
+  }
+  /* ---- end of the prompt ---- */
   function k(v) { return (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('en-GB'); }
   function calc() {
     var p = { share: +I.share.value / 100, own: I.own.checked, hq: +I.hq.value / 100, crp: +I.crp.value / 100, pg: +I.pg.value / 100, cg: +I.cg.value / 100, mg: +I.mg.value / 100, ss: +I.ss.value / 100, tax: I.tax.checked, sunk: I.sunk.checked, int: I.int.checked };
@@ -257,6 +346,112 @@ details ol { margin: 10px 0 0; padding-left: 24px; } details li { margin: 8px 0;
   $('vA').addEventListener('click', function () { setView('A'); }); $('vB').addEventListener('click', function () { setView('B'); });
   $('reset').addEventListener('click', function () { setView(view); });
   setView('A');
+
+  // commit before reveal: the A-to-E ranking, as at 4:06
+  var GATE_HINT = ['flat for ten years', '2% a year', '10%: 6% + 4%', '5% rising to 28%', '8% a year'];
+  $('rankRows').innerHTML = LETTERS.map(function (l, n) {
+    return '<div class="rankrow"><label for="rk' + l + '"><b>' + l + '</b>' + ASSUMPTIONS[n] + ' <span>' + GATE_HINT[n] + '</span></label><select id="rk' + l + '"><option value="">\u2013</option>' +
+      [1, 2, 3, 4, 5].map(function (r) { return '<option value="' + r + '">' + r + '</option>'; }).join('') + '</select></div>';
+  }).join('');
+  function ranking() { return LETTERS.map(function (l) { return +$('rk' + l).value || 0; }); }
+  function rankCheck() {
+    var r = ranking(), full = r.every(function (x) { return x > 0; }), distinct = new Set(r.filter(function (x) { return x > 0; })).size === r.filter(function (x) { return x > 0; }).length;
+    $('unlock').disabled = !(full && distinct);
+    $('gateMsg').textContent = !distinct ? 'Each rank once: two assumptions share a rank.' : full ? 'Ready.' : 'Give each assumption a different rank.';
+  }
+  LETTERS.forEach(function (l) { $('rk' + l).addEventListener('change', rankCheck); });
+  var ST = null;
+  $('unlock').addEventListener('click', function () {
+    $('model').className = 'open'; $('gate').style.display = 'none';
+    ST = ST || stressRows(); compare(); drawStress(); $('model').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  function m(v) { return (v >= 0.5 ? '+' : v <= -0.5 ? '\u2212' : '') + Math.abs(Math.round(v / 1000)); }
+  function compare() {
+    var r = ranking();
+    $('cmp').innerHTML = '<thead><tr><th>Assumption</th><th>Your rank</th><th>The model\u2019s rank</th><th>Largest move from one change, INR m</th></tr></thead><tbody>' +
+      LETTERS.map(function (l, n) { return '<tr><td>' + l + ' \u00b7 ' + ASSUMPTIONS[n] + '</td><td>' + r[n] + '</td><td>' + ST.rank[n] + '</td><td>' + Math.round(ST.swing[n] / 1000) + '</td></tr>'; }).join('') + '</tbody>';
+  }
+  function drawStress() {
+    var all = ST.rows.concat([{ letter: '', change: 'The case, as given', npv: ST.base, deal: ST.baseD, isCase: true }]).sort(function (a, b) { return b.npv - a.npv; });
+    $('stress').innerHTML = '<thead><tr><th>One change from the case</th><th>Assumption</th><th>NPV, whole project</th><th>vs the case</th><th>NPV, LEGO\u2019s deal</th></tr></thead><tbody>' +
+      all.map(function (r) { var d = r.npv - ST.base;
+        return '<tr' + (r.isCase ? ' class="case"' : '') + '><td>' + r.change + '</td><td>' + (r.letter ? r.letter + ' \u00b7 ' + ASSUMPTIONS[LETTERS.indexOf(r.letter)].toLowerCase() : '') + '</td><td class="' + (r.npv < 0 ? 'neg' : 'pos') + '">' + m(r.npv) + '</td><td>' + (r.isCase ? '' : m(d)) + '</td><td class="' + (r.deal < 0 ? 'neg' : 'pos') + '">' + m(r.deal) + '</td></tr>'; }).join('') + '</tbody>';
+    $('breakEven').innerHTML = 'Break-even price growth: <b>' + (ST.bePrice * 100).toFixed(2) + '% a year</b> for the whole project, <b>' + (ST.bePriceDeal * 100).toFixed(2) + '%</b> for LEGO\u2019s deal. Break-even unit cost growth: <b>' + (ST.beCost * 100).toFixed(2) + '% a year</b>, against 2% in the case. The price path decides it; the discount rate barely moves it, because the large inflows arrive last.';
+  }
+  function inputs() {
+    var sl = { share: +I.share.value, own: I.own.checked, hq: +I.hq.value, crp: +I.crp.value, pg: +I.pg.value, cg: +I.cg.value, mg: +I.mg.value, ss: +I.ss.value, tax: I.tax.checked, sunk: I.sunk.checked, int: I.int.checked };
+    return { sliders: sl, ranking: ranking(), question: $('askQ').value };
+  }
+  /* ---- live Claude through the course proxy (same gate, class code and budget as the other tools) ---- */
+  var AI = { live: false, reason: 'off' }, AI_DEVICE = null;
+  function aiStore(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function aiDevice() {
+    if (AI_DEVICE) return AI_DEVICE;
+    var d = aiStore('aim_device');
+    if (!d || !/^[A-Za-z0-9_-]{8,64}$/.test(d)) { d = Array.from(crypto.getRandomValues(new Uint8Array(12)), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); aiStore('aim_device', d); }
+    return AI_DEVICE = d;
+  }
+  var AI_WHY = { 'off': 'Live AI is off', 'outside window': 'Live AI is outside today’s session hours', 'class code': 'That class code was not accepted',
+    'no code': 'Enter the class code to ask Claude from this page', 'budget': 'Today’s live AI budget is used up', 'rate': 'This device has asked its questions for now; wait a few minutes',
+    'inputs': 'Claude could not take this question: keep it under 600 characters', 'origin': 'Live AI only works on theaiminute.blog', 'network': 'Couldn’t reach the live AI', 'unavailable': 'Live AI is unavailable' };
+  function aiWhy(r) { return AI_WHY[r] || 'Claude did not answer'; }
+  // A request that hangs (a captive or flaky network) must not hold the page: give up and fall back.
+  function aiFetch(url, opts, ms) { var c = new AbortController(), t = setTimeout(function () { c.abort(); }, ms); opts.signal = c.signal; return fetch(url, opts).finally(function () { clearTimeout(t); }); }
+  async function aiStatus() {
+    if (!AI_URL) return;
+    $('aiBar').style.display = 'flex';
+    try { var s = await (await aiFetch(AI_URL.replace(/\/+$/, '') + '/status', {}, 6000)).json(); AI.live = !!s.live; AI.reason = s.reason || 'off'; }
+    catch (e) { AI.live = false; AI.reason = 'network'; }
+    $('aiBadge').textContent = AI.live ? 'Live AI on' : 'Offline mode';
+    $('aiBadge').classList.toggle('on', AI.live);
+    $('classCode').style.display = AI.live ? '' : 'none';
+  }
+  async function aiCall(kind, inputs) {
+    if (!AI_URL) return { ok: false, why: null };
+    if (!AI.live) await aiStatus();
+    if (!AI.live) return { ok: false, why: aiWhy(AI.reason) };
+    var code = $('classCode').value.trim();
+    if (!code) return { ok: false, why: aiWhy('no code') };
+    aiStore('aim_class_code', code);
+    try {
+      var r = await aiFetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Class-Code': code, 'X-Device-Id': aiDevice() }, body: JSON.stringify({ kind: kind, inputs: inputs }) }, 90000);
+      var b = await r.json().catch(function () { return {}; });
+      if (r.ok && typeof b.result === 'string' && b.result.trim()) return { ok: true, text: b.result.trim(), cost: b.cost_usd };
+      if (r.status === 423 || b.reason === 'budget') aiStatus();
+      return { ok: false, why: aiWhy(b.reason) };
+    } catch (e) { return { ok: false, why: aiWhy('network') }; }
+  }
+  // Ask Claude live; otherwise show the same prompt, ready to paste into any assistant.
+  var asking = false;
+  async function ask(kind, inputs, buttons) {
+    if (asking) return; asking = true;
+    buttons.forEach(function (x) { x.disabled = true; });
+    $('copyPrompt').hidden = true; $('aiNote').textContent = '';
+    $('aiOut').textContent = AI_URL ? 'Claude is reading your numbers. This takes up to half a minute…' : '';
+    try {
+      var res = await aiCall(kind, inputs);
+      if (res.ok) {
+        $('aiOut').textContent = res.text;
+        $('aiNote').textContent = typeof res.cost === 'number' ? 'Claude Sonnet 5.5. This answer cost about $' + res.cost.toFixed(3) + '.' : '';
+      } else {
+        $('aiOut').textContent = casePrompt(inputs);
+        $('aiNote').textContent = (res.why ? res.why + '. ' : '') + 'The prompt above carries your numbers: copy it into any assistant.';
+        $('copyPrompt').hidden = false;
+      }
+    } finally { asking = false; buttons.forEach(function (x) { x.disabled = false; }); }
+  }
+  $('copyPrompt').addEventListener('click', function () {
+    var t = $('aiOut').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { $('aiNote').textContent = 'Copied. Paste it into any assistant.'; }, function () { $('aiNote').textContent = 'Select the text above and copy it.'; });
+    else $('aiNote').textContent = 'Select the text above and copy it.';
+  });
+  $('classCode').value = aiStore('aim_class_code') || '';
+  aiStatus();
+  if (AI_URL) setInterval(aiStatus, 120000);
+  $('askBtn').addEventListener('click', function () {
+    if ($('askQ').value.trim().length < 3) { $('aiNote').textContent = 'Write your question first.'; return; }
+    ask('lego.ask', inputs(), [$('askBtn')]);
+  });
 })();
 </script>
 </body>
