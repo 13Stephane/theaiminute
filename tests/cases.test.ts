@@ -109,8 +109,8 @@ Deno.test("the three pages: the programme's footer, the proxy, and the commit sc
   for (const f of ["sab", "lego", "akzo"]) {
     const s = page(f);
     assert(!/Nyenrode|lecture 3|window\.claude/.test(s), f);
-    assert(f === "akzo" ? s.includes('<p class="note">AI &amp; Finance programme. Case:') && s.includes("Segment margins and returns: shareholder circular, 18 October 2017, annexes 1 and 2.")
-      : s.includes("AI &amp; Finance, executive programme") && s.includes("Prof. dr. Dennis Vink and Stéphane Guerraz"), f);
+    assert(s.includes('<p class="note">AI &amp; Finance programme. Case:') && !/executive programme|Session \d, case/.test(s), f);
+    if (f === "akzo") assert(s.includes("Segment margins and returns: shareholder circular, 18 October 2017, annexes 1 and 2."));
     assert(/^const AI_URL = "https:\/\/[a-z0-9]+\.supabase\.co\/functions\/v1\/ai";/m.test(s), f);
     assert(s.includes('id="gate"') && s.includes('class="locked" id="model"'), f);
   }
