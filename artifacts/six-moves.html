@@ -567,7 +567,7 @@ function teamView(id){
   let phase;
   if(!charterLocked) phase="charter";
   else if(st.ended) phase="end";
-  else if(nextR>(settings.openRound||0)) phase="waiting";
+  else if(nextR>Math.max(settings.openRound||0,2)) phase="waiting";
   else if(nextR===2 && !(settings.draws&&settings.draws[cs.key])) phase="waiting";
   else phase="round";
   if(phase==="end" && ui.tab==="round") ui.tab=settings.bridgeOpen?"bridge":"debrief";
@@ -584,7 +584,7 @@ function teamView(id){
     else {
       if(rep.rounds.length) main+=resultView(id,cs,doc,rep,rep.rounds.length-1,true);
       if(phase==="round") main+=roundForm(id,cs,doc,rep,nextR);
-      else if(phase==="waiting") main+='<div class="notice">'+(nextR===2&&!(settings.draws&&settings.draws[cs.key])&&(settings.openRound||0)>=2?"Round 2 opens once the facilitators have drawn the hidden answers.":"Round "+nextR+" opens when the facilitators start it. Use the time to discuss the coaching question.")+'</div>';
+      else if(phase==="waiting") main+='<div class="notice">'+(nextR===2&&!(settings.draws&&settings.draws[cs.key])?"Round 2 opens once the facilitators have drawn the hidden answers.":"Round "+nextR+" opens when the facilitators start it. Use the time to discuss the coaching question.")+'</div>';
       else if(phase==="end") main+='<div class="notice">The game is over. Open the debrief tab.</div>';
     }
   }
@@ -764,7 +764,7 @@ function consoleView(){
   if(!(canEdit||mode==="preview")) return '<div class="empty"><p>The console is for facilitators.</p></div>';
   const open=settings.openRound||0;
   let s='<section class="console"><div class="ch"><h1>Console <span class="ver">Rules v6.6 · own server</span></h1><label class="field inline"><span>Cohort</span><input data-set="cohort" value="'+esc(settings.cohort)+'" maxlength="60"></label></div>';
-  s+='<div class="cgrid"><div class="panel"><h3>Rounds open</h3><div class="seg">'+["Charter only","Round 1","Round 2","Round 3"].map((l,i)=>'<button data-action="open-round" data-v="'+i+'" aria-pressed="'+(open===i)+'">'+l+'</button>').join("")+'</div><p class="muted small">Teams can submit up to the open round. Round 2 also needs the hidden answers drawn.</p><h3>Day 3 bridge</h3><div class="seg">'+[["0","Closed"],["1","Open"]].map(([v,l])=>'<button data-action="bridge-open" data-v="'+v+'" aria-pressed="'+((!!settings.bridgeOpen)===(v==="1"))+'">'+l+'</button>').join("")+'</div><p class="muted small">Opens the bridge on every team page: the team’s own opportunity, its charter and the game master’s red team.</p></div>';
+  s+='<div class="cgrid"><div class="panel"><h3>Rounds open</h3><div class="seg">'+[[2,"Up to Round 2"],[3,"Round 3"]].map(([v,l])=>'<button data-action="open-round" data-v="'+v+'" aria-pressed="'+((open>=3)===(v===3))+'">'+l+'</button>').join("")+'</div><p class="muted small">The charter and Rounds 1 and 2 are open from the start. Open Round 3 when the room is ready.</p><h3>Day 3 bridge</h3><div class="seg">'+[["0","Closed"],["1","Open"]].map(([v,l])=>'<button data-action="bridge-open" data-v="'+v+'" aria-pressed="'+((!!settings.bridgeOpen)===(v==="1"))+'">'+l+'</button>').join("")+'</div><p class="muted small">Opens the bridge on every team page: the team’s own opportunity, its charter and the game master’s red team.</p></div>';
   const used=[...new Set(settings.teams.map(t=>t.case))];
   s+='<div class="panel"><div class="ph"><h3>Hidden answers</h3><button class="ghost small" data-action="reveal-toggle">'+(ui.reveal?"Hide":"Show")+'</button></div>';
   for(const k of used){ const cs=CASES[k]; const d=getDraw(settings,k);
@@ -977,7 +977,7 @@ document.addEventListener("click",async e=>{
   switch(a){
     case "sign-out": signOut(""); break;
     case "new-game": openDialog('<h2>Start a new game?</h2><p>Every team, round, bridge and note will be deleted, and new hidden answers will be drawn at setup. This cannot be undone.</p>',async()=>{ if(mode==="live") await api("POST","/api/reset"); settings=null; teams={}; debrief=null; versions={}; lastJSON=""; ui=freshUI(); location.hash="#/"; render() },"Delete and start again"); break;
-    case "create-game": { const rows=(ui.setupDraft||[]).map(t=>({name:String(t.name||"").trim(),case:t.case})).filter(t=>t.name); if(!rows.length){toast("Name at least one team.",true); break} const list=rows.map((t,i)=>({id:"team-"+(i+1),name:t.name,case:t.case})); try{await saveSettings({cohort:"ELPIS · Leading Industrial Science",openRound:0,bridgeOpen:false,teams:list,draws:{},salt:newSalt()}); ui.setupDraft=null}catch(x){writeFailed(x)} break; }
+    case "create-game": { const rows=(ui.setupDraft||[]).map(t=>({name:String(t.name||"").trim(),case:t.case})).filter(t=>t.name); if(!rows.length){toast("Name at least one team.",true); break} const list=rows.map((t,i)=>({id:"team-"+(i+1),name:t.name,case:t.case})); const salt=newSalt(), draws={}; for(const k of Object.keys(CASES)) draws[k]={code:encodeDraw({fav:Math.random()<CASES[k].p,bindBad:Math.random()<0.5},salt)}; try{await saveSettings({cohort:"ELPIS · Leading Industrial Science",openRound:2,bridgeOpen:false,teams:list,draws,salt}); ui.setupDraft=null}catch(x){writeFailed(x)} break; }
     case "setup-add": { const r=ui.setupDraft||[]; if(r.length<6) r.push({name:"Team "+(r.length+1),case:"ptx"}); render(); break; }
     case "setup-remove": { const r=ui.setupDraft||[]; if(r.length>1) r.splice(+b.dataset.i,1); render(); break; }
     case "remove-team": { const tid=b.dataset.id; openDialog('<h2>Remove this team?</h2><p>The team, its charter and any submitted rounds will be deleted. This cannot be undone.</p>',async()=>{const s=JSON.parse(JSON.stringify(settings)); s.teams=s.teams.filter(t=>t.id!==tid); await saveSettings(s); if(teams[tid]) await deleteTeam(tid)},"Remove the team"); break; }
