@@ -96,3 +96,24 @@ function floodReply(prompt: string): string {
       summary: "The margin sits with the network.",
     }) + "\n\`\`\`";
 }
+
+// six_moves_docs, with the same optimistic-write rule as the function's SQL.
+import type { Doc, DocStore } from "../supabase/functions/six-moves/handler.ts";
+export class MemDocs implements DocStore {
+  rows = new Map<string, Doc>();
+  all() { return Promise.resolve([...this.rows.values()].map((d) => structuredClone(d))); }
+  get(id: string) { const d = this.rows.get(id); return Promise.resolve(d ? structuredClone(d) : null); }
+  insertIfAbsent(id: string, data: unknown) {
+    if (this.rows.has(id)) return Promise.resolve(false);
+    this.rows.set(id, { id, data: structuredClone(data), version: 1 });
+    return Promise.resolve(true);
+  }
+  updateIfVersion(id: string, data: unknown, base: number) {
+    const d = this.rows.get(id);
+    if (!d || d.version !== base) return Promise.resolve(false);
+    this.rows.set(id, { id, data: structuredClone(data), version: base + 1 });
+    return Promise.resolve(true);
+  }
+  remove(id: string) { this.rows.delete(id); return Promise.resolve(); }
+  clear() { this.rows.clear(); return Promise.resolve(); }
+}

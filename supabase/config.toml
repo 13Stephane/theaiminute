@@ -6,3 +6,6 @@ verify_jwt = false   # public; the gate in ai/gate.ts does the checking
 
 [functions.admin]
 verify_jwt = true    # needs a signed-in session; the handler then checks ADMIN_EMAIL
+
+[functions.six-moves]
+verify_jwt = false   # public; the facilitator and team codes are the authentication

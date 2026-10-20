@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Six Moves</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1EF; --surface:#FFFFFF; --surface-2:#F4F7F6; --ink:#1B2725; --muted:#566360; --line:#D2DAD7;
+  --brand:#0D4A52; --brand-ink:#EEF5F4; --brand-2:#0D4A52; --gold:#A27A22; --gold-soft:#F4EAD2; --coin:#D9A42C;
+  --good:#2C6A50; --good-soft:#E3F0E9; --bad:#9A3A2E; --bad-soft:#F6E4E0; --warn:#8A6512; --warn-soft:#F7EDD6;
+  --cto:#1C5DAE; --cfo:#B4560A; --cco:#24813F; --ceo:#A61C4F; --exco:#0D4A52; --on-seat:#FFFFFF;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif; --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:10px; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1716; --surface:#172220; --surface-2:#1C2926; --ink:#E4EAE8; --muted:#9DAEA9; --line:#2D3B38;
+  --brand:#0D4A52; --brand-ink:#EEF5F4; --brand-2:#86CBD2; --gold:#D6B25E; --gold-soft:#3A3120; --coin:#E0B547; color-scheme:dark;
+  --good:#7CC6A2; --good-soft:#1E3329; --bad:#E59383; --bad-soft:#3A2420; --warn:#E0B75C; --warn-soft:#382E17;
+  --cto:#7FAEF0; --cfo:#F2A066; --cco:#6CCB8B; --ceo:#F07BA8; --exco:#86CBD2; --on-seat:#0B1513;}}
+:root[data-theme="dark"]{
+  --bg:#0F1716; --surface:#172220; --surface-2:#1C2926; --ink:#E4EAE8; --muted:#9DAEA9; --line:#2D3B38;
+  --brand:#0D4A52; --brand-ink:#EEF5F4; --brand-2:#86CBD2; --gold:#D6B25E; --gold-soft:#3A3120; --coin:#E0B547; color-scheme:dark;
+  --good:#7CC6A2; --good-soft:#1E3329; --bad:#E59383; --bad-soft:#3A2420; --warn:#E0B75C; --warn-soft:#382E17;
+  --cto:#7FAEF0; --cfo:#F2A066; --cco:#6CCB8B; --ceo:#F07BA8; --exco:#86CBD2; --on-seat:#0B1513;}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--serif);line-height:1.2;margin:0 0 .4em}
+h1{font-size:1.9rem} h2{font-size:1.35rem} h3{font-size:1.08rem}
+p{margin:.3em 0 .6em;max-width:75ch}
+a{color:var(--brand-2)} button{font:inherit}
+.muted{color:var(--muted)} .small{font-size:.86rem}
+#topbar{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--brand-ink);display:flex;align-items:center;gap:14px;padding:10px max(18px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));margin-top:calc(-1 * env(safe-area-inset-top,0px))}
+#topbar .brand{font-family:var(--serif);font-weight:700;font-size:1.25rem;color:var(--brand-ink);text-decoration:none}
+#topbar .cohort{opacity:.8}
+#topbar nav{margin-left:auto;display:flex;align-items:center;gap:12px} #topbar .signout{color:var(--brand-ink);opacity:.85} #topbar nav a{color:var(--brand-ink);text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35)} #topbar nav a.on{background:rgba(255,255,255,.14)}
+.pill{font-size:.8rem;padding:3px 10px;border-radius:999px} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+#app{max-width:1280px;margin:0 auto;padding:22px 18px 80px}
+.empty{max-width:640px;margin:10vh auto;text-align:left}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:var(--r);padding:11px 18px;font-weight:600;cursor:pointer;min-height:44px}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:8px 14px;cursor:pointer;min-height:40px}
+.ghost.small{min-height:32px;padding:4px 10px;font-size:.85rem}
+.link{background:none;border:0;color:var(--brand-2);text-decoration:underline;cursor:pointer;padding:0}
+.link.danger{color:var(--bad)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.home .lead{color:var(--muted)}
+.teamgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:18px}
+.teamcard{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);text-decoration:none;color:var(--ink)}
+.teamcard strong{font-family:var(--serif);font-size:1.2rem}
+.case{font-size:.82rem;color:var(--muted)}
+/* team */
+.team{display:grid;grid-template-columns:290px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.team{grid-template-columns:1fr}}
+.rail{position:sticky;top:70px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+@media (max-width:860px){.rail{position:static}}
+.railhead h2{margin:0 0 10px}
+.gauge{padding:10px 0;border-top:1px solid var(--line)}
+.gauge .gl{display:flex;justify-content:space-between;align-items:baseline} .gauge .gl b{font-family:var(--serif);font-size:1.3rem}
+.gauge.big .gl span{font-weight:600} .gauge.big .gl b{font-size:2rem;color:var(--brand-2)}
+.gs{font-size:.8rem;color:var(--muted)} .hist{font-size:.75rem;color:var(--muted)}
+.bar{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:4px 0} .bar i{height:9px;border-radius:2px;background:var(--line)} .bar i.on{background:var(--brand-2)} .bar.big i{height:14px}
+.coins{display:inline-flex;gap:4px;margin:6px 0} .coins i{width:14px;height:14px;border-radius:50%;border:2px solid var(--coin)} .coins i.on{background:var(--coin)}
+.score{display:flex;align-items:baseline;gap:8px;border-top:1px solid var(--line);padding-top:10px} .score b{font-family:var(--serif);font-size:1.6rem} .score small{color:var(--muted)}
+.charter{border-top:1px solid var(--line);margin-top:8px;padding-top:8px} .charter summary{cursor:pointer;font-weight:600} .charter p{font-size:.88rem}
+.tag{display:inline-block;font-size:.75rem;padding:1px 8px;border-radius:999px;background:var(--gold-soft);color:var(--warn)}
+.people{display:flex;flex-direction:column;gap:2px;font-size:.86rem;border-top:1px solid var(--line);padding-top:8px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;padding:10px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;min-height:44px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold);font-weight:600} .tabs button:disabled{opacity:.4;cursor:not-allowed}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:0 0 14px}
+.panel.due{border-color:var(--gold);background:var(--gold-soft)}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.notice{padding:14px 16px;border-left:4px solid var(--gold);background:var(--surface);border-radius:4px;margin:12px 0}
+.roundhead h1 span{font-family:var(--sans);font-size:1rem;color:var(--muted);font-weight:400;margin-left:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0} .seg button,.chips button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"],.chips button[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0} .chips button{font-size:.86rem;min-height:36px}
+.options{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:var(--r);padding:12px;cursor:pointer;min-height:64px}
+.opt[aria-pressed="true"]{border:2px solid var(--brand-2);background:var(--surface)}
+.sentence{font-weight:600;color:var(--brand-2)}
+.cardgroup h4{margin:14px 0 6px;font-size:.9rem;padding-left:10px;border-left:4px solid currentColor}
+.cardgroup h4.cto{color:var(--cto)} .cardgroup h4.cfo{color:var(--cfo)} .cardgroup h4.cco{color:var(--cco)} .cardgroup h4.ceo{color:var(--ceo)} .cardgroup h4.exco{color:var(--exco)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.gc{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;display:flex;flex-direction:column}
+.gc .gcbtn{all:unset;display:flex;flex-direction:column;gap:6px;padding:10px 12px 12px;cursor:pointer;border-top:6px solid var(--seat);min-height:120px}
+.gc.cto{--seat:var(--cto)} .gc.cfo{--seat:var(--cfo)} .gc.cco{--seat:var(--cco)} .gc.ceo{--seat:var(--ceo)} .gc.exco{--seat:var(--exco)}
+.gc.on{border:2px solid var(--seat);box-shadow:0 0 0 3px var(--gold-soft)} .gc.off .gcbtn{cursor:not-allowed;opacity:.5}
+.gc .gcbtn:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.gtop{display:flex;align-items:flex-start;gap:8px} .gtop .gname{flex:1;min-width:0} .gico{flex:none;width:30px;height:30px;color:var(--seat);margin-top:-2px} .gico svg{width:100%;height:100%;display:block} .gname{font-family:var(--serif);font-weight:700;font-size:1.02rem} .gcost{font-size:.8rem;color:var(--warn);white-space:nowrap}
+.badges{display:flex;flex-wrap:wrap;gap:4px} .b{font-style:normal;font-size:.72rem;padding:1px 8px;border-radius:999px;border:1px solid var(--line)} .b.commit{border-color:var(--gold);color:var(--warn)} .b.measure{border-color:var(--cto);color:var(--cto)} .b.tempt{border-color:var(--cfo);color:var(--cfo)}
+.gdo{font-size:.84rem} .gidea{font-size:.76rem;font-style:italic;color:var(--brand-2);margin-top:auto} .gcatch{font-size:.8rem;color:var(--muted)} .gcatch b{color:var(--bad);font-weight:600}
+.gc .seg{padding:0 10px 8px;margin:0} .gc .seg button{font-size:.82rem;min-height:34px;padding:4px 10px}
+.why{font-size:.76rem;color:var(--muted);padding:0 12px 8px}
+.problems{margin:10px 0 0;padding-left:18px;color:var(--bad)}
+.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}
+.actions.sticky{position:sticky;bottom:0;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:4px;margin:10px 0} .field span{font-weight:600;font-size:.9rem}
+.field input,.field textarea,.teamtab input,.teamtab select,.urlbox{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+.field textarea{min-height:64px;resize:vertical}
+.field.inline{flex-direction:row;align-items:center;gap:10px;margin:0} .field.inline input{width:320px;max-width:60vw}
+.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.routes{border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;margin:10px 0}
+.routes legend{font-weight:600;padding:0 6px}
+.choice{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer} .choice small{display:block;color:var(--muted)} .choice small.test{color:var(--ink);margin-top:4px}
+.casebrief{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.hq{margin-top:8px}
+/* results */
+.result{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:0 0 14px}
+.rh{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px}
+.deltas{display:flex;gap:6px;flex-wrap:wrap} .d{font-size:.8rem;padding:3px 9px;border-radius:999px;background:var(--surface-2)} .d.up{background:var(--good-soft);color:var(--good)} .d.down{background:var(--bad-soft);color:var(--bad)}
+.moves{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.mv{font-size:.84rem;padding:3px 10px;border-radius:6px;color:var(--on-seat)} .mv.cto{background:var(--cto)} .mv.cfo{background:var(--cfo)} .mv.cco{background:var(--cco)} .mv.ceo{background:var(--ceo)} .mv.exco{background:var(--exco)}
+.headlines,.lines,.record{list-style:none;padding:0;margin:8px 0}
+.headlines li{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line)} .hk{font-size:.75rem;color:var(--muted);width:78px;flex:none;padding-top:2px}
+.lines li{padding:3px 0 3px 12px;border-left:3px solid var(--line);margin:4px 0} .lines li.good{border-left-color:var(--good)} .lines li.bad{border-left-color:var(--bad)}
+.record li{font-size:.84rem;color:var(--muted)}
+.gm{background:var(--surface-2);border-radius:var(--r);padding:12px 14px;margin-top:10px}
+.reflect{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.verdict{background:var(--brand);color:var(--brand-ink);border-radius:var(--r);padding:20px;margin-bottom:14px} .verdict .muted{color:var(--brand-ink);opacity:.8} .verdict h1{font-size:2.2rem;margin:.1em 0}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px} .charts figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px} .charts figcaption{font-weight:600}
+.chart{width:100%;height:auto} .chart .grid{stroke:var(--line);stroke-width:1} .chart .grid.bar4{stroke:var(--gold);stroke-dasharray:4 3} .chart .ax{fill:var(--muted);font-size:10px}
+.scoretab{width:100%;max-width:520px;border-collapse:collapse;margin:14px 0} .scoretab td{padding:6px 8px;border-bottom:1px solid var(--line)} .scoretab td:last-child{text-align:right;font-weight:600} .scoretab .lost{color:var(--bad)} .scoretab .earned{color:var(--good)} .scoretab .tot td{font-family:var(--serif);font-size:1.2rem;border-bottom:0}
+.moments{padding-left:18px} .hyp{font-family:var(--serif);font-size:1.15rem}
+.ver{font-size:.8rem;color:var(--muted);margin-left:8px}
+.setup{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.setuprow{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:8px;align-items:center}
+.setuprow input,.setuprow select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+@media (max-width:520px){.setuprow{grid-template-columns:1fr 1fr}.setuprow button{grid-column:1/-1;justify-self:start}}
+.def{border-left:4px solid var(--gold);background:var(--surface-2);padding:10px 14px;border-radius:4px;font-family:var(--serif);font-size:1.05rem}
+.opt b{display:block} .optsub{display:block;font-size:.84rem;color:var(--muted);margin-top:4px}
+.yearsel{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:2px 6px;margin:0 2px}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 12px}
+.copybox{width:100%;min-height:150px;font:.82rem/1.45 var(--sans);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px}
+.rt{border-top:1px solid var(--line);margin-top:6px;padding-top:4px} .rt h4{margin:12px 0 4px;font-size:.95rem} .rt ol{padding-left:20px} .rt li{margin:4px 0}
+.spine{padding-left:20px} .spine li{margin:6px 0}
+details summary{cursor:pointer;color:var(--brand-2);font-weight:600;margin-top:6px}
+.options.k2{grid-template-columns:repeat(2,minmax(0,1fr))} @media (max-width:560px){.options.k2{grid-template-columns:1fr}}
+/* console */
+.ch{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.drawrow{display:grid;grid-template-columns:1.3fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)} .drawrow .seg{margin:0} .drawrow .seg button{min-height:34px;padding:4px 10px;font-size:.84rem}
+@media (max-width:640px){.drawrow{grid-template-columns:1fr}}
+.teamtab{width:100%;border-collapse:collapse} .teamtab th,.teamtab td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:.9rem} .panel{overflow-x:auto}
+.overview{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:20px}
+.ov{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.ovh strong{display:block;font-family:var(--serif);font-size:1.15rem}
+.ovg div{display:grid;grid-template-columns:78px 1fr 18px;align-items:center;gap:6px;font-size:.8rem} .ovg b{text-align:right}
+.ovs{font-size:.86rem}
+.flags{display:flex;flex-wrap:wrap;gap:4px} .flags i{font-style:normal;font-size:.74rem;padding:2px 8px;border-radius:999px} .flags .bad{background:var(--bad-soft);color:var(--bad)} .flags .warn{background:var(--warn-soft);color:var(--warn)}
+.compare{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+@media (max-width:520px){.compare{grid-template-columns:1fr}}
+.legend{display:flex;gap:14px;font-size:.84rem} .legend i{display:inline-block;width:14px;height:4px;margin-right:6px;vertical-align:middle}
+.cmp{width:100%;border-collapse:collapse;margin-top:10px;font-size:.84rem} .cmp th,.cmp td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top} .cmp td:first-child{color:var(--muted);white-space:nowrap}
+.notes{white-space:normal;line-height:1.6}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);max-width:560px;width:calc(100% - 32px);padding:22px}
+dialog::backdrop{background:rgba(10,20,19,.5)}
+dialog dl{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;margin:12px 0} dialog dt{color:var(--muted);font-size:.86rem} dialog dd{margin:0}
+.dlg-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s} .toast.show{opacity:1} .toast.bad{background:var(--bad)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header id="topbar"><span class="brand">Six Moves</span></header>
+<main id="app"></main>
+<dialog id="dlg" aria-labelledby="dlg-body"><div id="dlg-body"></div><div class="dlg-actions"><button class="ghost" id="dlg-cancel" onclick="document.getElementById('dlg').close()">Back</button><button class="primary" id="dlg-ok">Confirm</button></div></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+const GAME_DATA = {"common": [{"id": "monkey", "name": "Monkey-first test", "seat": "Science", "does": "Test the hardest part now. Reveals the hidden answer to your team.", "catch": "A bad answer arrives early, which is the point.", "concept": "monkey first; measurement", "cost": 1, "measure": true}, {"id": "hold", "name": "Hold the tension", "seat": "Science", "does": "Fund a second route alongside the first. When the hidden answer is revealed, your Position neither falls nor rises.", "catch": "A hedge: you give up the upside to remove the downside.", "concept": "holding both sides; real options", "cost": 1}, {"id": "refocus", "name": "Refocus", "seat": "Resources", "does": "Stop the pet project named on your case card, and set the one question every review and every AI analysis must answer. Next round, its people and budget come back to you: 2 tokens.", "catch": "Trust −1 now: someone loved that project. Played in Round 3, nothing comes back in time.", "concept": "attention (Ocasio); leading with AI", "cost": 1}, {"id": "secure", "name": "Secure a complement", "seat": "Ecosystem", "does": "Secure a critical complementary asset. Tick one option.", "catch": "Faster and cheaper, or owned: not both.", "concept": "complementary assets (Teece)", "cost": "opt", "options": [{"id": "partner", "label": "Partner", "text": "1 token · Position +1 · the partner claims a share of the margin"}, {"id": "build", "label": "Build", "text": "2 tokens · Position +2 · you own it"}]}, {"id": "room", "name": "Put them in the room", "seat": "Lead", "does": "Bring the internal blocker or a key outsider into the decision forum. Trust +1.", "catch": "Decisions get slower before they get better.", "concept": "blockers (Olson); outsiders (Janis)", "cost": 0}, {"id": "reward", "name": "Reward the honest experiment", "seat": "Lead", "cost": 1, "does": "Publicly recognise a team whose experiment proved its own idea wrong. Trust +1, or +2 once you know your hidden answer is unfavourable. Your next pivot or stop then costs no Trust.", "catch": "It only counts in public, and it pays most right after bad news.", "concept": "a culture of development; role modelling"}, {"id": "allin", "name": "All in", "seat": "Anyone", "does": "Half your resources on your main route, said in public. Trust +1. Before the hidden answer is known: Position +1 now, then +2 if it is favourable, or −2 and Trust −1 if not. After it: Position +1.", "catch": "Blind, it is a gamble; after measuring, it is a decision. A later pivot or stop costs Trust −1.", "concept": "daring, with discipline", "cost": 3, "commit": true}, {"id": "pivot", "name": "Pivot or stop", "seat": "Anyone", "does": "When your 2030 condition fails, or whenever you decide. Tick one option.", "catch": "Say which plan died.", "concept": "the kill criterion", "cost": "opt", "commit": true, "options": [{"id": "pivot", "label": "Pivot", "text": "2 tokens · from Round 2 · a new route and a new charter line 3 · Technology −1, Trust −1"}, {"id": "stop", "label": "Stop", "text": "free · always possible · play ends: an honourable stop, not a success"}]}], "cases": {"ptx": {"key": "ptx", "name": "Power-to-X", "seatText": "You lead Vestkyst PtX, a fictional Danish developer with a 300 MW electrolysis project near Esbjerg. The technology works; everything around it is undecided.", "hq": "Will an anchor buyer sign a ten-year offtake at a green premium?", "start": {"P": 2, "T": 4, "R": 3, "tok": 5}, "cards": [{"id": "book", "name": "Book pipeline capacity", "seat": "Anyone", "does": "Reserve transport capacity on the hydrogen pipeline. Position +1. In Round 1 it costs 1 token; later, 2 on the secondary market.", "catch": "Booked in Round 1, before anyone knows who will buy: stranded (−1) if the hidden answer is no.", "concept": "commit early, or late", "cost": "book", "commit": true}, {"id": "golocal", "name": "Go local", "seat": "Science", "does": "Redesign output toward e-methanol for nearby shipping and industry: a route to buyers who already exist.", "catch": "It pays only if a local buyer appears, and it is closed to you once you take state aid.", "concept": "changing the route", "cost": 2}, {"id": "coinvest", "name": "Co-invest with the state", "seat": "Resources", "does": "Danish or EU support: two tokens now.", "catch": "The state’s conditions squeeze the margin: Position −1, and Go local can no longer be played.", "concept": "the pedestal; the entrepreneurial state", "cost": -2, "tempt": true}, {"id": "club", "name": "Form a buyers’ club", "seat": "Ecosystem", "does": "Aggregate smaller offtakers into one contract. Reveals the hidden answer from the market. Trust +1.", "catch": "Many buyers, many conditions.", "concept": "sensing; desire", "cost": 1, "measure": true}], "rounds": [{"market": "The capacity sale reaches its threshold narrowly; the first pipeline stage proceeds. A signal: the route exists; the buyers do not yet.", "eco": "Your electrolyser supplier slips delivery by nine months. Technology −1."}, {"market": "The reveal. Favourable: a German steelmaker signs a ten-year contract at a premium, Position +1. Unfavourable: a German industrial tender goes to another project, Position −1; stranded capacity −1 more if ★ Book was played in Round 1. Hold the tension: neither.", "eco": "A Danish shipping line trials e-methanol, and German partners look for suppliers. Position +1 if Go local or Secure a complement was played; otherwise a signal."}, {"market": "Carbon prices rise sharply and the delayed stacks arrive. Position +1 and Technology +1 for every team still in play.", "eco": "Opposition to a new plant elsewhere in Jutland makes headlines. Trust −1 unless Put them in the room was played."}], "pm": {"2": {"incident": "Your project engineer tells you, privately, that stack degradation in the pilot is worse than the figures in next week’s bank presentation. The loan closes the day after.", "options": [{"text": "Thank the engineer, and ask for a written note you will review after the bank meeting.", "rc": "3d0c0d591f0e1a4b0f5d04154159"}, {"text": "Move the bank meeting by a month and present corrected figures, with the engineer beside you. The loan will cost more.", "rc": "271b1944030a124b0f5d04154158"}, {"text": "Present the figures as they stand: the pilot is early, the degradation is within the bank’s covenants, and the loan closes on time.", "rc": "200117594341584b0f5d0415415b"}]}, "3": {"incident": "Residents ask you to a public meeting about the plant. Your head of communications wants to send a written statement instead, as the lawyers advise during a permit review.", "options": [{"text": "Follow the legal advice and send the statement: anything said at the meeting can be used in the permit review.", "rc": "200117594341584b0f5d04154059"}, {"text": "Send the statement now, and offer a meeting once the permit decision is out.", "rc": "3d0c0d591f0e1a4b0f5d04154058"}, {"text": "Go in person with the project engineer, against legal advice, and pay for a noise study the residents choose.", "rc": "271b1944030a124b0f5d0415405b"}]}}, "decisions": [{"id": "keepcap", "kind": "keep", "q": "Keep the booked capacity?", "opts": ["Keep", "Release"], "eff": ["Nothing changes now. If the buyer does not sign, the stranded capacity costs Position −1.", "1 token back and no risk of stranded capacity, but the capacity no longer counts for your 2030 test."]}, {"id": "golocal", "kind": "door", "card": "golocal", "q": "Go local?", "opts": ["Yes", "No"], "eff": ["Go local must be one of this round’s moves.", "The local route is closed for the rest of the game."]}, {"id": "candour", "kind": "candour", "q": "Is our 2030 condition on track?", "opts": ["Yes", "No"], "eff": ["Nothing changes now. If the condition then fails, Trust −1.", "You prepare people for a change of course: 1 token now, and your next pivot or stop costs no Trust."]}], "lens": ["The route is only as valuable as the buyer at the end of it.", "The market answered the question the technology could not.", "A pivot that changes the route can save the molecule; say which plan died."], "questions": ["Which of your moves went to the buyer, and which to the pipe?", "Is your 2030 condition wrong, or your route?", "What would you have needed to see to wait?"], "cond": "A typical condition, “an anchor buyer at a premium by 2030”, is met if the reveal is favourable and the team holds the route (★ Book or Secure a complement); on the local route, if Go local and Secure a complement were played by the end of Round 2 and the shipping-line headline landed.", "headlineTest": "True if the Position of 4 or more in 2032 rests on the route named in charter line 2, pipeline or local, and the 2030 condition was met or the charter amended openly.", "p": 0.35, "routes": {"pipeline": {"label": "Pipeline route", "cards": ["book", "coinvest"], "test": "A buyer signs a ten-year contract at a premium (the hidden answer is favourable), and you hold pipeline capacity or a secured complement."}, "local": {"label": "Local route", "cards": ["golocal"], "test": "You have played Go local and Secure a complement."}}, "pet": "A hydrogen refuelling station for trucks at Esbjerg port: the showcase every visiting minister is taken to. Its champion is the founder, who opened it."}, "mistral": {"key": "mistral", "name": "Mistral", "seatText": "You are the executive committee of Mistral AI, as it stood in September 2026. The decisions you make in the game are yours, not the company’s.", "hq": "Will European public and regulated buyers turn sovereignty into a binding requirement?", "start": {"P": 2, "T": 4, "R": 3, "tok": 6}, "cards": [{"id": "open", "name": "Open the flagship", "seat": "Anyone", "does": "Release the weights of your next frontier model. Trust +1. In Round 1, before a rival does: Position −1 now, and +1 in 2031–32 if you have secured a complement for others to build around.", "catch": "Later, it is only Trust +1: the moment to lead has passed.", "concept": "open as strategy; timing", "cost": 0, "commit": true}, {"id": "compute", "name": "Frontier compute sprint", "seat": "Science", "does": "Commit a major share of capital to the next training run. Technology +1, Position +1.", "catch": "If scale stops deciding, it becomes the most expensive pedestal in Europe.", "concept": "the monkey or the pedestal", "cost": 2}, {"id": "deep", "name": "Go deep in industry", "seat": "Resources", "does": "A manufacturing partner funds co-development: two tokens now, and Position +1 later if a manufacturer comes looking.", "catch": "A narrower market today: Position −1, and a partner with a claim on the margin.", "concept": "complementary assets; the pedestal", "cost": -2, "tempt": true}, {"id": "sovereign", "name": "Sovereign stack", "seat": "Ecosystem", "does": "A certified, on-premise offer for governments and regulated sectors. Reveals the hidden answer from the market. Trust +1.", "catch": "Slow procurement and heavy compliance: it pays only if sovereignty becomes binding.", "concept": "a fence; sensing", "cost": 1, "measure": true}], "rounds": [{"market": "A rival open-weight model halves prices. A signal about where the model layer is heading.", "eco": "A US lab poaches senior researchers. Trust −1."}, {"market": "The reveal. Favourable: the EU requires certified sovereign AI for public-sector use, Position +1, and ◎ Sovereign stack adds +1. Unfavourable: the EU leaves AI procurement to price and performance, Position −1. Hold the tension: neither.", "eco": "A European manufacturer looks for an AI partner for its plants. Position +1 if Go deep in industry or Secure a complement was played; otherwise a signal."}, {"market": "An efficiency result elsewhere narrows the value of raw compute. Position −1 if the compute sprint was played without a customer-side complement.", "eco": "Enterprise customers renew. Trust +1."}], "pm": {"2": {"incident": "Three senior researchers want to publish a result that would help rivals as much as you, and say they will leave if refused.", "options": [{"text": "Promise to review the publication policy next quarter, and ask them to wait until then.", "rc": "3d0c0d591f0e1a4b0f40191e071b19415f5f"}, {"text": "Refuse: investors funded the result, and two rivals would ship it within a month.", "rc": "200117594341584b0f40191e071b19415f5e"}, {"text": "Let them publish after a three-month delay, fund an open research programme, and ask what the policy is costing you.", "rc": "271b1944030a124b0f40191e071b19415f5d"}]}, "3": {"incident": "A major government customer asks for a feature your safety team considers unready. The contract renewal is due this quarter.", "options": [{"text": "Put the safety lead in front of the customer with you, and ship when she signs off, even if the renewal slips.", "rc": "271b1944030a124b0f40191e071b19415e5f"}, {"text": "Ship on time with a usage restriction in the contract: the customer accepts the risk, and the renewal is secured.", "rc": "200117594341584b0f40191e071b19415e5e"}, {"text": "Ask the safety team for a revised assessment, and tell the customer you will answer next month.", "rc": "3d0c0d591f0e1a4b0f40191e071b19415e5d"}]}}, "decisions": [{"id": "open", "kind": "door", "card": "open", "q": "Open the next model?", "opts": ["Open", "Keep closed"], "eff": ["Open the flagship must be one of this round’s moves.", "Open the flagship is gone for the rest of the game."]}, {"id": "compute", "kind": "door", "card": "compute", "q": "Commit to the compute sprint?", "opts": ["Commit", "Hold back"], "eff": ["The compute sprint must be one of this round’s moves.", "The compute sprint is gone for the rest of the game."]}, {"id": "candour", "kind": "candour", "q": "Is our 2030 condition on track?", "opts": ["Yes", "No"], "eff": ["Nothing changes now. If the condition then fails, Trust −1.", "You prepare people for a change of course: 1 token now, and your next pivot or stop costs no Trust."]}], "lens": ["Open weights spread your model and lower your rivals’ costs in equal measure.", "Sovereignty is only a fence if buyers are required to stand behind it.", "When raw compute stops deciding, the margin moves to whoever owns the customer’s problem."], "questions": ["If scale stops deciding, what will your margin rest on?", "Which customer would follow you if a cheaper model appeared tomorrow?", "What did you decide not to do?"], "cond": "Mistral’s stop rule is framed around a route, not the company, for example “by 2030, sovereign buyers make up a third of revenue, or we stop the sovereign route”. It is met if the reveal is favourable and ◎ Sovereign stack was played by the end of Round 2. An industry-route condition is met if Go deep and Secure a complement were played by then.", "headlineTest": "True if the Position of 4 or more in 2032 rests on the route named in charter line 2, sovereign, industrial or open, and not merely on compute.", "p": 0.4, "routes": {"sovereign": {"label": "Sovereign route", "cards": ["sovereign"], "test": "The EU makes certified sovereign AI binding (the hidden answer is favourable), and you have played Sovereign stack."}, "industrial": {"label": "Industrial route", "cards": ["deep"], "test": "You have played Go deep in industry and Secure a complement."}}, "pet": "A consumer voice assistant for cars and homes, invented for the game and not a claim about the company. Its champion is the senior researcher who built the first prototype."}, "quantum": {"key": "quantum", "name": "Quantum", "seatText": "You lead Qvist, a fictional 18-person quantum-software spin-out from a Nordic university, with early access to the Magne computer. No product yet.", "hq": "Will a paying customer’s problem show a useful quantum advantage within a few years?", "start": {"P": 2, "T": 3, "R": 3, "tok": 5}, "cards": [{"id": "bind", "name": "Bind to one hardware approach", "seat": "Anyone", "does": "Technology +1. In Round 1, the offer is exclusive: Position +1 as well, with a fifty-fifty risk of Position −2 in 2031–32 if a rival approach wins. Later, a non-exclusive partnership: Technology +1 only.", "catch": "Staying hardware-agnostic removes the risk; exclusivity is what pays.", "concept": "commit early, or late", "cost": 2, "commit": true}, {"id": "agnostic", "name": "Stay hardware-agnostic", "seat": "Science", "does": "Keep your software portable across hardware approaches. A rival’s breakthrough cannot strand you.", "catch": "No gain on the day you play it.", "concept": "holding both sides", "cost": 1}, {"id": "qinspired", "name": "Quantum-inspired product", "seat": "Resources", "does": "Sell classical algorithms inspired by quantum methods now: two tokens of revenue and runway.", "catch": "Trust −1: your scientists see a very comfortable pedestal.", "concept": "the pedestal", "cost": -2, "tempt": true}, {"id": "anchor", "name": "Anchor with pharma or materials", "seat": "Ecosystem", "does": "Co-develop one problem with a Nordic industrial partner. Reveals the hidden answer from the market. Trust +1.", "catch": "One customer’s problem may not generalise.", "concept": "monkey first; sensing", "cost": 1, "measure": true}], "rounds": [{"market": "Magne reaches a commissioning milestone in Copenhagen. Technology +1.", "eco": "Your pharma partner reorganises its R&D. A signal: no effect, but the anchor partner’s attention is elsewhere."}, {"market": "The reveal. Favourable: the anchor problem shows a useful advantage, Position +1. Unfavourable: no advantage yet, and investors cool, Position −1. Hold the tension: neither.", "eco": "An EU quantum funding call opens. Trust +1, and Position +1 for teams that anchored with a partner."}, {"market": "A rival hardware approach reports an error-correction result. If ★ Bind was played: a disclosed fifty-fifty draw, Position −2. Stay hardware-agnostic: no effect.", "eco": "A Nordic materials company asks for a paid pilot. Position +1 if ◎ Anchor or Secure a complement was played before this round."}], "pm": {"2": {"incident": "Your most senior scientist says at the all-hands that the quantum-inspired product is a distraction, and that she will not work on it. The product pays a third of the salaries.", "options": [{"text": "Tell her, in the room, that the decision stands: the product keeps eighteen people employed while the science matures.", "rc": "200117594341584b0f5c050c1d1d0d405f5f"}, {"text": "Say you will discuss it with her after the all-hands.", "rc": "3d0c0d591f0e1a4b0f5c050c1d1d0d405f5e"}, {"text": "Thank her in the room, take her off the product at a cost in delivery, and ask her to design the test that would show whether it is a distraction.", "rc": "271b1944030a124b0f5c050c1d1d0d405f5d"}]}, "3": {"incident": "Your pharma partner’s results show no advantage yet. The investor update is due on Friday, and a bridge round depends on it.", "options": [{"text": "Report the result as it is, with what it rules out, have the scientist who ran it present, and accept a smaller bridge round.", "rc": "271b1944030a124b0f5c050c1d1d0d405e5f"}, {"text": "Ask the team to rerun the test, and move the investor update by two weeks.", "rc": "3d0c0d591f0e1a4b0f5c050c1d1d0d405e5e"}, {"text": "Lead with the pipeline and the paid pilots, and report the pharma result in the next quarterly update.", "rc": "200117594341584b0f5c050c1d1d0d405e5d"}]}}, "decisions": [{"id": "keepq", "kind": "keep", "q": "Keep selling the quantum-inspired product?", "opts": ["Keep", "Stop"], "eff": ["Nothing changes.", "Trust +1 and 1 token less: the scientists come back, the runway shrinks."]}, {"id": "excl", "kind": "excl", "card": "anchor", "q": "Take the anchor partner’s exclusivity terms?", "opts": ["Accept", "Decline"], "eff": ["Anchor will cost no token, but a second customer’s paid pilot in 2031–32 is barred.", "Anchor costs 1 token as usual, and a second customer’s pilot stays possible."]}, {"id": "candour", "kind": "candour", "q": "Is our 2030 condition on track?", "opts": ["Yes", "No"], "eff": ["Nothing changes now. If the condition then fails, Trust −1.", "You prepare people for a change of course: 1 token now, and your next pivot or stop costs no Trust."]}], "lens": ["An exclusive offer today is a bet on a dominant design that has not arrived.", "An advantage that does not show on a paying customer’s problem is a paper, not a product.", "Holding both options had a price every round; so did closing one."], "questions": ["Who has told you their problem is worth paying for?", "Which of your moves kept options open, and which closed them?", "What would make you stop?"], "cond": "A demanding condition, “a paying customer with a demonstrated advantage by 2030”, is met only if the reveal is favourable and ◎ Anchor was played by the end of Round 2. A more modest one, “a paid pilot by 2030”, is met by ◎ Anchor and Secure a complement by then.", "headlineTest": "True if the Position of 4 or more in 2032 rests on a customer’s problem the team solves, not on the quantum-inspired product alone.", "p": 0.25, "routes": {"customer": {"label": "Customer route", "cards": ["anchor"], "test": "You have played Anchor with pharma or materials, and either the anchor problem shows an advantage or you have secured a complement."}, "product": {"label": "Product route", "cards": ["qinspired"], "test": "You still sell the quantum-inspired product, and you have secured a complement: a paying channel."}}, "pet": "A quantum machine-learning research line that brings papers and conference invitations, not customers. Its champion is the professor co-founder, whose lab it came from."}}};
+// ---------- Six Moves engine v6.6 (deterministic) ----------
+// Rules v6.6: every case starts at Trust 3; a messenger shot in 2029–30 cannot be repaired in 2031–32;
+// the 2030 test follows the declared route and is shown to the team; decision promises close a door or carry a price. Hidden answers and people-moment readings are stored encoded,
+// so they are not readable at a glance. This is obfuscation, not security.
+function _xor(str,key){let o="";for(let i=0;i<str.length;i++) o+=String.fromCharCode(str.charCodeAt(i)^key.charCodeAt(i%key.length));return o}
+function encodeDraw(obj,salt){const plain=JSON.stringify(obj)+"~"+Math.random().toString(36).slice(2);const x=_xor(plain,salt);let h="";for(let i=0;i<x.length;i++) h+=x.charCodeAt(i).toString(16).padStart(2,"0");return h}
+function decodeDraw(code,salt){try{let s="";for(let i=0;i<code.length;i+=2) s+=String.fromCharCode(parseInt(code.substr(i,2),16));const p=_xor(s,salt);return JSON.parse(p.slice(0,p.lastIndexOf("~")))}catch(e){return null}}
+const RK="six-moves-pm";
+function readingOf(cs,r,i){const o=cs.pm[String(r)]&&cs.pm[String(r)].options[i]; if(!o) return null; if(o.reading) return o.reading; try{let s="";for(let j=0;j<o.rc.length;j+=2) s+=String.fromCharCode(parseInt(o.rc.substr(j,2),16)); return _xor(s,RK).split("|")[0].replace(/\.+$/,"")}catch(e){return null}}
+function getDraw(settings,key){const d=settings&&settings.draws&&settings.draws[key]; if(!d) return null; if(d.code) return decodeDraw(d.code,settings.salt||""); if(typeof d.fav==="boolean") return d; return null}
+const HEAD={
+ ptx:{1:{market:{text:"The capacity sale reaches its threshold narrowly: the first pipeline stage will be built."},eco:{text:"Your electrolyser supplier slips delivery by nine months."}},
+      2:{market:{fav:"A German steelmaker signs a ten-year green-hydrogen contract at a premium.",unfav:"A German industrial tender for green hydrogen goes to another project."},eco:{text:"A Danish shipping line trials e-methanol, and German partners look for suppliers."}},
+      3:{market:{text:"Carbon prices rise sharply, and the delayed stacks finally arrive."},eco:{text:"Opposition to a new plant elsewhere in Jutland makes national headlines."}}},
+ mistral:{1:{market:{text:"A rival open-weight model halves prices across the market."},eco:{text:"A US lab poaches three of your senior researchers."}},
+      2:{market:{fav:"The EU requires certified sovereign AI for public-sector use.",unfav:"The EU leaves public AI procurement to price and performance."},eco:{text:"A European manufacturer looks for an AI partner for its plants."}},
+      3:{market:{text:"An efficiency result elsewhere narrows the value of raw compute."},eco:{text:"Your largest enterprise customers renew their contracts."}}},
+ quantum:{1:{market:{text:"Magne reaches a commissioning milestone in Copenhagen."},eco:{text:"Your pharma partner reorganises its R&D."}},
+      2:{market:{fav:"The anchor problem shows a useful quantum advantage.",unfav:"The anchor problem shows no advantage yet, and investors cool."},eco:{text:"An EU quantum funding call opens."}},
+      3:{market:{text:"A rival hardware approach reports an error-correction result."},eco:{text:"A Nordic materials company asks for a paid pilot."}}}
+};
+const COMMIT_IDS=new Set(["allin","book","open","bind","pivot"]); // pivot option only; stop is not a commitment
+const MEASURE_IDS=new Set(["monkey","club","sovereign","anchor"]);
+const POSMOVES=new Set(["partner","build","book","golocal","compute","bind","allin","deep"]);
+const YEARS={1:"2027–28",2:"2029–30",3:"2031–32"};
+function eff(c){return c.opt||c.id}
+function cardCost(id,r,st){ // effective id
+  const t={reward:1,monkey:1,hold:1,refocus:1,partner:1,build:2,room:0,allin:3,pivot:2,stop:0,book:(r===1?1:2),golocal:2,coinvest:-2,club:1,open:0,compute:2,deep:-2,sovereign:1,bind:2,agnostic:1,qinspired:-2,anchor:(st&&st.excl?0:1)};
+  return t[id];
+}
+function clamp(v){return Math.max(1,Math.min(5,v))}
+function routeOf(cs,id){for(const [k,v] of Object.entries(cs.routes)) if(v.cards.includes(id)) return k; return null}
+function initState(cs,charter){
+  return {P:cs.start.P,T:cs.start.T,R:cs.start.R,tok:cs.start.tok,played:[],measured:0,hold:false,allinPre:false,allin:false,bookEarly:false,bindEarly:false,openEarly:false,compute:false,room:false,refocusBonus:false,met:null,stopped:false,pivoted:false,route:(charter&&charter.route)||null,routeCards:[],capped:false,blind:false,trained:{},broken:false,served:0,ceoDecided:0,noPromise:0,ended:false,closed:[],decided:{},capReleased:false,excl:false,qStopped:false,candour:null,freePivot:false,shot2:false};
+}
+function playedBase(st){return new Set(st.played.map(x=>x.id))}
+function playedEff(st){return new Set(st.played.map(eff))}
+// legality of a proposed selection at the start of round r
+function checkSelection(cs,st,r,sel){
+  const reasons=[]; const base=playedBase(st); const effs=playedEff(st);
+  if(sel.length>2) reasons.push("At most two moves a round.");
+  let commits=0, cost=0;
+  for(const c of sel){
+    const e=eff(c);
+    if(base.has(c.id)) reasons.push(nameOf(cs,c.id)+" has already been played.");
+    const card=findCard(cs,c.id);
+    if(card.options && !c.opt) reasons.push("Choose an option on "+card.name+".");
+    if(c.id==="golocal" && (effs.has("coinvest")||sel.some(x=>x.id==="coinvest"))) reasons.push("Go local is closed once you take state aid.");
+    if((st.closed||[]).includes(c.id)) reasons.push(card.name+" was closed by your decision.");
+    if(e==="pivot"){ if(r===1) reasons.push("Pivot is only possible from Round 2."); if(!c.route) reasons.push("Choose the route you pivot to."); }
+    if(COMMIT_IDS.has(e)){commits++; if(st.R<3) reasons.push(card.name+" needs Trust 3; you have "+st.R+".");}
+    const k=cardCost(e,r,st); if(k>0) cost+=k;
+  }
+  if(commits>1) reasons.push("At most one commitment a round.");
+  if(cost>st.tok) reasons.push("Not enough tokens: this costs "+cost+", you have "+st.tok+".");
+  return {ok:reasons.length===0,reasons,cost};
+}
+function applyDecision(cs,st,dec,choice){
+  const first=choice===dec.opts[0]; st.decided=st.decided||{}; st.decided[dec.id]=choice; let dP=0,dR=0,t="";
+  if(dec.kind==="door"){ if(first) t=" It must be one of this round’s moves."; else { st.closed=(st.closed||[]).concat([dec.card]); t=" The card is closed for the rest of the game."; } }
+  else if(dec.id==="keepcap"){ if(!first){ st.tok+=1; st.capReleased=true; st.bookEarly=false; t=" Capacity released: 1 token back, no risk of stranding; it no longer counts for your 2030 test."; } }
+  else if(dec.id==="keepq"){ if(!first){ dR=1; st.tok=Math.max(0,st.tok-1); st.qStopped=true; t=" The product stops: Trust +1, 1 token less."; } }
+  else if(dec.id==="excl"){ if(first){ st.excl=true; t=" Anchor will cost no token; a second customer’s pilot is barred."; } }
+  else if(dec.kind==="candour"){ st.candour=first?"yes":"no"; if(!first){ st.tok=Math.max(0,st.tok-1); st.freePivot=true; t=" You prepare people for a change of course: 1 token, and your next pivot or stop costs no Trust."; } }
+  return {dP,dR,t};
+}
+function preDue(cs,st0,prevTurn,due){ const st=JSON.parse(JSON.stringify(st0)); if(prevTurn&&prevTurn.promise&&!prevTurn.promise.none&&prevTurn.promise.kind==="decision"&&due&&due.type==="decided"){ const dec=cs.decisions[prevTurn.promise.target]; if(dec&&dec.opts.includes(due.choice)) applyDecision(cs,st,dec,due.choice); } return st }
+function decisionOpen(cs,st,r,sel,dec){
+  if(st.decided&&st.decided[dec.id]) return false;
+  const played=new Set(st.played.map(x=>x.id)); const selIds=new Set((sel||[]).map(x=>x.id)); const has=id=>played.has(id)||selIds.has(id);
+  if(dec.kind==="candour") return r===1;
+  if(dec.id==="keepcap") return r===1 && has("book");
+  if(dec.id==="keepq") return has("qinspired");
+  if(dec.card){ if(has(dec.card)||(st.closed||[]).includes(dec.card)) return false; if(dec.card==="golocal"&&has("coinvest")) return false; }
+  return true;
+}
+function routeTest(cs,route){ const r=cs.routes[route]; return r&&r.test?r.test:"" }
+let DATA=null;
+function setData(d){DATA=d}
+function allCards(cs){return DATA.common.concat(cs.cards)}
+function findCard(cs,id){return allCards(cs).find(c=>c.id===id)}
+function nameOf(cs,id){const c=findCard(cs,id); if(c) return c.name; const o={partner:"Secure a complement (partner)",build:"Secure a complement (build)",pivot:"Pivot",stop:"Stop"}; return o[id]||id}
+function effName(cs,c){const card=findCard(cs,c.id); if(card&&card.options&&c.opt){const o=card.options.find(x=>x.id===c.opt); return card.name+": "+o.label.toLowerCase()} return card?card.name:c.id}
+// resolve one round
+function resolveRound(cs,st0,r,turn,draw,prevTurn,players){
+  const st=JSON.parse(JSON.stringify(st0)); const L=[]; const H=[];
+  let P=st.P,T=st.T,R=st.R;
+  const ceoName=players?players[(r-1)%3]:null;
+  // promise due
+  if(prevTurn && prevTurn.promise && !prevTurn.promise.none){
+    const pr=prevTurn.promise, due=turn.due||{};
+    if(pr.kind==="card"){
+      const kept=turn.cards.some(c=>c.id===pr.target||c.opt===pr.target);
+      if(kept) L.push({k:"promise",t:"Promise kept: "+who(pr,players)+" got "+nameOf(cs,pr.target)+" played."});
+      else if(due.type==="release") L.push({k:"promise",t:"Promise released aloud by "+who(pr,players)+" ("+due.reason+"). Counts as kept."});
+      else {R-=1; st.broken=true; L.push({k:"promise",bad:true,t:"Promise broken: "+who(pr,players)+" neither kept nor released it. Trust −1."})}
+    } else {
+      const dec=cs.decisions[pr.target];
+      if(due.type==="decided" && dec && dec.opts.includes(due.choice)){
+        const res=applyDecision(cs,st,dec,due.choice); P+=res.dP; R+=res.dR;
+        if(dec.kind==="door" && due.choice===dec.opts[0] && !turn.cards.some(c=>c.id===dec.card)){ R-=1; st.broken=true; L.push({k:"promise",bad:true,t:"Decision not carried out: "+who(pr,players)+" announced “"+dec.q+" "+due.choice+"”, but the card was not played. Trust −1."}) }
+        else L.push({k:"promise",t:"Promise kept: "+who(pr,players)+" announced “"+dec.q+" "+due.choice+"”."+res.t});
+      }
+      else if(due.type==="release") L.push({k:"promise",t:"Promise released aloud by "+who(pr,players)+" ("+due.reason+"). Counts as kept."});
+      else {R-=1; st.broken=true; L.push({k:"promise",bad:true,t:"Promise broken: the decision was not announced. Trust −1."})}
+    }
+  }
+  if(r<3 && turn.promise && turn.promise.none){R-=1; st.noPromise++; L.push({k:"promise",bad:true,t:"No promise made this round. Trust −1."})}
+  // people moment
+  if(r>=2 && turn.pm!=null){
+    const rd=readingOf(cs,r,turn.pm); let e=rd==="Trained"?1:(rd==="Shot"?-1:0); let silenced=false;
+    if(r===2&&e<0) st.shot2=true; if(r===3&&st.shot2&&e>0){e=0; silenced=true}
+    R+=e; st.trained[r]=e>0; st.pmTok=(e<0?1:0);
+    L.push({k:"people",good:e>0,bad:e<0||silenced,t:silenced?"People moment: you answered well, but since the messenger was shot in 2029–30, people have stopped bringing you news. No change.":(e>0?"People moment: the messenger was trained. Trust +1.":(e<0?"People moment: the messenger was shot. Trust −1; the shortcut saves a token.":"People moment: polite, at a distance. No change."))});
+  }
+  if(turn.agreed==="ceo") st.ceoDecided++;
+  let posmove=false, served=false;
+  const routeCardsNow=[];
+  for(const c of turn.cards){
+    const e=eff(c); const k=cardCost(e,r,st); st.tok-=k;
+    if(MEASURE_IDS.has(e) && !st.measured) st.measured=r;
+    const rt=routeOf(cs,e); if(rt) routeCardsNow.push(rt);
+    if(["monkey","hold","partner","build","room","club","sovereign","anchor","allin"].includes(e) || (rt && rt===st.route)) served=true;
+    if(POSMOVES.has(e)) posmove=true;
+    if(["allin","book","open","bind"].includes(e) && r<=2 && !(st.measured && st.measured<r) && !st.hold && !turn.cards.some(x=>eff(x)==="hold")) st.blind=true;
+    switch(e){
+      case "monkey": L.push({k:"move",t:"Monkey-first test: the hidden answer is revealed to you: "+(draw.fav?"favourable.":"unfavourable.")}); break;
+      case "hold": st.hold=true; L.push({k:"move",t:"Hold the tension: a second route is funded. At the reveal, Position will neither fall nor rise."}); break;
+      case "refocus": R-=1; L.push({k:"move",t:"Refocus: the pet project stops. Trust −1 now"+(r<3?".":"; played this late, nothing comes back in time.")}); break;
+      case "partner": P+=1; L.push({k:"move",t:"Secure a complement, partner: Position +1. The partner claims a share of the margin."}); break;
+      case "build": P+=2; L.push({k:"move",t:"Secure a complement, build: Position +2. You own it."}); break;
+      case "reward": { const knowsBad=!draw.fav && ((st.measured&&st.measured<=r) || r>=3); R+=knowsBad?2:1; st.reward=true; L.push({k:"move",t:"Reward the honest experiment: Trust +"+(knowsBad?2:1)+(knowsBad?", because bad news was met with recognition, not blame":"")+". Your next pivot or stop costs no Trust."}); } break;
+      case "room": R+=1; st.room=true; L.push({k:"move",t:"Put them in the room: Trust +1."}); break;
+      case "allin": st.allin=true; R+=1; if(r<=2){P+=1; st.allinPre=true; L.push({k:"move",t:"All in, before the answer is known: Position +1 and Trust +1 now; +2 or −2 when the answer arrives."})} else {P+=1; L.push({k:"move",t:"All in, after the answer: Position +1, Trust +1."})} break;
+      case "pivot": T-=1; const pivotTrust=(st.reward||st.freePivot)?0:1+(st.allin?1:0); R-=pivotTrust; st.pivoted=true; st.pivotRound=r; st.route=c.route||st.route; st.routeCards=[]; L.push({k:"move",t:"Pivot to the "+(cs.routes[st.route]?cs.routes[st.route].label.toLowerCase():"new route")+": Technology −1"+(pivotTrust?", Trust −"+pivotTrust:", and no Trust lost: "+(st.reward?"the team rewarded honest experiments":"people were prepared for a change of course"))+"."}); break;
+      case "stop": st.stopped=true; if(st.allin&&!st.reward&&!st.freePivot) R-=1; L.push({k:"move",t:"Stop: play ends here. An honourable stop, scored as it stands."}); break;
+      case "book": P+=1; if(r===1) st.bookEarly=true; L.push({k:"move",t:"Book pipeline capacity"+(r===1?" in Round 1":" on the secondary market")+": Position +1."}); break;
+      case "golocal": L.push({k:"move",t:"Go local: the route to nearby buyers is open; it pays when a buyer appears."}); break;
+      case "coinvest": P-=1; L.push({k:"move",t:"Co-invest with the state: two tokens now; Position −1; Go local is closed."}); break;
+      case "club": R+=1; L.push({k:"move",t:"Form a buyers’ club: Trust +1. The hidden answer is revealed to you: "+(draw.fav?"favourable.":"unfavourable.")}); break;
+      case "open": R+=1; if(r===1){P-=1; st.openEarly=true; L.push({k:"move",t:"Open the flagship, before a rival: Trust +1, Position −1 now; +1 in 2031–32 if you have secured a complement."})} else L.push({k:"move",t:"Open the flagship: Trust +1."}); break;
+      case "compute": T+=1; P+=1; st.compute=true; L.push({k:"move",t:"Frontier compute sprint: Technology +1, Position +1."}); break;
+      case "deep": P-=1; L.push({k:"move",t:"Go deep in industry: two tokens now; Position −1 for a narrower market."}); break;
+      case "sovereign": R+=1; L.push({k:"move",t:"Sovereign stack: Trust +1. The hidden answer is revealed to you: "+(draw.fav?"favourable.":"unfavourable.")}); break;
+      case "bind": T+=1; if(r===1){P+=1; st.bindEarly=true; L.push({k:"move",t:"Bind to one hardware approach, exclusively: Technology +1, Position +1, and a risk in 2031–32."})} else L.push({k:"move",t:"Bind, non-exclusively: Technology +1."}); break;
+      case "agnostic": st.agnostic=true; L.push({k:"move",t:"Stay hardware-agnostic: a rival’s breakthrough can no longer strand you."}); break;
+      case "qinspired": R-=1; L.push({k:"move",t:"Quantum-inspired product: two tokens of revenue; Trust −1."}); break;
+      case "anchor": R+=1; L.push({k:"move",t:"Anchor with pharma or materials: Trust +1. The hidden answer is revealed to you: "+(draw.fav?"favourable.":"unfavourable.")}); break;
+    }
+  }
+  if(st.pmTok){st.tok=Math.max(0,st.tok+st.pmTok); st.pmTok=0;}
+  if(r<3 && turn.cards.some(c=>c.id==="refocus")){st.tok+=2; L.push({k:"move",t:"Refocus pays back: the pet project’s people and budget are free before the next decision. 2 tokens."})}
+  if(served) st.served++;
+  st.played=st.played.concat(turn.cards.map(c=>({id:c.id,opt:c.opt||null,r})));
+  st.routeCards=st.routeCards.concat(routeCardsNow);
+  const pl=playedEff(st);
+  const hd=HEAD[cs.key][r];
+  const mk=(kind,text,note)=>H.push({kind,text,note});
+  if(!st.stopped || r===st.stoppedRound){ /* headlines still happen in the round of the stop */ }
+  // headlines
+  if(cs.key==="ptx"){
+    if(r===1){mk("Market",hd.market.text,"A signal: the route exists; the buyers do not yet."); T-=1; mk("Ecosystem",hd.eco.text,"Technology −1.");}
+    if(r===2){reveal(); if(!draw.fav && st.bookEarly){P-=1; H[H.length-1].note+=" Your early capacity is stranded: −1 more."}
+      if(pl.has("golocal")||pl.has("partner")||pl.has("build")){P+=1; mk("Ecosystem",hd.eco.text,"Position +1: you have a route to these buyers.")} else mk("Ecosystem",hd.eco.text,"A signal: you have nothing to offer them yet.");}
+    if(r===3){ if(!st.stopped){P+=1;T+=1; mk("Market",hd.market.text,"Position +1 and Technology +1.")} else mk("Market",hd.market.text,"You have stopped.");
+      if(!st.room){R-=1; mk("Ecosystem",hd.eco.text,"Trust −1: nobody brought the neighbours into the room.")} else mk("Ecosystem",hd.eco.text,"Your earlier work with the community holds. No effect.");}
+  }
+  if(cs.key==="mistral"){
+    if(r===1){mk("Market",hd.market.text,"A signal about where the model layer is heading."); R-=1; mk("Ecosystem",hd.eco.text,"Trust −1.");}
+    if(r===2){reveal(true); if(pl.has("deep")||pl.has("partner")||pl.has("build")){P+=1; mk("Ecosystem",hd.eco.text,"Position +1: you are ready to partner.")} else mk("Ecosystem",hd.eco.text,"A signal: nobody here can answer them yet.");}
+    if(r===3){ let note="A signal.";
+      if(st.compute && !(pl.has("partner")||pl.has("build")||pl.has("deep")||pl.has("sovereign"))){P-=1; note="Position −1: your compute sprint has no customer-side complement behind it."}
+      if(st.openEarly && (pl.has("partner")||pl.has("build")||pl.has("deep"))){P+=1; note=(note==="A signal."?"":note+" ")+"Position +1: an ecosystem has formed around your open weights."}
+      mk("Market",hd.market.text,note); R+=1; mk("Ecosystem",hd.eco.text,"Trust +1.");}
+  }
+  if(cs.key==="quantum"){
+    if(r===1){T+=1; mk("Market",hd.market.text,"Technology +1."); mk("Ecosystem",hd.eco.text,"A signal: your anchor partner’s attention is elsewhere.");}
+    if(r===2){reveal(); R+=1; let n="Trust +1."; if(pl.has("anchor")){P+=1; n="Trust +1, and Position +1 because you anchored with a partner."} mk("Ecosystem",hd.eco.text,n);}
+    if(r===3){ let note="A signal."; if(st.bindEarly && !st.agnostic){ if(draw.bindBad){P-=2; note="Your exclusive partner’s approach falls behind: Position −2."} else note="Your exclusive partner’s approach holds up. No effect."} else if(st.bindEarly) note="Staying agnostic protects you. No effect.";
+      mk("Market",hd.market.text,note);
+      const before=new Set(st0.played.map(eff)); if(st.excl&&(before.has("anchor")||before.has("partner")||before.has("build"))){ mk("Ecosystem",hd.eco.text,"Your exclusivity terms bar a second customer. No effect.") } else if(before.has("anchor")||before.has("partner")||before.has("build")){P+=1; mk("Ecosystem",hd.eco.text,"Position +1: you have a partner and a problem to offer.")} else mk("Ecosystem",hd.eco.text,"A signal: you have nothing to pilot yet.");}
+  }
+  function reveal(sov){
+    const text=draw.fav?hd.market.fav:hd.market.unfav; let note="";
+    if(st.hold){note="Hold the tension: Position neither falls nor rises."}
+    else if(draw.fav){P+=1; note="The hidden answer is favourable: Position +1."; if(sov && pl.has("sovereign")){P+=1; note+=" Your sovereign stack adds +1."}}
+    else if(!st.pivoted){P-=1; note="The hidden answer is unfavourable: Position −1."}
+    else note="The hidden answer is unfavourable; you had already changed route.";
+    if(st.allinPre){ if(draw.fav){P+=2; note+=" All in pays: +2."} else {P-=2; R-=1; note+=" All in on the wrong answer: −2, Trust −1."} }
+    mk("Market",text,note);
+  }
+  // route cap: route cards since last pivot drawn from a route other than the declared one
+  const other=st.routeCards.filter(x=>x!==st.route);
+  st.capped=other.length>0;
+  if(r===2){
+    const comp=pl.has("partner")||pl.has("build"); const rt=st.route;
+    if(cs.key==="ptx") st.met = rt==="local" ? (pl.has("golocal")&&comp) : (draw.fav && ((pl.has("book")&&!st.capReleased)||comp));
+    if(cs.key==="mistral") st.met = rt==="industrial" ? (pl.has("deep")&&comp) : (draw.fav && pl.has("sovereign"));
+    if(cs.key==="quantum") st.met = rt==="product" ? (pl.has("qinspired")&&!st.qStopped&&comp) : (pl.has("anchor")&&(draw.fav||comp));
+    const tt=routeTest(cs,rt);
+    L.push({k:"condition",good:st.met,bad:!st.met,t:(st.met?"Your 2030 condition is met. 10 points.":"Your 2030 condition is not met. Round 3 asks you to pivot openly, stop, or push on at the cost of a leadership check.")+(tt?" The test for your route: "+tt:"")});
+    if(st.candour==="yes" && !st.met){ R-=1; L.push({k:"promise",bad:true,t:"You announced that the 2030 condition was on track. It was not: Trust −1."}) }
+  }
+  T=clamp(T); R=clamp(R); P=Math.min(P,T+1); if(st.capped) P=Math.min(P,3); P=clamp(P);
+  if(st.capped) L.push({k:"route",bad:true,t:"Moves from two routes: Position is capped at 3 until you pivot openly."});
+  const delta={P:P-st0.P,T:T-st0.T,R:R-st0.R,tok:st.tok-st0.tok};
+  st.P=P; st.T=T; st.R=R;
+  if(st.stopped||r===3) st.ended=true;
+  return {st,lines:L,headlines:H,delta};
+}
+function who(pr,players){return (players&&players[pr.owner])||("Player "+(pr.owner+1))}
+function replay(cs,team,settings){
+  const draw=getDraw(settings,cs.key); const players=team.players||["","",""];
+  let st=initState(cs,team.charter); const states=[st]; const rounds=[];
+  const turns=team.turns||[];
+  for(let i=0;i<turns.length;i++){
+    const t=turns[i]; if(st.ended) break;
+    if(t.round===2 && !draw) break;
+    const res=resolveRound(cs,st,t.round,t,draw||{fav:false,bindBad:false},i>0?turns[i-1]:null,players);
+    st=res.st; states.push(st); rounds.push({r:t.round,lines:res.lines,headlines:res.headlines,delta:res.delta,turn:t});
+  }
+  return {states,rounds,final:st,score:scoreOf(cs,st,rounds)};
+}
+function scoreOf(cs,st,rounds){
+  const done=st.ended; const n=rounds.length;
+  const pos=st.P*8; const cond=st.met===true?10:0;
+  const trainedVals=Object.values(st.trained);
+  const hasR3=rounds.some(x=>x.r===3);
+  const pivotOrStopR3=rounds.some(x=>x.r===3 && x.turn.cards.some(c=>c.opt==="pivot"||c.opt==="stop")) || st.stopped;
+  const checks=[
+    {label:"Moves served the charter", status: st.served>=2?"earned":(done||(n-st.served)>1?"lost":"open")},
+    {label:"Promises kept or released", status: st.broken?"lost":(done?"earned":"open")},
+    {label:"Messenger trained", status: trainedVals.some(v=>!v)?"lost":(trainedVals.length>=2?"earned":(done?(trainedVals.length?"earned":"lost"):"open"))},
+    {label:"No blind commitment", status: st.blind?"lost":(done?"earned":"open")},
+    {label:"Stop rule honoured", status: st.met===true?"earned":(st.met===false?(pivotOrStopR3?"earned":(done?"lost":"open")):(st.stopped?"earned":"open"))}
+  ];
+  const lead=checks.reduce((a,c)=>a+(c.status==="earned"?10:0),0);
+  const open=checks.filter(c=>c.status==="open").length;
+  const total=pos+cond+lead;
+  const inPlay=done?0:((5-st.P)*8+(st.met===null?10:0)+open*10);
+  let verdict=null;
+  if(done){
+    const test=!st.capped && (st.met===true||st.pivoted);
+    if(st.stopped) verdict="Honourable stop";
+    else if(st.P>=5 && st.R>=3 && test) verdict="Breakthrough seized";
+    else if(st.P>=4 && st.R>=3 && test) verdict="Strong position";
+    else if(st.P>=4 && st.R>=3) verdict="Strong position, not the story you wrote";
+    else if(st.P>=4) verdict="Won the market, lost the room";
+    else if(st.P<=2) verdict="Stalled";
+    else verdict="Loved but not paid";
+  }
+  return {pos,cond,checks,lead,total,inPlay,verdict};
+}
+//{setData,replay,checkSelection,resolveRound,initState,cardCost,HEAD,effName,nameOf,findCard,allCards,YEARS,routeOf};
+
+// ---------------- App ----------------
+setData(GAME_DATA);
+const CASES=GAME_DATA.cases;
+const ROLE={Science:{label:"CTO",cls:"cto"},Resources:{label:"CFO",cls:"cfo"},Ecosystem:{label:"CCO",cls:"cco"},Lead:{label:"CEO",cls:"ceo"},Anyone:{label:"Executive committee",cls:"exco"}};
+const SEATS=["CTO","CFO","CCO"];
+const ICONS={"monkey": "<circle cx=\"4.6\" cy=\"11\" r=\"2.5\"/><circle cx=\"19.4\" cy=\"11\" r=\"2.5\"/><circle cx=\"12\" cy=\"12\" r=\"6.8\" style=\"fill:var(--surface)\"/><path d=\"M8.2 14.6c0-2 1.7-3 3.8-3s3.8 1 3.8 3-1.7 3.4-3.8 3.4-3.8-1.4-3.8-3.4z\"/><circle cx=\"9.7\" cy=\"9.6\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"14.3\" cy=\"9.6\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M10.6 15.6c.9.6 1.9.6 2.8 0\"/>", "hold": "<path d=\"M13.5 2.5 5 13.5h6.2L10 21.5l9-12h-6.4z\"/>", "refocus": "<circle cx=\"11\" cy=\"13\" r=\"8\"/><circle cx=\"11\" cy=\"13\" r=\"4.6\"/><circle cx=\"11\" cy=\"13\" r=\"1.4\" fill=\"currentColor\"/><path d=\"M11 13 20 4\"/><path d=\"M16.6 3.6 20 4l.4 3.4\"/>", "secure": "<path d=\"M4 9h4.3a2.6 2.6 0 1 1 5.2 0H17v4.3a2.6 2.6 0 1 1 0 5.2V21H4z\"/>", "room": "<circle cx=\"12\" cy=\"13.5\" r=\"4.2\"/><circle cx=\"12\" cy=\"5\" r=\"1.9\"/><circle cx=\"4.5\" cy=\"16.5\" r=\"1.9\"/><circle cx=\"19.5\" cy=\"16.5\" r=\"1.9\"/>", "reward": "<path d=\"M8.3 2.8 12 9.4l3.7-6.6\"/><circle cx=\"12\" cy=\"15\" r=\"5.8\"/><path d=\"M12 11.9l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z\" fill=\"currentColor\" stroke-width=\"0.6\"/>", "allin": "<ellipse cx=\"12\" cy=\"6.5\" rx=\"7\" ry=\"2.6\"/><path d=\"M5 6.5v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4\"/><path d=\"M5 10.5v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4\"/><path d=\"M5 14.5v3.5c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-3.5\"/>", "pivot": "<path d=\"M12 21.5v-7.5\"/><path d=\"M12 14 6 8\"/><path d=\"M5.8 12.2V7.8h4.4\"/><path d=\"M12 14l4.6-4.6\"/><path d=\"M14.4 6.8l4.8 4.8\"/>", "book": "<path d=\"M2 9.5h20M2 15.5h20\"/><path d=\"M6.5 7.5v10M17.5 7.5v10\"/><path d=\"M12 9.5V5.5M9.8 5.5h4.4\"/>", "golocal": "<path d=\"M12 21.5s-6.6-6.2-6.6-11.2a6.6 6.6 0 0 1 13.2 0c0 5-6.6 11.2-6.6 11.2z\"/><circle cx=\"12\" cy=\"10.2\" r=\"2.4\"/>", "coinvest": "<path d=\"M3 9.5 12 4l9 5.5z\"/><path d=\"M6 11.5v6.5M10 11.5v6.5M14 11.5v6.5M18 11.5v6.5\"/><path d=\"M4 20h16M3 22h18\"/>", "club": "<circle cx=\"12\" cy=\"7.5\" r=\"2.7\"/><path d=\"M7.4 18.5c0-2.7 2-4.6 4.6-4.6s4.6 1.9 4.6 4.6\"/><circle cx=\"5.2\" cy=\"10\" r=\"2\"/><path d=\"M1.8 18.5c0-2.2 1.5-3.6 3.4-3.6\"/><circle cx=\"18.8\" cy=\"10\" r=\"2\"/><path d=\"M22.2 18.5c0-2.2-1.5-3.6-3.4-3.6\"/>", "open": "<rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8.2 11V7.2a3.9 3.9 0 0 1 7.5-1.6\"/><path d=\"M12 14.8v2.6\"/>", "compute": "<rect x=\"7\" y=\"7\" width=\"10\" height=\"10\" rx=\"1.5\"/><rect x=\"10\" y=\"10\" width=\"4\" height=\"4\"/><path d=\"M9.5 3v4M14.5 3v4M9.5 17v4M14.5 17v4M3 9.5h4M3 14.5h4M17 9.5h4M17 14.5h4\"/>", "deep": "<path d=\"M3 21V12l5 3v-3l5 3v-3l5 3V4.5h3V21z\"/><path d=\"M7 18h2M12 18h2\"/>", "sovereign": "<path d=\"M12 2.8 4.5 5.8v5.6c0 4.6 3.2 8.3 7.5 9.8 4.3-1.5 7.5-5.2 7.5-9.8V5.8z\"/><path d=\"M8.8 9.6h6.4M8.8 12.6h6.4M9.6 15.6h4.8\"/>", "bind": "<path d=\"M10.2 13.8a3.6 3.6 0 0 1 0-5.1l2.6-2.6a3.6 3.6 0 0 1 5.1 5.1l-1.4 1.4\"/><path d=\"M13.8 10.2a3.6 3.6 0 0 1 0 5.1l-2.6 2.6a3.6 3.6 0 0 1-5.1-5.1l1.4-1.4\"/>", "agnostic": "<circle cx=\"5.5\" cy=\"5.5\" r=\"2\"/><circle cx=\"12\" cy=\"5.5\" r=\"2\"/><circle cx=\"18.5\" cy=\"5.5\" r=\"2\"/><circle cx=\"12\" cy=\"19\" r=\"2.2\"/><path d=\"M12 16.8V7.5M12 13.2 6.6 7.3M12 13.2l5.4-5.9\"/>", "qinspired": "<circle cx=\"12\" cy=\"12\" r=\"1.7\" fill=\"currentColor\"/><ellipse cx=\"12\" cy=\"12\" rx=\"9.2\" ry=\"3.6\"/><ellipse cx=\"12\" cy=\"12\" rx=\"9.2\" ry=\"3.6\" transform=\"rotate(60 12 12)\"/><ellipse cx=\"12\" cy=\"12\" rx=\"9.2\" ry=\"3.6\" transform=\"rotate(-60 12 12)\"/>", "anchor": "<circle cx=\"12\" cy=\"4.6\" r=\"2\"/><path d=\"M12 6.6v14.6M8 10.5h8\"/><path d=\"M4.6 13.8c0 4.2 3.3 7.4 7.4 7.4s7.4-3.2 7.4-7.4\"/><path d=\"M2.8 15.6l1.8-1.9 1.9 1.8M21.2 15.6l-1.8-1.9-1.9 1.8\"/>"};
+function icon(id){const p=ICONS[id]; return p?'<span class="gico" aria-hidden="true"><svg viewBox="-2 -2 28 28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.5" r="13" fill="currentColor" stroke="none" opacity=".12"/>'+p+'</svg></span>':''}
+function newSalt(){const a=new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a,b=>String.fromCharCode(33+(b%90))).join("")}
+const RELEASE_REASONS=["The team chose other moves","Not enough tokens","Trust is too low","No longer useful"];
+// ---------- the game server ----------
+// Put your Worker's address between the quotes, for example "https://six-moves.yourname.workers.dev".
+// Left empty, the page runs in preview mode on this computer only, and nothing is saved.
+const API_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/six-moves";
+const POLL_MS = 4000;
+let aiOn=false, canEdit=false, mode="connecting", dbError=null, role=null, polling=null;
+let settings=null, teams={}, debrief=null, loadedSettings=false, loadedTeams=false, versions={}, lastJSON="";
+let CODE=""; try{CODE=localStorage.getItem("sixmoves.code")||""}catch(e){}
+let ui=freshUI();
+function freshUI(){return {sel:[],pm:null,agreed:"all",promise:null,due:null,tab:"round",charterDraft:null,bridgeDraft:null,setupDraft:null,reveal:false,busy:false,genBusy:{}}}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function hashRoute(){const h=location.hash.replace(/^#\/?/,""); if(h.startsWith("team/")) return {view:"team",id:decodeURIComponent(h.slice(5))}; if(h==="console") return {view:"console"}; return {view:"home"}}
+let route=hashRoute();
+window.addEventListener("hashchange",()=>{route=hashRoute(); ui=freshUI(); render(); window.scrollTo(0,0)});
+// ---------- storage: the game server ----------
+function clone(o){return JSON.parse(JSON.stringify(o))}
+async function api(method,path,body){
+  let r;
+  try{ r=await fetch(API_URL.replace(/\/+$/,"")+path,{method,headers:{"content-type":"application/json","x-code":CODE},body:body===undefined?undefined:JSON.stringify(body),cache:"no-store"}) }
+  catch(e){ const err=new Error("offline"); err.code="network"; throw err }
+  let j=null; try{ j=await r.json() }catch(e){}
+  if(!r.ok){ const err=new Error((j&&j.error)||("HTTP "+r.status)); err.status=r.status; err.body=j; err.code=r.status===409?"conflict":r.status===401?"unauthorized":r.status===403?"forbidden":r.status===429?"rate_limited":"server"; throw err }
+  return j;
+}
+function applyState(s){
+  role=s.role; canEdit=role==="facilitator"; aiOn=!!s.ai; versions=s.versions||{};
+  const js=JSON.stringify([s.settings,s.teams,s.debrief]);
+  settings=s.settings||null; teams=s.teams||{}; debrief=s.debrief||null; loadedSettings=true; loadedTeams=true;
+  const changed=js!==lastJSON||mode!=="live"||dbError; mode="live"; dbError=null; lastJSON=js;
+  if(changed) render();
+}
+async function pull(){
+  try{ applyState(await api("GET","/api/state")) }
+  catch(e){ if(e.code==="unauthorized") signOut("That code was not recognised."); else if(e.code==="forbidden"){ dbError="origin"; mode="live"; loadedSettings=true; render() } else if(dbError!=="offline"){ dbError="offline"; render() } }
+}
+function startPolling(){
+  if(polling) return;
+  polling=setInterval(()=>{ if(document.visibilityState==="visible"&&mode==="live") pull() },POLL_MS);
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&mode==="live") pull() });
+}
+function signOut(msg){ CODE=""; try{localStorage.removeItem("sixmoves.code")}catch(e){} mode="code"; ui.codeMsg=msg||""; settings=null; teams={}; debrief=null; lastJSON=""; render() }
+async function boot(){
+  render();
+  if(!API_URL){ mode="preview"; canEdit=true; loadedSettings=true; loadedTeams=true; render(); return }
+  if(!CODE){ mode="code"; render(); return }
+  await pull(); startPolling();
+}
+async function putDoc(key,path,obj){ const r=await api("PUT",path,{data:obj,base:versions[key]||0}); versions[key]=r.version; return r }
+async function onWriteError(e){ if(e&&e.code==="conflict") await pull(); throw e }
+async function saveSettings(obj){obj.updatedAt=new Date().toISOString(); if(mode==="preview"){settings=clone(obj); render(); return} try{ await putDoc("settings","/api/doc/settings",obj); settings=clone(obj); lastJSON=""; render() }catch(e){ await onWriteError(e) }}
+async function saveTeam(id,obj){obj.updatedAt=new Date().toISOString(); if(mode==="preview"){teams[id]=clone(obj); render(); return} try{ await putDoc("team:"+id,"/api/doc/team/"+encodeURIComponent(id),obj); teams[id]=clone(obj); lastJSON=""; render() }catch(e){ await onWriteError(e) }}
+async function deleteTeam(id){ if(mode==="preview"){delete teams[id]; render(); return} await api("DELETE","/api/doc/team/"+encodeURIComponent(id)); delete teams[id]; delete versions["team:"+id]; lastJSON=""; render() }
+async function saveDebrief(obj){ if(mode==="preview"){debrief=obj; render(); return} try{ await putDoc("debrief","/api/doc/debrief",obj); debrief=clone(obj); lastJSON=""; render() }catch(e){ await onWriteError(e) }}
+async function aiCall(task,data,team){ if(mode!=="live"||!aiOn){ const e=new Error("unavailable"); e.code="unavailable"; throw e } return api("POST","/api/ai",{task,data,team:team||null}) }
+function toast(msg,bad){const t=$("#toast"); t.textContent=msg; t.className="toast show"+(bad?" bad":""); clearTimeout(toast._t); toast._t=setTimeout(()=>t.className="toast",3200)}
+function writeFailed(e){ const c=e&&e.code; toast(c==="conflict"?"Someone else saved this just now. The page has refreshed: check it and try again.":c==="forbidden"?"You don’t have permission to change this.":c==="unauthorized"?"Your code is no longer valid. Enter it again.":"Could not save. Check your connection and try again.",true) }
+function codeView(){ return '<div class="empty"><h1>Six Moves</h1><p>Enter the code your facilitators gave you. Facilitators use the console code.</p><form id="code-form" class="codeform"><label class="field"><span>Code</span><input id="code-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80"></label><div class="actions"><button class="primary" type="submit">Enter</button></div>'+(ui.codeMsg?'<p class="problems">'+esc(ui.codeMsg)+'</p>':'')+'</form></div>' }
+document.addEventListener("submit",e=>{ if(e.target&&e.target.id==="code-form"){ e.preventDefault(); const v=($("#code-input").value||"").trim(); if(!v) return; CODE=v; try{localStorage.setItem("sixmoves.code",v)}catch(x){} ui.codeMsg=""; mode="connecting"; render(); pull().then(()=>{ if(mode==="live") startPolling() }) } });
+// ---------- helpers ----------
+function teamMeta(id){return settings&&settings.teams.find(t=>t.id===id)}
+function teamDoc(id){return teams[id]||{id,players:["","",""],charter:null,turns:[]}}
+function playerName(doc,i){return (doc.players&&doc.players[i])||SEATS[i]}
+function ceoOf(doc,r){return playerName(doc,(r-1)%3)}
+function statusOf(meta,doc,rep){
+  if(!doc.charter||!doc.charter.locked) return "Writing the charter";
+  if(rep.final.ended) return rep.score.verdict||"Finished";
+  const n=(doc.turns||[]).length; return n===0?"Charter locked":("Round "+n+" submitted");
+}
+function coins(n,max){let s='<span class="coins" aria-label="'+n+' tokens">';for(let i=0;i<Math.max(max,n);i++) s+='<i class="'+(i<n?"on":"")+'"></i>'; return s+'</span>'}
+function gaugeBar(v,big){let s='<span class="bar'+(big?" big":"")+'">'; for(let i=1;i<=5;i++) s+='<i class="'+(i<=v?"on":"")+'"></i>'; return s+'</span>'}
+function sign(n){return n>0?"+"+n:(n<0?"−"+(-n):"±0")}
+function roleOf(card){return ROLE[card.seat]}
+function costLabel(card,r,st){ if(card.id==="anchor"&&st&&st.excl) return "free (exclusive)"; if(card.cost==="book") return r===1?"1 token":"2 tokens"; if(card.cost==="opt") return card.id==="secure"?"1 or 2":"2 or free"; if(card.cost===0) return "free"; if(card.cost<0) return "brings "+(-card.cost); return card.cost+(card.cost===1?" token":" tokens")}
+// ---------- render root ----------
+function focusKey(el){ if(!el||!el.dataset) return null; for(const k of ["draft","set","teamName","bdraft","setupName"]) if(el.dataset[k]!=null) return {k,v:el.dataset[k],i:el.dataset.i||null}; return null }
+function render(){
+  const app=$("#app"); if(!app) return;
+  const act=document.activeElement; const fk=focusKey(act); let selS=null,selE=null; try{selS=act.selectionStart; selE=act.selectionEnd}catch(e){}
+  _render(app);
+  if(fk){ const sel='[data-'+fk.k.replace(/[A-Z]/g,m=>"-"+m.toLowerCase())+'="'+fk.v+'"]'+(fk.i!=null?'[data-i="'+fk.i+'"]':''); const el=document.querySelector(sel); if(el&&el.type!=="radio"){ el.focus(); try{ if(selS!=null) el.setSelectionRange(selS,selE) }catch(e){} } }
+}
+function _render(app){
+  const top=$("#topbar");
+  if(mode==="code"){ top.innerHTML='<span class="brand">Six Moves</span>'; app.innerHTML=codeView(); const ci=$("#code-input"); if(ci) ci.focus(); return }
+  let head='<a class="brand" href="#/">Six Moves</a>';
+  if(settings) head+='<span class="cohort">'+esc(settings.cohort)+'</span>';
+  if(mode==="preview") head+='<span class="pill warn">Preview: nothing is saved</span>';
+  if(mode==="live"&&dbError==="offline") head+='<span class="pill warn">Connection lost: retrying</span>';
+  head+='<nav>'+(canEdit||mode==="preview"?'<a href="#/console" class="'+(route.view==="console"?"on":"")+'">Console</a>':'')+(mode==="live"?'<button class="link signout" data-action="sign-out">Sign out</button>':'')+'</nav>';
+  top.innerHTML=head;
+  if(mode==="connecting"||!loadedSettings){app.innerHTML='<div class="empty"><p>Connecting to the game…</p></div>'; return}
+  if(dbError==="origin"){app.innerHTML='<div class="empty"><p>The game server does not accept this page’s address. Ask the facilitators to add it to ALLOWED_ORIGINS.</p></div>'; return}
+  if(!settings){app.innerHTML=setupView(); return}
+  if(route.view==="console") app.innerHTML=consoleView();
+  else if(route.view==="team") app.innerHTML=teamView(route.id);
+  else app.innerHTML=homeView();
+  afterRender();
+}
+function afterRender(){
+  document.querySelectorAll("[data-autosize]").forEach(t=>{t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"});
+}
+// ---------- setup & home ----------
+function setupView(){
+  if(!(canEdit||mode==="preview")) return '<div class="empty"><h1>Six Moves</h1><p>The facilitators have not set up this game yet. Keep this page open; it will update when they do.</p></div>';
+  const rows=ui.setupDraft||(ui.setupDraft=[{name:"Team 1",case:"ptx"},{name:"Team 2",case:"mistral"},{name:"Team 3",case:"quantum"}]);
+  let s='<div class="empty"><h1>Set up the game</h1><p>Name each team and give it a case. Anything from one to six teams works. If two teams share a case, the console compares their routes. You can rename, add or remove teams, and draw the hidden answers, later in the console.</p><div class="setup">';
+  s+=rows.map((t,i)=>'<div class="setuprow"><input id="setup-name-'+i+'" data-setup-name="'+i+'" value="'+esc(t.name)+'" maxlength="40" aria-label="Team '+(i+1)+' name"><select id="setup-case-'+i+'" data-setup-case="'+i+'" aria-label="Team '+(i+1)+' case">'+Object.values(CASES).map(c=>'<option value="'+c.key+'"'+(c.key===t.case?" selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select><button class="link danger" data-action="setup-remove" data-i="'+i+'"'+(rows.length<=1?" disabled":"")+'>Remove</button></div>').join("");
+  s+='</div><div class="actions"><button class="ghost" data-action="setup-add"'+(rows.length>=6?" disabled":"")+'>Add a team</button><button class="primary" data-action="create-game">Create the game</button></div></div>';
+  return s;
+}
+function homeView(){
+  let s='<section class="home"><h1>Choose your team</h1><p class="lead">Open your team’s page on the laptop at your table. Each team has its own link; the facilitators can see every table from the console.</p><div class="teamgrid">';
+  for(const t of settings.teams){
+    const doc=teamDoc(t.id); const cs=CASES[t.case]; const rep=replay(cs,doc,settings);
+    s+='<a class="teamcard" href="#/team/'+encodeURIComponent(t.id)+'"><span class="case">'+esc(cs.name)+'</span><strong>'+esc(t.name)+'</strong><span class="muted">'+esc(statusOf(t,doc,rep))+'</span></a>';
+  }
+  return s+'</div></section>';
+}
+// ---------- team view ----------
+function teamView(id){
+  const meta=teamMeta(id); if(!meta) return '<div class="empty"><p>No team with this link. <a href="#/">Choose your team</a>.</p></div>';
+  const cs=CASES[meta.case]; const doc=teamDoc(id); const rep=replay(cs,doc,settings); const st=rep.final;
+  const turns=doc.turns||[]; const nextR=turns.length+1;
+  const charterLocked=doc.charter&&doc.charter.locked;
+  let phase;
+  if(!charterLocked) phase="charter";
+  else if(st.ended) phase="end";
+  else if(nextR>(settings.openRound||0)) phase="waiting";
+  else if(nextR===2 && !(settings.draws&&settings.draws[cs.key])) phase="waiting";
+  else phase="round";
+  if(phase==="end" && ui.tab==="round") ui.tab=settings.bridgeOpen?"bridge":"debrief";
+  if(ui.tab==="bridge" && !settings.bridgeOpen) ui.tab="round";
+  const tabs=[["round",phase==="end"?"Last round":"This round"],["past","Past rounds"],["debrief","Debrief"]];
+  if(settings.bridgeOpen) tabs.push(["bridge","Day 3 bridge"]);
+  let main='';
+  if(phase==="charter") main=charterView(id,meta,cs,doc);
+  else {
+    main+='<div class="tabs" role="tablist">'+tabs.map(([k,l])=>'<button role="tab" aria-selected="'+(ui.tab===k)+'" data-action="tab" data-tab="'+k+'"'+(k==="debrief"&&phase!=="end"?' disabled':'')+'>'+l+'</button>').join("")+'</div>';
+    if(ui.tab==="past") main+=pastView(cs,doc,rep);
+    else if(ui.tab==="debrief"&&phase==="end") main+=debriefView(id,cs,doc,rep);
+    else if(ui.tab==="bridge"&&settings.bridgeOpen) main+=bridgeView(id,cs,doc);
+    else {
+      if(rep.rounds.length) main+=resultView(id,cs,doc,rep,rep.rounds.length-1,true);
+      if(phase==="round") main+=roundForm(id,cs,doc,rep,nextR);
+      else if(phase==="waiting") main+='<div class="notice">'+(nextR===2&&!(settings.draws&&settings.draws[cs.key])&&(settings.openRound||0)>=2?"Round 2 opens once the facilitators have drawn the hidden answers.":"Round "+nextR+" opens when the facilitators start it. Use the time to discuss the coaching question.")+'</div>';
+      else if(phase==="end") main+='<div class="notice">The game is over. Open the debrief tab.</div>';
+    }
+  }
+  return '<div class="team"><aside class="rail">'+railView(meta,cs,doc,rep)+'</aside><section class="main">'+main+'</section></div>';
+}
+function railView(meta,cs,doc,rep){
+  const st=rep.final; const hist=rep.states;
+  const spark=k=>hist.map(s=>s[k]).join(" · ");
+  let s='<div class="railhead"><span class="case">'+esc(cs.name)+'</span><h2>'+esc(meta.name)+'</h2></div>';
+  s+='<div class="gauge big"><div class="gl"><span>Position</span><b>'+st.P+'</b></div>'+gaugeBar(st.P,true)+'<div class="gs">Can we earn a margin, and keep it? Strong is 4, breakthrough 5.</div><div class="hist">'+spark("P")+'</div></div>';
+  s+='<div class="gauge"><div class="gl"><span>Technology</span><b>'+st.T+'</b></div>'+gaugeBar(st.T)+'<div class="gs">The ceiling: Position ≤ '+Math.min(5,st.T+1)+'</div><div class="hist">'+spark("T")+'</div></div>';
+  s+='<div class="gauge"><div class="gl"><span>Trust</span><b>'+st.R+'</b></div>'+gaugeBar(st.R)+'<div class="gs">'+(st.R>=3?"Commitments open":"Commitments locked: Trust 3 needed")+'</div><div class="hist">'+spark("R")+'</div></div>';
+  s+='<div class="gauge"><div class="gl"><span>Tokens</span><b>'+st.tok+'</b></div>'+coins(st.tok,5)+'</div>';
+  if(rep.rounds.length){const sc=rep.score; s+='<div class="score"><span>Score so far</span><b>'+sc.total+'</b><small>'+(st.ended?"final":sc.inPlay+" still in play")+'</small></div>'}
+  if(doc.charter&&doc.charter.locked){
+    const c=doc.charter; s+='<details class="charter" open><summary>Our charter</summary><p><b>2032.</b> '+esc(c.l1)+'</p><p><b>Margin.</b> '+esc(c.l2)+' <span class="tag">'+esc((cs.routes[st.route||c.route]||{}).label||"")+'</span></p><p><b>By 2030, or we stop.</b> '+esc(c.l3)+'</p>'+(routeTest(cs,st.route||c.route)?'<p class="small muted"><b>What the game checks:</b> '+esc(routeTest(cs,st.route||c.route))+'</p>':'')+'</details>';
+    s+='<details class="charter"><summary>Our case</summary><p>'+esc(cs.seatText)+'</p>'+(cs.pet?'<p><b>Pet project.</b> '+esc(cs.pet)+'</p>':'')+'<p><b>The open question.</b> '+esc(cs.hq)+'</p></details>';
+    s+='<div class="people">'+SEATS.map((seat,i)=>'<span><b>'+seat+'</b> '+esc(playerName(doc,i))+'</span>').join("")+'</div>';
+  }
+  return s;
+}
+function charterView(id,meta,cs,doc){
+  const d=ui.charterDraft||(ui.charterDraft={players:(doc.players||["","",""]).slice(),l1:(doc.charter&&doc.charter.l1)||"",l2:(doc.charter&&doc.charter.l2)||"",l3:(doc.charter&&doc.charter.l3)||"",route:(doc.charter&&doc.charter.route)||""});
+  let s='<div class="casebrief"><h1>'+esc(cs.name)+'</h1><p>'+esc(cs.seatText)+'</p>'+(cs.pet?'<p class="pet"><b>Your pet project.</b> '+esc(cs.pet)+'</p>':'')+'<p class="hq"><b>The question nobody can answer yet.</b> '+esc(cs.hq)+'</p></div>';
+  s+='<h2>Your executive team</h2><p class="muted">Nobody plays their own job title. Each of you is CEO for one round, in this order, and keeps your own seat.</p><div class="players">';
+  for(let i=0;i<3;i++) s+='<label class="field"><span>'+SEATS[i]+' · CEO in Round '+(i+1)+'</span><input data-draft="player" data-i="'+i+'" value="'+esc(d.players[i])+'" placeholder="Name" maxlength="40"></label>';
+  s+='</div><h2>Your charter</h2><p class="muted">The only writing in the game. Suggested order: 1, then 3 while honesty is cheap, then 2.</p>';
+  s+='<label class="field"><span>1 · Our ambition for 2032</span><textarea data-autosize data-draft="l1" maxlength="400" placeholder="A press-release headline, six years out, and two sentences under it">'+esc(d.l1)+'</textarea></label>';
+  s+='<label class="field"><span>2 · What our margin will rest on</span><textarea data-autosize data-draft="l2" maxlength="400" placeholder="Differentiation, a fence or a scarce position, and its mechanism">'+esc(d.l2)+'</textarea></label>';
+  s+='<fieldset class="routes"><legend>Our route</legend>'+Object.entries(cs.routes).map(([k,v])=>'<label class="choice"><input type="radio" name="route" data-draft="route" value="'+k+'"'+(d.route===k?" checked":"")+'><span><b>'+esc(v.label)+'</b><small>Its cards: '+v.cards.map(c=>esc(nameOf(cs,c))).join(", ")+'</small>'+(v.test?'<small class="test"><b>Checked at the end of 2030:</b> '+esc(v.test)+'</small>':'')+'</span></label>').join("")+'<p class="muted small">Position 4 and 5 can only be reached on this route. Moves from the other route cap Position at 3, unless you pivot openly.</p></fieldset>';
+  s+='<label class="field"><span>3 · What must be true by 2030, or we stop</span><textarea data-autosize data-draft="l3" maxlength="400" placeholder="In your words: what the game will check for your route by 2030, and what you will do if it fails">'+esc(d.l3)+'</textarea></label>';
+  const ok=d.l1.trim()&&d.l2.trim()&&d.l3.trim()&&d.route&&d.players.every(p=>p.trim());
+  s+='<div class="actions"><button class="primary" data-action="review-charter"'+(ok?"":" disabled")+'>Review and lock the charter</button>'+(ok?'':'<span class="muted small">Fill in the three names, the three lines and your route.</span>')+'</div>';
+  return '<div class="form">'+s+'</div>';
+}
+function roundForm(id,cs,doc,rep,r){
+  const prev=(doc.turns||[])[r-2]; const st=preDue(cs,rep.final,prev,ui.due);
+  const ceo=ceoOf(doc,r), kb=ceoOf(doc,r+1>3?1:r+1);
+  let s='<div class="roundhead"><h1>Round '+r+' <span>decisions for '+YEARS[r]+'</span></h1><p><b>CEO this round:</b> '+esc(ceo)+' · <b>keyboard:</b> '+esc(r<3?kb:ceoOf(doc,1))+'</p></div>';
+  // promise due
+  if(prev&&prev.promise&&!prev.promise.none){
+    const pr=prev.promise; const nm=playerName(doc,pr.owner); const due=ui.due||{};
+    s+='<div class="panel due"><h3>Promise due</h3>';
+    if(pr.kind==="card"){ s+='<p>'+esc(nm)+' promised to get <b>'+esc(nameOf(cs,pr.target))+'</b> played this round. Tick it below to keep the promise, or release it aloud.</p>'}
+    else { const dq=cs.decisions[pr.target]; s+='<p>'+esc(nm)+' promised to announce: <b>'+esc(dq.q)+'</b> The answer binds the team from this round.</p><div class="options">'+dq.opts.map((o,i)=>'<button class="opt" data-action="due-decide" data-choice="'+esc(o)+'" aria-pressed="'+(due.type==="decided"&&due.choice===o)+'"><b>'+esc(o)+'</b>'+(dq.eff?'<span class="optsub">'+esc(dq.eff[i])+'</span>':'')+'</button>').join("")+'</div>'+(dq.kind==="door"&&due.type==="decided"&&due.choice===dq.opts[0]?'<p class="sentence">Tick '+esc(nameOf(cs,dq.card))+' below to carry it out, or release the promise aloud.</p>':'')}
+    s+='<details'+(due.type==="release"?" open":"")+'><summary>Release it aloud instead</summary><div class="seg wrap">'+RELEASE_REASONS.map(x=>'<button data-action="due-release" data-reason="'+esc(x)+'" aria-pressed="'+(due.type==="release"&&due.reason===x)+'">'+esc(x)+'</button>').join("")+'</div></details></div>';
+  }
+  // people moment
+  if(r>=2){
+    const pm=cs.pm[String(r)];
+    s+='<div class="panel"><h3>People moment</h3><p>'+esc(pm.incident)+'</p><div class="options">'+pm.options.map((o,i)=>'<button class="opt" data-action="pm" data-i="'+i+'" aria-pressed="'+(ui.pm===i)+'">'+esc(o.text)+'</button>').join("")+'</div></div>';
+  }
+  // cards
+  const chk=checkSelection(cs,st,r,ui.sel);
+  s+='<div class="panel"><div class="ph"><h3>Two moves</h3><span class="muted">'+ui.sel.length+' of 2 chosen · '+Math.max(0,st.tok-chk.cost)+' tokens left after</span></div><p class="muted small">Each executive tables their own cards; the executive committee tables commitments. Discuss first; tick what the team decides.</p>';
+  const groups=[["Science"],["Resources"],["Ecosystem"],["Lead"],["Anyone"]];
+  const played=new Set(st.played.map(x=>x.id));
+  for(const [seat] of groups){
+    const cards=allCards(cs).filter(c=>c.seat===seat); if(!cards.length) continue;
+    const role=ROLE[seat];
+    s+='<div class="cardgroup"><h4 class="'+role.cls+'">'+role.label+(seat==="Lead"?" · "+esc(ceo):"")+(seat==="Anyone"?" · the CEO decides":"")+'</h4><div class="cards">';
+    for(const c of cards){
+      const selIdx=ui.sel.findIndex(x=>x.id===c.id); const on=selIdx>=0; const used=played.has(c.id);
+      let why="";
+      if(!on&&!used){
+        const trial=checkSelection(cs,st,r,ui.sel.concat([{id:c.id,opt:c.options?c.options[0].id:null,route:"x"}]));
+        const alt=c.options?checkSelection(cs,st,r,ui.sel.concat([{id:c.id,opt:c.options[1].id,route:"x"}])):trial;
+        if(!trial.ok&&!alt.ok) why=(trial.reasons.find(x=>!/Choose/.test(x))||alt.reasons[0]||"");
+        if(ui.sel.length>=2) why="Two moves already chosen.";
+      }
+      const disabled=used||(!on&&why);
+      s+='<div class="gc '+role.cls+(on?" on":"")+(disabled?" off":"")+'"><button class="gcbtn" data-action="toggle-card" data-id="'+c.id+'"'+(disabled?" disabled":"")+' aria-pressed="'+on+'"><span class="gtop">'+icon(c.id)+'<span class="gname">'+esc(c.name)+'</span><span class="gcost">'+costLabel(c,r,st)+'</span></span><span class="badges">'+(c.commit?'<i class="b commit">'+(c.id==="pivot"?"Pivot needs Trust 3":"Commitment · Trust 3")+'</i>':'')+(c.measure?'<i class="b measure">Measures the question</i>':'')+(c.tempt?'<i class="b tempt">Temptation</i>':'')+'</span><span class="gdo">'+esc(c.does)+'</span><span class="gcatch"><b>The catch.</b> '+esc(c.catch)+'</span>'+(c.concept?'<span class="gidea">Idea: '+esc(c.concept)+'</span>':'')+'</button>';
+      if(on&&c.options){s+='<div class="seg">'+c.options.map(o=>'<button data-action="card-opt" data-id="'+c.id+'" data-opt="'+o.id+'" aria-pressed="'+(ui.sel[selIdx].opt===o.id)+'">'+esc(o.label)+'</button>').join("")+'</div>'}
+      if(on&&ui.sel[selIdx].opt==="pivot"){const other=Object.keys(cs.routes).filter(k=>k!==st.route); s+='<div class="seg">'+other.map(k=>'<button data-action="pivot-route" data-route="'+k+'" aria-pressed="'+(ui.sel[selIdx].route===k)+'">Pivot to '+esc(cs.routes[k].label.toLowerCase())+'</button>').join("")+'</div>'}
+      if(used) s+='<span class="why">Already played</span>'; else if(why&&!on) s+='<span class="why">'+esc(why)+'</span>';
+      s+='</div>';
+    }
+    s+='</div></div>';
+  }
+  if(ui.sel.length && !chk.ok) s+='<ul class="problems">'+chk.reasons.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>';
+  s+='</div>';
+  // how decided
+  s+='<div class="panel"><h3>How did you decide?</h3><div class="seg">'+[["all","All agreed"],["ceo","The CEO decided"]].map(([k,l])=>'<button data-action="agreed" data-v="'+k+'" aria-pressed="'+(ui.agreed===k)+'">'+l+'</button>').join("")+'</div></div>';
+  // promise
+  if(r<3){
+    const p=ui.promise||{}; const owners=[0,1,2].filter(i=>i!==(r-1)%3);
+    s+='<div class="panel"><h3>A promise for next round</h3><p class="muted small">The CEO asks one executive for something the team has not yet agreed. They may accept, decline or counter. Making no promise costs Trust −1.</p>';
+    s+='<div class="seg">'+owners.map(i=>'<button data-action="p-owner" data-i="'+i+'" aria-pressed="'+(p.owner===i&&!p.none)+'">'+esc(playerName(doc,i))+' ('+SEATS[i]+')</button>').join("")+'<button data-action="p-none" aria-pressed="'+(!!p.none)+'">No promise (Trust −1)</button></div>';
+    if(p.owner!=null&&!p.none){
+      s+='<div class="seg">'+[["card","A card we will play"],["decision","A decision to announce"]].map(([k,l])=>'<button data-action="p-kind" data-v="'+k+'" aria-pressed="'+(p.kind===k)+'">'+l+'</button>').join("")+'</div>';
+      if(p.kind==="card"){ const selIds=new Set(ui.sel.map(x=>x.id)); const avail=allCards(cs).filter(c=>!played.has(c.id)&&!selIds.has(c.id)); s+='<div class="chips">'+avail.map(c=>'<button data-action="p-target" data-v="'+c.id+'" aria-pressed="'+(p.target===c.id)+'">'+esc(c.name)+'</button>').join("")+'</div>' }
+      if(p.kind==="decision"){ const open=cs.decisions.map((d,i)=>[d,i]).filter(([d])=>decisionOpen(cs,st,r,ui.sel,d)); s+=open.length?'<div class="chips">'+open.map(([d,i])=>'<button data-action="p-target" data-v="'+i+'" aria-pressed="'+(p.target===i)+'">'+esc(d.q)+'</button>').join("")+'</div><p class="muted small">The answer, announced next round, binds the team: it closes a door or carries a price.</p>':'<p class="muted small">No decision is open for next round. Promise a card instead.</p>' }
+      if(p.kind&&p.target!=null) s+='<p class="sentence">'+esc(playerName(doc,p.owner))+', next round, '+(p.kind==="card"?"will get "+esc(nameOf(cs,p.target))+" played.":"will announce: "+esc(cs.decisions[p.target].q)+" "+cs.decisions[p.target].opts.map((o,i)=>esc(o)+": "+esc((cs.decisions[p.target].eff||[])[i]||"")).join(" "))+'</p>';
+    }
+    s+='</div>';
+  }
+  if(ui.promise&&ui.promise.kind==="decision"&&ui.promise.target!=null&&!decisionOpen(cs,st,r,ui.sel,cs.decisions[ui.promise.target])) ui.promise.target=null;
+  const ready=turnReady(cs,st,r,prev);
+  s+='<div class="actions sticky"><button class="primary" data-action="review-turn"'+(ready.ok?"":" disabled")+'>Review round '+r+'</button><span class="muted small">'+esc(ready.msg)+'</span></div>';
+  return '<div class="form">'+s+'</div>';
+}
+function turnReady(cs,st,r,prev){
+  const chk=checkSelection(cs,st,r,ui.sel);
+  if(ui.sel.length===0) return {ok:false,msg:"Choose your moves."};
+  if(!chk.ok) return {ok:false,msg:chk.reasons[0]};
+  if(r>=2&&ui.pm==null) return {ok:false,msg:"Answer the people moment."};
+  if(r<3){const p=ui.promise||{}; if(!p.none&&!(p.owner!=null&&p.kind&&p.target!=null)) return {ok:false,msg:"Make a promise, or choose no promise."}}
+  return {ok:true,msg:ui.sel.length===1?"You are playing one move this round.":"Ready to review."};
+}
+function buildTurn(r){
+  const t={round:r,cards:ui.sel.map(c=>{const o={id:c.id}; if(c.opt) o.opt=c.opt; if(c.route) o.route=c.route; return o}),agreed:ui.agreed,submittedAt:new Date().toISOString()};
+  if(r>=2) t.pm=ui.pm;
+  if(r<3) t.promise=ui.promise.none?{none:true}:{owner:ui.promise.owner,kind:ui.promise.kind,target:ui.promise.target};
+  if(ui.due) t.due=ui.due;
+  return t;
+}
+function resultView(id,cs,doc,rep,idx,current){
+  const R=rep.rounds[idx]; const t=R.turn; const r=R.r; const st=rep.states[idx+1];
+  let s='<div class="result"><div class="rh"><h2>What happened in '+YEARS[r]+'</h2><span class="deltas">'+[["Position","P"],["Technology","T"],["Trust","R"],["Tokens","tok"]].map(([l,k])=>'<span class="d '+(R.delta[k]>0?"up":R.delta[k]<0?"down":"")+'">'+l+' '+sign(R.delta[k])+'</span>').join("")+'</span></div>';
+  s+='<div class="moves">'+t.cards.map(c=>'<span class="mv '+ROLE[findCard(cs,c.id).seat].cls+'">'+esc(effName(cs,c))+'</span>').join("")+'<span class="muted small">'+(t.agreed==="ceo"?"The CEO decided":"All agreed")+'</span></div>';
+  s+='<ul class="headlines">'+R.headlines.map(h=>'<li><span class="hk">'+h.kind+'</span><span><b>'+esc(h.text)+'</b> '+esc(h.note)+'</span></li>').join("")+'</ul>';
+  s+='<ul class="lines">'+R.lines.map(l=>'<li class="'+(l.bad?"bad":l.good?"good":"")+'">'+esc(l.t)+'</li>').join("")+'</ul>';
+  const fb=t.feedback;
+  s+='<div class="gm"><h3>Game master</h3>';
+  if(fb){ if(fb.story) s+='<p>'+esc(fb.story)+'</p>'; s+='<p><b>Case lens.</b> '+esc(fb.lens)+'</p><p><b>Coaching question.</b> '+esc(fb.question)+'</p>'}
+  else if(ui.genBusy["r"+idx]) s+='<p class="muted">Writing feedback…</p>';
+  else s+='<p><b>Case lens.</b> '+esc(cs.lens[r-1])+'</p><p><b>Coaching question.</b> '+esc(cs.questions[r-1])+'</p>'+(aiOn?'<button class="ghost" data-action="gen-feedback" data-idx="'+idx+'">Ask the game master for feedback</button>':'');
+  s+='</div>';
+  if(current){
+    const rf=t.reflection;
+    if(rf) s+='<p class="muted small">You said the CEO '+(rf.ceoLast?"spoke last":"did not speak last")+'; '+esc(playerName(doc,rf.least))+' spoke least.</p>';
+    else {
+      const d=ui.reflect||{};
+      s+='<div class="reflect"><span>Did the CEO speak last?</span><div class="seg">'+[["y","Yes"],["n","No"]].map(([k,l])=>'<button data-action="rf-last" data-v="'+k+'" aria-pressed="'+(d.last===k)+'">'+l+'</button>').join("")+'</div><span>Who spoke least?</span><div class="seg">'+[0,1,2].map(i=>'<button data-action="rf-least" data-i="'+i+'" aria-pressed="'+(d.least===i)+'">'+esc(playerName(doc,i))+'</button>').join("")+'</div><button class="ghost" data-action="rf-save" data-idx="'+idx+'"'+(d.last&&d.least!=null?"":" disabled")+'>Save</button></div>';
+    }
+  }
+  return s+'</div>';
+}
+function pastView(cs,doc,rep){
+  if(!rep.rounds.length) return '<div class="notice">No rounds yet. Past rounds appear here once submitted, and cannot be changed.</div>';
+  let s='<p class="muted small">Read only. Submitted rounds cannot be changed.</p>';
+  rep.rounds.forEach((R,idx)=>{
+    const t=R.turn; s+=resultView(null,cs,doc,rep,idx,false);
+    const bits=[];
+    if(t.pm!=null) bits.push("People moment: “"+cs.pm[String(R.r)].options[t.pm].text+"”");
+    if(t.promise) bits.push(t.promise.none?"No promise made.":"Promise: "+playerName(doc,t.promise.owner)+(t.promise.kind==="card"?" to get "+nameOf(cs,t.promise.target)+" played.":" to announce: "+cs.decisions[t.promise.target].q));
+    if(t.due) bits.push(t.due.type==="release"?"Promise due was released: "+t.due.reason+".":"Decision announced: "+t.due.choice+".");
+    bits.push("Submitted "+new Date(t.submittedAt).toLocaleString());
+    s+='<ul class="record">'+bits.map(b=>'<li>'+esc(b)+'</li>').join("")+'</ul>';
+  });
+  return s;
+}
+function chartSVG(series,opts){
+  opts=opts||{}; const W=opts.w||320,H=opts.h||150,pad=28; const n=Math.max(...series.map(s=>s.values.length),2);
+  const x=i=>pad+i*(W-pad-10)/Math.max(1,(opts.slots||4)-1), y=v=>H-pad-(v-1)*(H-pad-12)/4;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" class="chart" role="img" aria-label="'+esc(opts.label||"Chart")+'">';
+  for(let v=1;v<=5;v++) s+='<line x1="'+pad+'" x2="'+(W-6)+'" y1="'+y(v)+'" y2="'+y(v)+'" class="grid'+(v===4?" bar4":"")+'"/><text x="'+(pad-8)+'" y="'+(y(v)+4)+'" class="ax">'+v+'</text>';
+  (opts.xl||["Start","R1","R2","R3"]).forEach((l,i)=>{s+='<text x="'+x(i)+'" y="'+(H-8)+'" class="ax" text-anchor="middle">'+l+'</text>'});
+  for(const se of series){ const pts=se.values.map((v,i)=>x(i)+","+y(v)).join(" "); s+='<polyline points="'+pts+'" fill="none" stroke="'+se.color+'" stroke-width="2.5"'+(se.dash?' stroke-dasharray="6 4"':'')+'/>'; se.values.forEach((v,i)=>{s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="3.5" fill="'+se.color+'"/>'}) }
+  return s+'</svg>';
+}
+function debriefView(id,cs,doc,rep){
+  const st=rep.final, sc=rep.score; const hist=rep.states;
+  let s='<div class="verdict"><span class="muted">Your verdict</span><h1>'+esc(sc.verdict)+'</h1><p>Position '+st.P+' · Technology '+st.T+' · Trust '+st.R+' · '+st.tok+' tokens left</p></div>';
+  s+='<div class="charts">'+[["Position","P","var(--brand-2)"],["Technology","T","var(--cto)"],["Trust","R","var(--ceo)"]].map(([l,k,c])=>'<figure><figcaption>'+l+'</figcaption>'+chartSVG([{values:hist.map(h=>h[k]),color:c}],{label:l+" by round"})+'</figure>').join("")+'</div>';
+  s+='<table class="scoretab"><tbody><tr><td>Position × 8</td><td>'+sc.pos+' / 40</td></tr><tr><td>Your 2030 condition</td><td>'+sc.cond+' / 10</td></tr>'+sc.checks.map(c=>'<tr><td>'+esc(c.label)+'</td><td class="'+c.status+'">'+(c.status==="earned"?"10":c.status==="lost"?"0":"–")+'</td></tr>').join("")+'<tr class="tot"><td>Total</td><td>'+sc.total+' / 100</td></tr></tbody></table>';
+  const d=doc.debrief;
+  s+='<div class="gm"><h3>Game master</h3>';
+  if(d&&d.moments){ s+='<ol class="moments">'+d.moments.map(m=>'<li><b>Round '+esc(m.round)+'.</b> '+esc(m.text)+'</li>').join("")+'</ol><p class="hyp">'+esc(d.hypothesis)+'</p><div class="seg">'+[["yes","It fits"],["partly","Partly"],["no","It does not"]].map(([k,l])=>'<button data-action="fit" data-v="'+k+'" aria-pressed="'+(d.fit===k)+'">'+l+'</button>').join("")+'</div>' }
+  else if(ui.genBusy.debrief) s+='<p class="muted">Writing your debrief…</p>';
+  else s+=(aiOn?'<button class="primary" data-action="gen-debrief">Write our debrief</button>':'<p class="muted">The game master is not available here. Your facilitators will lead the debrief.</p>');
+  s+='<p class="small muted"><b>The headline test.</b> '+esc(cs.headlineTest)+'</p></div>';
+  return s;
+}
+// ---------- console ----------
+function consoleView(){
+  if(!(canEdit||mode==="preview")) return '<div class="empty"><p>The console is for facilitators.</p></div>';
+  const open=settings.openRound||0;
+  let s='<section class="console"><div class="ch"><h1>Console <span class="ver">Rules v6.6 · own server</span></h1><label class="field inline"><span>Cohort</span><input data-set="cohort" value="'+esc(settings.cohort)+'" maxlength="60"></label></div>';
+  s+='<div class="cgrid"><div class="panel"><h3>Rounds open</h3><div class="seg">'+["Charter only","Round 1","Round 2","Round 3"].map((l,i)=>'<button data-action="open-round" data-v="'+i+'" aria-pressed="'+(open===i)+'">'+l+'</button>').join("")+'</div><p class="muted small">Teams can submit up to the open round. Round 2 also needs the hidden answers drawn.</p><h3>Day 3 bridge</h3><div class="seg">'+[["0","Closed"],["1","Open"]].map(([v,l])=>'<button data-action="bridge-open" data-v="'+v+'" aria-pressed="'+((!!settings.bridgeOpen)===(v==="1"))+'">'+l+'</button>').join("")+'</div><p class="muted small">Opens the bridge on every team page: the team’s own opportunity, its charter and the game master’s red team.</p></div>';
+  const used=[...new Set(settings.teams.map(t=>t.case))];
+  s+='<div class="panel"><div class="ph"><h3>Hidden answers</h3><button class="ghost small" data-action="reveal-toggle">'+(ui.reveal?"Hide":"Show")+'</button></div>';
+  for(const k of used){ const cs=CASES[k]; const d=getDraw(settings,k);
+    s+='<div class="drawrow"><span><b>'+esc(cs.name)+'</b> <small class="muted">favourable '+Math.round(cs.p*100)+'%</small></span><span>'+(d?(ui.reveal?(d.fav?"Favourable":"Unfavourable")+(k==="quantum"?(d.bindBad?" · rival wins":" · rival fails"):""):"Drawn"):"Not drawn")+'</span><span class="seg">'+'<button data-action="draw" data-case="'+k+'">Draw</button><button data-action="set-draw" data-case="'+k+'" data-v="1">Favourable</button><button data-action="set-draw" data-case="'+k+'" data-v="0">Unfavourable</button></span></div>' }
+  s+='</div></div>';
+  // teams
+  s+='<div class="panel"><div class="ph"><h3>Teams</h3><button class="ghost small" data-action="add-team">Add a team</button></div><table class="teamtab"><thead><tr><th>Team</th><th>Case</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>';
+  settings.teams.forEach((t,i)=>{ const doc=teamDoc(t.id); const rep=replay(CASES[t.case],doc,settings);
+    s+='<tr><td><input data-team-name="'+i+'" value="'+esc(t.name)+'" maxlength="40"></td><td><select data-team-case="'+i+'"'+((doc.turns||[]).length?" disabled":"")+'>'+Object.values(CASES).map(c=>'<option value="'+c.key+'"'+(c.key===t.case?" selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></td><td>'+esc(statusOf(t,doc,rep))+'</td><td><a href="#/team/'+encodeURIComponent(t.id)+'">Open</a> · <button class="link" data-action="copy-link" data-id="'+esc(t.id)+'">Copy link</button></td><td><button class="link danger" data-action="reset-team" data-id="'+esc(t.id)+'">Reset</button>'+(!(doc.charter&&doc.charter.locked)&&!(doc.turns||[]).length?' · <button class="link danger" data-action="remove-team" data-id="'+esc(t.id)+'">Remove</button>':'')+'</td></tr>' });
+  s+='</tbody></table></div>';
+  // overview
+  s+='<h2>Tables</h2><div class="overview">';
+  const reps={};
+  for(const t of settings.teams){ const cs=CASES[t.case]; const doc=teamDoc(t.id); const rep=replay(cs,doc,settings); reps[t.id]=rep; const st=rep.final;
+    const flags=[]; if(st.blind) flags.push(["bad","Committed blind"]); if(st.broken) flags.push(["bad","Broke a promise"]); if(st.noPromise) flags.push(["warn","No promise ×"+st.noPromise]); if(st.R<3) flags.push(["warn","Trust below 3"]); if(st.capped) flags.push(["bad","Two routes: capped at 3"]); if(st.tok<=0) flags.push(["warn","Out of tokens"]); if(st.ceoDecided) flags.push(["warn","CEO decided ×"+st.ceoDecided]);
+    const lastRf=(doc.turns||[]).slice(-1)[0]; const rf=lastRf&&lastRf.reflection;
+    s+='<div class="ov"><div class="ovh"><span class="case">'+esc(cs.name)+'</span><strong>'+esc(t.name)+'</strong><span class="muted small">'+esc(statusOf(t,doc,rep))+'</span></div>';
+    s+='<div class="ovg"><div><span>Position</span>'+gaugeBar(st.P,true)+'<b>'+st.P+'</b></div><div><span>Technology</span>'+gaugeBar(st.T)+'<b>'+st.T+'</b></div><div><span>Trust</span>'+gaugeBar(st.R)+'<b>'+st.R+'</b></div><div><span>Tokens</span>'+coins(st.tok,5)+'</div></div>';
+    s+='<div class="ovs">'+(rep.rounds.length?('Score '+rep.score.total+(st.ended?" · final":" · "+rep.score.inPlay+" in play")):'No rounds yet')+(doc.charter&&doc.charter.locked?' · '+esc(cs.routes[st.route]?cs.routes[st.route].label:""):'')+'</div>';
+    if(flags.length) s+='<div class="flags">'+flags.map(([c,l])=>'<i class="'+c+'">'+esc(l)+'</i>').join("")+'</div>';
+    if(rf) s+='<div class="small muted">Last round: CEO '+(rf.ceoLast?"spoke last":"did not speak last")+'; '+esc(playerName(doc,rf.least))+' spoke least.</div>';
+    const lastFb=lastRf&&lastRf.feedback; if(lastFb) s+='<div class="small"><b>Question asked:</b> '+esc(lastFb.question)+'</div>';
+    const bd=doc.bridge; if(bd) s+='<div class="small"><b>Bridge:</b> '+esc(bd.name||"unnamed")+(bd.kind?' · '+esc(kindLabel(bd.kind)):'')+(bd.redteam?' · red-teamed':'')+(bd.judgement?' · judgement: '+esc(bd.judgement):'')+'</div>';
+    s+='</div>' }
+  s+='</div>';
+  // compare
+  const palette=["var(--brand-2)","var(--cfo)","var(--cto)","var(--ceo)","var(--cco)","var(--gold)"];
+  const shared=used.filter(k=>settings.teams.filter(t=>t.case===k).length>=2);
+  if(shared.length) s+='<h2>Same world, different routes</h2><div class="compare">';
+  for(const k of shared){ const ts=settings.teams.filter(t=>t.case===k); const cs=CASES[k];
+    s+='<div class="panel"><h3>'+esc(cs.name)+'</h3>'+chartSVG(ts.map((t,i)=>({values:reps[t.id].states.map(x=>x.P),color:palette[i%palette.length],dash:i%2===1})),{label:"Position by round, "+cs.name,w:420,h:170})+'<div class="legend">'+ts.map((t,i)=>'<span><i style="background:'+palette[i%palette.length]+'"></i>'+esc(t.name)+'</span>').join("")+'</div>';
+    s+='<table class="cmp"><thead><tr><th></th>'+ts.map(t=>'<th>'+esc(t.name)+'</th>').join("")+'</tr></thead><tbody>';
+    s+='<tr><td>Route</td>'+ts.map(t=>'<td>'+esc((cs.routes[reps[t.id].final.route]||{}).label||"–")+'</td>').join("")+'</tr>';
+    for(let r=1;r<=3;r++) s+='<tr><td>'+YEARS[r]+'</td>'+ts.map(t=>{const R=reps[t.id].rounds.find(x=>x.r===r); return '<td>'+(R?R.turn.cards.map(c=>esc(effName(cs,c))).join("<br>"):"–")+'</td>'}).join("")+'</tr>';
+    s+='<tr><td>Position path</td>'+ts.map(t=>'<td>'+reps[t.id].states.map(x=>x.P).join(" → ")+'</td>').join("")+'</tr>';
+    s+='<tr><td>Score</td>'+ts.map(t=>'<td>'+(reps[t.id].rounds.length?reps[t.id].score.total:"–")+'</td>').join("")+'</tr>';
+    s+='<tr><td>Verdict</td>'+ts.map(t=>'<td>'+esc(reps[t.id].score.verdict||"In play")+'</td>').join("")+'</tr></tbody></table></div>' }
+  if(shared.length) s+='</div>';
+  // debrief notes
+  s+='<h2>Debrief notes</h2><div class="panel">';
+  if(debrief&&debrief.text) s+='<div class="notes">'+esc(debrief.text).replace(/\n/g,"<br>")+'</div><p class="muted small">Drafted '+new Date(debrief.at).toLocaleString()+'</p>';
+  s+=(aiOn?'<button class="'+(debrief?"ghost":"primary")+'" data-action="gen-console"'+(ui.genBusy.console?" disabled":"")+'>'+(ui.genBusy.console?"Drafting…":(debrief?"Redraft the notes":"Draft debrief notes"))+'</button>':'<p class="muted">The game master is not available in this view.</p>');
+  s+='<p class="muted small">Notes pick the moments worth discussing: promises, people moments, blind commitments, and same-case comparisons when two teams share a case. No ranking.</p></div>';
+  s+='<h2>New game</h2><div class="panel"><p class="muted small">After the rehearsal, clear everything: teams, rounds, bridges, notes and hidden answers. The codes and the server stay as they are.</p><button class="ghost danger" data-action="new-game">Start a new game</button></div></section>';
+  return s;
+}
+// ---------- Day 3 bridge ----------
+const OPP_DEF="An opportunity is value someone will pay for that they cannot get today, delivered at a margin you can keep. It takes one of four forms. A technology on its own is a candidate, not yet an opportunity.";
+const KINDS=[
+ {k:"whole",l:"A whole product",t:"Everything the mainstream buyer needs to say yes, designed in from the start."},
+ {k:"madewhole",l:"An existing product made whole",t:"A product you already sell, completed with what is missing for a new group of buyers."},
+ {k:"model",l:"A business model",t:"A new way to charge, deliver or share the margin, often with a partner who holds the complement."},
+ {k:"context",l:"A change of context",t:"A standard, an infrastructure, a regulation or a new kind of buyer that would make the market."}];
+const CTX=["A standard","An infrastructure","A regulation","A new kind of buyer"];
+const ESCAPES=[
+ {k:"diff",l:"Differentiation",t:"Rivals cannot offer the same thing: a patented molecule, a qualified process."},
+ {k:"fence",l:"A fence",t:"Buyers are kept apart and priced apart: segments, licences, regions."},
+ {k:"scarce",l:"A scarce position",t:"You hold what rivals cannot buy: capacity, a channel, a licence, a chokepoint."}];
+const YEARS_AHEAD=["2027","2028","2029","2030","2031","2032","2033","2034","2035","2036","2038","2040"];
+const BFIELDS=["by","name","desc","kind","ctx","year","ambition","stopYear","stop","escape","mechanism","monkey","missing","lever","judgement","change","changeOwner","promiseOwner","promise","promiseDate"];
+function getBridgeDraft(doc){ if(ui.bridgeDraft) return ui.bridgeDraft; const b=doc.bridge||{}; const d={}; for(const f of BFIELDS) d[f]=b[f]!=null?String(b[f]):""; if(!d.year) d.year="2032"; if(!d.stopYear) d.stopYear="2029"; ui.bridgeDraft=d; return d }
+function bridgeFields(d){const o={}; for(const f of BFIELDS) o[f]=String(d[f]==null?"":d[f]).trim(); return o}
+function kindLabel(k){const x=KINDS.find(z=>z.k===k); return x?x.l:""}
+function escapeLabel(k){const x=ESCAPES.find(z=>z.k===k); return x?x.l:""}
+function bridgeReady(d){ return !!(String(d.name).trim()&&d.kind&&String(d.ambition).trim()&&String(d.stop).trim()&&d.escape&&String(d.mechanism).trim()) }
+function trimDot(t){return String(t||"").trim().replace(/[.\s]+$/,"")}
+function nameAt(doc,i){ return (i===""||i==null)?"Someone":playerName(doc,+i) }
+function charterText(d){ return [
+  "Opportunity: "+(d.name||"(not named)")+(d.desc?". "+d.desc:""),
+  "Its form: "+(kindLabel(d.kind)||"(not chosen)")+(d.kind==="context"&&d.ctx?" ("+d.ctx.toLowerCase()+")":""),
+  "Line 1, our ambition for "+d.year+": "+(d.ambition||"(not written)"),
+  "Line 3, what must be true by "+d.stopYear+", or we stop: "+(d.stop||"(not written)"),
+  "Line 2, what our margin will rest on: "+(escapeLabel(d.escape)||"(not chosen)")+(d.mechanism?". "+d.mechanism:""),
+  "The monkey, the hardest part we will test first: "+(d.monkey||"(not given)"),
+  "Missing pieces of the whole product, and who holds them: "+(d.missing||"(not given)"),
+  "The lever outside the firm, if the binding constraint is there: "+(d.lever||"(none named)")].join("\n") }
+const RT_RULES="You red-team a leadership team's charter for a real opportunity, at ELPIS, an executive programme at DTU on leading industrial science. Write in plain British English, short sentences, no jargon, no exclamation marks. Make the strongest case against the charter. Do not soften it, do not praise it, and do not propose a different opportunity. Never invent facts, figures, companies or sources: argue from what the charter says and from general reasoning, and say when a point would need checking. The team describes the opportunity as it would in public.";
+function rtTask(d){ const fail=String((parseInt(d.stopYear,10)||2029)+1); return "First, as a competent rival: how you would take this margin away, in at most 90 words. Then, as a sceptical board member: why you would not fund it yet, in at most 90 words. Then a pre-mortem: it is "+fail+" and this has failed. Give the three most likely reasons, each with the earliest signal the team would see." }
+function rtPrompt(d){ return RT_RULES+"\n\nThe charter:\n"+charterText(d)+"\n\n"+rtTask(d)+"\n\nReply with only a JSON object: {\"rival\": \"...\", \"board\": \"...\", \"premortem\": [{\"reason\": \"...\", \"signal\": \"...\"}, three items]}" }
+function rtPromptAnyAI(d){ return RT_RULES+"\n\nHere is our charter.\n"+charterText(d)+"\n\n"+rtTask(d)+" Reply in three short sections: As a rival; As a board member; Pre-mortem." }
+function rtHtml(rt){ return '<div class="rt"><h4>As a competent rival</h4><p>'+esc(rt.rival)+'</p><h4>As a sceptical board member</h4><p>'+esc(rt.board)+'</p><h4>Pre-mortem</h4><ol>'+(rt.premortem||[]).map(p=>'<li>'+esc(p.reason)+(p.signal?' <span class="muted">Earliest signal: '+esc(p.signal)+'</span>':'')+'</li>').join("")+'</ol><p class="muted small">Red-teamed '+esc(new Date(rt.at).toLocaleString())+'</p></div>' }
+function bridgeView(id,cs,doc){
+  const d=getBridgeDraft(doc); const b=doc.bridge||{}; const names=[0,1,2].map(i=>playerName(doc,i));
+  const chipsP=k=>'<div class="seg">'+names.map((n,i)=>'<button data-action="b-set" data-k="'+k+'" data-v="'+i+'" aria-pressed="'+(String(d[k])===String(i))+'">'+esc(n)+'</button>').join("")+'</div>';
+  const yearSel=(k,sid,label)=>'<select id="'+sid+'" class="yearsel" data-bdraft="'+k+'" aria-label="'+label+'">'+YEARS_AHEAD.map(y=>'<option'+(d[k]===y?" selected":"")+'>'+y+'</option>').join("")+'</select>';
+  let s='<div class="panel"><h2>The bridge: your real charter</h2><p>The same discipline as the game, applied to an opportunity of your own. Describe it as you would in public: no confidential figures or names.</p><p class="def">'+esc(OPP_DEF)+'</p></div>';
+  s+='<div class="panel"><div class="ph"><h3>1 · Choose one opportunity</h3><span class="muted small">8 min</span></div><p class="muted small">Each of you brought one. Whose is this?</p>'+chipsP("by");
+  s+='<label class="field"><span>Name</span><input id="b-name" data-bdraft="name" maxlength="120" value="'+esc(d.name)+'" placeholder="A short name a stranger would understand"></label>';
+  s+='<label class="field"><span>What it is, and for whom</span><textarea id="b-desc" data-autosize data-bdraft="desc" maxlength="600" placeholder="Two sentences">'+esc(d.desc)+'</textarea></label>';
+  s+='<div class="field"><span>Which form does it take?</span></div><div class="options k2">'+KINDS.map(x=>'<button class="opt" data-action="b-set" data-k="kind" data-v="'+x.k+'" aria-pressed="'+(d.kind===x.k)+'"><b>'+esc(x.l)+'</b><span class="optsub">'+esc(x.t)+'</span></button>').join("")+'</div>';
+  if(d.kind==="context") s+='<div class="seg" aria-label="Which change of context">'+CTX.map(c=>'<button data-action="b-set" data-k="ctx" data-v="'+esc(c)+'" aria-pressed="'+(d.ctx===c)+'">'+esc(c)+'</button>').join("")+'</div>';
+  s+='</div>';
+  s+='<div class="panel"><div class="ph"><h3>2 · Its charter, from the future back</h3><span class="muted small">12 min</span></div><p class="muted small">Write line 1, then line 3 while honesty is cheap, then line 2.</p>';
+  s+='<div class="field"><span>1 · Our ambition for '+yearSel("year","b-year","Ambition year")+'</span><textarea id="b-ambition" aria-label="Our ambition" data-autosize data-bdraft="ambition" maxlength="400" placeholder="A headline from that year, and two sentences under it">'+esc(d.ambition)+'</textarea></div>';
+  s+='<div class="field"><span>3 · What must be true by '+yearSel("stopYear","b-stopyear","Stop condition year")+', or we stop</span><textarea id="b-stop" aria-label="Stop condition" data-autosize data-bdraft="stop" maxlength="400" placeholder="One checkable condition, and what you will do if it fails">'+esc(d.stop)+'</textarea></div>';
+  s+='<div class="field"><span>2 · What our margin will rest on</span></div><div class="options">'+ESCAPES.map(x=>'<button class="opt" data-action="b-set" data-k="escape" data-v="'+x.k+'" aria-pressed="'+(d.escape===x.k)+'"><b>'+esc(x.l)+'</b><span class="optsub">'+esc(x.t)+'</span></button>').join("")+'</div>';
+  s+='<label class="field"><span>Its mechanism</span><textarea id="b-mech" data-autosize data-bdraft="mechanism" maxlength="400" placeholder="Rivals cannot follow, because…">'+esc(d.mechanism)+'</textarea></label></div>';
+  s+='<div class="panel"><div class="ph"><h3>3 · Walk back from the whole product</h3><span class="muted small">8 min</span></div>';
+  s+='<label class="field"><span>The monkey: the hardest part, which you will test first</span><textarea id="b-monkey" data-autosize data-bdraft="monkey" maxlength="300">'+esc(d.monkey)+'</textarea></label>';
+  s+='<label class="field"><span>Missing pieces, and who holds them</span><textarea id="b-missing" data-autosize data-bdraft="missing" maxlength="600" placeholder="One per line: the piece, who holds it, and whether you build, partner or buy">'+esc(d.missing)+'</textarea></label>';
+  s+='<label class="field"><span>If the binding constraint is outside the firm: the lever you will pull</span><textarea id="b-lever" data-autosize data-bdraft="lever" maxlength="300" placeholder="A standard, a coalition, a regulator, an anchor buyer, an infrastructure">'+esc(d.lever)+'</textarea></label>';
+  s+='<div class="actions"><button class="primary" data-action="b-save">Save the charter</button>'+(b.savedAt?'<span class="muted small">Last saved '+esc(new Date(b.savedAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}))+'</span>':'')+'</div></div>';
+  const ready=bridgeReady(d); const rt=b.redteam;
+  s+='<div class="panel"><div class="ph"><h3>4 · Have it red-teamed</h3><span class="muted small">AI move · 12 min</span></div><p class="muted small">The game master makes the strongest case against your charter: as a rival, as a board member, then as a pre-mortem. It does not soften the case and does not suggest another opportunity. Its view is an input; the judgement is yours.</p>';
+  if(rt) s+=rtHtml(rt);
+  if(ui.genBusy.redteam) s+='<p class="muted">Thinking…</p>';
+  else if(aiOn) s+='<div class="actions"><button class="'+(rt?"ghost":"primary")+'" data-action="b-redteam"'+(ready?"":" disabled")+'>'+(rt?"Red-team the charter again":"Ask the game master to red-team it")+'</button><span class="muted small" id="b-ready">'+(ready?"It reads the charter as it stands on screen.":"Name the opportunity, choose its form, and write lines 1, 2 and 3 first.")+'</span></div>';
+  else s+='<p class="notice">The game master is not available on this page. Copy the prompt below into any assistant.</p>';
+  s+='<details'+(aiOn?'':' open')+'><summary>Copy the prompt for any AI</summary><textarea id="b-prompt" class="copybox" readonly aria-label="Prompt for any AI">'+esc(rtPromptAnyAI(d))+'</textarea><div class="actions"><button class="ghost small" data-action="b-copy">Copy the prompt</button></div></details></div>';
+  s+='<div class="panel"><h3>5 · Your judgement</h3><p class="muted small">Read the red team aloud. '+esc(ceoOf(doc,3))+', CEO in the last round, speaks last.</p>';
+  s+='<div class="seg">'+[["agree","We agree"],["partly","Partly"],["reject","We reject it"]].map(([k,l])=>'<button data-action="b-set" data-k="judgement" data-v="'+k+'" aria-pressed="'+(d.judgement===k)+'">'+l+'</button>').join("")+'</div>';
+  s+='<label class="field"><span>One change to the charter</span><textarea id="b-change" data-autosize data-bdraft="change" maxlength="400">'+esc(d.change)+'</textarea></label><p class="muted small">Who owns the change?</p>'+chipsP("changeOwner");
+  s+='<div class="field"><span>The first promise</span></div><p class="muted small">Who makes it?</p>'+chipsP("promiseOwner")+'<div class="row2"><label class="field"><span>Will</span><input id="b-promise" data-bdraft="promise" maxlength="200" value="'+esc(d.promise)+'" placeholder="One outcome"></label><label class="field"><span>By</span><input id="b-pdate" data-bdraft="promiseDate" maxlength="40" value="'+esc(d.promiseDate)+'" placeholder="A date"></label></div>';
+  s+='<div class="actions"><button class="primary" data-action="b-save">Save the bridge</button></div></div>';
+  if(b.savedAt){
+    const L=[
+      '<b>The ambition.</b> '+esc(b.year||"")+': '+esc(b.ambition||"–"),
+      '<b>What the margin rests on.</b> '+esc(escapeLabel(b.escape)||"–")+(b.mechanism?'. '+esc(b.mechanism):''),
+      '<b>The monkey, and the kill criterion.</b> '+(b.monkey?esc(trimDot(b.monkey))+'. ':'')+'By '+esc(b.stopYear||"")+', or we stop: '+esc(b.stop||"–"),
+      '<b>The complements.</b> '+esc(b.missing||"–").replace(/\n+/g,"; "),
+      '<b>Who must be in the room, and the first promise.</b> '+(b.promise?esc(nameAt(doc,b.promiseOwner))+' will '+esc(b.promise)+(b.promiseDate?', by '+esc(b.promiseDate):''):'–')];
+    s+='<div class="panel"><h3>Your five-line pitch, drafted from the bridge</h3><ol class="spine">'+L.map(x=>'<li>'+x+'</li>').join("")+'</ol><p class="muted small">Line 1 should also name the fat question it answers, and the panel will listen for evidence of demand. Game scores do not carry into the pitch.</p></div>';
+  }
+  return s;
+}
+async function genRedTeam(id){
+  const d=ui.bridgeDraft; if(!d||!aiOn) return;
+  ui.genBusy.redteam=true; render();
+  try{
+    const out=(await aiCall("redteam",{charter:charterText(d),stopYear:d.stopYear},id)).json;
+    if(out&&out.rival&&out.board&&Array.isArray(out.premortem)){
+      const fresh=JSON.parse(JSON.stringify(teamDoc(id)));
+      fresh.bridge=Object.assign({},fresh.bridge||{},bridgeFields(d),{savedAt:new Date().toISOString(),redteam:{rival:String(out.rival).slice(0,900),board:String(out.board).slice(0,900),premortem:out.premortem.slice(0,3).map(p=>({reason:String((p&&p.reason)||"").slice(0,300),signal:String((p&&p.signal)||"").slice(0,300)})),at:new Date().toISOString()}});
+      await saveTeam(id,fresh);
+    } else toast("The game master could not red-team the charter. Try again.",true);
+  }catch(e){
+    toast(e&&e.code==="rate_limited"?"Too many requests just now. Try again in a few minutes.":e&&e.code==="unavailable"?"The game master is not available. Use the prompt for any AI.":"The game master could not red-team the charter. Try again.",true);
+  }
+  ui.genBusy.redteam=false; render();
+}
+// ---------- dialogs ----------
+function openDialog(html,onConfirm,confirmLabel){
+  const d=$("#dlg"); $("#dlg-body").innerHTML=html; $("#dlg-ok").textContent=confirmLabel||"Confirm";
+  $("#dlg-ok").onclick=async()=>{ $("#dlg-ok").disabled=true; try{await onConfirm(); d.close()}catch(e){writeFailed(e)} finally{$("#dlg-ok").disabled=false} };
+  if(d.showModal) d.showModal(); else d.setAttribute("open","");
+}
+// ---------- AI ----------
+function roundContext(cs,doc,rep,idx){
+  const R=rep.rounds[idx], t=R.turn, st=rep.states[idx+1], st0=rep.states[idx];
+  return {case:cs.name,seat:cs.seatText,pet_project:cs.pet,round:R.r,years:YEARS[R.r],charter:doc.charter,route:(cs.routes[st.route]||{}).label,
+    moves:t.cards.map(c=>effName(cs,c)),decided:t.agreed==="ceo"?"the CEO decided":"all agreed",
+    headlines:R.headlines.map(h=>h.kind+": "+h.text+" ("+h.note+")"),results:R.lines.map(l=>l.t),
+    gauges_before:{Position:st0.P,Technology:st0.T,Trust:st0.R,Tokens:st0.tok},gauges_after:{Position:st.P,Technology:st.T,Trust:st.R,Tokens:st.tok},
+    people_moment:t.pm!=null?cs.pm[String(R.r)].options[t.pm].text:null,case_lens_hint:cs.lens[R.r-1],question_hint:cs.questions[R.r-1]};
+}
+async function genFeedback(id,idx){
+  const meta=teamMeta(id); const cs=CASES[meta.case]; const doc=teamDoc(id); const rep=replay(cs,doc,settings);
+  ui.genBusy["r"+idx]=true; render();
+  let fb=null;
+  try{
+    const ctx=roundContext(cs,doc,rep,idx);
+    const out=(await aiCall("feedback",ctx,id)).json;
+    if(out&&out.lens&&out.question) fb={story:String(out.story||"").slice(0,700),lens:String(out.lens).slice(0,300),question:String(out.question).slice(0,300),at:new Date().toISOString()};
+  }catch(e){}
+  if(!fb) fb={story:"",lens:cs.lens[rep.rounds[idx].r-1],question:cs.questions[rep.rounds[idx].r-1],fallback:true,at:new Date().toISOString()};
+  const fresh=JSON.parse(JSON.stringify(teamDoc(id))); if(fresh.turns&&fresh.turns[idx]&&!fresh.turns[idx].feedback){fresh.turns[idx].feedback=fb; try{await saveTeam(id,fresh)}catch(e){writeFailed(e)}}
+  ui.genBusy["r"+idx]=false; render();
+}
+async function genDebrief(id){
+  const meta=teamMeta(id); const cs=CASES[meta.case]; const doc=teamDoc(id); const rep=replay(cs,doc,settings);
+  ui.genBusy.debrief=true; render();
+  try{
+    const ctx={case:cs.name,charter:doc.charter,rounds:rep.rounds.map((R,i)=>roundContext(cs,doc,rep,i)),promises:(doc.turns||[]).map(t=>t.promise||null),reflections:(doc.turns||[]).map(t=>t.reflection||null),final:{Position:rep.final.P,Technology:rep.final.T,Trust:rep.final.R,Tokens:rep.final.tok},verdict:rep.score.verdict,checks:rep.score.checks};
+    const out=(await aiCall("debrief",ctx,id)).json;
+    if(out&&Array.isArray(out.moments)&&out.hypothesis){ const fresh=JSON.parse(JSON.stringify(teamDoc(id))); fresh.debrief={moments:out.moments.slice(0,3).map(m=>({round:m.round,text:String(m.text).slice(0,400)})),hypothesis:String(out.hypothesis).slice(0,500),at:new Date().toISOString()}; await saveTeam(id,fresh) }
+    else toast("The game master could not write the debrief. Try again.",true);
+  }catch(e){ toast(e&&e.code==="rate_limited"?"Too many requests just now. Try again in a few minutes.":"The game master could not write the debrief. Try again.",true) }
+  ui.genBusy.debrief=false; render();
+}
+async function genConsole(){
+  ui.genBusy.console=true; render();
+  try{
+    const data=settings.teams.map(t=>{const cs=CASES[t.case]; const doc=teamDoc(t.id); const rep=replay(cs,doc,settings); return {team:t.name,case:cs.name,route:(cs.routes[rep.final.route]||{}).label,charter:doc.charter,rounds:rep.rounds.map(R=>({years:YEARS[R.r],moves:R.turn.cards.map(c=>effName(cs,c)),decided:R.turn.agreed,people_moment:R.turn.pm!=null?readingOf(cs,R.r,R.turn.pm):null,results:R.lines.map(l=>l.t)})),position_path:rep.states.map(x=>x.P),final:{Position:rep.final.P,Trust:rep.final.R,Tokens:rep.final.tok},verdict:rep.score.verdict,flags:{blind:rep.final.blind,broken:rep.final.broken,noPromise:rep.final.noPromise,capped:rep.final.capped}}});
+    const {text}=await aiCall("console",data);
+    await saveDebrief({text:String(text).slice(0,4000),at:new Date().toISOString()});
+  }catch(e){ toast(e&&e.code==="forbidden"?"You don’t have permission to save notes.":"The game master could not draft the notes. Try again.",true) }
+  ui.genBusy.console=false; render();
+}
+// ---------- events ----------
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.dataset.setupName!=null && ui.setupDraft){ ui.setupDraft[+el.dataset.setupName].name=el.value; return }
+  if(el.dataset.bdraft!=null){ const d=ui.bridgeDraft; if(!d) return; d[el.dataset.bdraft]=el.value; if(el.tagName==="TEXTAREA"){el.style.height="auto"; el.style.height=(el.scrollHeight+2)+"px"} const btn=$('[data-action="b-redteam"]'); if(btn&&!ui.genBusy.redteam) btn.disabled=!bridgeReady(d); const hint=$("#b-ready"); if(hint) hint.textContent=bridgeReady(d)?"It reads the charter as it stands on screen.":"Name the opportunity, choose its form, and write lines 1, 2 and 3 first."; const pr=$("#b-prompt"); if(pr) pr.value=rtPromptAnyAI(d); return }
+  if(el.dataset.draft){ const d=ui.charterDraft; if(!d) return; if(el.dataset.draft==="player") d.players[+el.dataset.i]=el.value; else if(el.dataset.draft==="route") d.route=el.value; else d[el.dataset.draft]=el.value;
+    if(el.tagName==="TEXTAREA"){el.style.height="auto"; el.style.height=(el.scrollHeight+2)+"px"}
+    const btn=$('[data-action="review-charter"]'); const ok=d.l1.trim()&&d.l2.trim()&&d.l3.trim()&&d.route&&d.players.every(p=>p.trim()); if(btn){btn.disabled=!ok} if(el.dataset.draft==="route") render(); }
+});
+document.addEventListener("change",async e=>{
+  const el=e.target;
+  if(el.dataset.setupCase!=null && ui.setupDraft){ ui.setupDraft[+el.dataset.setupCase].case=el.value; return }
+  if(el.dataset.bdraft!=null && ui.bridgeDraft){ ui.bridgeDraft[el.dataset.bdraft]=el.value; const pr=$("#b-prompt"); if(pr) pr.value=rtPromptAnyAI(ui.bridgeDraft); return }
+  if(el.dataset.set==="cohort"){const s=JSON.parse(JSON.stringify(settings)); s.cohort=el.value.trim()||"Six Moves"; try{await saveSettings(s)}catch(x){writeFailed(x)}}
+  if(el.dataset.teamName!=null){const s=JSON.parse(JSON.stringify(settings)); s.teams[+el.dataset.teamName].name=el.value.trim()||s.teams[+el.dataset.teamName].name; try{await saveSettings(s)}catch(x){writeFailed(x)}}
+  if(el.dataset.teamCase!=null){const s=JSON.parse(JSON.stringify(settings)); s.teams[+el.dataset.teamCase].case=el.value; try{await saveSettings(s)}catch(x){writeFailed(x)}}
+});
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-action]"); if(!b||b.disabled) return;
+  const a=b.dataset.action; const id=route.id;
+  const meta=id&&settings?teamMeta(id):null; const cs=meta?CASES[meta.case]:null;
+  switch(a){
+    case "sign-out": signOut(""); break;
+    case "new-game": openDialog('<h2>Start a new game?</h2><p>Every team, round, bridge and note will be deleted, and new hidden answers will be drawn at setup. This cannot be undone.</p>',async()=>{ if(mode==="live") await api("POST","/api/reset"); settings=null; teams={}; debrief=null; versions={}; lastJSON=""; ui=freshUI(); location.hash="#/"; render() },"Delete and start again"); break;
+    case "create-game": { const rows=(ui.setupDraft||[]).map(t=>({name:String(t.name||"").trim(),case:t.case})).filter(t=>t.name); if(!rows.length){toast("Name at least one team.",true); break} const list=rows.map((t,i)=>({id:"team-"+(i+1),name:t.name,case:t.case})); try{await saveSettings({cohort:"ELPIS · Leading Industrial Science",openRound:0,bridgeOpen:false,teams:list,draws:{},salt:newSalt()}); ui.setupDraft=null}catch(x){writeFailed(x)} break; }
+    case "setup-add": { const r=ui.setupDraft||[]; if(r.length<6) r.push({name:"Team "+(r.length+1),case:"ptx"}); render(); break; }
+    case "setup-remove": { const r=ui.setupDraft||[]; if(r.length>1) r.splice(+b.dataset.i,1); render(); break; }
+    case "remove-team": { const tid=b.dataset.id; openDialog('<h2>Remove this team?</h2><p>The team, its charter and any submitted rounds will be deleted. This cannot be undone.</p>',async()=>{const s=JSON.parse(JSON.stringify(settings)); s.teams=s.teams.filter(t=>t.id!==tid); await saveSettings(s); if(teams[tid]) await deleteTeam(tid)},"Remove the team"); break; }
+    case "bridge-open": { const s=JSON.parse(JSON.stringify(settings)); s.bridgeOpen=b.dataset.v==="1"; try{await saveSettings(s)}catch(x){writeFailed(x)} break; }
+    case "b-set": { const d=ui.bridgeDraft; if(d){ d[b.dataset.k]=b.dataset.v; if(b.dataset.k==="kind"&&b.dataset.v!=="context") d.ctx="" } render(); break; }
+    case "b-save": { const d=ui.bridgeDraft; if(!d) break; const fresh=JSON.parse(JSON.stringify(teamDoc(id))); fresh.bridge=Object.assign({},fresh.bridge||{},bridgeFields(d),{savedAt:new Date().toISOString()}); try{await saveTeam(id,fresh); toast("Saved.")}catch(x){writeFailed(x)} break; }
+    case "b-redteam": genRedTeam(id); break;
+    case "b-copy": { const ta=$("#b-prompt"); try{await navigator.clipboard.writeText(ta.value); toast("Prompt copied.")}catch(x){ ta.focus(); ta.select(); toast("The prompt is selected: copy it with your keyboard.") } break; }
+    case "tab": ui.tab=b.dataset.tab; render(); break;
+    case "review-charter": {
+      const d=ui.charterDraft; const html='<h2>Lock the charter?</h2><p class="muted">Once locked, the charter can only change through an open pivot during play.</p><dl><dt>Team</dt><dd>'+d.players.map((p,i)=>esc(p)+" ("+SEATS[i]+")").join(", ")+'</dd><dt>2032</dt><dd>'+esc(d.l1)+'</dd><dt>Margin</dt><dd>'+esc(d.l2)+' · '+esc(cs.routes[d.route].label)+'</dd><dt>By 2030, or we stop</dt><dd>'+esc(d.l3)+'</dd></dl>';
+      openDialog(html,async()=>{const doc=JSON.parse(JSON.stringify(teamDoc(id))); doc.players=d.players.map(p=>p.trim()); doc.charter={l1:d.l1.trim(),l2:d.l2.trim(),l3:d.l3.trim(),route:d.route,locked:true,lockedAt:new Date().toISOString()}; doc.turns=doc.turns||[]; await saveTeam(id,doc); ui.charterDraft=null; render(); window.scrollTo(0,0)},"Lock the charter"); break; }
+    case "toggle-card": { const i=ui.sel.findIndex(x=>x.id===b.dataset.id); if(i>=0) ui.sel.splice(i,1); else if(ui.sel.length<2){const c=findCard(cs,b.dataset.id); ui.sel.push({id:c.id,opt:c.options?null:undefined})} render(); break; }
+    case "card-opt": { const s=ui.sel.find(x=>x.id===b.dataset.id); if(s){s.opt=b.dataset.opt; if(s.opt!=="pivot") delete s.route} render(); break; }
+    case "pivot-route": { const s=ui.sel.find(x=>x.opt==="pivot"); if(s) s.route=b.dataset.route; render(); break; }
+    case "pm": ui.pm=+b.dataset.i; render(); break;
+    case "agreed": ui.agreed=b.dataset.v; render(); break;
+    case "p-owner": ui.promise={owner:+b.dataset.i}; render(); break;
+    case "p-none": ui.promise={none:true}; render(); break;
+    case "p-kind": ui.promise=Object.assign({},ui.promise,{kind:b.dataset.v,target:null}); render(); break;
+    case "p-target": ui.promise.target=ui.promise.kind==="decision"?+b.dataset.v:b.dataset.v; render(); break;
+    case "due-decide": ui.due={type:"decided",choice:b.dataset.choice}; render(); break;
+    case "due-release": ui.due={type:"release",reason:b.dataset.reason}; render(); break;
+    case "review-turn": {
+      const doc=teamDoc(id); const rep=replay(cs,doc,settings); const r=(doc.turns||[]).length+1; const turn=buildTurn(r); const prev=(doc.turns||[])[r-2];
+      const st=preDue(cs,rep.final,prev,ui.due); const chk=checkSelection(cs,st,r,ui.sel);
+      let warn=[];
+      if(prev&&prev.promise&&!prev.promise.none){ const pr=prev.promise; const dq=pr.kind==="decision"?cs.decisions[pr.target]:null; const kept=pr.kind==="card"?turn.cards.some(c=>c.id===pr.target):(ui.due&&ui.due.type==="decided"&&!(dq&&dq.kind==="door"&&ui.due.choice===dq.opts[0]&&!turn.cards.some(c=>c.id===dq.card))); if(!kept&&!(ui.due&&ui.due.type==="release")) warn.push("The promise due this round will be recorded as broken: Trust −1.") }
+      if(turn.promise&&turn.promise.none) warn.push("No promise this round: Trust −1.");
+      if(turn.cards.some(c=>["allin","book","open","bind"].includes(c.opt||c.id)) && r<=2) warn.push("You are committing before the hidden answer is known to everyone.");
+      const html='<h2>Submit round '+r+'?</h2><p class="muted">Check it with the whole team. Once submitted, the round cannot be changed.</p><dl><dt>Moves</dt><dd>'+turn.cards.map(c=>esc(effName(cs,c))+(c.route?" → "+esc(cs.routes[c.route].label):"")).join("<br>")+'</dd><dt>Cost</dt><dd>'+chk.cost+' of '+st.tok+' tokens</dd><dt>How you decided</dt><dd>'+(turn.agreed==="ceo"?"The CEO decided":"All agreed")+'</dd>'+(r>=2?'<dt>People moment</dt><dd>'+esc(cs.pm[String(r)].options[turn.pm].text)+'</dd>':'')+(r<3?'<dt>Promise</dt><dd>'+(turn.promise.none?"No promise":esc(playerName(doc,turn.promise.owner))+(turn.promise.kind==="card"?" will get "+esc(nameOf(cs,turn.promise.target))+" played":" will announce: "+esc(cs.decisions[turn.promise.target].q)))+'</dd>':'')+'</dl>'+(warn.length?'<ul class="problems">'+warn.map(w=>'<li>'+esc(w)+'</li>').join("")+'</ul>':'');
+      openDialog(html,async()=>{ const fresh=JSON.parse(JSON.stringify(teamDoc(id))); fresh.turns=fresh.turns||[]; if(fresh.turns.length!==r-1) throw {code:"conflict"}; fresh.turns.push(turn); await saveTeam(id,fresh); ui=freshUI(); ui.tab=(r===3||turn.cards.some(c=>c.opt==="stop"))?"debrief":"round"; render(); window.scrollTo(0,0); if(aiOn) setTimeout(()=>genFeedback(id,r-1),50) },"Confirm and submit"); break; }
+    case "gen-feedback": genFeedback(id,+b.dataset.idx); break;
+    case "rf-last": ui.reflect=Object.assign({},ui.reflect,{last:b.dataset.v}); render(); break;
+    case "rf-least": ui.reflect=Object.assign({},ui.reflect,{least:+b.dataset.i}); render(); break;
+    case "rf-save": { const idx=+b.dataset.idx; const fresh=JSON.parse(JSON.stringify(teamDoc(id))); if(fresh.turns[idx].reflection) break; fresh.turns[idx].reflection={ceoLast:ui.reflect.last==="y",least:ui.reflect.least}; try{await saveTeam(id,fresh); ui.reflect=null}catch(x){writeFailed(x)} break; }
+    case "gen-debrief": genDebrief(id); break;
+    case "fit": { const fresh=JSON.parse(JSON.stringify(teamDoc(id))); if(fresh.debrief){fresh.debrief.fit=b.dataset.v; try{await saveTeam(id,fresh)}catch(x){writeFailed(x)}} break; }
+    case "open-round": { const s=JSON.parse(JSON.stringify(settings)); s.openRound=+b.dataset.v; try{await saveSettings(s)}catch(x){writeFailed(x)} break; }
+    case "reveal-toggle": ui.reveal=!ui.reveal; render(); break;
+    case "draw": { const k=b.dataset.case; const cs2=CASES[k]; const doDraw=async()=>{const s=JSON.parse(JSON.stringify(settings)); s.draws=s.draws||{}; s.salt=s.salt||newSalt(); s.draws[k]={code:encodeDraw({fav:Math.random()<cs2.p,bindBad:Math.random()<0.5},s.salt)}; await saveSettings(s); toast(cs2.name+": hidden answer drawn.")};
+      if((settings.draws||{})[k]) openDialog('<h2>Draw again for '+esc(cs2.name)+'?</h2><p>Teams on this case would play a different world from the one already drawn.</p>',doDraw,"Draw again"); else { try{await doDraw()}catch(x){writeFailed(x)} } break; }
+    case "set-draw": { const k=b.dataset.case; const s=JSON.parse(JSON.stringify(settings)); s.draws=s.draws||{}; s.salt=s.salt||newSalt(); const prev=getDraw(settings,k); const prevBind=prev?prev.bindBad:Math.random()<0.5; s.draws[k]={code:encodeDraw({fav:b.dataset.v==="1",bindBad:prevBind},s.salt)}; try{await saveSettings(s); toast(CASES[k].name+": hidden answer set.")}catch(x){writeFailed(x)} break; }
+    case "add-team": { const s=JSON.parse(JSON.stringify(settings)); const n=s.teams.length+1; let tid="team-"+n; while(s.teams.some(t=>t.id===tid)) tid+="x"; s.teams.push({id:tid,name:"Team "+n,case:"ptx"}); try{await saveSettings(s)}catch(x){writeFailed(x)} break; }
+    case "copy-link": { const url=location.href.split("#")[0]+"#/team/"+encodeURIComponent(b.dataset.id); try{await navigator.clipboard.writeText(url); toast("Link copied.")}catch(x){ openDialog('<h2>Link for this team</h2><p class="muted">Copy it and open it on the team’s laptop.</p><input class="urlbox" readonly value="'+esc(url)+'">',async()=>{},"Done") } break; }
+    case "reset-team": { const tid=b.dataset.id; openDialog('<h2>Reset this team?</h2><p>Its charter and every submitted round will be deleted. This cannot be undone.</p>',async()=>{await deleteTeam(tid)},"Reset the team"); break; }
+    case "gen-console": genConsole(); break;
+  }
+});
+boot();
+
+</script>
+</body>
+</html>
