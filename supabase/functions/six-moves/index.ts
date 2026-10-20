@@ -1,5 +1,6 @@
 // Edge Function `six-moves`: the game server for Six Moves. Deployed public
-// (verify_jwt = false); the facilitator and team codes are the authentication.
+// (verify_jwt = false); the facilitator code and the live room's class code are
+// the authentication.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { supabaseStore } from "../ai/store.ts";
@@ -48,7 +49,7 @@ Deno.serve((req) =>
     spend,
     hasKey: !!KEY,
     facilitatorCode: Deno.env.get("SIX_MOVES_FACILITATOR_CODE") ?? "",
-    teamCode: Deno.env.get("SIX_MOVES_TEAM_CODE") ?? "",
+    pepper: Deno.env.get("CLASS_CODE_PEPPER") ?? "",
     allowedOrigins: Deno.env.get("SIX_MOVES_ALLOWED_ORIGINS") ?? "",
     async callModel({ model, maxTokens, system, user }) {
       const api = await fetch("https://api.anthropic.com/v1/messages", {

@@ -11,10 +11,13 @@
 // POST   /api/ai                                  {task, data, team}
 //
 // Same status codes, JSON shapes and CORS as the Worker. The codes in x-code
-// are the authentication. AI calls go through the live room's spend control
+// are the authentication: the facilitator code is a secret of its own, and the
+// team code is the live room's class code, the one the control room shows and
+// rotates. AI calls go through the live room's spend control
 // (ai_control: switch, window, budget; ai_usage: one row per call), and the
 // per-team hourly limit is ai_reserve over a one-hour window.
 
+import { deriveCode, normalizeCode, sameCode } from "../_shared/classcode.ts";
 import { liveState, type Store } from "../ai/gate.ts";
 import { costUsd, MODEL } from "../ai/templates.ts";
 
@@ -58,7 +61,7 @@ export const TASKS: Record<string, Task> = {
     user: (d) => {
       const fail = String((parseInt(String(d.stopYear), 10) || 2029) + 1);
       return "The charter:\n" + String(d.charter || "").slice(0, 4000) +
-        "\n\nFirst, as a competent rival: how you would take this margin away, in at most 90 words. Then, as a sceptical board member: why you would not fund it yet, in at most 90 words. Then a pre-mortem: it is " + fail +
+        "\n\nFirst, as a competent rival: how you would take this margin away, in at most 90 words. Then, as a sceptical board member: why you would not fund it yet, and what would have to be true for the number in the ambition, in at most 90 words. Then a pre-mortem: it is " + fail +
         " and this has failed. Give the three most likely reasons, each with the earliest signal the team would see." +
         "\n\nReply with only a JSON object: {\"rival\": \"...\", \"board\": \"...\", \"premortem\": [{\"reason\": \"...\", \"signal\": \"...\"}, three items]}";
     },
@@ -88,7 +91,7 @@ export type Deps = {
   callModel: ModelCall;
   hasKey: boolean;
   facilitatorCode: string;
-  teamCode: string;
+  pepper: string;            // CLASS_CODE_PEPPER: with ai_control's salt, gives the team code
   allowedOrigins: string;
   perTeamPerHour?: number;
   now?: () => Date;
@@ -104,20 +107,20 @@ function parseJSON(text: string): any {
   return null;
 }
 
-// /api/state is polled every four seconds per device; the switch, window and
-// budget are read at most every fifteen seconds per instance.
-let liveCache: { at: number; live: boolean } | null = null;
-async function aiLive(spend: Store, now: Date): Promise<boolean> {
-  if (liveCache && now.getTime() - liveCache.at < 15_000) return liveCache.live;
-  let live = false;
-  try {
-    const c = await spend.control();
-    live = liveState(c, await spend.spendSince(c.budget_since), now).live;
-  } catch { /* stays false */ }
-  liveCache = { at: now.getTime(), live };
-  return live;
+// Every request needs the class code, and /api/state is polled every four
+// seconds per device: the control row and the spend are read at most every
+// fifteen seconds per instance, so a rotated code or a flipped switch lands
+// within that. A failed read is not cached and throws: the page then shows
+// "retrying" instead of signing everyone out.
+let roomCache: { at: number; live: boolean; teamCode: string } | null = null;
+async function room(spend: Store, pepper: string, now: Date): Promise<{ live: boolean; teamCode: string }> {
+  if (roomCache && now.getTime() - roomCache.at < 15_000) return roomCache;
+  const c = await spend.control();
+  const live = liveState(c, await spend.spendSince(c.budget_since), now).live;
+  roomCache = { at: now.getTime(), live, teamCode: await deriveCode(pepper, c.class_code_salt) };
+  return roomCache;
 }
-export function resetLiveCache() { liveCache = null; }
+export function resetRoomCache() { roomCache = null; }
 
 export async function handle(req: Request, deps: Deps): Promise<Response> {
   const clock = deps.now ?? (() => new Date());
@@ -141,27 +144,28 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   if (path === "/api/health") {
     return reply({
       ok: true, model: MODEL, key: deps.hasKey, database: !!deps.docs,
-      codes: !!(deps.facilitatorCode && deps.teamCode), originAllowed: okOrigin,
-      aiLive: await aiLive(deps.spend, clock()),
+      codes: !!(deps.facilitatorCode && deps.pepper), originAllowed: okOrigin,
+      aiLive: await room(deps.spend, deps.pepper, clock()).then((r) => r.live, () => false),
     });
   }
   if (!okOrigin) return reply({ error: "This page's address is not allowed. Add it to SIX_MOVES_ALLOWED_ORIGINS." }, 403);
   if (!deps.docs) return reply({ error: "No database configured." }, 500);
-  if (!deps.facilitatorCode || !deps.teamCode) return reply({ error: "Codes are not set on the server." }, 500);
+  if (!deps.facilitatorCode || !deps.pepper) return reply({ error: "Codes are not set on the server." }, 500);
   const docs = deps.docs;
 
-  const code = req.headers.get("x-code") || "";
-  const role = code === deps.facilitatorCode ? "facilitator" : (code === deps.teamCode ? "team" : null);
-  if (!role) return reply({ error: "Wrong code." }, 401);
-
   try {
+    const code = req.headers.get("x-code") || "";
+    const r = await room(deps.spend, deps.pepper, clock());
+    // The class code is typed off a slide: case, spaces and dashes do not matter.
+    const role = code === deps.facilitatorCode ? "facilitator" : (sameCode(normalizeCode(code), r.teamCode) ? "team" : null);
+    if (!role) return reply({ error: "Wrong code." }, 401);
     const now = clock().toISOString();
 
     // ---- read everything the page needs
     if (req.method === "GET" && path === "/api/state") {
       // ai is true only when the game master can answer: key set and the live room's switch on.
       const out = {
-        role, ai: deps.hasKey && await aiLive(deps.spend, clock()),
+        role, ai: deps.hasKey && r.live,
         settings: null as unknown, debrief: null as unknown, teams: {} as Record<string, unknown>, versions: {} as Record<string, number>,
       };
       for (const r of await docs.all()) {

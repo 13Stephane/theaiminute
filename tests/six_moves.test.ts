@@ -3,16 +3,18 @@
 // live room's spend control in front of the game master.
 
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { handle, type ModelCall, resetLiveCache } from "../supabase/functions/six-moves/handler.ts";
+import { handle, type ModelCall, resetRoomCache } from "../supabase/functions/six-moves/handler.ts";
+import { deriveCode } from "../supabase/functions/_shared/classcode.ts";
 import { costUsd, MODEL } from "../supabase/functions/ai/templates.ts";
 import { MemDb, MemDocs } from "./memstore.ts";
 
 const ORIGIN = "https://theaiminute.blog";
-const F = "facilitator-code", T = "team-code";
+const PEPPER = "test-pepper";
+const F = "facilitator-code", T = await deriveCode(PEPPER, "test-salt"); // the class code MemDb's salt gives
 const SETTINGS = { teams: [{ id: "north", name: "North" }, { id: "south", name: "South" }] };
 
 function setup(o: { reply?: string; fail?: number; perTeamPerHour?: number } = {}) {
-  resetLiveCache();
+  resetRoomCache();
   const docs = new MemDocs(), db = new MemDb();
   const asked: { model: string; maxTokens: number; system: string; user: string }[] = [];
   const callModel: ModelCall = (a) => {
@@ -25,7 +27,7 @@ function setup(o: { reply?: string; fail?: number; perTeamPerHour?: number } = {
     if (h.origin !== null) headers.Origin = h.origin ?? ORIGIN;
     const res = await handle(
       new Request("https://x.supabase.co/functions/v1/six-moves" + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }),
-      { docs, spend: db, callModel, hasKey: true, facilitatorCode: F, teamCode: T, allowedOrigins: ORIGIN + ",https://www.theaiminute.blog", perTeamPerHour: o.perTeamPerHour },
+      { docs, spend: db, callModel, hasKey: true, facilitatorCode: F, pepper: PEPPER, allowedOrigins: ORIGIN + ",https://www.theaiminute.blog", perTeamPerHour: o.perTeamPerHour },
     );
     return { status: res.status, headers: res.headers, json: res.status === 204 ? null : await res.json() };
   };
@@ -138,4 +140,23 @@ Deno.test("spend control: switch off hides the game master and refuses calls; bu
   assertEquals((await ask("south")).status, 200);
   assertEquals((await ask("NOT VALID")).status, 200); // falls to the shared "anon" bucket, as in the Worker
   assertEquals(busy.db.rows.filter((x) => x.device === "anon").length, 1);
+});
+
+Deno.test("the team code is the class code: typed loosely it works, rotated the old one stops, a failed read is 500 not 401", async () => {
+  const { send, db } = setup();
+  const loose = T.toLowerCase().slice(0, 3) + "-" + T.toLowerCase().slice(3);
+  assertEquals((await send("GET", "/api/state", undefined, { code: loose })).json.role, "team");
+  assertEquals((await send("GET", "/api/state", undefined, { code: T.slice(0, 5) })).status, 401);
+
+  db.ctl.class_code_salt = "rotated-salt";
+  resetRoomCache(); // the fifteen seconds have passed
+  assertEquals((await send("GET", "/api/state", undefined, { code: T })).status, 401);
+  const fresh = await deriveCode(PEPPER, "rotated-salt");
+  assertEquals((await send("GET", "/api/state", undefined, { code: fresh })).json.role, "team");
+  assertEquals((await send("GET", "/api/state")).json.role, "facilitator"); // the console code does not rotate
+
+  resetRoomCache();
+  db.control = () => Promise.reject(new Error("db down"));
+  assertEquals((await send("GET", "/api/state", undefined, { code: fresh })).status, 500);
+  assertEquals((await send("GET", "/api/health")).json.aiLive, false);
 });
