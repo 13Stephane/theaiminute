@@ -1,0 +1,957 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>AI Capex Payback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: controls rail on the left, verdict + numbers + chart + sensitivity grid on the right. Projector-first: large type, sparse. */
+:root{
+  --bg:#ECEBE3; --panel:#F4F3EE; --ink:#193C3F; --muted:#5E6E6C; --gold:#C6A553; --line:#D3D1C4;
+  --good:#2F6B3A; --bad:#9A3B22; --bar:#193C3F; --barshort:#8FA3A1;
+  --display:Georgia,"Times New Roman",serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#102A2C; --panel:#173537; --ink:#ECEBE3; --muted:#A9B7B4; --gold:#D4B666; --line:#2E4C4E;
+  --good:#7FC08A; --bad:#E38B6F; --bar:#ECEBE3; --barshort:#5F7C7A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#102A2C; --panel:#173537; --ink:#ECEBE3; --muted:#A9B7B4; --gold:#D4B666; --line:#2E4C4E;
+  --good:#7FC08A; --bad:#E38B6F; --bar:#ECEBE3; --barshort:#5F7C7A; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.45;margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 48px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+h1{font-family:var(--display);font-size:clamp(30px,4vw,44px);line-height:1.1;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.presets button{font:500 14px var(--body);color:var(--ink);background:transparent;border:1.5px solid var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+.presets button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.presets button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:32px;margin-top:24px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.controls{display:flex;flex-direction:column;gap:18px}
+.group-label{font:600 12px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:baseline}
+.ctl label{font-weight:500}
+.ctl output{font:500 18px var(--mono);font-variant-numeric:tabular-nums}
+.ctl input{grid-column:1/-1;width:100%;accent-color:var(--gold);height:28px}
+.ctl small{grid-column:1/-1;color:var(--muted);font-size:13.5px}
+.results{display:flex;flex-direction:column;gap:22px;min-width:0}
+.verdict{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:16px 20px;border-left:6px solid var(--bad);background:var(--panel)}
+.verdict.ok{border-left-color:var(--good)}
+.verdict .tag{font:600 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--bad)}
+.verdict.ok .tag{color:var(--good)}
+.verdict .big{font-family:var(--display);font-size:clamp(24px,3vw,32px)}
+.verdict .why{color:var(--muted);flex-basis:100%}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.tile{border-top:2px solid var(--line);padding-top:8px}
+.tile .k{font-size:13.5px;color:var(--muted)}
+.tile .v{font:500 clamp(24px,2.6vw,30px) var(--mono);font-variant-numeric:tabular-nums}
+.tile .s{font-size:13.5px;color:var(--muted)}
+h2{font-family:var(--display);font-size:22px;margin:0 0 6px}
+.chartbox{position:relative}
+svg text{fill:var(--ink);font-family:var(--body)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:14px;padding:8px 10px;border-radius:4px;white-space:nowrap;transform:translate(-50%,-110%)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--muted);margin-top:4px}
+.sw{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px;border-radius:2px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:16px}
+th,td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th{font:600 13px var(--body);color:var(--muted)}
+td.cur{background:var(--gold);color:#193C3F;font-weight:600}
+.note{color:var(--muted);font-size:14.5px;max-width:75ch}
+.note code{font-family:var(--mono);font-size:13.5px}
+.macro{border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:18px}
+.mctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px 24px}
+.check{display:flex;gap:8px;align-items:center;font-size:14.5px;color:var(--muted);grid-column:1/-1}
+.check input{accent-color:var(--gold);width:18px;height:18px}
+.causes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.cause{padding:14px 16px;border:1.5px solid var(--line);opacity:.55}
+.cause.on{border-color:var(--ink);opacity:1;background:var(--panel)}
+.cause h3{font-family:var(--display);font-size:19px;margin:0 0 6px}
+.cause p{margin:0;font-size:15px}
+.cause .flag{font:600 12px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.expo table{font-family:var(--body);font-size:15px;width:100%;min-width:760px}
+.expo td:first-child{min-width:170px}
+.expo .basis{display:block;margin-top:4px}
+.expo select{font:500 14px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:3px 4px}
+.expo td,.expo th{text-align:left;vertical-align:middle}
+.watch td{vertical-align:top;font-size:14px}
+.watch td:first-child{font-weight:600}
+.expo td.num,.expo th.num{text-align:right;font-family:var(--mono)}
+.expo input[type=number]{width:96px;font:500 15px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:4px 6px;text-align:right}
+.expo input[type=range]{width:120px;accent-color:var(--gold)}
+.chip{display:inline-block;font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--muted)}
+.chip.src{border-color:var(--ink);color:var(--ink)}
+.amp{color:var(--bad);font-weight:600}
+.expo tfoot td{font-weight:600;border-top:2px solid var(--ink);border-bottom:none}
+.expo .sub{display:block;font-size:12.5px;color:var(--muted);font-weight:400}
+details summary{cursor:pointer;font-weight:600}
+details.more{border-top:1px solid var(--line);padding-top:8px}
+details.more>summary{font:600 15px var(--body);color:var(--ink);padding:6px 0;list-style-position:inside}
+details.more[open]>summary{margin-bottom:12px}
+.moreinner{display:flex;flex-direction:column;gap:18px}
+.rank{font-size:14px;color:var(--muted);margin:0;line-height:1.45}
+.loops{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.loop{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1.5px solid var(--line)}
+.loop .check{color:var(--ink);font-size:15px;align-items:flex-start}
+.loop .check input{margin-top:2px;flex:none}
+.minis{display:flex;flex-direction:column;gap:14px}
+.mini h3{font:600 14px var(--body);margin:0 0 2px}
+.simkey{display:flex;flex-wrap:wrap;gap:18px;font-size:14px;color:var(--muted)}
+.simkey svg{vertical-align:middle;margin-right:6px}
+.simtable td,.simtable th{white-space:nowrap;padding:7px 9px}
+.simtable{font-size:15px}
+.simtable th:first-child,.simtable td:first-child{text-align:left;font-family:var(--body)}
+.simtable td .sub{display:block;font:400 12.5px var(--body);color:var(--muted)}
+.simtable tr.ghost td{color:var(--muted)}
+.sumline{font-size:17px;max-width:75ch;margin:0}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+.node{flex:1 1 170px;padding:12px 14px;background:var(--panel);border:1.5px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.node .k{font-size:13.5px;color:var(--muted)}
+.node .v{font:500 clamp(22px,2.4vw,28px) var(--mono);font-variant-numeric:tabular-nums}
+.node .s{font-size:13.5px;color:var(--muted)}
+.flow .arrow{align-self:center;font-size:22px;color:var(--muted)}
+@media (max-width:700px){.flow{flex-direction:column}.flow .node{flex:0 0 auto}.flow .arrow{transform:rotate(90deg);align-self:flex-start;margin-left:18px}}
+.stack .mctl{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+.pathnote{color:var(--muted);font-size:13.5px;margin-top:-8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>Will this year's AI build-out pay?</h1>
+    <p class="lede">One year of data-centre capex, written off and paid for. Move the assumptions and watch the revenue it needs.</p>
+  </div>
+  <div class="presets" role="group" aria-label="Scenarios">
+    <button type="button" data-p="base" aria-pressed="true">Base case</button>
+    <button type="button" data-p="life3">Chips last 3 years</button>
+    <button type="button" data-p="rates">Rates +2 points</button>
+    <button type="button" data-p="war">Price war</button>
+    <button type="button" data-p="boom">Usage boom</button>
+  </div>
+</header>
+
+<div class="grid">
+<section class="controls" aria-label="Assumptions">
+  <div class="group-label">What decides the answer</div>
+  <p class="rank">Ranked by how much each moves this year's coverage over its evidence range: year-1 revenue 55–99%, margin 61–81%, chip life 63–78%, share on contracts 64–77%. Everything else moves it by 10 points or less.</p>
+  <div class="ctl"><label for="rev">Revenue in year 1</label><output id="rev_o"></output>
+    <input id="rev" type="range" min="25" max="600" step="5"><small>About a quarter of capex a year, in an evidence band of 0.2–0.35 ($140–250bn). Signed contracts earn $8–13bn a year per gigawatt (IREN, Nebius, CoreWeave) against $35–49bn of capex per gigawatt (Bernstein, Morgan Stanley). AWS and Google Cloud added $0.26–0.37 of yearly revenue per dollar of 2023–25 capex. Short contracts signed in 2026's shortage price far higher.</small><small id="rev_note" style="color:var(--bad)"></small></div>
+  <div class="ctl"><label for="margin">Margin after power and staff</label><output id="margin_o"></output>
+    <input id="margin" type="range" min="30" max="90" step="5"><small>Share of revenue left to pay for the capital. IREN's project margin is about 85%; CoreWeave's 56–60% is after paying data-centre leases; power is 6–13% of revenue.</small></div>
+  <div class="ctl"><label for="life">Useful life of the chips</label><output id="life_o"></output>
+    <input id="life" type="range" min="2" max="8" step="1"><small>Firms book 5 to 6 years. Nvidia ships a new generation every year, yet older chips keep earning: V100s still rent at AWS's 2017 list price, and H100 rents rose in 2026.</small></div>
+  <div class="ctl" id="contractBox"><label for="contract">Share sold on contracts <span class="chip">your estimate</span></label><output id="contract_o"></output>
+    <input id="contract" type="range" min="0" max="100" step="5"><small>Contracted revenue holds its price for the chips' life; the rest sells at spot rents. CoreWeave: 98% of revenue from committed contracts, about five years on average (Q2 2026). Hyperscaler backlogs run 3–6 years of cloud revenue. Meta's capacity earns through ads, not rent.</small></div>
+  <details class="more"><summary>More assumptions</summary><div class="moreinner">
+  <div class="group-label">The investment</div>
+  <div class="ctl"><label for="capex">Capex this year</label><output id="capex_o"></output>
+    <input id="capex" type="range" min="100" max="1500" step="5"><small>Company guidance sums to about $730bn for 2026: Amazon about $220bn, Alphabet $195–205bn, Microsoft about $175bn, Meta $130–145bn. About half is rented out; the rest serves their own products, and Meta's earns through ads.</small></div>
+  <div class="ctl"><label for="chip">Share spent on chips and servers</label><output id="chip_o"></output>
+    <input id="chip" type="range" min="30" max="85" step="5"><small>The rest is buildings, power and cooling.</small></div>
+  <div class="ctl"><label for="blife">Life of buildings and power</label><output id="blife_o"></output>
+    <input id="blife" type="range" min="10" max="30" step="1"></div>
+  <div class="group-label">The money</div>
+  <div class="ctl"><label for="wacc">Cost of capital</label><output id="wacc_o"></output>
+    <input id="wacc" type="range" min="4" max="16" step="0.5"><small>10-year Treasury: about 5.07% on 15 Oct 2026, down from 5.28% on 7 Oct as money moved into bonds. Add an equity and credit premium. For the big four, about 9.7% (range 8.8–10.5%): Damodaran's implied equity premium of 4.2%, betas of 1.0–1.25.</small></div>
+  <label class="check" for="endo"><input id="endo" type="checkbox"> Rates respond to the build-out</label>
+  <div class="ctl" id="betaBox" hidden><label for="beta">Rate rise per 1% of GDP of capex <span class="chip">your estimate</span></label><output id="beta_o"></output>
+    <input id="beta" type="range" min="0" max="0.6" step="0.05" value="0.25"><small>By analogy with government borrowing: about 0.25 points per 1% of GDP of deficit (Laubach, Federal Reserve, 2008). An analogy, not a measurement for AI. Today's rates already price the planned $730bn, so the loop moves the rate only for capex above or below it.</small><small id="endo_s" style="color:var(--ink)"></small></div>
+  <div class="group-label">The revenue path</div>
+  <div class="presets" role="group" aria-label="How a build earns" id="pathMode">
+    <button type="button" data-r="fixed" aria-pressed="true">Fixed capacity</button>
+    <button type="button" data-r="grow" aria-pressed="false">Grows with usage</button>
+  </div>
+  <small class="pathnote" id="path_note"></small>
+  <div class="ctl"><label for="drop">Price per unit of AI output falls</label><output id="drop_o"></output>
+    <input id="drop" type="range" min="0" max="80" step="5"><small id="drop_s"></small></div>
+  <div class="ctl"><label for="grow">Usage grows</label><output id="grow_o"></output>
+    <input id="grow" type="range" min="0" max="200" step="5"><small id="grow_s"></small></div>
+  <div class="ctl"><label for="lag">From spend to revenue <span class="chip">your estimate</span></label><output id="lag_o"></output>
+    <input id="lag" type="range" min="0" max="24" step="3"><small>Chips earn within months; buildings are paid for a year or two ahead: about 9 months, weighted by spend. The charge includes the return on money spent before revenue starts.</small></div>
+  </div></details>
+</section>
+
+<section class="results" aria-live="polite">
+  <div class="verdict" id="verdict">
+    <span class="tag" id="v_tag"></span><span class="big" id="v_big"></span><span class="why" id="v_why"></span>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Capital charge per year</div><div class="v" id="t_k"></div><div class="s" id="t_k_s">write-off plus return</div></div>
+    <div class="tile"><div class="k">Revenue needed per year</div><div class="v" id="t_req"></div><div class="s" id="t_req_s"></div></div>
+    <div class="tile"><div class="k" id="t_g_k">Revenue growth per year</div><div class="v" id="t_g"></div><div class="s" id="t_g_s"></div></div>
+    <div class="tile"><div class="k" id="t_be_k">Usage growth to break even</div><div class="v" id="t_be"></div><div class="s" id="t_be_s"></div></div>
+  </div>
+
+  <div>
+    <h2>Revenue against what the capital needs</h2>
+    <div class="chartbox" id="chartbox"><svg id="chart" viewBox="0 0 760 300" width="100%" role="img" aria-label="Revenue per year against required revenue"></svg><div class="tip" id="tip" hidden></div></div>
+    <div class="legend"><span><span class="sw" style="background:var(--bar)"></span>Revenue covers the charge</span><span><span class="sw" style="background:var(--barshort)"></span>Revenue falls short</span><span><span class="sw" style="background:var(--gold)"></span>Revenue needed</span></div>
+  </div>
+
+  <details class="more"><summary>Revenue needed, by chip life and cost of capital</summary><div>
+    <p class="note" id="sens_note" style="margin:0 0 8px">Chip life down the side, cost of capital across. Other assumptions as set. The gold cell is your current setting.</p>
+    <div class="tablewrap"><table id="sens"></table></div>
+  </div></details>
+
+  <section class="macro stack" aria-label="The stack">
+    <div>
+      <h2>The stack: who pays for this vintage</h2>
+      <p class="note" style="margin:0">The cloud layer's revenue is other people's spending. Model labs pay part of their compute bill from what they earn and part from capital they raise; other firms pay from their own revenue. The two labs differ: OpenAI leans on new capital, Anthropic pays from revenue. Chip and server suppliers are paid when the chips ship.</p>
+    </div>
+    <details class="more"><summary>Settings: who pays, and how</summary><div class="mctl">
+      <div class="ctl"><label for="k_lab">Labs' share of the cloud layer's AI revenue <span class="chip">your estimate</span></label><output id="k_lab_o"></output>
+        <input id="k_lab" type="range" min="0" max="90" step="5" value="50"><small>The rest comes from firms that use AI clouds directly.</small></div>
+      <div class="ctl"><label for="k_oai">OpenAI's share of the labs' compute spending <span class="chip">your estimate</span></label><output id="k_oai_o"></output>
+        <input id="k_oai" type="range" min="0" max="100" step="5" value="70"><small>2026: OpenAI's compute bill is about $50bn; Anthropic spent about $9bn in the first half (draft prospectus, Reuters). The rest is Anthropic.</small></div>
+      <div class="ctl"><label for="k_new_o">Share of OpenAI's compute bill paid with new capital <span class="chip">your estimate</span></label><output id="k_new_o_o"></output>
+        <input id="k_new_o" type="range" min="0" max="90" step="5" value="40"><small>28–50% in 2026.</small></div>
+      <div class="ctl"><label for="k_new_a">Share of Anthropic's compute bill paid with new capital <span class="chip">your estimate</span></label><output id="k_new_a_o"></output>
+        <input id="k_new_a" type="range" min="0" max="90" step="5" value="0"><small>Pays its current bill from revenue: cash-flow positive in Q3 2026 (Bloomberg). Its $518bn of commitments over a decade, about 80% payable whatever it uses, lean on the IPO.</small></div>
+      <div class="ctl"><label for="k_circ">Share of that capital from the labs' own suppliers <span class="chip">your estimate</span></label><output id="k_circ_o"></output>
+        <input id="k_circ" type="range" min="0" max="80" step="5" value="30"><small>Microsoft holds about 27% of OpenAI; Amazon and Google are large Anthropic investors; Nvidia invests in labs that buy its chips.</small></div>
+      <div class="ctl"><label for="k_gm">Suppliers' gross margin on chips and servers <span class="chip">your estimate</span></label><output id="k_gm_o"></output>
+        <input id="k_gm" type="range" min="10" max="80" step="5" value="55"><small>Nvidia: 71% for fiscal 2026. Server assemblers earn far less.</small></div>
+      <label class="check" for="ipo"><input id="ipo" type="checkbox"> The IPO window shuts: labs can pay only from what they earn. This feeds the verdict above, the economy and the five-year run.</label>
+    </div>
+    </details>
+    <div class="flow">
+      <div class="node"><div class="k">End customers</div><div class="v" id="k_end"></div><div class="s" id="k_end_s"></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="node"><div class="k">Model labs</div><div class="v" id="k_labs"></div><div class="s" id="k_labs_s"></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="node"><div class="k">Clouds and data-centre owners</div><div class="v" id="k_cloud"></div><div class="s" id="k_cloud_s"></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="node"><div class="k">Chip and server suppliers</div><div class="v" id="k_chip"></div><div class="s" id="k_chip_s"></div></div>
+    </div>
+    <p class="sumline" id="k_sum"></p>
+  </section>
+
+  <section class="macro" aria-label="Economic impact">
+    <div>
+      <h2>If it falls short: the economy</h2>
+      <p class="note" style="margin:0">A shortfall is a demand shock: firms cut next year's capex and shareholders spend less. The share losses spread beyond the AI stocks; the part owned abroad does not cut US spending. First-round effects on US GDP, before multipliers. The Fed's response is shown below, on the cost of capital rather than on GDP.</p>
+    </div>
+    <div class="presets" role="group" aria-label="Size of the shock" id="m_mode">
+      <button type="button" data-b="link" aria-pressed="true">Correction: set by the shortfall</button>
+      <button type="button" data-b="bust" aria-pressed="false">2000-sized bust</button>
+    </div>
+    <p class="note" style="margin:0">The bust sets AI-heavy shares 78% down, as the Nasdaq fell from March 2000 to October 2002, and capex 55% down, what the payback rule cuts over two years. Chip makers lose twice: their valuation falls with the AI stocks and their revenue with the build.</p>
+    <details class="more"><summary>Settings: the shock and who feels it</summary>
+    <div class="mctl">
+      <label class="check" for="link"><input id="link" type="checkbox" checked> Set the capex cut from the shortfall above (cut = share of the capital charge the revenue fails to cover; no shortfall means no cut and no sell-off)</label>
+      <div class="ctl"><label for="cut">Capex cut next year</label><output id="cut_o"></output>
+        <input id="cut" type="range" min="0" max="60" step="5"></div>
+      <div class="ctl"><label for="fall">AI-heavy stocks fall</label><output id="fall_o"></output>
+        <input id="fall" type="range" min="0" max="80" step="1"><small>Magnificent Seven: $24.6tn on 15 October 2026, Nvidia $5.2tn of it (Motley Fool data). Nvidia also loses the revenue the cut removes; see the table below. Nasdaq, March 2000 to October 2002: −78%.</small></div>
+      <div class="ctl"><label for="cents">Spending cut per $1 of lost wealth</label><output id="cents_o"></output>
+        <input id="cents" type="range" min="1" max="6" step="0.5"><small>Rule of thumb: 2 to 5 cents.</small></div>
+      <div class="ctl"><label for="imp">Share of AI capex imported</label><output id="imp_o"></output>
+        <input id="imp" type="range" min="0" max="60" step="5"><small>About 35% (First Trust, Oct 2026). Exporters abroad take this part.</small></div>
+      <div class="ctl"><label for="beq">Rest of the market falls by this share of the AI fall <span class="chip">your estimate</span></label><output id="beq_o"></output>
+        <input id="beq" type="range" min="0" max="1" step="0.05" value="0.4"><small>The other two-thirds of the S&amp;P 500, about $44tn.</small></div>
+      <div class="ctl"><label for="fs">Share of US shares held abroad</label><output id="fs_o"></output>
+        <input id="fs" type="range" min="0" max="40" step="1" value="18"><small>$20.5tn of $111tn at end-2025 (Federal Reserve, Z.1). Losses on this part land abroad and do not cut US spending.</small></div>
+      <div class="ctl"><label class="check" for="listed" style="grid-column:1/-1"><input id="listed" type="checkbox"> OpenAI and Anthropic are listed: their fall reaches pension and index funds</label>
+        <small>Private rounds valued them at $852bn (March) and $965bn (May 2026). Anthropic plans to list in November (Reuters, unconfirmed); OpenAI has filed but set no date.</small></div>
+    </div>
+    </details>
+    <div class="tiles">
+      <div class="tile"><div class="k">Lost investment</div><div class="v" id="m_inv"></div><div class="s" id="m_inv_s"></div></div>
+      <div class="tile"><div class="k">Lost consumption</div><div class="v" id="m_con"></div><div class="s" id="m_con_s"></div></div>
+      <div class="tile"><div class="k">US growth this year</div><div class="v" id="m_g"></div><div class="s" id="m_g_s"></div></div>
+      <div class="tile"><div class="k">Lost by exporters abroad</div><div class="v" id="m_exp"></div><div class="s">Taiwan, Korea, Netherlands, Japan</div></div>
+      <div class="tile"><div class="k">Share losses landing abroad</div><div class="v" id="m_fx"></div><div class="s" id="m_fx_s"></div></div>
+    </div>
+    <p class="sumline" id="m_2000"></p>
+    <div class="causes">
+      <div class="cause" id="c_none"><span class="flag">Your setting</span><h3>No shortfall</h3><p>Revenue covers the capital. Spending continues and keeps adding to demand. The risk is the next vintage, not this one.</p></div>
+      <div class="cause" id="c_price"><span class="flag">Your setting</span><h3>Prices collapse, usage is real</h3><p>It would pay if prices held. Builders and their lenders lose; the capacity gets used and cheap compute flows to every firm that uses it. Fibre after 2001.</p></div>
+      <div class="cause" id="c_demand"><span class="flag">Your setting</span><h3>Usage falls short</h3><p>It fails even at stable prices: too little use for the capital deployed. Investors and the economy both lose, and capacity sits idle. Lenders on single sites and GPU collateral take the first losses.</p></div>
+    </div>
+    <details class="more"><summary>Rates in the bust</summary>
+    <div id="bust" style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
+      <div>
+        <p class="note" style="margin:0">A shortfall pulls rates two ways. The Fed wants to cut and, with the loop on, the build-out's own pull on rates unwinds, so the risk-free rate falls. With inflation above target, the Fed delivers only what is left of the cut after the overshoot. Lenders to leveraged builders demand more. The same correction makes capital cheaper for the big four and dearer for whoever borrowed against a single site.</p>
+      </div>
+      <div class="mctl">
+        <div class="ctl"><label for="fed">Fed cut wanted <span class="chip">your estimate</span></label><output id="fed_o"></output>
+          <input id="fed" type="range" min="0" max="3" step="0.25" value="1"></div>
+        <div class="ctl"><label for="pi0">Inflation now</label><output id="pi0_o"></output>
+          <input id="pi0" type="range" min="1" max="7" step="0.1" value="3.7"><small>US consumer prices, September 2026: about 3.7%, driven by energy; core about 2.4%. The Fed raised rates in September; markets expect another rise by December. Also the five-year run's starting point.</small></div>
+        <div class="ctl"><label for="lam">Fed's weight on inflation above 2% <span class="chip">your estimate</span></label><output id="lam_o"></output>
+          <input id="lam" type="range" min="0" max="1.5" step="0.1" value="0.5"><small>0.5 is the Taylor rule's weight. At 0, inflation no longer limits the Fed. Also used in the five-year run.</small></div>
+        <div class="ctl"><label for="spr">Spread widening, leveraged builders <span class="chip">your estimate</span></label><output id="spr_o"></output>
+          <input id="spr" type="range" min="0" max="6" step="0.5" value="3"></div>
+      </div>
+      <p class="note" id="bust_none" style="margin:0" hidden>No capex cut at your setting: no Fed cut, no widening.</p>
+      <div class="tiles" id="bust_tiles">
+        <div class="tile"><div class="k">Risk-free rate falls</div><div class="v" id="b_fall"></div><div class="s" id="b_fall_s"></div></div>
+        <div class="tile"><div class="k">Cost of capital, big four</div><div class="v" id="b_big"></div><div class="s" id="b_big_s"></div></div>
+        <div class="tile"><div class="k">Cost of capital, leveraged builders</div><div class="v" id="b_lev"></div><div class="s" id="b_lev_s"></div></div>
+      </div>
+    </div>
+    </details>
+  </section>
+
+  <section class="macro expo" aria-label="Who holds the losses">
+    <div>
+      <h2>Who holds the losses</h2>
+      <p class="note" style="margin:0">One-off losses of wealth and credit, by holder: exposure × loss rate. The number that turns a crash into a crisis is the part held by leveraged or short-funded holders. These are stock losses: do not add them to the GDP figures above.</p>
+    </div>
+    <p class="sumline" id="x_line"></p>
+    <p class="sumline" id="x_labs"></p>
+    <details class="more"><summary>The holders, row by row</summary>
+    <div class="tablewrap"><table id="expo">
+      <thead><tr><th>Holder</th><th class="num">Exposure, $bn</th><th>Loss rate</th><th class="num">Loss, $bn</th><th class="num">Held abroad</th><th>Leveraged or short-funded?</th><th>Paid by the labs?</th></tr></thead>
+      <tbody></tbody>
+      <tfoot><tr><td>Total one-off loss</td><td></td><td></td><td class="num" id="x_tot"></td><td></td><td></td><td></td></tr>
+      <tr><td>In leveraged or short-funded hands</td><td></td><td></td><td class="num amp" id="x_amp"></td><td></td><td id="x_amp_s"></td><td></td></tr>
+      <tr><td>Landing abroad</td><td></td><td></td><td class="num" id="x_ab"></td><td></td><td id="x_ab_s"></td><td></td></tr></tfoot>
+    </table></div>
+    <p class="note" style="margin:0">"Source" rows use published figures; "your estimate" rows are placeholders for the class to replace. Share losses follow the stock fall and the rest-of-market setting above; the AI labs fall 1.5 times as far as the AI stocks. "Held abroad" uses the Federal Reserve figure for shares and estimates elsewhere. Part of the labs' value already sits inside the Seven's (Microsoft holds about 27% of OpenAI), so the rows overlap a little. Nvidia and the chip suppliers abroad lose twice: their valuation falls with the AI stocks and their revenue with the capex cut. US suppliers outside the Seven (Broadcom, AMD, Micron) stay in the rest-of-market row. Slider loss rates are set for a 30% fall in the AI stocks and scale with the fall you choose, up to 80%: credit losses grow with the bust. When the model shows no shortfall and the link is on, all losses are zero.</p>
+    </details>
+  </section>
+
+  <section class="macro sim" aria-label="Five years with the loops">
+    <div>
+      <h2>Run it forward: five years, with the loops</h2>
+      <p class="note" style="margin:0">Choose how the builders decide. Payback rule: they cut whenever a build falls short of its capital. Street plan: they build what analysts expect, whatever it earns. Street until the money stops: they follow the Street plan until lenders or shareholders stop funding it, then cut. Then choose how markets react. Everything else sits in the loops below the table.</p>
+    </div>
+    <div class="presets" role="group" aria-label="How the builders decide" id="s_mode">
+      <button type="button" data-m="rule" aria-pressed="true">Payback rule</button>
+      <button type="button" data-m="street" aria-pressed="false">Street plan</button>
+      <button type="button" data-m="break" aria-pressed="false">Street until the money stops</button>
+    </div>
+    <div class="mctl">
+      <div class="ctl" id="s_plan_box"><label for="s_plan">Builders' plan: capex growth while it pays</label><output id="s_plan_o"></output>
+        <input id="s_plan" type="range" min="0" max="50" step="5" value="20"></div>
+      <div class="ctl" id="s_g27_box" hidden><label for="s_g27">Street plan: growth into 2027</label><output id="s_g27_o"></output>
+        <input id="s_g27" type="range" min="0" max="100" step="5" value="40"><small>Big-four consensus for 2027: $935bn (+28%, MarketScreener, August) to $1.03tn (+40%, S&amp;P Global); BofA and Goldman Sachs nearer +50%. 2026 is the capex set above.</small></div>
+
+      <div class="ctl" id="s_trigL_box" hidden><label for="s_trigL">Lenders stop the leveraged builders at a spread of <span class="chip">your estimate</span></label><output id="s_trigL_o"></output>
+        <input id="s_trigL" type="range" min="3" max="12" step="0.5" value="8"><small>Points over the big four's cost of capital: at 8, they pay about 18%. CoreWeave's notes hit record yields on 14 Oct 2026. Once stopped, builders cut by the shortfall and do not return to the plan.</small></div>
+      <div class="ctl" id="s_trigE_box"><label for="s_trigE">Shareholders stop the builders when AI shares are this far below peak <span class="chip">your estimate</span></label><output id="s_trigE_o"></output>
+        <input id="s_trigE" type="range" min="10" max="60" step="5" value="30"><small>In mid-October 2026 the chip index was about 20% below its June peak and the big four still planned 28–40% more for 2027: the threshold sits higher. Without a panic, AI shares settle about 24% below peak on these settings.</small></div>
+      <div class="ctl"><label for="s_sig">AI shares fall per point of shortfall <span class="chip">your estimate</span></label><output id="s_sig_o"></output>
+          <input id="s_sig" type="range" min="0" max="2" step="0.1" value="0.6"><small>At 0.6, the 2026 shortfall puts AI shares about 18% below peak, near the chip index's fall from June. The labs fall 1.5 times as far.</small></div>
+      <label class="check" for="s_panic" style="grid-column:1/-1"><input id="s_panic" type="checkbox"> Panic: a credit event turns the fall into a rout, as in 2000</label>
+      <div class="ctl" id="s_panicF_box" hidden><label for="s_panicF">How far AI shares overshoot <span class="chip">your estimate</span></label><output id="s_panicF_o"></output>
+        <input id="s_panicF" type="range" min="30" max="80" step="5" value="60"><small>It starts the year lenders stop the leveraged builders, then eases by a fifth a year. The Nasdaq fell 78% from 2000 to 2002. The labs' new capital stops; households and firms spend less.</small></div>
+
+    </div>
+    <div class="verdict ok" id="s_verdict" style="border-left-color:var(--ink)"><p class="sumline" id="s_sum"></p></div>
+    <div class="simkey" aria-hidden="true">
+      <span><svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="var(--ink)" stroke-width="2.5"/><circle cx="14" cy="5" r="4" fill="var(--ink)"/></svg><span id="s_keyA">With the loops</span></span>
+      <span><svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/></svg><span id="s_keyB">Same rule, loops off</span></span>
+    </div>
+    <div class="minis">
+      <div class="mini"><h3>Capex, $bn</h3><div class="chartbox"><svg id="s_c1" viewBox="0 0 760 190" width="100%" role="img" aria-label="Capex by year, with and without the loops"></svg><div class="tip" id="s_t1" hidden></div></div></div>
+      <div class="mini"><h3>New vintage covers its capital, %</h3><div class="chartbox"><svg id="s_c3" viewBox="0 0 760 190" width="100%" role="img" aria-label="Share of its capital each new vintage covers, by year"></svg><div class="tip" id="s_t3" hidden></div></div></div>
+    </div>
+    <details class="more"><summary>Year by year: cost of capital, inflation and every number</summary><div class="moreinner">
+    <div class="minis">
+      <div class="mini"><h3>Cost of capital for the big four's new vintage, %</h3><div class="chartbox"><svg id="s_c2" viewBox="0 0 760 190" width="100%" role="img" aria-label="Cost of capital by year, with and without the loops"></svg><div class="tip" id="s_t2" hidden></div></div></div>
+      <div class="mini"><h3>Inflation, %</h3><div class="chartbox"><svg id="s_c4" viewBox="0 0 760 190" width="100%" role="img" aria-label="Consumer price inflation by year, with and without the loops"></svg><div class="tip" id="s_t4" hidden></div></div></div>
+    </div>
+    <div class="tablewrap"><table class="simtable" id="s_table"></table></div>
+    </div></details>
+    <p class="note" style="margin:0">Economic profit counts the 2026–2030 vintages only, in the years 2026–2030; later years of the later vintages fall outside the window. Every loop strength is an estimate for the class to argue, not a measurement.</p>
+    <details class="more"><summary>The loops: brakes, amplifiers and switches</summary><div class="moreinner">
+    <div class="mctl">
+      <div class="ctl" id="s_gl_box" hidden><label for="s_gl">Street plan: growth a year after 2027 <span class="chip">your estimate</span></label><output id="s_gl_o"></output>
+        <input id="s_gl" type="range" min="-20" max="40" step="5" value="10"><small>No consensus beyond 2027 in the sources used here.</small></div>
+      <div class="ctl"><label for="s_debt">Share of capex funded with debt</label><output id="s_debt_o"></output>
+        <input id="s_debt" type="range" min="0" max="60" step="1" value="35"><small>Goldman Sachs: about 33% in 2026 and 35% in 2027, likely to rise further.</small></div>
+    </div>
+    <div class="group-label">Loops inside the build</div>
+    <div class="loops">
+      <div class="loop"><label class="check" for="s_rates"><input type="checkbox" id="s_rates" checked><span><b>Rates.</b> More capex, dearer capital, weaker payback, less capex.</span></label>
+        <div class="ctl"><label for="s_beta">Rate rise per 1% of GDP of capex <span class="chip">your estimate</span></label><output id="s_beta_o"></output>
+          <input id="s_beta" type="range" min="0" max="0.6" step="0.05" value="0.25"><small>Measured from the planned $730bn, as above.</small></div></div>
+      <div class="loop"><label class="check" for="s_glut"><input type="checkbox" id="s_glut" checked><span><b>Prices.</b> Capacity outgrows usage, prices fall below trend, weaker payback, less capex. When usage outgrows capacity, rents rise above trend, up to 30%.</span></label>
+        <div class="ctl"><label for="s_eps">Price response to spare capacity <span class="chip">your estimate</span></label><output id="s_eps_o"></output>
+          <input id="s_eps" type="range" min="0" max="1.5" step="0.1" value="0.5"><small>At 0.5, capacity 10% ahead of usage puts prices about 5% below trend. Spot H100 rents rose 33% in the year to August 2026 as supply tightened; in 2024, as supply caught up, they fell about 40% a year, which suggests a response nearer 1.</small></div>
+        <div class="ctl"><label for="s_base0">Fleet already running, against the 2026 build <span class="chip">your estimate</span></label><output id="s_base0_o"></output>
+          <input id="s_base0" type="range" min="0" max="1.5" step="0.1" value="0.5"><small>In compute. Epoch: about 15m H100-equivalents installed at end-2025; 2026 adds about 31m. Retires over four years.</small></div></div>
+      <div class="loop"><label class="check" for="s_pow"><input type="checkbox" id="s_pow" checked><span><b>Power.</b> A fleet above plan raises power prices: data centres' margins fall and the bill reaches consumer prices.</span></label>
+        <div class="ctl"><label for="s_eta">Power prices rise per 10% of AI fleet above plan <span class="chip">your estimate</span></label><output id="s_eta_o"></output>
+          <input id="s_eta" type="range" min="0" max="5" step="0.5" value="2"><small>The fleet is every live vintage; the plan is $730bn a year. Electricity is 2.5% of the consumer price basket (BLS, December 2025).</small></div>
+        <div class="ctl"><label for="s_cp">Power bill as a share of AI revenue <span class="chip">your estimate</span></label><output id="s_cp_o"></output>
+          <input id="s_cp" type="range" min="0" max="30" step="1" value="7"><small>6–13% of revenue: a gigawatt for a year at $86–91 per MWh (EIA) costs about $0.8–1.0bn.</small></div>
+        <label class="check" for="s_mor"><input type="checkbox" id="s_mor"> Moratoriums from 2027 delay part of each year's build by a year</label>
+        <div class="ctl" id="s_morx_box" hidden><label for="s_morx">Share of each year's build delayed <span class="chip">your estimate</span></label><output id="s_morx_o"></output>
+          <input id="s_morx" type="range" min="0" max="50" step="5" value="15"><small>Data-centre rules are a midterm issue (October 2026).</small></div></div>
+      <div class="loop"><label class="check" for="s_lev"><input type="checkbox" id="s_lev" checked><span><b>Two kinds of builder.</b> Leveraged builders pay a spread that widens after their last vintage falls short, so they cut harder.</span></label>
+        <div class="ctl"><label for="s_levsh">Leveraged builders' share of the build <span class="chip">your estimate</span></label><output id="s_levsh_o"></output>
+          <input id="s_levsh" type="range" min="0" max="50" step="5" value="20"><small>Oracle, CoreWeave and other neoclouds, single-site vehicles.</small></div>
+        <div class="ctl"><label for="s_s0">Their spread over the big four's cost of capital <span class="chip">your estimate</span></label><output id="s_s0_o"></output>
+          <input id="s_s0" type="range" min="0" max="6" step="0.5" value="3"><small>CoreWeave's notes carry 8.5–9.75% coupons and reached record yields on 14 Oct 2026 while Treasury yields fell; its equity costs far more. CoreWeave's CDS was about 880bp on 12 Oct; Oracle, cut to BBB- in July, trades about 2 points over Treasuries. Estimated cost of capital: Oracle about 10%, neoclouds 12–15%.</small></div>
+        <div class="ctl"><label for="s_zeta">Spread widening per 10 points of shortfall <span class="chip">your estimate</span></label><output id="s_zeta_o"></output>
+          <input id="s_zeta" type="range" min="0" max="3" step="0.25" value="1"></div>
+        <div class="ctl"><label for="s_labL">Labs' share of their revenue <span class="chip">your estimate</span></label><output id="s_labL_o"></output>
+          <input id="s_labL" type="range" min="0" max="100" step="5" value="60"><small>OpenAI is about 47% of Oracle's backlog; Microsoft, largely for OpenAI, was 67% of CoreWeave's 2025 revenue.</small></div>
+        <div class="ctl"><label for="s_oaiL">OpenAI's share of that lab revenue <span class="chip">your estimate</span></label><output id="s_oaiL_o"></output>
+          <input id="s_oaiL" type="range" min="0" max="100" step="5" value="90"><small>Anthropic's disclosed commitments go to Google, Amazon, Microsoft, Broadcom-related leases, xAI and AMD, not to Oracle or CoreWeave. <span id="s_oaiB_note"></span></small></div></div>
+      <div class="loop"><label class="check" for="s_fund"><input type="checkbox" id="s_fund" checked><span><b>Funding.</b> A shortfall knocks AI shares down; as the labs' value falls, their new capital dries up and they buy less compute the next year. It bites on the lab that leans on new capital, so it hits the leveraged builders, mostly OpenAI's, harder than the big four.</span></label>
+
+        <div class="ctl"><label for="s_theta">Labs' fall at which new capital stops <span class="chip">your estimate</span></label><output id="s_theta_o"></output>
+          <input id="s_theta" type="range" min="20" max="90" step="5" value="50"><small>Uses the labs' shares and new-capital shares from the stack above. With the IPO window shut there, nothing is left to cut.</small></div></div>
+      <div class="loop"><label class="check" for="s_stake"><input type="checkbox" id="s_stake"><span><b>Cross-holdings.</b> The big four own large stakes in the labs. A builder that counts this year's gain on its stake as part of the build's return also counts the loss: when the labs' value falls, the vintage looks worse and next year's capex falls further.</span></label>
+        <div class="ctl"><label for="s_stakeV">The big four's stakes in the labs <span class="chip">your estimate</span></label><output id="s_stakeV_o"></output>
+          <input id="s_stakeV" type="range" min="0" max="1000" step="10" value="530"><small>Microsoft holds about 27% of OpenAI ($852bn round); Google about 14% of Anthropic; Amazon an estimated mid-to-high teens, carried at $74bn in March and lifted by a $53.4bn gain in Q2 (Amazon filings). At the $965bn round, about $530bn. The stakes move with the labs: 1.5 times the AI share fall. Off by default; the gains and losses are shown in the table either way.</small></div></div>
+    </div>
+    <div class="group-label">Loops in the economy</div>
+    <div class="loops">
+      <div class="loop"><label class="check" for="s_fed"><input type="checkbox" id="s_fed" checked><span><b>Inflation and the Fed.</b> The Fed cuts only by the growth lost beyond inflation above target, and raises rates if inflation climbs above today's level.</span></label>
+        <div class="ctl"><label for="s_phi">Fed cut per point of growth lost <span class="chip">your estimate</span></label><output id="s_phi_o"></output>
+          <input id="s_phi" type="range" min="0" max="2" step="0.25" value="1"><small>Inflation now and the Fed's weight on it are set under "Rates in the bust" above.</small></div>
+        <div class="ctl"><label for="s_rho">Share of inflation's overshoot that persists a year <span class="chip">your estimate</span></label><output id="s_rho_o"></output>
+          <input id="s_rho" type="range" min="0.3" max="0.95" step="0.05" value="0.7"><small>US inflation has run above 2% for more than five years.</small></div></div>
+      <div class="loop"><label class="check" for="s_conf"><input type="checkbox" id="s_conf"><span><b>Confidence.</b> Share losses cut household spending and other firms' investment; growth falls, and the Fed sees it a year later.</span></label>
+        <div class="ctl"><label for="s_firm">Firms' investment cut per $1 of share losses <span class="chip">your estimate</span></label><output id="s_firm_o"></output>
+          <input id="s_firm" type="range" min="0" max="6" step="0.5" value="2"><small>Households use the spending cut, rest-of-market and foreign-holding settings from the economy panel. Idle this week: the Dow rose and defensive sectors rallied.</small></div></div>
+      <div class="loop"><label class="check" for="s_usd"><input type="checkbox" id="s_usd"><span><b>The dollar.</b> Foreign holders sell: the dollar falls, imports cost more, long rates rise, and the Fed is boxed in.</span></label>
+        <div class="ctl"><label for="s_del">Dollar fall per 10 points of AI share fall <span class="chip">your estimate</span></label><output id="s_del_o"></output>
+          <input id="s_del" type="range" min="0" max="6" step="0.5" value="2"><small>The pattern of April 2025. Idle this week: Treasuries were the haven.</small></div></div>
+    </div>
+    </div></details>
+  </section>
+
+  <section class="macro expo watch" aria-label="What to watch">
+    <div>
+      <h2>What to watch, quarterly</h2>
+      <p class="note" style="margin:0">How sure is the verdict? On 20,000 draws across the evidence ranges (year-1 revenue $145–260bn, margin 60–80%, chip life 4–6 years, contracts 50–95%, spot fall 15–35%, lag 0–18 months, cost of capital 9–11%), a 2026 build pays in about 5% of cases; median coverage 76%, middle 80% between 62% and 94%. Year-1 revenue explains about 60% of the spread, chip life 17%, margin 13%; the loop strengths explain almost none. These are the public numbers that update the three that matter. Values as of 16 October 2026.</p>
+    </div>
+    <details class="more"><summary>Ten indicators, their thresholds and sources</summary>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Indicator</th><th>Now</th><th>Moves the model if</th><th>Input it moves</th><th>Source, cadence</th></tr></thead>
+      <tbody><tr><td>GPU spot rents</td><td>H100 $2.81, B200 $6.01 an hour (Silicon Data, 15 Oct 2026); every generation up 9–38% in a year</td><td>H100 below $2 or B200 below $4.50 for a quarter: a glut is starting</td><td>Spot rent fall; price response</td><td>Silicon Data indices, monthly</td></tr><tr><td>Price of new multi-year contracts</td><td>2025 deals: $9.7–13bn per gigawatt a year. 2026 offers: $20–25m per MW (IREN, Nebius)</td><td>New deals below $10bn per gigawatt a year, or above $15bn</td><td>Year-1 revenue</td><td>Neocloud and Oracle filings, quarterly</td></tr><tr><td>Hyperscaler AI revenue</td><td>Microsoft's AI business above $37bn a year (Apr 2026); AWS AI above $25bn (Jul 2026)</td><td>AI revenue grows slower than capex for two quarters</td><td>Year-1 revenue</td><td>Earnings calls, quarterly</td></tr><tr><td>Backlog and its conversion</td><td>Microsoft $678bn, Oracle $664bn, Google Cloud $514bn, AWS $496bn, CoreWeave $104bn (41% due within 24 months)</td><td>Backlog shrinks, or revenue lags the backlog's due dates</td><td>Share sold on contracts</td><td>10-Q filings, quarterly</td></tr><tr><td>Labs' revenue and funding</td><td>OpenAI about $50bn a year (Sep), aiming at $70bn by December; Anthropic $16.8bn in Q3; valued at $852bn and $965bn</td><td>A revenue miss, a down round or a pulled listing</td><td>Labs' new capital; funding loop</td><td>Company statements, FT, Reuters; as they happen</td></tr><tr><td>Credit for leveraged builders</td><td>CoreWeave unsecured above 15%, CDS about 880bp (12 Oct); Oracle BBB-, 2035 bonds about 2 points over Treasuries</td><td>CoreWeave CDS above 1,000bp, or Oracle cut to junk</td><td>Borrowers' spread</td><td>Bond and CDS data, weekly</td></tr><tr><td>Capex guidance</td><td>2026 about $730bn; 2027 consensus $935bn–1.03tn</td><td>2027 guidance cut by more than 10% on the late-October calls</td><td>Capex; Street plan</td><td>Earnings calls, quarterly; next 28–30 Oct</td></tr><tr><td>Rates and inflation</td><td>10-year 5.07% (15 Oct); consumer prices 3.7% (Sep); Fed funds 3.75–4.00%</td><td>Inflation at 4% or more, or the 10-year at 5.5% or more</td><td>Cost of capital; inflation now</td><td>Treasury, BLS, Fed; monthly</td></tr><tr><td>Power and permits</td><td>Industrial power $86–91 per MWh (EIA); primary-market vacancy 1.4% (CBRE, H1 2026)</td><td>A moratorium in a top-five data-centre state, or power prices up 10% in a year</td><td>Power share; moratorium switch</td><td>EIA, CBRE, state legislatures; quarterly</td></tr><tr><td>Chip life</td><td>Firms book 5–6 years; V100s still rent; H100 rents rose in 2026</td><td>A hyperscaler shortens useful lives below 5 years, or A100 rents fall more than 30% in a year</td><td>Chip life</td><td>10-K depreciation notes, rent indices; yearly</td></tr></tbody>
+    </table></div>
+    </details>
+  </section>
+
+  <details class="note">
+    <summary>How the model works</summary>
+    <p>Each slice of capex is turned into a level yearly charge that repays it over its life and pays the cost of capital: <code>charge = capex × r / (1 − (1 + r)^−life)</code>, chips and buildings separately. The charge is scaled up by (1 + r)^(months to revenue ÷ 12), for the money spent before revenue starts. Revenue needed = charge ÷ margin. Fixed capacity (the default): revenue in year t = year-1 revenue × (contracted share + spot share × (1 − price fall)^(t−1)); contracts hold their price for the chips' life, and spot rents fall as newer chips arrive. Grows with usage (earlier versions): revenue in year t = year-1 revenue × ((1 + usage growth) × (1 − price fall))^(t−1), as if a fixed fleet could serve rising demand. The verdict is the present value of margin minus charge over those years. Buildings outlive the chips; the model charges them only their yearly share.</p>
+    <p>Street plan. Capex follows the analysts' path instead of the payback rule: the 2026 figure you set, your growth into 2027 (about 40%, between consensus and the banks' higher estimates), then your growth a year. The same loops apply, so prices, power, funding, inflation, the cost of capital and each vintage's payback respond to the spending even though the spending does not respond to them. Debt raised = capex × the debt share.</p>
+    <p>Rates and the build-out (optional). With the loop on, the cost of capital used = your setting + β × (capex − $730bn) ÷ US GDP, with β in points per 1% of GDP. Today's rates already price the planned $700bn. In the bust, the risk-free rate falls by the Fed cut plus, with the loop on, the unwinding of the cut capex's pull; the big four pay your rate minus that fall, leveraged builders pay it plus the spread widening. Both responses are estimates for the class to argue.</p>
+    <p>Five years forward. Each year's build is split between the big four and, with that loop on, leveraged builders. Each class's vintage is valued with the model above at its own cost of capital, that year's margin and its starting revenue (the year-1 revenue per dollar of capex, times the funding factor). In fixed-capacity mode the price factor applies to the spot share only; in grows-with-usage mode, to all revenue. On the payback rule each class grows capex by the plan after a vintage that covers its capital and cuts it by the shortfall (at most 60%) after one that does not. With moratoriums on, from 2027 the share you set of each year's build slips a year.</p>
+    <p>Rates: the big four's cost of capital = your setting + β × (capex − $730bn) ÷ US GDP − the Fed's move + the dollar's premium. Leveraged builders add their spread, which widens by your setting for every 10 points by which their last vintage fell short. Prices: capacity counts every live vintage plus the fleet already running (your share of the 2026 build, retiring over four years), with each year's dollar buying more compute at the rate prices fall; usage grows at your usage growth; when capacity runs ahead of usage, that year's prices are scaled by (usage ÷ capacity)^ε, up to 30% above trend when usage runs ahead. Power: power prices sit above trend by your setting for every 10% by which the AI fleet (every live vintage) exceeds the planned fleet ($730bn a year), and below it when the fleet is smaller; the margin falls by the power share of revenue × the rise, for every live vintage; consumer prices rise by 2.49% (electricity's weight in the basket) × that year's rise.</p>
+    <p>Funding: AI shares sit below their peak by σ × the share of capital the latest vintage fails to cover (at most 70%); the labs fall 1.5 times as far (at most 90%). The next year, the labs' new capital shrinks in proportion to their fall, reaching zero at your threshold, and the compute it would have bought goes unbought: each class loses revenue × its labs' share × the new-capital share × the shortfall in new capital. Contracts do not protect against this: a lab that cannot raise money cannot honour its contract.</p>
+    <p>Inflation, after the Policy Room's inflation block: it starts at the level set under "Rates in the bust"; each later year it is 2% + your persistence × last year's gap to 2% + 0.4 × last year's growth from capex and confidence, plus power and import prices. The 0.4 is my estimate. The Fed moves the following year: it cuts by φ × growth lost − λ × (inflation − 2%), never below zero, and raises rates by (1 + λ) × any rise in inflation above today's level, which markets already price. Growth from capex = the change in capex × the domestic share ÷ US GDP.</p>
+    <p>Confidence (switch): each year's new US-held share losses, on the Seven, the rest of the market and, if listed, the labs, cut spending by the economy panel's cents for households plus yours for firms. The dollar (switch): the dollar falls by your setting per 10 points of last year's AI share fall; consumer prices rise by 0.1 point and the cost of capital by 0.1 point for each 1% it falls. Both 0.1s are my estimates; April 2025 is the pattern, not a calibration.</p>
+    <p>The stack. Of the cloud layer's year-1 revenue, the labs' share is paid partly from the labs' revenue and partly from new capital, of which part comes from the labs' own suppliers. With the IPO window shut, the new-capital part disappears and the year-1 revenue used everywhere on the page falls by revenue × labs' share × new-capital share. Chip and server suppliers receive the chip share of capex when it ships, and keep their gross margin on it.</p>
+    <p>Share losses. Losses on the Seven, on the rest of the market (by your share of the AI fall) and, if listed, on the AI labs (1.5 times the AI fall, at most 90%) are added up; the part held abroad is removed before the spending effect is applied.</p>
+    <p>Not in the model: taxes, working capital, contracts shorter than the chips' life, rent earned after the chips' booked life, and the value of being in the race at all. Customers who pay this revenue must earn more than it from AI themselves.</p>
+  </details>
+</section>
+</div>
+</div>
+
+<script>
+const BASE={capex:730,chip:60,life:5,blife:20,wacc:10,margin:70,rev:180,contract:75,drop:25,grow:60,lag:9};
+const PRESETS={base:{},life3:{life:3},rates:{wacc:12},war:{drop:60},boom:{grow:120}};
+const ids=Object.keys(BASE);
+const $=id=>document.getElementById(id);
+const fmtB=v=>(v<0?"−":"")+"$"+Math.round(Math.abs(v)).toLocaleString("en-US")+"bn";
+const pct=v=>{const r=Math.round(v*10)/10;return (r<0?"−":"")+Math.abs(r)+"%";};
+const UNIT={capex:v=>"$"+v+"bn",chip:v=>v+"%",life:v=>v+" yrs",blife:v=>v+" yrs",wacc:v=>v+"%",margin:v=>v+"%",rev:v=>"$"+v+"bn",contract:v=>v+"%",drop:v=>v+"% / yr",grow:v=>v+"% / yr",lag:v=>v+" months"};
+
+function crf(r,L){return r===0?1/L:r/(1-Math.pow(1+r,-L));}
+// Revenue factor for a build in its year t (t=1 first year), relative to year-1 revenue.
+function pathF(p,t,sf){sf=sf==null?1:sf;
+  if(p.path==="grow") return Math.pow((1+p.grow/100)*(1-p.drop/100),t-1)*sf;
+  const k=(p.contract||0)/100; return k+(1-k)*Math.pow(1-p.drop/100,t-1)*sf;}
+function model(p){
+  const r=p.wacc/100,s=p.chip/100,m=p.margin/100,d=p.drop/100,u=p.grow/100,L=p.life;
+  const lagF=Math.pow(1+r,(p.lag||0)/12);
+  const K=(p.capex*s*crf(r,L)+p.capex*(1-s)*crf(r,p.blife))*lagF;
+  const req=K/m, g=(1+u)*(1-d);
+  const rev=[],ep=[];let npv=0;
+  for(let t=1;t<=L;t++){const R=p.rev*pathF(p,t,p.spotF);rev.push(R);const e=m*R-K;ep.push(e);npv+=e/Math.pow(1+r,t);}
+  let pvK=0;for(let t=1;t<=L;t++)pvK+=K/Math.pow(1+r,t);
+  return {K,req,g,rev,ep,npv,pvK,cover:(pvK+npv)/pvK,lagF};
+}
+function breakEvenRev(p){
+  const f=x=>model({...p,rev:x}).npv;
+  let lo=0,hi=20000; if(f(hi)<0) return null;
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2; if(f(mid)>=0) hi=mid; else lo=mid;}
+  return hi;
+}
+function breakEvenGrowth(p){
+  const f=u=>model({...p,grow:u}).npv;
+  if(f(-99)>=0) return -99;
+  let lo=-99,hi=5000; if(f(hi)<0) return null;
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2; if(f(mid)>=0) hi=mid; else lo=mid;}
+  return hi;
+}
+window.__model={model,breakEvenGrowth,breakEvenRev,crf};
+
+
+const PLAN=730, USGDP=31000;
+const loopOn=()=>$("endo").checked, betaV=()=>parseFloat($("beta").value);
+function bump(capex){return loopOn()?betaV()*(capex-PLAN)/USGDP*100:0;}
+const rate1=v=>(Math.round(v*100)/100).toString().replace(/(\.\d)0$/,"$1")+"%";
+const MB={cut:15,fall:30,cents:3,imp:35}; const GDP=31000, NVDA=5240, SIX=19330, MAG7=NVDA+SIX, TREND=2.0, REST=44000, LABS=1817, LABMULT=1.5;
+const SUPX=3890, SUPX_AI=0.5, SUPX_AB=80, BUST={cut:55,fall:78};
+const supRate=(fall,cut,a)=>Math.round((1-(1-fall/100)*(1-a*cut/100))*1000)/10;
+const fmtT=v=>"$"+(Math.round(v/100)/10).toLocaleString("en-US")+"tn";
+const mids=Object.keys(MB);
+const MUNIT={cut:v=>v+"%",fall:v=>v+"%",cents:v=>v+"¢",imp:v=>v+"%"};
+function renderMacro(p,o){
+  if($("link").checked){const c=Math.min(60,Math.max(0,Math.round((1-o.cover)*100/5)*5));$("cut").value=c;}
+  $("cut").disabled=$("link").checked;
+  const q={};mids.forEach(k=>{q[k]=parseFloat($(k).value);});
+  if($("link").checked&&o.npv>=0){q.fall=0;}
+  mids.forEach(k=>$(k+"_o").textContent=MUNIT[k](q[k]));
+  const lost=p.capex*q.cut/100, home=lost*(1-q.imp/100), abroad=lost-home;
+  const beq=parseFloat($("beq").value), fs=parseFloat($("fs").value), listed=$("listed").checked;
+  $("beq_o").textContent=Math.round(beq*100)+"%"; $("fs_o").textContent=fs+"%";
+  const labFall=Math.min(90,q.fall*LABMULT);
+  const nvF=supRate(q.fall,q.cut,1), sxF=supRate(q.fall,q.cut,SUPX_AI);
+  const usEq=NVDA*nvF/100+SIX*q.fall/100+REST*q.fall*beq/100+(listed?LABS*labFall/100:0), supL=SUPX*sxF/100;
+  const eqLoss=usEq+supL, usLoss=usEq*(1-fs/100)+supL*(1-SUPX_AB/100), fxLoss=eqLoss-usLoss;
+  const cons=usLoss*q.cents/100;
+  const hi=home/GDP*100, hc=cons/GDP*100, g=TREND-hi-hc;
+  $("m_inv").textContent=pct(-hi); $("m_inv_s").textContent=`of GDP: ${fmtB(home)} of the ${fmtB(lost)} cut`;
+  $("m_con").textContent=pct(-hc); $("m_con_s").textContent=`of GDP: ${fmtB(cons)} less spending, from ${fmtT(usLoss)} of US-held share losses`;
+  $("m_fx").textContent=fmtT(fxLoss); $("m_fx_s").textContent=eqLoss>0?`foreign holders of US shares (${fs}%), plus most of ${fmtT(supL)} lost on chip suppliers abroad`:"no share losses at your setting";
+  $("m_2000").textContent=usEq>0?`US share losses at your setting: ${fmtT(usEq)}, ${Math.round(usEq/GDP*100)}% of a year's US output; Nvidia falls ${Math.round(nvF)}%, chip suppliers abroad ${Math.round(sxF)}%. 2000–02 for scale: the Wilshire 5000 lost $7.4tn, about 72% of 2000 output; the Nasdaq fell 78% and Cisco 80%; US output was flat over 2001.`:"No share losses at your setting.";
+  const isBust=!$("link").checked&&q.cut===BUST.cut&&q.fall===BUST.fall, isLink=$("link").checked&&q.fall===MB.fall;
+  document.querySelectorAll("#m_mode button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.b==="bust"?isBust:isLink)?"true":"false"));
+  $("m_g").textContent=pct(g); $("m_g_s").textContent=g<0?"recession territory":g<1?`stall: trend is ${TREND}%`:`trend is ${TREND}%`;
+  $("m_exp").textContent=fmtB(abroad);
+  const fed=parseFloat($("fed").value), spr=parseFloat($("spr").value);
+  const pi0=parseFloat($("pi0").value), lam=parseFloat($("lam").value);
+  $("fed_o").textContent=fed+" pts"; $("spr_o").textContent=spr+" pts";
+  $("pi0_o").textContent=pi0.toFixed(1)+"%"; $("lam_o").textContent=lam.toFixed(1);
+  const fedEff=Math.max(0,fed-lam*Math.max(0,pi0-2)), r2=v=>Math.round(v*100)/100;
+  const busted=q.cut>0;
+  $("bust_none").hidden=busted; $("bust_tiles").hidden=!busted;
+  if(busted){
+    const unwind=loopOn()?betaV()*lost/USGDP*100:0, fall=fedEff+unwind;
+    const rBig=Math.max(0.5,p.wacc-fall), rLev=Math.max(0.5,p.wacc-fall+spr);
+    const per=r=>model({...p,capex:100,wacc:r}).req;
+    $("b_fall").textContent=fall<0.005?"0 pts":"−"+r2(fall)+" pts";
+    const fedTxt=fedEff<fed-0.005?`Fed: ${fed} wanted, ${r2(fedEff)} delivered with inflation at ${pi0.toFixed(1)}%`:`Fed ${fed}`;
+    $("b_fall_s").textContent=fedTxt+(loopOn()?` + build-out unwinding ${r2(unwind)}`:`; turn the rates loop on to add the unwinding`);
+    $("b_big").textContent=rate1(rBig); $("b_big_s").textContent=`spreads unchanged · ${fmtB(per(rBig))} a year needed per $100bn of next year's build`;
+    $("b_lev").textContent=rate1(rLev); $("b_lev_s").textContent=`plus ${spr} pts of spread · ${fmtB(per(rLev))} a year needed per $100bn`;
+  }
+  const paysAtFlat=model({...p,drop:0}).npv>=0;
+  const cause=o.npv>=0?"none":(paysAtFlat?"price":"demand");
+  ["none","price","demand"].forEach(c=>$("c_"+c).classList.toggle("on",c===cause));
+  document.querySelectorAll(".cause .flag").forEach(f=>f.hidden=!f.parentElement.classList.contains("on"));
+  renderExpo(q.fall,$("link").checked&&o.npv>=0,{beq,fs,labFall,cut:q.cut});
+}
+mids.forEach(k=>{$(k).value=MB[k];$(k).addEventListener("input",render);});
+$("link").addEventListener("change",render);
+document.querySelectorAll("#m_mode button").forEach(b=>b.addEventListener("click",()=>{
+  if(b.dataset.b==="bust"){$("link").checked=false;$("cut").value=BUST.cut;$("fall").value=BUST.fall;}
+  else{$("link").checked=true;$("fall").value=MB.fall;}
+  render();}));
+["endo"].forEach(k=>$(k).addEventListener("change",render));
+["beta","fed","spr","pi0","lam","beq","fs","k_lab","k_oai","k_new_o","k_new_a","k_circ","k_gm"].forEach(k=>$(k).addEventListener("input",render));
+["listed","ipo"].forEach(k=>$(k).addEventListener("change",render));
+
+const EXPO=[
+ {id:"nv",name:"Nvidia",sub:"$5.24tn, 15 October 2026; its revenue is the build itself",exp:5240,basis:"src",link:"sup",ab:"fs",amp:false,why:"no forced selling; the wealth loss cuts spending (above)",lb:"part"},
+ {id:"eq",name:"The other six of the Magnificent Seven",sub:"Apple, Alphabet, Microsoft, Amazon, Meta, Tesla: $19.3tn, 15 October 2026",exp:19330,basis:"src",link:"fall",ab:"fs",amp:false,why:"no forced selling; the wealth loss cuts spending (above)",lb:"part"},
+ {id:"rest",name:"The rest of the US stock market",sub:"other two-thirds of the S&P 500; falls by your share of the AI fall",exp:44000,basis:"est",link:"rest",ab:"fs",amp:false,why:"no, but every firm's cost of equity rises",lb:"no"},
+ {id:"supx",name:"Chip suppliers abroad",sub:"TSMC $2.19tn, SK Hynix $1.06tn, ASML $0.64tn, 15 October 2026; about half their revenue tied to the build (your estimate)",exp:3890,basis:"src",link:"supx",ab:80,amp:false,why:"no: listed in Taiwan, Korea and the Netherlands; the loss lands mostly abroad",lb:"part"},
+ {id:"labs",name:"Equity in OpenAI and Anthropic",sub:"private rounds: $852bn (March) and $965bn (May 2026)",exp:1817,basis:"src",link:"labs",ab:25,amp:false,why:"no: venture, sovereign and supplier money",lb:"yes"},
+ {id:"ig",name:"Bonds of the big cloud firms",sub:"investment grade; Meta $30bn, Oracle $18bn in 2025",exp:250,basis:"est",rate:2,ab:25,amp:false,why:"no: diversified cash flows",lb:"part"},
+ {id:"hy",name:"Bonds and loans of weaker AI firms",sub:"smaller AI clouds, lower-rated issuers",exp:150,basis:"est",rate:20,ab:15,amp:true,why:"yes: leveraged issuers",lb:"yes"},
+ {id:"pc",name:"Private credit and single-site vehicles",sub:"Morgan Stanley: over half of $1.5tn needs to 2028",exp:400,basis:"est",rate:15,ab:15,amp:true,why:"yes: funds with withdrawals, bank lines",lb:"part"},
+ {id:"abs",name:"Asset-backed bonds, digital infrastructure",sub:"about 5% of US ABS; 63% linked to data centres",exp:82,basis:"src",rate:10,ab:10,amp:true,why:"yes: marked to market",lb:"no"},
+ {id:"spv",name:"Bonds of data-centre project vehicles",sub:"Meta's Hyperion: $27bn sold via PIMCO; Meta guarantees residual value",exp:80,basis:"est",rate:5,ab:20,amp:false,why:"no: insurers and pensions; guarantees send the loss back to the hyperscaler",lb:"no"},
+ {id:"gulf",name:"Gulf sovereign funds in AI infrastructure",sub:"MGX $49bn AI fund; QIA–Brookfield $20bn; HUMAIN about $23bn of agreements",exp:100,basis:"est",rate:25,ab:100,amp:false,why:"no: long-dated, unleveraged; the loss leaves the US",lb:"part"},
+ {id:"ut",name:"Utilities' generation built for data centres",sub:"stranded if demand falls",exp:100,basis:"est",rate:20,ab:0,amp:false,why:"no: passed to all customers",lb:"no"}
+];
+const LINKTXT={fall:"linked to stock fall",rest:"stock fall × your share",labs:"1.5 × stock fall",sup:"stock fall, then the capex cut on revenue",supx:"as Nvidia, on half the revenue"};
+(function buildExpo(){
+  const tb=document.querySelector("#expo tbody");
+  tb.innerHTML=EXPO.map(r=>`<tr><td>${r.name}<span class="sub">${r.sub}</span></td>
+   <td class="num"><input type="number" id="xe_${r.id}" value="${r.exp}" min="0" step="10" aria-label="${r.name} exposure"><span class="basis"><span class="chip ${r.basis==="src"?"src":""}">${r.basis==="src"?"source":"your estimate"}</span></span></td>
+   <td>${r.link?`<span id="xr_${r.id}_o"></span> <span class="sub">${LINKTXT[r.link]}</span>`:`<input type="range" id="xr_${r.id}" min="0" max="80" step="1" value="${r.rate}" aria-label="${r.name} loss rate"> <output id="xr_${r.id}_o"></output>`}</td>
+   <td class="num" id="xl_${r.id}"></td><td class="num" id="xa_${r.id}"></td><td class="${r.amp?"amp":""}">${r.why}</td>
+   <td><select id="xb_${r.id}" aria-label="${r.name}: paid by the labs?">${[["yes","Yes"],["part","Partly"],["no","No"]].map(([v,t])=>`<option value="${v}"${v===r.lb?" selected":""}>${t}</option>`).join("")}</select></td></tr>`).join("");
+  EXPO.forEach(r=>{$("xe_"+r.id).addEventListener("input",render); if(!r.link)$("xr_"+r.id).addEventListener("input",render); $("xb_"+r.id).addEventListener("change",render);});
+})();
+function renderExpo(fall,off,x){
+  let tot=0,amp=0,ab=0;
+  EXPO.forEach(r=>{
+    const e=Math.max(0,parseFloat($("xe_"+r.id).value)||0);
+    const lr={fall:fall,rest:Math.round(fall*x.beq*10)/10,labs:x.labFall,sup:supRate(fall,x.cut,1),supx:supRate(fall,x.cut,SUPX_AI)};
+    const rate=off?0:(r.link?lr[r.link]:Math.min(80,Math.round(parseFloat($("xr_"+r.id).value)*fall/30)));
+    $("xr_"+r.id+"_o").textContent=rate+"%";
+    const a=r.ab==="fs"?x.fs:r.ab;
+    const l=e*rate/100; tot+=l; if(r.amp)amp+=l; ab+=l*a/100;
+    $("xl_"+r.id).textContent=Math.round(l).toLocaleString("en-US");
+    $("xa_"+r.id).textContent=a+"%";
+  });
+  $("x_tot").textContent=fmtB(tot); $("x_amp").textContent=fmtB(amp); $("x_ab").textContent=fmtB(ab);
+  $("x_line").textContent=tot>0?`One-off losses: ${fmtT(tot)} in total. ${fmtB(amp)} sits in leveraged or short-funded hands, the part that turns a crash into a crisis; ${fmtT(ab)} lands abroad.`:"No losses at your setting.";
+  $("x_amp_s").textContent=tot>0?`${Math.round(amp/tot*1000)/10}% of the total: the crisis-relevant part`:"";
+  $("x_ab_s").textContent=tot>0?`${Math.round(ab/tot*1000)/10}% of the total`:"";
+  let nY=0,nP=0,eY=0,eP=0;
+  EXPO.forEach(r=>{const v=$("xb_"+r.id).value, e=Math.max(0,parseFloat($("xe_"+r.id).value)||0);
+    if(v==="yes"){nY++;eY+=e;} else if(v==="part"){nP++;eP+=e;}});
+  const fmtX=v=>v>=10000?fmtT(v):fmtB(v);
+  $("x_labs").textContent=nY+nP===0?"Tooze's count: no row depends on the labs paying, on your reading.":
+    `Tooze's count: ${nY+nP} of ${EXPO.length} rows depend wholly or partly on two labs paying their compute bills (${nY} wholly, ${fmtX(eY)} of exposure; ${nP} partly, ${fmtX(eP)}). A lab revenue miss reaches all of them at once, as one figure did on 8 October 2026. Diversified on the page; one counterparty in fact. The column is my reading: change it.`;
+}
+
+const SIM_N=5, YEAR0=2026;
+const W_ELEC=0.0249, KAPPA=0.4, SMAX=1.3, FX_PI=0.1, FX_R=0.1;
+const LOOPS=["rates","glut","pow","lev","fund","fed","conf","usd","stake","panic"];
+function oaiBig(o){if(!o.lev)return o.oai;const lw=o.levsh/100,lL=o.labL/100,wB=o.klab*(1-lw);return wB>0?Math.min(1,Math.max(0,(o.oai*(wB+lL*lw)-o.oaiL*lL*lw)/wB)):o.oai;}
+const LOOPNAME={rates:"rates",glut:"prices",pow:"power",lev:"the leveraged builders",fund:"funding",fed:"inflation and the Fed",conf:"confidence",usd:"the dollar",stake:"the cross-holdings",panic:"the panic"};
+function wealthLoss(F,o){return (MAG7*F/100+REST*F*o.beq/100+(o.listed?LABS*Math.min(90,F*LABMULT)/100:0))*(1-o.fs/100);}
+function sim(p,o){
+  const rho=p.rev/p.capex, L=p.life, g=(1+p.grow/100)*(1-p.drop/100), u=1+p.grow/100;
+  const eff=v=>Math.pow(1/(1-p.drop/100),v-1);
+  const sh=o.lev?[1-o.levsh/100,o.levsh/100]:[1], labSh=o.lev?[o.klab,o.labL/100]:[o.klab];
+  const oaiB=oaiBig(o), nwC=o.lev?[oaiB*o.nO+(1-oaiB)*o.nA,o.oaiL*o.nO+(1-o.oaiL)*o.nA]:[o.nw];
+  const Y=[]; let prevB=p.capex, P=1;
+  for(let t=1;t<=SIM_N;t++){
+    const l=Y[t-2];
+    let plan;
+    const brk=!l?sh.map(()=>false):l.brk.map((b,i)=>b||(o.mode==="break"&&(l.F>=o.trigE||(i===1&&o.s0+o.zeta*Math.max(0,1-l.cv[1])*10>=o.trigL))));
+    if(t===1) plan=sh.map(s=>p.capex*s);
+    else if(o.mode==="street"){const tot=l.planTot*(1+(t===2?o.g27:o.gl)/100); plan=sh.map(s=>tot*s);}
+    else if(o.mode==="break"){const g=1+(t===2?o.g27:o.gl)/100;
+      plan=l.plan.map((c,i)=>brk[i]?(l.cvd[i]>=1?c*(1+o.plan/100):c*Math.max(0.4,l.cvd[i])):c*g);}
+    else plan=l.plan.map((c,i)=>l.cvd[i]>=1?c*(1+o.plan/100):c*Math.max(0.4,l.cvd[i]));
+    const built=plan.map((c,i)=>o.mor&&t>1?(1-o.morx/100)*c+(o.morx/100)*l.plan[i]:c);
+    const B=built.reduce((a,b)=>a+b,0), planTot=plan.reduce((a,b)=>a+b,0);
+    const gc=(B-prevB)*(1-o.imp/100)/USGDP*100;
+    const Pprev=P; if(o.pow){const fleet=Y.filter(y=>t-y.t<L).reduce((a,y)=>a+y.B,0)+B, planFleet=PLAN*Math.min(t,L); P=Math.max(0.5,1+o.eta/10*(fleet/planFleet-1));}
+    const m=Math.max(0.05,p.margin/100-(o.pow?o.cp/100*(P-1):0));
+    const Fprev=l?l.F:0, Dprev=l?l.D:0;
+    const D=o.usd?o.del/10*Fprev:0;
+    const pi=t===1?o.pi0:2+o.rho*(l.pi-2)+KAPPA*l.g+(o.pow?W_ELEC*(P/Pprev-1)*100:0)+(o.usd?FX_PI*(D-Dprev):0);
+    let fed=0;
+    if(o.fed&&t>1){const cut=Math.max(0,o.phi*l.lost-o.lam*Math.max(0,l.pi-2)), hike=(1+o.lam)*Math.max(0,l.pi-o.pi0); fed=cut-hike;}
+    const bump=o.rates?o.beta*(B-PLAN)/USGDP*100:0, usdR=o.usd?FX_R*D:0;
+    const r=Math.max(0.5,p.wacc+bump-fed+usdR);
+    const spread=o.lev?o.s0+o.zeta*Math.max(0,1-(l?l.cv[1]:1))*10:0;
+    const B0=(o.glut?o.base0:0)*p.capex, surv=Math.max(0,1-(t-1)/4);
+    const cap=(B0*surv+Y.filter(y=>t-y.t<L).reduce((a,y)=>a+y.B*eff(y.t),0)+B*eff(t))/(p.capex+B0);
+    const use=Math.pow(u,t-1), S=o.glut?Math.min(SMAX,Math.pow(use/cap,o.eps)):1;
+    const fund=o.fund&&!o.shut&&t>1?Math.max(0,1-Math.min(90,LABMULT*Fprev)/o.theta):1;
+    const R=labSh.map((ls,i)=>1-ls*nwC[i]*(1-fund));
+    const vs=built.map((c,i)=>c>1e-9?model({...p,capex:c,rev:rho*c*R[i],spotF:S,wacc:i===0?r:r+spread,margin:m*100}):null);
+    const cv=vs.map(v=>v?v.cover:1);
+    let num=0,den=0; vs.forEach(v=>{if(v){num+=v.pvK+v.npv;den+=v.pvK;}});
+    const cover=den>0?num/den:1;
+    const Ff=Math.min(70,Math.max(0,o.sig*(1-cover)*100));
+    let pStart=l?l.pStart:-1; if(o.panic&&pStart<0&&(Ff>=o.trigE||(o.lev&&spread>=o.trigL)))pStart=t;
+    const F=pStart>0?Math.max(Ff,o.panicF*Math.pow(0.8,t-pStart)):Ff;
+    const labFall=Math.min(90,LABMULT*F), dStake=-(o.stakeV||0)*(labFall-(l?l.labFall:0))/100;
+    const cvd=cv.map((c,i)=>i===0&&o.stake&&vs[0]?c+dStake/vs[0].pvK:c);
+    const conf=(o.conf||(o.panic&&pStart>0))?-((o.cents+o.firm)/100)*(wealthLoss(F,o)-wealthLoss(Fprev,o))/USGDP*100:0;
+    const gg=gc+conf;
+    const y={t,plan,built,planTot,B,C:B,r,spread,bump,fed,usdR,S,P,m,fund,F,D,pi,gc,conf,g:gg,lost:Math.max(0,-gg),cover,cv,cvd,brk,labFall,dStake,pStart,Ff,K:vs.map(v=>v?v.K:0),R,debt:B*o.debt/100};
+    Y.push(y);
+    let ep=0; Y.forEach(w=>{if(t-w.t<L)w.built.forEach((c,i)=>{if(c>1e-9)ep+=m*rho*c*pathF(p,t-w.t+1,S)*R[i]-w.K[i];});}); y.ep=ep;
+    prevB=B;
+  }
+  return Y;
+}
+let simMode="rule";
+function simOpts(){const k=stackV(),v=id=>parseFloat($(id).value),c=id=>$(id).checked;
+  return {mode:simMode,g27:v("s_g27"),gl:v("s_gl"),debt:v("s_debt"),plan:v("s_plan"),imp:v("imp"),
+  rates:c("s_rates"),beta:v("s_beta"),glut:c("s_glut"),eps:v("s_eps"),fed:c("s_fed"),phi:v("s_phi"),rho:v("s_rho"),
+  pi0:v("pi0"),lam:v("lam"),pow:c("s_pow"),eta:v("s_eta"),cp:v("s_cp"),mor:c("s_mor"),morx:v("s_morx"),
+  lev:c("s_lev"),levsh:v("s_levsh"),s0:v("s_s0"),zeta:v("s_zeta"),labL:v("s_labL"),
+  fund:c("s_fund"),sig:v("s_sig"),theta:v("s_theta"),klab:k.lab,nw:k.nw,oai:k.oai,nO:k.nO,nA:k.nA,oaiL:v("s_oaiL")/100,shut:k.shut,
+  stake:c("s_stake"),stakeV:v("s_stakeV"),trigL:v("s_trigL"),trigE:v("s_trigE"),panic:c("s_panic"),panicF:v("s_panicF"),
+  conf:c("s_conf"),firm:v("s_firm"),cents:v("cents"),beq:v("beq"),fs:v("fs"),listed:c("listed"),
+  usd:c("s_usd"),del:v("s_del"),base0:v("s_base0")};}
+const yr=t=>YEAR0+t-1;
+function miniChart(svgId,tipId,A,B,o){
+  const svg=$(svgId),W=Math.max(300,Math.round(svg.parentElement.clientWidth)||760),H=190,ml=58,mr=70,mt=12,mb=28,iw=W-ml-mr,ih=H-mt-mb,n=A.length;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const all=[...A,...B,...(o.ref!=null?[o.ref]:[])];
+  let lo=o.zero?0:Math.min(...all), hi=Math.max(...all); if(hi-lo<1e-6){hi=lo+1;}
+  const pad=(hi-lo)*0.12; if(!o.zero)lo=Math.max(0,lo-pad); hi=hi+pad;
+  const step=niceStep((hi-lo)/3); lo=Math.floor(lo/step)*step; const top=Math.ceil(hi/step)*step;
+  const x=i=>ml+(n===1?iw/2:i*iw/(n-1)), y=v=>mt+ih-(v-lo)/(top-lo)*ih;
+  let s="";
+  for(let v=lo;v<=top+1e-9;v+=step){s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${ml-6}" y="${y(v)+4}" text-anchor="end" font-size="14">${o.tick(v)}</text>`;}
+  A.forEach((_,i)=>{s+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="14">${yr(i+1)}</text>`;});
+  if(o.ref!=null){s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(o.ref)}" y2="${y(o.ref)}" stroke="var(--gold)" stroke-width="2.5" stroke-dasharray="6 4"/><text x="${W-mr+6}" y="${y(o.ref)+4}" font-size="14" font-weight="600">${o.refLabel}</text>`;}
+  const path=arr=>arr.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  s+=`<path d="${path(B)}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  s+=`<path d="${path(A)}" fill="none" stroke="var(--ink)" stroke-width="2.5"/>`;
+  A.forEach((v,i)=>{s+=`<circle cx="${x(i)}" cy="${y(v)}" r="4.5" fill="var(--ink)" stroke="var(--bg)" stroke-width="2"/>`;});
+  const last=A[n-1]; if(o.ref==null||Math.abs(y(last)-y(o.ref))>14)s+=`<text x="${x(n-1)+8}" y="${y(last)+4}" font-size="14" font-weight="600">${(o.endFmt||o.fmt)(last)}</text>`;
+  A.forEach((_,i)=>{const w=iw/(n-1||1);s+=`<rect class="hit" data-i="${i}" x="${Math.max(0,x(i)-w/2)}" y="${mt}" width="${w}" height="${ih}" fill="transparent"/>`;});
+  svg.innerHTML=s;
+  const tip=$(tipId);
+  svg.querySelectorAll(".hit").forEach(h=>{
+    h.addEventListener("pointerenter",()=>{const i=+h.dataset.i;
+      tip.textContent=`${yr(i+1)}: ${o.fmt(A[i])} ${o.la||"with the loops"} · ${o.fmt(B[i])} ${o.lb||"without"}`;
+      const r=svg.getBoundingClientRect(),sc=r.width/W;
+      tip.style.left=Math.min(Math.max(x(i)*sc,110),r.width-110)+"px";tip.style.top=(Math.min(y(A[i]),y(B[i]))*sc)+"px";tip.hidden=false;});
+    h.addEventListener("pointerleave",()=>tip.hidden=true);
+  });
+}
+function renderSim(p){
+  const o=simOpts();
+  const txt=(id,t)=>{$(id).textContent=t;};
+  txt("s_plan_o",o.plan+"% / yr"); txt("s_beta_o",o.beta+" pts"); txt("s_eps_o",o.eps.toFixed(1)); txt("s_base0_o",o.base0.toFixed(1)+"×"); txt("s_phi_o",o.phi.toFixed(2)); txt("s_rho_o",o.rho.toFixed(2));
+  txt("s_eta_o",o.eta+"%"); txt("s_cp_o",o.cp+"%"); txt("s_morx_o",o.morx+"%");
+  txt("s_levsh_o",o.levsh+"%"); txt("s_s0_o","+"+o.s0+" pts"); txt("s_zeta_o","+"+o.zeta+" pts"); txt("s_labL_o",o.labL+"%");
+  txt("s_oaiL_o",Math.round(o.oaiL*100)+"%"); txt("s_stakeV_o","$"+o.stakeV+"bn");
+  txt("s_oaiB_note",o.lev?`With the stack's mix, that leaves OpenAI about ${Math.round(oaiBig(o)*100)}% of the big four's lab revenue.`:"");
+  txt("s_sig_o",o.sig.toFixed(2)); txt("s_theta_o",o.theta+"%"); txt("s_firm_o",o.firm+"¢"); txt("s_del_o",o.del+"%");
+  $("s_beta").disabled=!o.rates; $("s_eps").disabled=!o.glut; $("s_base0").disabled=!o.glut; $("s_phi").disabled=!o.fed;
+  ["s_eta","s_cp"].forEach(k=>$(k).disabled=!o.pow); $("s_morx_box").hidden=!o.mor;
+  ["s_levsh","s_s0","s_zeta","s_labL","s_oaiL"].forEach(k=>$(k).disabled=!o.lev); $("s_stakeV").disabled=!o.stake;
+  $("s_theta").disabled=!o.fund||o.shut;
+  $("s_firm").disabled=!(o.conf||o.panic); $("s_del").disabled=!o.usd;
+  txt("s_g27_o","+"+o.g27+"%"); txt("s_gl_o",(o.gl>=0?"+":"−")+Math.abs(o.gl)+"% / yr"); txt("s_debt_o",o.debt+"%");
+  const street=o.mode==="street", brkM=o.mode==="break";
+  $("s_plan_box").hidden=street||brkM; $("s_g27_box").hidden=!(street||brkM); $("s_gl_box").hidden=!(street||brkM);
+  $("s_trigL_box").hidden=!(brkM||o.panic); $("s_trigE_box").hidden=!(brkM||o.panic); $("s_trigL").disabled=!o.lev; $("s_panicF_box").hidden=!o.panic;
+  txt("s_trigL_o",o.trigL+" pts"); txt("s_trigE_o",o.trigE+"%"); txt("s_panicF_o",o.panicF+"%");
+  txt("s_keyA",street?"Street plan, with the loops":brkM?"Street until the money stops":"With the loops");
+  txt("s_keyB",street?"Payback rule, same loops":brkM?"Street plan, never stops":"Same rule, loops off");
+  const off={...o}; LOOPS.forEach(k=>off[k]=false);
+  const A=sim(p,o), B=street?sim(p,{...o,mode:"rule"}):brkM?sim(p,{...o,mode:"street"}):sim(p,off);
+  const lab=street?{la:"on the Street plan",lb:"on the payback rule"}:brkM?{la:"until the money stops",lb:"on the Street plan"}:{};
+  const C5=Y=>Y[SIM_N-1].C;
+  const pc=v=>(Math.round(v*10)/10).toFixed(1)+"%";
+  miniChart("s_c1","s_t1",A.map(y=>y.C),B.map(y=>y.C),{...lab,zero:true,tick:v=>Math.round(v).toLocaleString("en-US"),fmt:v=>fmtB(v),endFmt:v=>Math.round(v).toLocaleString("en-US")});
+  miniChart("s_c2","s_t2",A.map(y=>y.r),B.map(y=>y.r),{...lab,zero:false,tick:v=>(Math.round(v*10)/10)+"%",fmt:v=>rate1(v)});
+  miniChart("s_c3","s_t3",A.map(y=>y.cover*100),B.map(y=>y.cover*100),{...lab,zero:true,ref:100,refLabel:"pays",tick:v=>Math.round(v)+"%",fmt:v=>Math.round(v)+"%"});
+  miniChart("s_c4","s_t4",A.map(y=>y.pi),B.map(y=>y.pi),{...lab,zero:false,ref:2,refLabel:"target",tick:v=>(Math.round(v*10)/10)+"%",fmt:pc});
+  const pv=Y=>Y.reduce((a,y)=>a+y.ep/Math.pow(1+p.wacc/100,y.t-1),0);
+  const sgn=v=>(v<0?"−":"")+fmtB(Math.abs(v));
+  // the Fed sentence
+  let sF="";
+  if(o.fed){
+    const cut=A.findIndex(y=>y.fed>0.05), hike=A.findIndex(y=>y.fed<-0.05), piEnd=A[SIM_N-1].pi;
+    const blocked=j=>j>0&&A[j-1].lost>0.05&&o.phi*A[j-1].lost-o.lam*Math.max(0,A[j-1].pi-2)<=0.05;
+    const anyBlocked=A.some((_,j)=>j<(cut<0?SIM_N:cut)&&blocked(j));
+    if(hike>=0&&(cut<0||hike<cut)) sF=` Inflation climbs above today's ${pc(o.pi0)}, so the Fed raises rates in ${yr(hike+1)}; inflation ends at ${pc(piEnd)}.`;
+    else if(cut>=0) sF=` The Fed first cuts in ${yr(cut+1)}${anyBlocked?`: until then, inflation above target outweighs the growth lost`:""}. Inflation goes from ${pc(o.pi0)} to ${pc(piEnd)}.`;
+    else if(anyBlocked) sF=` The Fed never cuts: the growth lost never outweighs inflation above target. Inflation goes from ${pc(o.pi0)} to ${pc(piEnd)}.`;
+    else if(A.some(y=>y.lost>0.05)) sF=` The Fed barely moves. Inflation goes from ${pc(o.pi0)} to ${pc(piEnd)}.`;
+    else sF=` No growth is lost, so the Fed has nothing to cut for. Inflation goes from ${pc(o.pi0)} to ${pc(piEnd)}.`;
+  }
+  const minF=Math.min(...A.map(y=>y.fund));
+  const sFund=o.fund&&!o.shut&&minF<0.95?` The labs' new capital falls to ${Math.round(minF*100)}% of normal in ${yr(A.findIndex(y=>y.fund===minF)+1)}.`:"";
+  const stTot=A.reduce((a,y)=>a+y.dStake,0);
+  const pY=A.findIndex(y=>y.pStart>0);
+  const sPanic=o.panic&&pY>=0?` Panic in ${yr(pY+1)}: AI shares overshoot to ${Math.round(A[pY].F)}% below peak, the labs' new capital stops, and share losses take ${Math.abs(Math.round(A[pY].conf*100)/100)} points off US growth that year.`:"";
+  const sStake=o.stake?` The big four's lab stakes ${stTot<0?"lose":"gain"} ${fmtB(Math.abs(stTot))} by ${yr(SIM_N)}${street?"":`; counting the ${YEAR0} loss of ${fmtB(Math.abs(A[0].dStake))}, they judge that vintage at ${Math.round(A[0].cvd[0]*100)}% instead of ${Math.round(A[0].cv[0]*100)}%`}.`:"";
+  if(brkM){
+    const sum=Y=>Y.reduce((a,y)=>a+y.C,0), R0=sim(p,{...o,mode:"rule"});
+    const bB=A.findIndex(y=>y.brk[0]), bL=o.lev?A.findIndex(y=>y.brk[1]):-1;
+    const Cs=A.map(y=>y.C); let peak=0; Cs.forEach((c,i)=>{if(c>Cs[peak]+1e-9)peak=i;});
+    let t1;
+    if(bB<0&&bL<0) t1=`The money never stops on these settings: builders follow the Street plan to ${fmtB(Cs[SIM_N-1])} in ${yr(SIM_N)}.`;
+    else{
+      const why=j=>A[j-1].F>=o.trigE?`AI shares ${Math.round(A[j-1].F)}% below peak`:`a spread of ${Math.round(A[j].spread*10)/10} points`;
+      const sL=o.lev?(bL<0?"Lenders never stop the leveraged builders":`The leveraged builders are stopped in ${yr(bL+1)}, at ${why(bL)}`):"";
+      const sB=bB<0?"the big four never are":`the big four in ${yr(bB+1)}, at ${why(bB)}`;
+      t1=(o.lev?`${sL}; ${sB}.`:`${sB[0].toUpperCase()+sB.slice(1)}.`);
+      let cut=-1,cr=0; for(let i=1;i<SIM_N;i++){const r=1-Cs[i]/Cs[i-1]; if(r>cr+1e-9){cr=r;cut=i;}}
+      t1+=` Capex peaks at ${fmtB(Cs[peak])} in ${yr(peak+1)}`+(cut>0&&cr>0.05?`; the sharpest cut comes in ${yr(cut+1)}, ${Math.round(cr*100)}% in one year, and the build-out alone takes ${(Math.abs(A[cut].gc)).toFixed(2)} points off US growth that year.`:".");
+    }
+    const t2=` Over five years builders spend ${fmtB(sum(A))}: ${fmtB(sum(B)-sum(A))} less than on the Street plan and ${fmtB(sum(A)-sum(R0))} more than on the payback rule.`;
+    const t4=` Economic profit on the ${YEAR0}–${yr(SIM_N)} vintages over these years: ${sgn(pv(A))} in present value, against ${sgn(pv(B))} on the Street plan.`;
+    $("s_sum").textContent=t1+t2+sPanic+sFund+sStake+sF+t4;
+  }
+  else if(street){
+    const sum=Y=>Y.reduce((a,y)=>a+y.C,0), extra=sum(A)-sum(B);
+    const f=A.findIndex(y=>y.cover<1), after=f<0?0:A.slice(f+1).reduce((a,y)=>a+y.C,0);
+    const debtSum=A.reduce((a,y)=>a+y.debt,0), minS=Math.min(...A.map(y=>y.S)), maxR=Math.max(...A.map(y=>y.r));
+    let t1=`On the Street plan, capex reaches ${fmtB(C5(A))} by ${yr(SIM_N)}: ${extra>=0?fmtB(extra)+" more":fmtB(-extra)+" less"} over five years than the payback rule would spend.`;
+    let t2=f<0?" Every vintage still covers its capital.":(f===0?` No vintage covers its capital, yet the plan keeps building: ${fmtB(after)} is spent from ${yr(2)} after the first vintage falls short.`:` The new vintage stops covering its capital in ${yr(f+1)}; ${fmtB(after)} is spent after that signal.`);
+    let t3=` Debt funds about ${fmtB(debtSum)}.${minS<0.995?` AI prices fall up to ${Math.round((1-minS)*100)}% below trend.`:""}${sPanic}${sFund}${sStake} The big four's cost of capital peaks at ${rate1(maxR)}.`;
+    let t4=` Economic profit on the ${YEAR0}–${yr(SIM_N)} vintages over these years: ${sgn(pv(A))} in present value, against ${sgn(pv(B))} on the payback rule.`;
+    $("s_sum").textContent=t1+t2+t3+sF+t4;
+  }
+  else {
+    const Cs=A.map(y=>y.C); let peak=0; Cs.forEach((c,i)=>{if(c>Cs[peak]+1e-9)peak=i;});
+    const falls=Cs.every((c,i)=>i===0||c<Cs[i-1]-1e-6);
+    let s1;
+    if(falls) s1=`Capex falls every year: no vintage covers its capital. By ${yr(SIM_N)} it is ${fmtB(Cs[SIM_N-1])}, ${Math.round((1-Cs[SIM_N-1]/Cs[0])*100)}% below ${YEAR0}.`;
+    else if(peak>0&&peak<SIM_N-1) s1=`Capex peaks at ${fmtB(Cs[peak])} in ${yr(peak+1)}. That vintage no longer covers its capital, so builders cut from ${yr(peak+2)}, ending at ${fmtB(Cs[SIM_N-1])} in ${yr(SIM_N)}.`;
+    else if(A.every(y=>y.cover>=1)) s1=`Every vintage covers its capital: capex grows to ${fmtB(Cs[SIM_N-1])} by ${yr(SIM_N)}.`;
+    else s1=`Capex ends at ${fmtB(Cs[SIM_N-1])} in ${yr(SIM_N)}, against ${fmtB(Cs[0])} in ${YEAR0}.`;
+    const tot=Y=>Y.reduce((a,y)=>a+y.C,0), d=tot(A)-tot(B);
+    let s2=Math.abs(d)<5?" The loops barely change five-year spending.":` The loops ${d<0?"cut":"add"} ${fmtB(Math.abs(d))} ${d<0?"from":"to"} five-year spending against the same rule without them.`;
+    const one=k=>tot(sim(p,{...off,[k]:true}))-tot(B);
+    const parts=LOOPS.filter(k=>o[k]).map(k=>[k,one(k)]);
+    if(parts.length&&Math.abs(d)>=5){const big=parts.reduce((a,b)=>Math.abs(b[1])>Math.abs(a[1])?b:a);
+      if(Math.abs(big[1])>=5)s2+=` On its own, the biggest effect comes from ${LOOPNAME[big[0]]} (${big[1]<0?"−":"+"}${fmtB(Math.abs(big[1]))}).`;}
+    const s3=` Economic profit on the ${YEAR0}–${yr(SIM_N)} vintages over these years: ${sgn(pv(A))} in present value, against ${sgn(pv(B))} without the loops.`;
+    $("s_sum").textContent=s1+s2+sPanic+sFund+sStake+sF+s3;
+  }
+  // table
+  const pts=v=>(v>=0?"+":"−")+Math.abs(Math.round(v*100)/100);
+  const row=(label,f,cls)=>`<tr${cls?` class="${cls}"`:""}><td>${label}</td>${A.map((y,i)=>`<td>${f(y,i)}</td>`).join("")}</tr>`;
+  const n0=v=>Math.round(v).toLocaleString("en-US");
+  let h=`<thead><tr><th></th>${A.map(y=>`<th>${yr(y.t)}</th>`).join("")}</tr></thead><tbody>`;
+  h+=row("Capex, $bn",y=>n0(y.C)+(o.lev?`<span class="sub">leveraged ${n0(y.built[1])}</span>`:""));
+  if(brkM)h+=row("Still on the Street plan",y=>{const b=y.brk;return !b[0]&&!(o.lev&&b[1])?"yes":(o.lev&&!b[0]&&b[1]?"big four only":"no");});
+  h+=`<tr class="ghost"><td>${street?"Capex on the payback rule":brkM?"Capex on the Street plan":"Capex without the loops"}</td>${B.map(y=>`<td>${n0(y.C)}</td>`).join("")}</tr>`;
+  h+=row("Cost of capital, big four",y=>{const s=[];if(o.rates)s.push("build-out "+pts(y.bump));if(o.fed)s.push("Fed "+(Math.abs(y.fed)<0.005?"0":pts(-y.fed)));if(o.usd&&y.usdR>0.005)s.push("dollar "+pts(y.usdR));
+    return rate1(y.r)+(s.length?`<span class="sub">${s.join("<br>")}</span>`:"");});
+  if(o.lev)h+=row("Cost of capital, leveraged builders",y=>rate1(y.r+y.spread)+`<span class="sub">spread +${Math.round(y.spread*100)/100}</span>`);
+  h+=row("AI prices against trend",y=>Math.abs(y.S-1)<0.005?"on trend":(y.S>1?"+":"−")+Math.round(Math.abs(y.S-1)*100)+"%");
+  if(o.pow)h+=row("Power prices against trend",y=>Math.abs(y.P-1)<0.005?"on trend":(y.P>1?"+":"−")+Math.round(Math.abs(y.P-1)*100)+"%"+`<span class="sub">margin ${Math.round(y.m*1000)/10}%</span>`);
+  if(o.fund||o.conf||o.usd||o.panic||brkM)h+=row("AI shares below peak",y=>Math.round(y.F)+"%"+(o.panic&&y.F>y.Ff+0.5?`<span class="sub">panic</span>`:""));
+  if(o.fund&&!o.shut)h+=row("Labs' new capital, of normal",y=>Math.round(y.fund*100)+"%");
+  if(o.usd)h+=row("Dollar fall",y=>y.D<0.05?"0%":"−"+(Math.round(y.D*10)/10)+"%");
+  h+=row("New vintage covers its capital",y=>Math.round(y.cover*100)+"%"+(o.lev?`<span class="sub">big four ${Math.round(y.cv[0]*100)}%<br>leveraged ${Math.round(y.cv[1]*100)}%</span>`:""));
+  h+=row("Big four's lab stakes, gain or loss, $bn",y=>(y.dStake<-0.5?"−":"")+n0(Math.abs(y.dStake))+(o.stake?`<span class="sub">judged at ${Math.round(y.cvd[0]*100)}%</span>`:""));
+  h+=row("Inflation",y=>pc(y.pi));
+  h+=row("Capex adds to US growth, points",y=>y.t===1?"—":pts(y.gc));
+  if(o.conf||o.panic)h+=row("Share losses add to US growth, points",y=>pts(y.conf));
+  h+=row("Funded with debt, $bn",y=>n0(y.debt));
+  h+=row("Economic profit, live vintages, $bn",y=>(y.ep<0?"−":"")+n0(Math.abs(y.ep)));
+  $("s_table").innerHTML=h+"</tbody>";
+}
+["s_plan","s_beta","s_eps","s_base0","s_phi","s_rho","s_g27","s_gl","s_debt","s_eta","s_cp","s_morx","s_levsh","s_s0","s_zeta","s_labL","s_oaiL","s_stakeV","s_trigL","s_trigE","s_panicF","s_sig","s_theta","s_firm","s_del"].forEach(k=>$(k).addEventListener("input",render));
+document.querySelectorAll("#s_mode button").forEach(b=>b.addEventListener("click",()=>{simMode=b.dataset.m;
+  document.querySelectorAll("#s_mode button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));render();}));
+["s_rates","s_glut","s_fed","s_pow","s_mor","s_lev","s_fund","s_conf","s_usd","s_stake","s_panic"].forEach(k=>$(k).addEventListener("change",render));
+let simRT;window.addEventListener("resize",()=>{clearTimeout(simRT);simRT=setTimeout(()=>renderSim(effP(read())),150);});
+
+let pathMode="fixed";
+function read(){const p={};ids.forEach(k=>p[k]=parseFloat($(k).value));p.path=pathMode;return p;}
+document.querySelectorAll("#pathMode button").forEach(b=>b.addEventListener("click",()=>{pathMode=b.dataset.r;render();}));
+function stackV(){const g=id=>parseFloat($(id).value)/100, oai=g("k_oai"), nO=g("k_new_o"), nA=g("k_new_a");
+  return {lab:g("k_lab"),oai,nO,nA,nw:oai*nO+(1-oai)*nA,circ:g("k_circ"),gm:g("k_gm"),shut:$("ipo").checked};}
+function effP(p){const k=stackV();return k.shut?{...p,rev:p.rev*(1-k.lab*k.nw)}:p;}
+function renderStack(p,o){
+  const k=stackV();
+  $("k_lab_o").textContent=Math.round(k.lab*100)+"%"; $("k_oai_o").textContent=Math.round(k.oai*100)+"%";
+  $("k_new_o_o").textContent=Math.round(k.nO*100)+"%"; $("k_new_a_o").textContent=Math.round(k.nA*100)+"%";
+  $("k_circ_o").textContent=Math.round(k.circ*100)+"%"; $("k_gm_o").textContent=Math.round(k.gm*100)+"%";
+  $("k_circ").disabled=k.shut;
+  const rev=p.rev; // already reduced when the window is shut; rebuild the pieces from the set revenue
+  const R0=k.shut?rev/(1-k.lab*k.nw):rev;
+  const L=R0*k.lab, fromRev=L*(1-k.nw), fromNew=k.shut?0:L*k.nw, vendors=fromNew*k.circ;
+  const dir=R0*(1-k.lab), endMoney=dir+fromRev, cloudRev=dir+fromRev+fromNew;
+  const m=p.margin/100, chipRev=p.capex*p.chip/100, gp=chipRev*k.gm, rest=p.capex-chipRev;
+  $("k_end").textContent=fmtB(endMoney);
+  $("k_end_s").textContent=`reaches the clouds: ${fmtB(dir)} direct, ${fmtB(fromRev)} through the labs' revenue`;
+  $("k_labs").textContent=fmtB(L-(k.shut?L*k.nw:0));
+  $("k_labs_s").textContent=k.shut?`pay only from revenue; ${fmtB(L*k.nw)} of compute goes unbought`:`pay the clouds: ${fmtB(fromRev)} from revenue, ${fmtB(fromNew)} from new capital: OpenAI ${fmtB(L*k.oai*k.nO)}, Anthropic ${fmtB(L*(1-k.oai)*k.nA)} (${fmtB(vendors)} of it their suppliers' own money)`;
+  $("k_cloud").textContent=fmtB(cloudRev);
+  const ep=m*cloudRev-o.K;
+  $("k_cloud_s").textContent=`earn in year 1; capital charge ${fmtB(o.K)}; economic profit ${ep<0?"−":""}${fmtB(Math.abs(ep))}`;
+  $("k_chip").textContent=fmtB(chipRev);
+  $("k_chip_s").textContent=`paid when the chips ship; gross profit ${fmtB(gp)}. The other ${fmtB(rest)} goes to buildings, power and cooling`;
+  const covAll=Math.round(m*cloudRev/o.K*100), covEnd=Math.round(m*endMoney/o.K*100);
+  $("k_sum").textContent=(k.shut?`With the IPO window shut, the cloud layer's year-1 revenue falls from ${fmtB(R0)} to ${fmtB(cloudRev)}, covering ${covAll}% of the capital charge; the verdict, the economy and the five-year run now use it. `:`In year 1, revenue covers ${covAll}% of the capital charge; end-customer money alone covers ${covEnd}%. ${fmtB(fromNew)} of the clouds' revenue is the labs' new capital, ${fmtB(vendors)} of it the suppliers' own money coming back. `)+`Chip and server suppliers book ${fmtB(gp)} of gross profit when this vintage ships, before anyone knows whether it pays. The chokepoint is paid first.`;
+  $("rev_note").textContent=k.shut?`IPO window shut (see the stack below): the model uses ${fmtB(cloudRev)}.`:"";
+}
+function set(p){ids.forEach(k=>{$(k).value=p[k];});}
+
+function render(){
+  const pr=read(); ids.forEach(k=>$(k+"_o").textContent=UNIT[k](pr[k]));
+  const p0=effP(pr);
+  const d=bump(p0.capex), p={...p0,wacc:Math.max(0.5,p0.wacc+d)};
+  $("betaBox").hidden=!loopOn(); $("beta_o").textContent=betaV()+" pts";
+  const dTxt=(d>=0?"+":"−")+Math.abs(Math.round(d*100)/100);
+  $("endo_s").textContent=loopOn()?`Rate used: ${rate1(p.wacc)} (${Math.abs(d)<0.005?"capex at plan, so no change":`${p0.wacc}% set, ${dTxt} points from capex ${d>=0?"above":"below"} plan`}). On this estimate, the planned $730bn already adds about ${Math.round(betaV()*PLAN/USGDP*100*100)/100} points to today's rate.`:"";
+  $("sens_note").textContent="Chip life down the side, cost of capital across. Other assumptions as set. The gold cell is your current setting."+(loopOn()&&Math.abs(d)>=0.005?` Columns are the rate you set; the build-out adds ${dTxt} points to each.`:"");
+  const o=model(p), fixed=p.path!=="grow", be=fixed?breakEvenRev(p):breakEvenGrowth(p);
+  document.querySelectorAll("#pathMode button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.r===p.path?"true":"false"));
+  $("contractBox").hidden=!fixed;
+  $("path_note").textContent=fixed?"Each build has fixed capacity: contracted revenue holds, spot rents fall as newer chips arrive.":"Earlier versions: each build's revenue grows with usage and falls with price, as if a fixed fleet could serve rising demand.";
+  $("drop_s").textContent=fixed?"How fast an ageing chip's spot rent falls. History: 13–36% a year by generation (V100, A100, H100). In 2026 every generation's rent rose, by 9–38%, as supply tightened.":"";
+  $("grow_s").textContent=fixed?"A build's capacity is fixed, so usage growth does not lift its own revenue. In the five-year run it decides whether capacity runs ahead of demand.":"";
+  $("t_k_s").textContent=p.lag>0?`write-off plus return, including ${p.lag} months before revenue`:"write-off plus return";
+  const ok=o.npv>=0, v=$("verdict"); v.classList.toggle("ok",ok);
+  $("v_tag").textContent=ok?"Pays off":"Falls short";
+  $("v_big").textContent=(ok?"Value created ":"Value destroyed ")+fmtB(Math.abs(o.npv));
+  $("v_why").textContent=`Present value over the ${p.life}-year life of the chips, at ${rate1(p.wacc)} cost of capital${loopOn()&&Math.abs(d)>=0.005?`, including ${dTxt} points from the build-out`:""}${p.lag>0?`, with ${p.lag} months from spend to revenue`:""}. The build covers ${Math.round(o.cover*100)}% of its capital.`;
+  $("t_k").textContent=fmtB(o.K);
+  $("t_req").textContent=fmtB(o.req);
+  $("t_req_s").textContent=`year 1 covers ${Math.round(p.rev/o.req*100)}%`;
+  if(fixed){
+    $("t_g_k").textContent=`Revenue in year ${p.life} against year 1`;
+    $("t_g").textContent=pct((o.rev[o.rev.length-1]/o.rev[0]-1)*100);
+    $("t_g_s").textContent=`${p.contract}% on contracts holds; spot rents fall ${p.drop}% a year`;
+    $("t_be_k").textContent="Year-1 revenue to break even";
+    if(be===null){$("t_be").textContent="out of reach";$("t_be_s").textContent="no plausible revenue closes the gap";}
+    else{$("t_be").textContent=fmtB(be);$("t_be_s").textContent=be<=p.rev?"your figure clears it":`your figure: ${fmtB(p.rev)}`;}
+  } else {
+    $("t_g_k").textContent="Revenue growth per year";
+    $("t_g").textContent=pct((o.g-1)*100);
+    const flat=(1/(1-p.drop/100)-1)*100;
+    $("t_g_s").textContent=`usage must grow ${pct(flat)} just to stand still`;
+    $("t_be_k").textContent="Usage growth to break even";
+    if(be===null){$("t_be").textContent="out of reach";$("t_be_s").textContent="no plausible growth closes the gap";}
+    else if(be<=-99){$("t_be").textContent="any";$("t_be_s").textContent="pays even if usage collapses";}
+    else{$("t_be").textContent=pct(be);$("t_be_s").textContent=be<=p.grow?"your bet clears it":`your bet: ${p.grow}%`;}
+  }
+  drawChart(p,o); drawSens(p0,d); renderMacro(p,o); renderSim(p0);
+  renderStack(p,o);
+  try{localStorage.setItem("capex_p",JSON.stringify(pr));localStorage.setItem("capex_path",pathMode);}catch(e){}
+}
+
+function drawChart(p,o){
+  const svg=$("chart"),W=760,H=300,ml=64,mr=92,mt=16,mb=40,iw=W-ml-mr,ih=H-mt-mb;
+  const maxV=Math.max(o.req,...o.rev)*1.15;
+  const step=niceStep(maxV/4), top=Math.ceil(maxV/step)*step;
+  const y=v=>mt+ih-(v/top)*ih, n=o.rev.length, bw=iw/n;
+  let s="";
+  for(let v=0;v<=top+1e-9;v+=step){s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${ml-8}" y="${y(v)+5}" text-anchor="end" font-size="14">$${Math.round(v)}bn</text>`;}
+  o.rev.forEach((R,i)=>{
+    const x=ml+i*bw+bw*0.18,w=bw*0.64,cover=R>=o.req;
+    s+=`<rect class="bar" data-i="${i}" x="${x}" y="${y(R)}" width="${w}" height="${Math.max(0,y(0)-y(R))}" rx="4" fill="${cover?"var(--bar)":"var(--barshort)"}"/>`;
+    s+=`<text x="${x+w/2}" y="${y(R)-8}" text-anchor="middle" font-size="14" font-weight="600">${Math.round(R)}</text>`;
+    s+=`<text x="${x+w/2}" y="${H-14}" text-anchor="middle" font-size="14">Year ${i+1}</text>`;
+    s+=`<rect class="hit" data-i="${i}" x="${ml+i*bw}" y="${mt}" width="${bw}" height="${ih}" fill="transparent"/>`;
+  });
+  s+=`<line x1="${ml}" x2="${W-mr}" y1="${y(o.req)}" y2="${y(o.req)}" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 5"/>`;
+  s+=`<text x="${W-mr+8}" y="${y(o.req)-4}" font-size="14" font-weight="600">needed</text><text x="${W-mr+8}" y="${y(o.req)+14}" font-size="14" font-weight="600">${Math.round(o.req)}</text>`;
+  svg.innerHTML=s;
+  const tip=$("tip"),box=$("chartbox");
+  svg.querySelectorAll(".hit").forEach(h=>{
+    h.addEventListener("pointerenter",()=>{const i=+h.dataset.i,R=o.rev[i];
+      tip.textContent=`Year ${i+1}: revenue ${fmtB(R)} · needed ${fmtB(o.req)} · margin left after the charge ${fmtB(o.ep[i])}`;
+      const r=svg.getBoundingClientRect(),sc=r.width/760;
+      tip.style.left=Math.min(Math.max((ml+(i+0.5)*bw)*sc,120),r.width-120)+"px";tip.style.top=(y(Math.max(R,o.req))*sc)+"px";tip.hidden=false;});
+    h.addEventListener("pointerleave",()=>tip.hidden=true);
+  });
+}
+function niceStep(x){const e=Math.pow(10,Math.floor(Math.log10(x))),f=x/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
+
+function drawSens(p,d){d=d||0;
+  const lives=[3,4,5,6,7],rates=[6,8,10,12,14];
+  let h="<thead><tr><th>Chip life</th>"+rates.map(r=>`<th>${r}%</th>`).join("")+"</tr></thead><tbody>";
+  lives.forEach(L=>{h+=`<tr><th>${L} yrs</th>`+rates.map(r=>{
+    const v=model({...p,life:L,wacc:Math.max(0.5,r+d)}).req, cur=(L===p.life&&r===p.wacc);
+    return `<td class="${cur?"cur":""}">${Math.round(v)}</td>`;}).join("")+"</tr>";});
+  $("sens").innerHTML=h+"</tbody>";
+}
+
+const presetBtns=document.querySelectorAll(".presets button[data-p]");
+presetBtns.forEach(b=>b.addEventListener("click",()=>{
+  set({...BASE,...PRESETS[b.dataset.p]});
+  presetBtns.forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+  render();
+}));
+ids.forEach(k=>$(k).addEventListener("input",()=>{presetBtns.forEach(x=>x.setAttribute("aria-pressed","false"));render();}));
+
+let start=BASE;
+try{const s=JSON.parse(localStorage.getItem("capex_p")||"null");if(s&&ids.every(k=>typeof s[k]==="number"))start=s;const pm=localStorage.getItem("capex_path");if(pm==="grow"||pm==="fixed")pathMode=pm;}catch(e){}
+set(start); if(start!==BASE)presetBtns.forEach(x=>x.setAttribute("aria-pressed","false"));
+render();
+</script>
+
+</body></html>
