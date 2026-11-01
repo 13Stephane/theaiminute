@@ -265,6 +265,7 @@ details.paste button { margin-top: 8px; }
           </div>
           <button type="button" id="printcard">Print</button>
           <button type="button" class="quiet" id="clear">Clear my answers</button>
+          <button type="button" class="quiet" id="undo" hidden>Undo the clear</button>
           <p class="status" id="cardstatus"></p>
           <textarea id="manualcopy" aria-label="Text to copy by hand" hidden></textarea>
         </div>
@@ -642,17 +643,25 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     write(EXAMPLE_ANSWERS); renderChecks(); persist();
     setStatus("Example loaded: the fictional Power-to-X case. Replace it with your own opportunity.");
   });
-  var clearArmed = null;
+  var undoState = null, undoTimer = null;
   $("clear").addEventListener("click", function () {
-    var b = $("clear");
-    if (!clearArmed) {
-      b.textContent = "Click again to clear everything";
-      clearArmed = setTimeout(function () { b.textContent = "Clear my answers"; clearArmed = null; }, 4000);
-      return;
-    }
-    clearTimeout(clearArmed); clearArmed = null; b.textContent = "Clear my answers";
+    undoState = JSON.stringify({ answers: read(), feedback: store.feedback || null });
     write({}); store = {}; saveStore(store); renderChecks(); renderFeedback(EXAMPLE_FEEDBACK, true);
-    $("cardstatus").textContent = "Cleared.";
+    if ($("pasteBack")) $("pasteBack").value = "";
+    setStatus("");
+    $("undo").hidden = false;
+    $("cardstatus").textContent = "Your answers are cleared. Undo within 15 seconds if that was a slip.";
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(function () { $("undo").hidden = true; undoState = null; $("cardstatus").textContent = ""; }, 15000);
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); $("name").focus({ preventScroll: true }); } catch (e) { /* older browsers */ }
+  });
+  $("undo").addEventListener("click", function () {
+    if (!undoState) return;
+    var u = JSON.parse(undoState); undoState = null; clearTimeout(undoTimer);
+    write(u.answers); store = { answers: u.answers }; if (u.feedback) store.feedback = u.feedback; saveStore(store);
+    renderChecks();
+    if (u.feedback && Array.isArray(u.feedback.items)) renderFeedback(u.feedback, false); else renderFeedback(EXAMPLE_FEEDBACK, true);
+    $("undo").hidden = true; $("cardstatus").textContent = "Restored.";
   });
   var saveTimer = null;
   function persist() { store.answers = read(); saveStore(store); }
