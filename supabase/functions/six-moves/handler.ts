@@ -46,7 +46,7 @@ export const TASKS: Record<string, Task> = {
     role: "team", maxTokens: 1000, json: true,
     system: () => GM_RULES,
     user: (d) => "The whole game for one team (JSON):\n" + JSON.stringify(d) +
-      "\n\nReply with only a JSON object: {\"moments\": [{\"round\": 1, \"text\": \"one or two sentences\"}, three items, the three moments that mattered most], \"hypothesis\": \"one or two sentences about this team's leadership pattern, ending with: Does that fit?\"}",
+      "\n\nReply with only a JSON object: {\"moments\": [{\"round\": 1, \"text\": \"one or two sentences\"}, three items, the three moments that mattered most], \"hypothesis\": \"one or two sentences about this team's leadership pattern, ending with: Does that fit?\", \"line3\": \"at most two sentences comparing charter line 3 as written with what happened: could an outsider have checked it in 2030, did it say what would make the team stop or pivot, and did the team act on it\"}",
     check: (o) => o && Array.isArray(o.moments) && o.hypothesis,
   },
   console: {
