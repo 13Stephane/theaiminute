@@ -1,7 +1,7 @@
 // Smoke test against the deployed `ai` function.
 //
 //   deno run --allow-net tests/smoke.ts <AI_URL>                 gate checks only, no model calls
-//   deno run --allow-net tests/smoke.ts <AI_URL> <CLASS_CODE>    plus the happy path (about $0.02)
+//   deno run --allow-net tests/smoke.ts <AI_URL> <CLASS_CODE>    plus the happy path (about $0.02, and one to two cents more for elpis.margin)
 //
 // With a class code, switch live AI on (inside its window) first. The happy
 // path uses a fresh device id, so it never eats a real device's allowance.
@@ -135,6 +135,31 @@ if (!status.live) {
       check(`${kind} answers a question`, r.status === 200 && typeof r.body.result === "string",
         r.status === 200 ? `${r.body.result.split(/\s+/).length} words, ${JSON.stringify(r.body.usage)}, $${r.body.cost_usd}` : r);
     }
+
+    // ELPIS 2026, the margin diagnostic, on the page's Power-to-X example
+    const margin = {
+      name: "Vestkyst PtX: green hydrogen from a 300 MW electrolyser near Esbjerg (the fictional game case)",
+      pays: "An anchor offtaker in fertiliser pays per kg of hydrogen, under a ten-year contract",
+      escape: "scarce",
+      mechanism: "One of two approved pipeline slots on the route to the German border until 2031, plus a 300 MW grid connection already granted",
+      months: 36, route: "input",
+      why: "A rival needs its own grid connection and pipeline capacity; the next allocation round is expected in 2029",
+      goodenough: "Electrolyser stacks: several suppliers, prices falling",
+      scarce: "Cheap power hours (about 4,000 a year) and pipeline capacity",
+      approp: "weak",
+      complements: [
+        { name: "Pipeline capacity", type: "cospecialised", owner: "The gas transmission operator", plan: "partner" },
+        { name: "Anchor offtake contract", type: "cospecialised", owner: "A fertiliser producer", plan: "partner" },
+      ],
+      rung: "sign",
+      evidence: "One letter of intent from a fertiliser producer for 8,000 t a year, signed in June 2026",
+    };
+    const mBad = await call({ kind: "elpis.margin", inputs: { ...margin, escape: "magic" } });
+    check("elpis.margin: an unknown escape -> 400", mBad.status === 400, mBad);
+    const m = await call({ kind: "elpis.margin", inputs: margin });
+    check("elpis.margin returns five assessed items", m.status === 200 && m.body.result?.items?.length === 5,
+      m.status === 200 ? `${JSON.stringify(m.body.usage)}, $${m.body.cost_usd}` : m);
+    if (m.status === 200) console.log("      weakest: " + m.body.result.weakest);
 
     console.log("\nThe control room's live log should now show these calls with tokens and cost.");
   }

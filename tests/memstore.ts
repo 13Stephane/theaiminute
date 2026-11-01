@@ -72,7 +72,7 @@ export function fakeModel(log: { model: string; maxTokens: number; prompt: strin
   return (a) => {
     log.push(a);
     const n = (a.prompt.match(/^\d+\. /gm) || []).length;
-    const text = a.prompt.includes("You are a sparring partner") ? floodReply(a.prompt) : a.prompt.includes("Give a second opinion")
+    const text = a.prompt.includes("You are the margin sparring partner") ? marginReply() : a.prompt.includes("You are a sparring partner") ? floodReply(a.prompt) : a.prompt.includes("Give a second opinion")
       ? JSON.stringify({
         tasks: Array.from({ length: n }, (_, k) => ({ i: k + 1, type: ["automate", "augment", "human"][k % 3], time: 10, value: 10, why: "fake view" })),
         disagreements: [{ i: 1, point: "This takes judgement you are underrating." }],
@@ -81,6 +81,20 @@ export function fakeModel(log: { model: string; maxTokens: number; prompt: strin
       : a.prompt.includes("JSON array") ? SAMPLE_TASKS : "Fiscal support arrived fast; inflation is building with a lag.";
     return Promise.resolve({ text, stopReason: "end_turn", inputTokens: 400, outputTokens: 600 });
   };
+}
+
+// A reply in elpis.margin's contract: one JSON object, fenced, as models often send it.
+function marginReply(): string {
+  const keys = ["escape", "speed", "profit_moving", "complements", "demand"];
+  return "```json\n" + JSON.stringify({
+    restatement: "Our margin rests on a scarce position, because a rival needs the same slots; a competent rival needs about [unknown] months to secure them.",
+    items: keys.map((key, k) => ({
+      key, verdict: ["specific", "vague", "missing"][k % 3], challenge: "Fake: what would a rival do first?",
+      test: "Fake: ask one buyer to pay for a pilot within 90 days.", proof: "Fake: a signed purchase order.",
+    })),
+    weakest: "Fake: demand, because nobody has paid yet.",
+    next_step: "Fake: ask for a paid pilot this week. Owner: the commercial lead.",
+  }) + "\n```";
 }
 
 // A reply in 08's contract: prose under five headings, then the json block.

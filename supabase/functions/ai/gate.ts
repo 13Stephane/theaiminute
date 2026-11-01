@@ -11,8 +11,9 @@ import { corsHeaders, originAllowed } from "../_shared/cors.ts";
 import { deriveCode, normalizeCode, sameCode } from "../_shared/classcode.ts";
 import { costUsd, EFFORT, type Effort, InputError, KINDS as BASE_KINDS, MODEL } from "./templates.ts";
 import { CASE_KINDS } from "./cases.ts";
+import { ELPIS_KINDS } from "./elpis.ts";
 
-const KINDS = { ...BASE_KINDS, ...CASE_KINDS };
+const KINDS = { ...BASE_KINDS, ...CASE_KINDS, ...ELPIS_KINDS };
 
 export type Control = {
   enabled: boolean;

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://www.theaiminute.blog/artifacts/elpis_margin_diagnostic.html">
+<meta name="description" content="ELPIS 2026, AI move 1: four questions about what one opportunity's margin will rest on, plus the demand you can show, tested by a sparring partner.">
+<link rel="icon" href="https://www.theaiminute.blog/logo.png">
+<title>Margin diagnostic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* ELPIS 2026 (DTU), AI move 1: the margin diagnostic. A working sheet: questions on the left, a sticky test bench
+   on the right (precision check, the sparring partner, the card). One column on phones. DTU navy with ELPIS orange,
+   as in the course decks. Live AI through the course proxy (kind elpis.margin), or a prompt for any assistant. */
+:root {
+  --bg: #F4F5FA;
+  --surface: #FFFFFF;
+  --ink: #030F4F;
+  --muted: #555A73;
+  --rule: #D6D9E7;
+  --label: #2F3EEA;
+  --accent: #F9A35F;
+  --accent-ink: #A8550F;
+  --accent-soft: #FDEBDB;
+  --ok: #1F7A4D;
+  --ok-soft: #E1F2E8;
+  --miss: #B3261E;
+  --miss-soft: #F9E1DF;
+  --focus: #2F3EEA;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #070B26; --surface: #0E143A; --ink: #E7E9F6; --muted: #A3A8C6; --rule: #262D5E; --label: #8C95F0;
+    --accent: #F9A35F; --accent-ink: #F9A35F; --accent-soft: #2A1E1A; --ok: #6CC79A; --ok-soft: #12291F;
+    --miss: #F08A82; --miss-soft: #2D1517; --focus: #8C95F0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #070B26; --surface: #0E143A; --ink: #E7E9F6; --muted: #A3A8C6; --rule: #262D5E; --label: #8C95F0;
+  --accent: #F9A35F; --accent-ink: #F9A35F; --accent-soft: #2A1E1A; --ok: #6CC79A; --ok-soft: #12291F;
+  --miss: #F08A82; --miss-soft: #2D1517; --focus: #8C95F0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+header.top { padding-block: 28px 20px; border-bottom: 3px solid var(--ink); display: grid; gap: 10px; }
+.eyebrow { font-family: var(--f-display); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.02; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 .tick { color: var(--accent-ink); }
+.lede { max-width: 68ch; margin: 0; font-size: 1.06rem; }
+.rule-note { font-size: 0.92rem; color: var(--muted); margin: 0; }
+.rule-note b { color: var(--ink); }
+main.grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 28px; margin-top: 24px; align-items: start; }
+@media (max-width: 920px) { main.grid { grid-template-columns: minmax(0, 1fr); } }
+form { display: grid; gap: 18px; min-width: 0; }
+fieldset { border: 0; margin: 0; padding: 18px 20px 20px; background: var(--surface); border-top: 4px solid var(--ink); display: grid; gap: 12px; min-width: 0; }
+fieldset.opp { border-top-color: var(--accent); }
+legend { padding: 0; display: contents; }
+.q-head { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; }
+.q-num { font-family: var(--f-display); font-weight: 800; font-size: 1.5rem; color: var(--accent-ink); line-height: 1; font-variant-numeric: tabular-nums; }
+.q-title { font-family: var(--f-display); font-weight: 700; font-size: 1.22rem; line-height: 1.2; margin: 0; }
+.q-units { grid-column: 2; font-size: 0.88rem; color: var(--muted); margin: 0; }
+label, .lbl { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 4px; }
+.hint { font-weight: 400; color: var(--muted); }
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; font: inherit; font-size: 0.98rem; color: var(--ink); background: var(--bg); border: 1px solid var(--rule);
+  border-radius: 3px; padding: 9px 11px;
+}
+textarea { min-height: 70px; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, .choice input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.row3 { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 12px; }
+@media (max-width: 560px) { .row2, .row3 { grid-template-columns: minmax(0, 1fr); } }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.choice { position: relative; }
+.choice input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.choice span { display: grid; gap: 2px; height: 100%; padding: 10px 12px; border: 1px solid var(--rule); background: var(--bg); border-radius: 3px; cursor: pointer; }
+.choice b { font-family: var(--f-display); font-weight: 700; font-size: 0.98rem; }
+.choice small { color: var(--muted); font-size: 0.8rem; line-height: 1.3; }
+.choice input:checked + span { border-color: var(--ink); background: var(--surface); box-shadow: inset 4px 0 0 var(--accent); }
+.choice.not-escape input:checked + span { box-shadow: inset 4px 0 0 var(--miss); }
+.ladder { display: grid; gap: 6px; }
+.rung { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); align-items: stretch; }
+.rung .lvl { font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; justify-content: center; border-right: 2px solid var(--rule); }
+.rung .choice span { margin-left: calc(var(--i) * 14px); }
+.comp { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.85fr); gap: 8px; }
+.comp-head { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+@media (max-width: 560px) { .comp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .comp-head { display: none; } }
+aside.bench { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 920px) { aside.bench { position: static; } }
+.panel { background: var(--surface); padding: 16px 18px 18px; border-top: 4px solid var(--rule); display: grid; gap: 10px; min-width: 0; }
+.panel h2 { font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; margin: 0; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.count { font-family: var(--f-mono); font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.checks li { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: 8px; font-size: 0.9rem; align-items: start; }
+.pill { font-family: var(--f-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 2px; text-align: center; font-weight: 500; }
+.pill.miss, .pill.missing { background: var(--miss-soft); color: var(--miss); }
+.pill.warn, .pill.vague { background: var(--accent-soft); color: var(--accent-ink); }
+.pill.ok, .pill.specific { background: var(--ok-soft); color: var(--ok); }
+.actions { display: grid; gap: 8px; }
+.actions .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+button { font: inherit; font-weight: 600; font-size: 0.95rem; border-radius: 3px; padding: 10px 14px; cursor: pointer; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #030F4F; font-family: var(--f-display); font-weight: 700; font-size: 1.02rem; }
+button.quiet { border-color: var(--rule); color: var(--muted); font-weight: 500; }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+.status { font-size: 0.88rem; color: var(--muted); min-height: 1.3em; margin: 0; }
+.status.err { color: var(--miss); }
+.feedback { display: grid; gap: 10px; }
+.tag-example { justify-self: start; font-family: var(--f-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-ink); border: 1px solid var(--accent); padding: 2px 6px; }
+.restate { font-family: var(--f-display); font-weight: 500; font-size: 1.02rem; line-height: 1.35; border-left: 4px solid var(--accent); padding: 4px 0 4px 12px; margin: 0; }
+.fb { border-top: 1px solid var(--rule); padding-top: 10px; display: grid; gap: 6px; }
+.fb h3 { margin: 0; font-size: 0.98rem; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.fb dl { margin: 0; display: grid; grid-template-columns: 6.6rem minmax(0, 1fr); gap: 4px 10px; font-size: 0.9rem; }
+.fb dt { color: var(--muted); font-weight: 500; }
+.fb dd { margin: 0; }
+.weak { background: var(--bg); padding: 10px 12px; font-size: 0.92rem; display: grid; gap: 6px; }
+.raw { white-space: pre-wrap; font-family: var(--f-mono); font-size: 0.8rem; background: var(--bg); padding: 10px; overflow-x: auto; max-height: 320px; }
+.fallback { font-size: 0.86rem; color: var(--muted); margin: 0; }
+footer.note { margin-top: 28px; font-size: 0.82rem; color: var(--muted); max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.aibadge { justify-self: start; font-family: var(--f-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--rule); }
+.aibadge.on { background: var(--accent); border-color: var(--accent); color: #030F4F; }
+.live { display: grid; gap: 8px; }
+.live .code { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.live .code input { font-family: var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; }
+details.paste summary { cursor: pointer; font-size: 0.86rem; color: var(--muted); }
+details.paste textarea { margin-top: 8px; min-height: 90px; font-family: var(--f-mono); font-size: 0.82rem; }
+details.paste button { margin-top: 8px; }
+@media print {
+  body { background: #fff; color: #000; padding: 0; }
+  main.grid { grid-template-columns: minmax(0, 1fr); }
+  aside.bench { position: static; }
+  button, .status, .fallback, details.paste, .aibadge, .live, #checkspanel, textarea#manualcopy { display: none !important; }
+  fieldset, .panel { break-inside: avoid; border-top-width: 2px; }
+  input, select, textarea { border: 0; padding: 2px 0; background: transparent; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">ELPIS 2026 · AI move 1 · Tuesday evening, about 20 minutes</div>
+    <h1>Margin diagnostic<span class="tick">.</span></h1>
+    <p class="lede">Four questions about one real opportunity, answered with units, plus the demand you can show. A sparring partner then tests each claim: the question a rival would ask, the cheapest test within 90 days, and what would count as proof. Bring the card on Wednesday.</p>
+    <p class="rule-note"><b>Describe the opportunity as you would in public:</b> no confidential figures or names. Your answers stay in this browser until you ask the sparring partner; then the course server logs them with the call and sends them to Claude.</p>
+  </header>
+
+  <main class="grid">
+    <form id="sheet" novalidate>
+      <fieldset class="opp">
+        <legend><span class="q-head"><span class="q-num">0</span><span class="q-title">The opportunity</span><span class="q-units">One line a stranger would understand, then who pays for what.</span></span></legend>
+        <div><label for="name">The opportunity</label><input type="text" id="name" maxlength="160" placeholder="Green hydrogen from a 300 MW electrolyser, sold to fertiliser makers"></div>
+        <div><label for="pays">Who pays, for what <span class="hint">· the unit you will charge for</span></label><input type="text" id="pays" maxlength="200" placeholder="An anchor offtaker pays per kg, under a ten-year contract"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="q-head"><span class="q-num">1</span><span class="q-title">What will the price rest on?</span><span class="q-units">Answer in: an escape and its mechanism, with something a sceptic could check.</span></span></legend>
+        <div class="choices" role="radiogroup" aria-label="What the price will rest on">
+          <label class="choice"><input type="radio" name="escape" id="esc-diff" value="differentiation"><span><b>Differentiation</b><small>Your unit is no substitute for a rival's</small></span></label>
+          <label class="choice"><input type="radio" name="escape" id="esc-fence" value="fence"><span><b>A fence</b><small>Buyers kept apart, each charged what they bear</small></span></label>
+          <label class="choice"><input type="radio" name="escape" id="esc-scarce" value="scarce"><span><b>A scarce position</b><small>What rivals cannot replicate</small></span></label>
+          <label class="choice"><input type="radio" name="escape" id="esc-none" value="none"><span><b>Nothing yet</b><small>An honest answer, for now</small></span></label>
+          <label class="choice not-escape"><input type="radio" name="escape" id="esc-cost" value="cost"><span><b>A cost advantage</b><small>Not an escape on its own</small></span></label>
+        </div>
+        <div><label for="mechanism">The mechanism, with units</label><textarea id="mechanism" maxlength="600" placeholder="A process patent granted in two of three target markets; freedom to operate checked in the third"></textarea></div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="q-head"><span class="q-num">2</span><span class="q-title">How long will the escape hold?</span><span class="q-units">Answer in: months until a competent rival undoes it, and how.</span></span></legend>
+        <div class="row3">
+          <div><label for="months">Months</label><input type="number" id="months" min="0" max="999" step="1" inputmode="numeric" placeholder="18"></div>
+          <div><label for="route">The rival's most likely route</label>
+            <select id="route"><option value="">Choose a route</option><option value="copy">Copy it</option><option value="invent">Invent around it</option><option value="input">Build or buy the key input</option><option value="trade">Trade around the fence</option><option value="other">Another route (say which below)</option></select></div>
+        </div>
+        <div><label for="why">Why that long</label><textarea id="why" maxlength="600" placeholder="Eighteen months to invent around the patent; the key input can be bought from two suppliers"></textarea></div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="q-head"><span class="q-num">3</span><span class="q-title">Where is the profit moving?</span><span class="q-units">Answer in: the layer becoming good enough, and the adjacent one becoming scarce.</span></span></legend>
+        <div class="row2">
+          <div><label for="goodenough">Becoming good enough</label><textarea id="goodenough" maxlength="300" placeholder="Sensors: several suppliers, prices falling"></textarea></div>
+          <div><label for="scarce">Becoming scarce</label><textarea id="scarce" maxlength="300" placeholder="The validated data that calibrates them"></textarea></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="q-head"><span class="q-num">4</span><span class="q-title">Who owns the complements?</span><span class="q-units">Answer in: appropriability, then each complement: generic or cospecialised, owner, build, partner or buy.</span></span></legend>
+        <div>
+          <div><label for="approp">Appropriability</label><select id="approp"><option value="">Choose</option><option value="tight">Tight: hard to copy, well protected</option><option value="weak">Weak: copyable, or protection lapses</option></select></div>
+        </div>
+        <div class="comp" aria-hidden="true"><span class="comp-head">What it must pass through</span><span class="comp-head">Generic or cospecialised</span><span class="comp-head">Who owns it today</span><span class="comp-head">Build, partner, buy</span></div>
+        <div class="comp">
+          <input type="text" id="c1name" maxlength="120" aria-label="Complement 1" placeholder="Regulatory clearance">
+          <select id="c1type" aria-label="Complement 1 type"><option value="">Type</option><option value="generic">Generic</option><option value="cospecialised">Cospecialised</option></select>
+          <input type="text" id="c1owner" maxlength="120" aria-label="Complement 1 owner" placeholder="The distributor">
+          <select id="c1plan" aria-label="Complement 1 plan"><option value="">Plan</option><option value="build">Build</option><option value="partner">Partner</option><option value="buy">Buy</option></select>
+        </div>
+        <div class="comp">
+          <input type="text" id="c2name" maxlength="120" aria-label="Complement 2" placeholder="Hospital sales channel">
+          <select id="c2type" aria-label="Complement 2 type"><option value="">Type</option><option value="generic">Generic</option><option value="cospecialised">Cospecialised</option></select>
+          <input type="text" id="c2owner" maxlength="120" aria-label="Complement 2 owner" placeholder="Two incumbents">
+          <select id="c2plan" aria-label="Complement 2 plan"><option value="">Plan</option><option value="build">Build</option><option value="partner">Partner</option><option value="buy">Buy</option></select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="q-head"><span class="q-num">5</span><span class="q-title">Is there enough demand?</span><span class="q-units">Mark the highest rung you have reached. What people say is a hypothesis; what they pay is evidence.</span></span></legend>
+        <div class="ladder" role="radiogroup" aria-label="Highest rung of demand evidence">
+          <div class="rung" style="--i:4"><span class="lvl">5</span><label class="choice"><input type="radio" name="rung" id="r5" value="commit"><span><b>They commit volume and price</b><small>An offtake, a framework contract</small></span></label></div>
+          <div class="rung" style="--i:3"><span class="lvl">4</span><label class="choice"><input type="radio" name="rung" id="r4" value="pay"><span><b>They pay something</b><small>A paid pilot, a deposit, a pre-order</small></span></label></div>
+          <div class="rung" style="--i:2"><span class="lvl">3</span><label class="choice"><input type="radio" name="rung" id="r3" value="sign"><span><b>They sign something</b><small>A letter of intent, a memorandum</small></span></label></div>
+          <div class="rung" style="--i:1"><span class="lvl">2</span><label class="choice"><input type="radio" name="rung" id="r2" value="time"><span><b>They give time</b><small>A workshop, data access, a joint specification</small></span></label></div>
+          <div class="rung" style="--i:0"><span class="lvl">1</span><label class="choice"><input type="radio" name="rung" id="r1" value="say"><span><b>They say they like it</b><small>Interviews, surveys</small></span></label></div>
+        </div>
+        <div><label for="evidence">The evidence <span class="hint">· who, how much, when</span></label><textarea id="evidence" maxlength="600" placeholder="One letter of intent from a fertiliser producer for 8,000 t a year, signed in June 2026"></textarea></div>
+      </fieldset>
+    </form>
+
+    <aside class="bench" aria-label="Test bench">
+      <section class="panel" id="checkspanel" aria-live="polite">
+        <h2>Precision check <span class="count" id="checkcount"></span></h2>
+        <ul class="checks" id="checks"></ul>
+      </section>
+
+      <section class="panel">
+        <div class="actions">
+          <span class="aibadge" id="aiBadge" hidden>Offline mode</span>
+          <div class="live" id="liveBox" hidden>
+            <div class="code"><label for="classCode">Class code <span class="hint">· on the slide</span></label><input type="text" id="classCode" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+            <button type="button" class="primary" id="ask">Ask the sparring partner</button>
+            <button type="button" id="stop" hidden>Stop</button>
+          </div>
+          <p class="status" id="status" aria-live="polite"></p>
+          <div class="two">
+            <button type="button" id="copyprompt">Copy the prompt for any AI</button>
+            <button type="button" id="example">Load the Power-to-X example</button>
+          </div>
+          <p class="fallback" id="fallback">Live feedback is not available just now. Copy the prompt, paste it into any AI assistant, and paste its reply below to put it on your card.</p>
+          <details class="paste" id="pasteWrap">
+            <summary>Used another assistant? Paste its whole reply here</summary>
+            <textarea id="pasteBack" aria-label="The assistant's reply" placeholder="Paste the assistant's full reply"></textarea>
+            <button type="button" id="readIn">Add it to my card</button>
+          </details>
+        </div>
+      </section>
+
+      <section class="panel" id="result" aria-live="polite"></section>
+
+      <section class="panel">
+        <div class="actions">
+          <div class="two">
+            <button type="button" id="savecard">Save the card</button>
+            <button type="button" id="copycard">Copy the card</button>
+          </div>
+          <button type="button" id="printcard">Print</button>
+          <button type="button" class="quiet" id="clear">Clear my answers</button>
+          <p class="status" id="cardstatus"></p>
+          <textarea id="manualcopy" aria-label="Text to copy by hand" hidden></textarea>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="note">The precision check runs in this page, with no AI. The sparring partner tests claims; it does not know your market, and it is told not to invent facts. Keep the judgement yours: strike anything you cannot verify. ELPIS 2026, DTU.</footer>
+</div>
+
+<script>
+const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // the course proxy. Empty: copy-a-prompt only.
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var STORE_KEY = "elpis-margin-v1";
+  var FIELDS = ["name", "pays", "mechanism", "months", "route", "why", "goodenough", "scarce", "approp",
+                "c1name", "c1type", "c1owner", "c1plan", "c2name", "c2type", "c2owner", "c2plan", "evidence"];
+  var LINES = ["name", "pays", "c1name", "c1owner", "c2name", "c2owner"];   // single-line fields
+  var ITEM_LABELS = { escape: "1 · What the price rests on", speed: "2 · How long it holds", profit_moving: "3 · Where profit is moving", complements: "4 · The complements", demand: "5 · Demand" };
+  var FEELING = ["unique", "superior", "hard to copy", "difficult to copy", "best-in-class", "best in class", "world-class", "world class", "cutting-edge", "cutting edge", "game-changing", "game changer", "disruptive", "revolutionary", "unmatched", "second to none", "first-mover", "first mover"];
+
+  /* ---- the prompt: the same text the server builds (supabase/functions/ai/elpis.ts, tests/elpis.test.ts); no page elements in here ---- */
+  var SYSTEM_PROMPT = "You are the margin sparring partner for ELPIS, an executive programme at DTU on leading industrial science. A participant describes one real opportunity and answers questions about what its margin will rest on. Your job is to test the claims, not to praise or rewrite the idea.\n\n" +
+    "Framework, in the programme's terms:\n" +
+    "- A margin survives only where one of three conditions of competitive pricing is broken: fungibility (escape: differentiation), arbitrage (escape: a fence between buyers), free entry (escape: a scarce position). A cost advantage is not an escape: it earns a rent only while a costlier producer still sets the price.\n" +
+    "- Teece: who profits depends on appropriability (tight or weak) and on who owns the complementary assets (generic or cospecialised). A partner who holds a cospecialised asset is a claimant on the margin.\n" +
+    "- Christensen and Raynor: when a layer becomes good enough and modular, margins move to the adjacent layer that is still hard to copy. AI floods some layers; the complement collects.\n" +
+    "- Demand: what people say is a hypothesis; what they pay or commit is evidence. Rungs: say they like it, give time, sign something, pay something, commit volume and price.\n\n" +
+    "Assess five items, with these keys: \"escape\", \"speed\", \"profit_moving\", \"complements\", \"demand\". For each give:\n" +
+    "- \"verdict\": \"specific\", \"vague\" or \"missing\". Specific means stated with a mechanism and units a sceptic could check.\n" +
+    "- \"challenge\": the one question a competent rival or a sceptical board member would ask. One sentence.\n" +
+    "- \"test\": the cheapest test that would confirm or refute the claim within 90 days. One or two sentences.\n" +
+    "- \"proof\": what evidence would count as proof, and the type of source where it would be found (for example a patent search in Espacenet, standards-body records, regulator filings, annual reports, a signed letter of intent). Name types of source; do not invent specific documents, figures or citations.\n\n" +
+    "Then give:\n" +
+    "- \"restatement\": the margin claim restated in one sentence with units, in the form \"Our margin rests on ..., because ...; a competent rival needs about ... months to ...\". Where the participant gave no figure, write [unknown] rather than inventing one.\n" +
+    "- \"weakest\": which item is the weakest link, and why, in at most two sentences.\n" +
+    "- \"next_step\": one action for the next seven days, with the role that should own it.\n\n" +
+    "Rules: be direct and concrete; no flattery and no exclamation marks; at most 45 words per field. Do not assert facts about real companies, markets or patents that the participant did not give; if you rely on general knowledge, say \"from general knowledge\" and keep to widely known facts. Answer in the language the participant wrote in.";
+
+  var FORMAT = "\n\nReply with only one JSON object and no other text, in exactly this shape:\n" +
+    "{\"restatement\": \"...\", \"items\": [{\"key\": \"escape\", \"verdict\": \"specific|vague|missing\", \"challenge\": \"...\", \"test\": \"...\", \"proof\": \"...\"}, " +
+    "{\"key\": \"speed\", ...}, {\"key\": \"profit_moving\", ...}, {\"key\": \"complements\", ...}, {\"key\": \"demand\", ...}], \"weakest\": \"...\", \"next_step\": \"...\"}";
+
+  var ESCAPES = { differentiation: "Differentiation", fence: "A fence", scarce: "A scarce position", none: "Nothing yet", cost: "A cost advantage" };
+  var ROUTES = { copy: "copy it", invent: "invent around it", input: "build or buy the key input", trade: "trade around the fence", other: "another route" };
+  var RUNGS = { say: "1 · they say they like it", time: "2 · they give time", sign: "3 · they sign something", pay: "4 · they pay something", commit: "5 · they commit volume and price" };
+
+  // The sheet's answers, as the server takes them: months a whole number or null, the complements as a pair.
+  function inputsFrom(o) {
+    return {
+      name: o.name, pays: o.pays, escape: o.escape, mechanism: o.mechanism,
+      months: /^\d{1,3}$/.test(o.months) ? parseInt(o.months, 10) : null,
+      route: o.route, why: o.why, goodenough: o.goodenough, scarce: o.scarce, approp: o.approp,
+      complements: [1, 2].map(function (n) {
+        return { name: o["c" + n + "name"], type: o["c" + n + "type"], owner: o["c" + n + "owner"], plan: o["c" + n + "plan"] };
+      }),
+      rung: o.rung, evidence: o.evidence
+    };
+  }
+  function participantText(i) {
+    var lines = [];
+    lines.push("Opportunity: " + (i.name || "[not given]"));
+    lines.push("Who pays, for what: " + (i.pays || "[not given]"));
+    lines.push("1. What the price rests on: " + (ESCAPES[i.escape] || "[not given]") + ". Mechanism: " + (i.mechanism || "[not given]"));
+    lines.push("2. How long it holds: " + (i.months !== null ? i.months + " months" : "[not given]") + "; the rival's most likely route: " + (ROUTES[i.route] || "[not given]") + ". Why: " + (i.why || "[not given]"));
+    lines.push("3. Where profit is moving. Layer becoming good enough: " + (i.goodenough || "[not given]") + ". Adjacent layer becoming scarce: " + (i.scarce || "[not given]"));
+    var comps = i.complements.filter(function (c) { return c.name; }).map(function (c) {
+      return c.name + " (" + (c.type || "type not given") + "; owned by " + (c.owner || "[owner not given]") + "; plan: " + (c.plan || "[not given]") + ")";
+    });
+    lines.push("4. Complements. Appropriability: " + (i.approp || "[not given]") + ". " + (comps.length ? comps.join("; ") : "[no complement named]"));
+    lines.push("5. Demand. Highest rung reached: " + (RUNGS[i.rung] || "[not given]") + ". Evidence: " + (i.evidence || "[not given]"));
+    return lines.join("\n");
+  }
+  function marginPrompt(i) { return SYSTEM_PROMPT + "\n\nThe participant's answers:\n\n" + participantText(i) + FORMAT; }
+  /* ---- end of the prompt ---- */
+
+  var EXAMPLE_ANSWERS = {
+    name: "Vestkyst PtX: green hydrogen from a 300 MW electrolyser near Esbjerg (the fictional game case)",
+    pays: "An anchor offtaker in fertiliser pays per kg of hydrogen, under a ten-year contract",
+    escape: "scarce",
+    mechanism: "One of two approved pipeline slots on the route to the German border until 2031, plus a 300 MW grid connection already granted",
+    months: "36", route: "input",
+    why: "A rival needs its own grid connection and pipeline capacity; the next allocation round is expected in 2029",
+    goodenough: "Electrolyser stacks: several suppliers, prices falling",
+    scarce: "Cheap power hours (about 4,000 a year) and pipeline capacity",
+    approp: "weak",
+    c1name: "Pipeline capacity", c1type: "cospecialised", c1owner: "The gas transmission operator", c1plan: "partner",
+    c2name: "Anchor offtake contract", c2type: "cospecialised", c2owner: "A fertiliser producer", c2plan: "partner",
+    rung: "sign",
+    evidence: "One letter of intent from a fertiliser producer for 8,000 t a year, signed in June 2026"
+  };
+  var EXAMPLE_FEEDBACK = {
+    restatement: "Our margin rests on a scarce position, one of two approved pipeline slots and a granted grid connection, because a rival needs both; a competent rival needs about 36 months to secure them.",
+    items: [
+      { key: "escape", verdict: "specific", challenge: "What stops the operator from approving a third slot when demand grows?", test: "Ask the operator in writing how slots are allocated after 2031, and on what criteria.", proof: "The operator's published capacity-allocation rules and the regulator's decisions on the route." },
+      { key: "speed", verdict: "vague", challenge: "Thirty-six months from when, and what if a rival buys a slot holder instead of waiting?", test: "Map the current slot holders and ask an adviser what acquiring one would cost.", proof: "Ownership records and recent transactions for comparable infrastructure." },
+      { key: "profit_moving", verdict: "specific", challenge: "If stacks commoditise, does cheap power not become the scarce layer you do not own?", test: "Request indicative ten-year power purchase quotes for 4,000 hours a year from two suppliers.", proof: "Signed term sheets or written indicative quotes." },
+      { key: "complements", verdict: "vague", challenge: "The offtaker holds a cospecialised asset: what stops it from taking most of the margin?", test: "Draft the offtake price formula and test it on three power-price scenarios.", proof: "A term sheet with a floor price and a volume commitment." },
+      { key: "demand", verdict: "vague", challenge: "A letter of intent costs the buyer nothing: who has paid or committed volume?", test: "Ask the anchor offtaker to co-fund a paid feasibility study within 90 days.", proof: "A signed paid study or a framework contract with volume and price." }
+    ],
+    weakest: "Demand: one unpaid letter of intent cannot carry a 300 MW investment, and the margin depends on a price the buyer has not committed to.",
+    next_step: "Ask the anchor offtaker for a paid feasibility study this week. Owner: the commercial lead."
+  };
+
+  /* ---------- storage (per browser, best effort) ---------- */
+  function loadStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function saveStore(obj) { try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch (e) { /* storage unavailable */ } }
+  var store = loadStore();
+
+  /* ---------- read and write the sheet ---------- */
+  function radio(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ""; }
+  function setRadio(name, value) { document.querySelectorAll('input[name="' + name + '"]').forEach(function (el) { el.checked = (el.value === value); }); }
+  // Control characters out (tabs to spaces on single lines), so the server takes what the page shows.
+  function clean(f, v) {
+    v = String(v || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "");
+    if (LINES.indexOf(f) >= 0) v = v.replace(/[\t\r\n]+/g, " ");
+    return v.trim();
+  }
+  function read() {
+    var o = {};
+    FIELDS.forEach(function (f) { o[f] = clean(f, $(f).value); });
+    o.escape = radio("escape"); o.rung = radio("rung");
+    return o;
+  }
+  function write(o) {
+    FIELDS.forEach(function (f) { $(f).value = o[f] || ""; });
+    setRadio("escape", o.escape || ""); setRadio("rung", o.rung || "");
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function hasDigit(s) { return /\d/.test(s || ""); }
+
+  /* ---------- the precision check, no AI ---------- */
+  function check(o) {
+    var out = [];
+    function add(level, text) { out.push({ level: level, text: text }); }
+    if (!o.name) add("miss", "Name the opportunity in one line.");
+    if (!o.pays) add("warn", "Say who pays, and for what unit.");
+    if (!o.escape) add("miss", "Question 1: choose what the price will rest on.");
+    else if (o.escape === "cost") add("warn", "A cost advantage is not an escape: it earns a rent only while a costlier producer still sets the price. Which escape will hold once you are the cheapest?");
+    else if (o.escape === "none") add("warn", "Nothing yet is an honest answer. Say which escape you will build first, and by when.");
+    if (o.escape && o.escape !== "none" && !hasDigit(o.mechanism)) add("warn", "Question 1: add something a sceptic could check, such as a number of markets, a share, a count or a date.");
+    if (!o.months) add("miss", "Question 2: how many months would a competent rival need?");
+    else if (!/^\d{1,3}$/.test(o.months)) add("warn", "Question 2: give the months as a whole number, 0 to 999.");
+    if (!o.route) add("warn", "Question 2: name the route a rival would most likely take.");
+    if (!o.goodenough || !o.scarce) add("warn", "Question 3: name the layer becoming good enough and the one becoming scarce.");
+    if (!o.approp) add("warn", "Question 4: is appropriability tight or weak?");
+    var named = 0;
+    [["c1name", "c1type", "c1owner", "c1plan"], ["c2name", "c2type", "c2owner", "c2plan"]].forEach(function (c) {
+      if (!o[c[0]]) return;
+      named++;
+      if (!o[c[2]]) add("warn", "Question 4: who owns “" + o[c[0]] + "” today?");
+      if (!o[c[1]]) add("warn", "Question 4: is “" + o[c[0]] + "” generic or cospecialised?");
+      if (!o[c[3]]) add("warn", "Question 4: build, partner or buy “" + o[c[0]] + "”?");
+    });
+    if (!named) add("miss", "Question 4: name at least one thing the opportunity must pass through to reach a paying customer.");
+    if (!o.rung) add("miss", "Question 5: mark the highest rung of demand you have reached.");
+    else if (o.rung === "say") add("warn", "Demand sits on the bottom rung: what people say is a hypothesis. What could you ask for that costs them something?");
+    if (o.rung && !hasDigit(o.evidence)) add("warn", "Question 5: give the evidence with who, how much and when.");
+    var text = [o.name, o.pays, o.mechanism, o.why, o.goodenough, o.scarce, o.evidence].join(" ").toLowerCase();
+    var found = FEELING.filter(function (w) { return text.indexOf(w) >= 0; });
+    if (found.length) add("warn", "Feeling words: " + found.map(function (w) { return "“" + w + "”"; }).join(", ") + ". Replace each with a mechanism and units.");
+    if (!out.length) add("ok", "No gaps this page can see. Now ask what a rival would ask.");
+    return out;
+  }
+  function renderChecks() {
+    var o = read(), list = check(o);
+    var gaps = list.filter(function (x) { return x.level !== "ok"; }).length;
+    $("checkcount").textContent = gaps ? gaps + (gaps === 1 ? " gap" : " gaps") : "ready";
+    $("checks").innerHTML = list.map(function (x) {
+      var word = { miss: "missing", warn: "vague", ok: "ready" }[x.level];
+      return '<li><span class="pill ' + x.level + '">' + word + "</span><span>" + esc(x.text) + "</span></li>";
+    }).join("");
+  }
+
+  /* ---------- feedback ---------- */
+  function renderFeedback(fb, isExample) {
+    var r = $("result");
+    if (!fb || !Array.isArray(fb.items)) { r.innerHTML = ""; return; }
+    var order = ["escape", "speed", "profit_moving", "complements", "demand"];
+    var items = fb.items.slice().sort(function (a, b) { return order.indexOf(a.key) - order.indexOf(b.key); }).map(function (it) {
+      var v = ["specific", "vague", "missing"].indexOf(it.verdict) >= 0 ? it.verdict : "vague";
+      return '<div class="fb"><h3><span>' + esc(ITEM_LABELS[it.key] || it.key) + '</span><span class="pill ' + v + '">' + esc(v) + "</span></h3>" +
+        "<dl><dt>A rival asks</dt><dd>" + esc(it.challenge) + "</dd><dt>Cheapest test</dt><dd>" + esc(it.test) + "</dd><dt>Proof would be</dt><dd>" + esc(it.proof) + "</dd></dl></div>";
+    }).join("");
+    r.innerHTML = '<div class="feedback">' +
+      (isExample ? '<span class="tag-example">Example · the fictional Power-to-X case</span>' : "") +
+      "<h2>" + (isExample ? "What the feedback looks like" : "Feedback from the sparring partner") + "</h2>" +
+      '<p class="restate">' + esc(fb.restatement) + "</p>" + items +
+      '<div class="weak"><div><b>Weakest link.</b> ' + esc(fb.weakest) + "</div><div><b>In the next seven days.</b> " + esc(fb.next_step) + "</div></div></div>";
+  }
+  function renderRaw(text) {
+    $("result").innerHTML = '<div class="feedback"><h2>Feedback, as written</h2><div class="raw">' + esc(text) + "</div></div>";
+  }
+  // A reply pasted from any assistant: the JSON object in it, if there is one.
+  function readReply(text) {
+    var t = String(text || "").trim().replace(/```json|```/g, "").trim();
+    var a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a < 0 || b <= a) return null;
+    try { var o = JSON.parse(t.slice(a, b + 1)); return o && Array.isArray(o.items) ? o : null; } catch (e) { return null; }
+  }
+
+  /* ---------- status line ---------- */
+  function setStatus(t, isErr) { var s = $("status"); s.textContent = t; s.className = "status" + (isErr ? " err" : ""); }
+
+  /* ---------- live AI, through the course proxy ---------- */
+  var LIVE_LIMIT = 6;   // calls per device per hour; the server holds the same number
+  var CALLS = [];       // a soft guard in this page
+  function callsLeft() { var t = Date.now(); while (CALLS.length && t - CALLS[0] > 3600000) CALLS.shift(); return LIVE_LIMIT - CALLS.length; }
+  var AI = { live: false, reason: "off" }, AI_DEVICE = null;
+  function aiStore(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } return null; }
+  function aiDevice() {
+    if (AI_DEVICE) return AI_DEVICE;
+    var d = aiStore("aim_device");
+    if (!d || !/^[A-Za-z0-9_-]{8,64}$/.test(d)) {
+      d = Array.from(crypto.getRandomValues(new Uint8Array(12)), function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+      aiStore("aim_device", d);
+    }
+    return AI_DEVICE = d;
+  }
+  var AI_WHY = {
+    "off": "Live AI is off", "outside window": "Live AI is outside today’s session hours",
+    "class code": "That class code was not accepted", "budget": "Today’s live AI budget is used up",
+    "rate": "This device has used its " + LIVE_LIMIT + " calls for the hour",
+    "inputs": "The server could not take these answers: shorten the longest ones",
+    "kind": "The course server does not know this page yet", "device": "This browser could not identify itself; reload the page",
+    "origin": "Live AI only works on theaiminute.blog", "network": "Couldn’t reach the live AI",
+    "upstream": "Claude did not answer", "refused": "Claude declined these answers; rephrase them",
+    "truncated": "The answer ran too long and was cut off", "bad output": "The answer came back in an unexpected shape",
+    "unavailable": "Live AI is unavailable"
+  };
+  function aiWhy(r) { return AI_WHY[r] || "The sparring partner did not answer"; }
+  // A request that hangs must not hold the page: give up after `ms`, or when Stop is pressed.
+  function aiFetch(url, opts, ms, ctl) {
+    var c = ctl || new AbortController(), t = setTimeout(function () { c.abort(); }, ms);
+    opts.signal = c.signal;
+    return fetch(url, opts).finally(function () { clearTimeout(t); });
+  }
+  function showLive() {
+    $("aiBadge").hidden = !AI_URL;
+    $("aiBadge").textContent = AI.live ? "Live AI on" : "Offline mode";
+    $("aiBadge").classList.toggle("on", AI.live);
+    $("liveBox").hidden = !AI.live;
+    $("fallback").hidden = AI.live;
+    $("fallback").textContent = (AI_URL && !AI.live ? aiWhy(AI.reason) + ". " : "") +
+      "Copy the prompt, paste it into any AI assistant, and paste its reply below to put it on your card.";
+  }
+  async function aiStatus() {
+    if (!AI_URL) { showLive(); return; }
+    try {
+      var s = await (await aiFetch(AI_URL.replace(/\/+$/, "") + "/status", {}, 6000)).json();
+      AI.live = !!s.live; AI.reason = s.reason || "off";
+    } catch (e) { AI.live = false; AI.reason = "network"; }
+    showLive();
+  }
+  // The worked example is for reading, not for spending calls: its feedback is already on the page.
+  var EXAMPLE_MIN_CHANGES = 3;
+  function changesFromExample(o) {
+    var n = 0;
+    FIELDS.concat(["escape", "rung"]).forEach(function (f) { if ((o[f] || "") !== (EXAMPLE_ANSWERS[f] || "")) n++; });
+    return n;
+  }
+
+  var controller = null, stopped = false;
+  function busy(on) {
+    $("ask").disabled = on; $("ask").textContent = on ? "Thinking…" : "Ask the sparring partner";
+    $("stop").hidden = !on;
+  }
+  $("ask").addEventListener("click", async function () {
+    var o = read();
+    if (!o.name || !o.escape) { setStatus("Name the opportunity and choose what the price rests on first.", true); return; }
+    var changed = changesFromExample(o);
+    if (changed < EXAMPLE_MIN_CHANGES) {
+      setStatus("This is still the Power-to-X example (" + changed + " of " + EXAMPLE_MIN_CHANGES + " answers changed); its feedback is already shown. Enter your own opportunity first.", true);
+      return;
+    }
+    var code = $("classCode").value.trim();
+    if (!code) { setStatus("Enter the class code from the slide.", true); return; }
+    if (callsLeft() <= 0) { setStatus("This page has used its " + LIVE_LIMIT + " calls for the hour. Copy the prompt into any AI assistant instead.", true); return; }
+    CALLS.push(Date.now());
+    controller = new AbortController(); stopped = false;
+    busy(true);
+    setStatus("The sparring partner is reading your answers. About 20 to 60 seconds.");
+    var counted = false;
+    try {
+      await aiStatus();
+      if (!AI.live) throw new Error(aiWhy(AI.reason) + ".");
+      aiStore("aim_class_code", code);
+      var res;
+      try {
+        res = await aiFetch(AI_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Class-Code": code, "X-Device-Id": aiDevice() },
+          body: JSON.stringify({ kind: "elpis.margin", inputs: inputsFrom(o) })
+        }, 120000, controller);
+      } catch (e) { counted = stopped; throw new Error(stopped ? "Stopped." : aiWhy("network") + "."); }
+      var data = await res.json().catch(function () { return {}; });
+      if (!res.ok || !data.result || !Array.isArray(data.result.items)) {
+        counted = data.reason === "rate";   // the server does not count refused or failed calls
+        if (res.status === 423 || data.reason === "budget") aiStatus();
+        throw new Error(aiWhy(data.reason) + ".");
+      }
+      counted = true;
+      renderFeedback(data.result, false);
+      store.feedback = data.result; store.answers = o; saveStore(store);
+      var left = callsLeft();
+      setStatus("Done." + (typeof data.cost_usd === "number" ? " This call cost about $" + data.cost_usd.toFixed(3) + "." : "") +
+        " " + left + " call" + (left === 1 ? "" : "s") + " left this hour. Revise your answers and ask again, or save the card.");
+    } catch (err) {
+      if (!counted) CALLS.pop();
+      var m = err && err.message ? err.message : "";
+      setStatus(m === "Stopped." ? m : m + " Copy the prompt into any AI assistant instead.", m !== "Stopped.");
+    } finally { busy(false); controller = null; }
+  });
+  $("stop").addEventListener("click", function () { if (controller) { stopped = true; controller.abort(); } });
+
+  /* ---------- copy helpers ---------- */
+  function copyText(text, statusEl, okMsg) {
+    var fallback = function () {
+      var ta = $("manualcopy"); ta.hidden = false; ta.value = text; ta.focus(); ta.select();
+      statusEl.textContent = "Copying is blocked here: the text is selected in the box under the card buttons, copy it by hand.";
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { statusEl.textContent = okMsg; }, fallback);
+      } else { fallback(); }
+    } catch (e) { fallback(); }
+  }
+  $("copyprompt").addEventListener("click", function () {
+    var o = read();
+    if (!o.name) { setStatus("Name the opportunity first.", true); return; }
+    copyText(marginPrompt(inputsFrom(o)), $("status"), "Prompt copied. Paste it into any AI assistant, then paste its reply below to put it on your card.");
+  });
+  $("readIn").addEventListener("click", function () {
+    var text = $("pasteBack").value;
+    if (!text.trim()) { setStatus("Paste the reply first.", true); return; }
+    var fb = readReply(text);
+    if (!fb) { renderRaw(text); setStatus("The reply is shown as written; its JSON could not be read, so it is not on the card.", true); return; }
+    renderFeedback(fb, false);
+    store.feedback = fb; store.answers = read(); saveStore(store);
+    $("pasteBack").value = ""; $("pasteWrap").open = false;
+    setStatus("Added to your card.");
+  });
+
+  /* ---------- the card ---------- */
+  function cardText() {
+    var o = read(), fb = store.feedback;
+    var t = "ELPIS 2026 · MARGIN CARD\n\n" + participantText(inputsFrom(o)) + "\n";
+    if (fb && Array.isArray(fb.items)) {
+      t += "\nSPARRING PARTNER\nRestated: " + fb.restatement + "\n";
+      fb.items.forEach(function (it) {
+        t += "\n" + (ITEM_LABELS[it.key] || it.key) + " [" + it.verdict + "]\n  A rival asks: " + it.challenge + "\n  Cheapest test: " + it.test + "\n  Proof would be: " + it.proof + "\n";
+      });
+      t += "\nWeakest link: " + fb.weakest + "\nNext seven days: " + fb.next_step + "\n";
+    }
+    t += "\nBring this card on Wednesday 4 November.\n";
+    return t;
+  }
+  $("copycard").addEventListener("click", function () { copyText(cardText(), $("cardstatus"), "Card copied. Paste it into a note or an email to yourself."); });
+  $("savecard").addEventListener("click", function () {
+    try {
+      var url = URL.createObjectURL(new Blob([cardText()], { type: "text/plain;charset=utf-8" }));
+      var a = document.createElement("a");
+      a.href = url; a.download = "elpis-margin-card.txt"; document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      $("cardstatus").textContent = "Card saved to your downloads.";
+    } catch (e) { $("cardstatus").textContent = "Saving is blocked here. Copy the card instead."; }
+  });
+  $("printcard").addEventListener("click", function () {
+    try { window.print(); } catch (e) { $("cardstatus").textContent = "Printing is blocked here. Copy the card instead."; }
+  });
+
+  /* ---------- example, clear, autosave ---------- */
+  $("example").addEventListener("click", function () {
+    write(EXAMPLE_ANSWERS); renderChecks(); persist();
+    setStatus("Example loaded: the fictional Power-to-X case. Replace it with your own opportunity.");
+  });
+  var clearArmed = null;
+  $("clear").addEventListener("click", function () {
+    var b = $("clear");
+    if (!clearArmed) {
+      b.textContent = "Click again to clear everything";
+      clearArmed = setTimeout(function () { b.textContent = "Clear my answers"; clearArmed = null; }, 4000);
+      return;
+    }
+    clearTimeout(clearArmed); clearArmed = null; b.textContent = "Clear my answers";
+    write({}); store = {}; saveStore(store); renderChecks(); renderFeedback(EXAMPLE_FEEDBACK, true);
+    $("cardstatus").textContent = "Cleared.";
+  });
+  var saveTimer = null;
+  function persist() { store.answers = read(); saveStore(store); }
+  $("sheet").addEventListener("input", function () { renderChecks(); clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); });
+  $("sheet").addEventListener("change", function () { renderChecks(); persist(); });
+  $("sheet").addEventListener("submit", function (e) { e.preventDefault(); });
+
+  /* ---------- start ---------- */
+  if (store.answers) write(store.answers);
+  renderChecks();
+  if (store.feedback && Array.isArray(store.feedback.items)) renderFeedback(store.feedback, false);
+  else renderFeedback(EXAMPLE_FEEDBACK, true);
+  $("classCode").value = aiStore("aim_class_code") || "";
+  showLive();
+  aiStatus();
+  if (AI_URL) setInterval(aiStatus, 120000);
+})();
+</script>
+</body>
+</html>
