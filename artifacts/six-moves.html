@@ -11,7 +11,7 @@
 <style>
 :root{
   --bg:#EDF1EF; --surface:#FFFFFF; --surface-2:#F4F7F6; --ink:#1B2725; --muted:#566360; --line:#D2DAD7;
-  --brand:#0D4A52; --brand-ink:#EEF5F4; --brand-2:#0D4A52; --gold:#A27A22; --gold-soft:#F4EAD2; --coin:#D9A42C;
+  --brand:#0D4A52; --brand-ink:#EEF5F4; --brand-2:#0D4A52; --gold:#A27A22; --gold-soft:#F4EAD2; --coin:#D9A42C; --ai:#F2C12E; --ai-ink:#1F1A0A; --ai-off:#7A5C16; --ai-off-ink:#F4EAD2;
   --good:#2C6A50; --good-soft:#E3F0E9; --bad:#9A3A2E; --bad-soft:#F6E4E0; --warn:#8A6512; --warn-soft:#F7EDD6;
   --cto:#1C5DAE; --cfo:#B4560A; --cco:#24813F; --ceo:#A61C4F; --exco:#0D4A52; --on-seat:#FFFFFF;
   --serif:"Source Serif 4",Georgia,"Times New Roman",serif; --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -45,6 +45,9 @@ a{color:var(--brand-2)} button{font:inherit}
 .empty{max-width:640px;margin:10vh auto;text-align:left}
 .primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:var(--r);padding:11px 18px;font-weight:600;cursor:pointer;min-height:44px}
 .primary:disabled{opacity:.45;cursor:not-allowed}
+/* Buttons that call the game master: bright gold when it can answer, dark gold when it cannot. */
+.ai{background:var(--ai);color:var(--ai-ink);border:0;border-radius:var(--r);padding:11px 18px;font-weight:600;cursor:pointer;min-height:44px}
+.ai:disabled{background:var(--ai-off);color:var(--ai-off-ink);cursor:not-allowed}
 .ghost{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:var(--r);padding:8px 14px;cursor:pointer;min-height:40px}
 .ghost.small{min-height:32px;padding:4px 10px;font-size:.85rem}
 .link{background:none;border:0;color:var(--brand-2);text-decoration:underline;cursor:pointer;padding:0}
@@ -492,6 +495,7 @@ const RELEASE_REASONS=["The team chose other moves","Not enough tokens","Trust i
 // Put your Worker's address between the quotes, for example "https://six-moves.yourname.workers.dev".
 // Left empty, the page runs in preview mode on this computer only, and nothing is saved.
 const API_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/six-moves";
+const BUILD = "v7.1"; // shown on the console; raise it with BUILD in supabase/functions/six-moves/handler.ts
 const POLL_MS = 4000;
 let aiOn=false, canEdit=false, mode="connecting", dbError=null, role=null, polling=null;
 let settings=null, teams={}, debrief=null, loadedSettings=false, loadedTeams=false, versions={}, lastJSON="";
@@ -515,7 +519,7 @@ async function api(method,path,body){
 }
 function applyState(s){
   role=s.role; canEdit=role==="facilitator"; aiOn=!!s.ai; versions=s.versions||{};
-  const js=JSON.stringify([s.settings,s.teams,s.debrief]);
+  const js=JSON.stringify([s.settings,s.teams,s.debrief,s.ai]);
   settings=s.settings||null; teams=s.teams||{}; debrief=s.debrief||null; loadedSettings=true; loadedTeams=true;
   const changed=js!==lastJSON||mode!=="live"||dbError; mode="live"; dbError=null; lastJSON=js;
   if(changed) render();
@@ -767,7 +771,7 @@ function resultView(id,cs,doc,rep,idx,current){
   s+='<div class="gm"><h3>Game master</h3>';
   if(fb){ if(fb.story) s+='<p>'+esc(fb.story)+'</p>'; s+='<p><b>Case lens.</b> '+esc(fb.lens)+'</p><p><b>Coaching question.</b> '+esc(fb.question)+'</p>'}
   else if(ui.genBusy["r"+idx]) s+='<p class="muted">Writing feedback…</p>';
-  else s+='<p><b>Case lens.</b> '+esc(cs.lens[r-1])+'</p><p><b>Coaching question.</b> '+esc(cs.questions[r-1])+'</p>'+(aiOn?'<button class="ghost" data-action="gen-feedback" data-idx="'+idx+'">Ask the game master for feedback</button>':'');
+  else s+='<p><b>Case lens.</b> '+esc(cs.lens[r-1])+'</p><p><b>Coaching question.</b> '+esc(cs.questions[r-1])+'</p>'+(aiOn?'<button class="ai" data-action="gen-feedback" data-idx="'+idx+'">Ask the game master for feedback</button>':'<button class="ai" disabled>Ask the game master for feedback</button>');
   s+='</div>';
   if(current){
     const rf=t.reflection;
@@ -811,7 +815,7 @@ function debriefView(id,cs,doc,rep){
   s+='<div class="gm"><h3>Game master</h3>';
   if(d&&d.moments){ s+='<ol class="moments">'+d.moments.map(m=>'<li><b>Round '+esc(m.round)+'.</b> '+esc(m.text)+'</li>').join("")+'</ol><p class="hyp">'+esc(d.hypothesis)+'</p><div class="seg">'+[["yes","It fits"],["partly","Partly"],["no","It does not"]].map(([k,l])=>'<button data-action="fit" data-v="'+k+'" aria-pressed="'+(d.fit===k)+'">'+l+'</button>').join("")+'</div>'+(d.line3?'<p class="small"><b>Your line 3.</b> '+esc(d.line3)+'</p>':'') }
   else if(ui.genBusy.debrief) s+='<p class="muted">Writing your debrief…</p>';
-  else s+=(aiOn?'<button class="primary" data-action="gen-debrief">Write our debrief</button>':'<p class="muted">The game master is not available here. Your facilitators will lead the debrief.</p>');
+  else s+=(aiOn?'<button class="ai" data-action="gen-debrief">Write our debrief</button>':'<button class="ai" disabled>Write our debrief</button><p class="muted">The game master is not available here. Your facilitators will lead the debrief.</p>');
   s+='<p class="small muted"><b>The headline test.</b> '+esc(cs.headlineTest)+'</p></div>';
   return s;
 }
@@ -819,7 +823,7 @@ function debriefView(id,cs,doc,rep){
 function consoleView(){
   if(!(canEdit||mode==="preview")) return '<div class="empty"><p>The console is for facilitators.</p></div>';
   const open=settings.openRound||0;
-  let s='<section class="console"><div class="ch"><h1>Console <span class="ver">Rules v6.6.1 · own server</span></h1><label class="field inline"><span>Cohort</span><input data-set="cohort" value="'+esc(settings.cohort)+'" maxlength="60"></label></div>';
+  let s='<section class="console"><div class="ch"><h1>Console <span class="ver">Rules v6.6.1 · Build '+BUILD+' · own server</span></h1><label class="field inline"><span>Cohort</span><input data-set="cohort" value="'+esc(settings.cohort)+'" maxlength="60"></label></div>';
   s+='<div class="cgrid"><div class="panel"><h3>Rounds open</h3><div class="seg">'+[[2,"Up to Round 2"],[3,"Round 3"]].map(([v,l])=>'<button data-action="open-round" data-v="'+v+'" aria-pressed="'+((open>=3)===(v===3))+'">'+l+'</button>').join("")+'</div><p class="muted small">The charter and Rounds 1 and 2 are open from the start. Open Round 3 when the room is ready.</p><h3>Day 3 bridge</h3><div class="seg">'+[["0","Closed"],["draft","Tuesday: draft"],["1","Wednesday: all steps"],["after","Thursday: afterwards"]].map(([v,l])=>'<button data-action="bridge-open" data-v="'+v+'" aria-pressed="'+(v==="0"?!settings.bridgeOpen:(v==="1"?settings.bridgeOpen===true:settings.bridgeOpen===v))+'">'+l+'</button>').join("")+'</div><p class="muted small">Tuesday: steps 1, 2, 3 and 6 open, the rest visible but greyed. Wednesday: the seven steps, with the red team. Thursday, after the pitches: step 8, afterwards.</p></div>';
   const used=[...new Set(settings.teams.map(t=>t.case))];
   s+='<div class="panel"><div class="ph"><h3>Hidden answers</h3><button class="ghost small" data-action="reveal-toggle">'+(ui.reveal?"Hide":"Show")+'</button></div>';
@@ -862,7 +866,7 @@ function consoleView(){
   // debrief notes
   s+='<h2>Debrief notes</h2><div class="panel">';
   if(debrief&&debrief.text) s+='<div class="notes">'+esc(debrief.text).replace(/\n/g,"<br>")+'</div><p class="muted small">Drafted '+new Date(debrief.at).toLocaleString()+'</p>';
-  s+=(aiOn?'<button class="'+(debrief?"ghost":"primary")+'" data-action="gen-console"'+(ui.genBusy.console?" disabled":"")+'>'+(ui.genBusy.console?"Drafting…":(debrief?"Redraft the notes":"Draft debrief notes"))+'</button>':'<p class="muted">The game master is not available in this view.</p>');
+  s+=(aiOn?'<button class="ai" data-action="gen-console"'+(ui.genBusy.console?" disabled":"")+'>'+(ui.genBusy.console?"Drafting…":(debrief?"Redraft the notes":"Draft debrief notes"))+'</button>':'<button class="ai" disabled>'+(debrief?"Redraft the notes":"Draft debrief notes")+'</button><p class="muted">The game master is not available in this view.</p>');
   s+='<p class="muted small">Notes pick the moments worth discussing: promises, people moments, blind commitments, and same-case comparisons when two teams share a case. No ranking.</p></div>';
   s+='<h2>New game</h2><div class="panel"><p class="muted small">After the rehearsal, clear everything: teams, rounds, bridges, notes and hidden answers. The codes and the server stay as they are.</p><button class="ghost danger" data-action="new-game">Start a new game</button></div></section>';
   return s;
@@ -1103,8 +1107,8 @@ function svgCharter(d){ return '<svg class="cdraw" viewBox="0 0 560 96" role="im
 function coachHtml(d,step){
   const r=(d.coach||{})[step]; let s='<div class="coach">';
   if(ui.genBusy["c-"+step]) s+='<p class="muted">The game master is reading your work…</p>';
-  else if(aiReady()) s+='<div class="actions"><button class="ghost" data-action="b-coach" data-mode="suggest" data-step="'+step+'">Suggest answers</button><button class="ghost" data-action="b-coach" data-mode="critique" data-step="'+step+'">Critique ours</button><span class="muted small">The game master suggests; you decide.</span></div>';
-  else s+='<p class="muted small">The game master is not available on this page.</p>';
+  else if(aiReady()) s+='<div class="actions"><button class="ai" data-action="b-coach" data-mode="suggest" data-step="'+step+'">Suggest answers</button><button class="ai" data-action="b-coach" data-mode="critique" data-step="'+step+'">Critique ours</button><span class="muted small">The game master suggests; you decide.</span></div>';
+  else s+='<div class="actions"><button class="ai" disabled>Suggest answers</button><button class="ai" disabled>Critique ours</button><span class="muted small">The game master is not available on this page.</span></div>';
   if(r&&r.mode==="suggest"&&r.fields){
     s+='<div class="cres"><h4>Suggestions</h4>'+Object.entries(r.fields).map(([k,v])=>{
       if(k==="pieces"&&Array.isArray(v)) return '<div class="sug"><b>Missing pieces</b><ul>'+v.map(p=>'<li>'+esc(p.name)+(p.owner?' · '+esc(p.owner):'')+(p.how?' · '+esc(p.how):'')+(p.kind?' · '+esc(p.kind):'')+'</li>').join("")+'</ul><button class="link" data-action="b-apply" data-step="'+step+'" data-f="pieces">Add these pieces</button></div>';
@@ -1289,8 +1293,8 @@ function bridgeView(id,cs,doc){
     s+='<p class="muted small">The game master makes the strongest case against your charter: as a rival, as a board member, then as a pre-mortem. It reads every step. Its view is an input; the judgement is yours.</p>';
     if(rt) s+=rtHtml(rt);
     if(ui.genBusy.redteam) s+='<p class="muted">Thinking…</p>';
-    else if(aiReady()) s+='<div class="actions"><button class="'+(rt?"ghost":"primary")+'" data-action="b-redteam"'+(ready?"":" disabled")+'>'+(rt?"Red-team it again":"Ask the game master to red-team it")+'</button><span class="muted small" id="b-ready">'+(ready?"It reads every step as it stands on screen.":"Steps 1, 2 and 6 first: the opportunity, the escape, the ambition and the stop condition.")+'</span></div>';
-    else s+='<p class="notice">The game master is not available on this page. Copy the prompt below into any assistant.</p>';
+    else if(aiReady()) s+='<div class="actions"><button class="ai" data-action="b-redteam"'+(ready?"":" disabled")+'>'+(rt?"Red-team it again":"Ask the game master to red-team it")+'</button><span class="muted small" id="b-ready">'+(ready?"It reads every step as it stands on screen.":"Steps 1, 2 and 6 first: the opportunity, the escape, the ambition and the stop condition.")+'</span></div>';
+    else s+='<div class="actions"><button class="ai" disabled>'+(rt?"Red-team it again":"Ask the game master to red-team it")+'</button></div><p class="notice">The game master is not available on this page. Copy the prompt below into any assistant.</p>';
     s+='<details'+(aiReady()?'':' open')+'><summary>Copy the prompt for any AI</summary><textarea id="b-prompt" class="copybox" readonly aria-label="Prompt for any AI">'+esc(rtPromptAnyAI(d))+'</textarea><div class="actions"><button class="ghost small" data-action="b-copy">Copy the prompt</button></div></details>';
     s+='<h4>Your judgement</h4><p class="muted small">Read the red team aloud. '+esc(ceoOf(doc,3))+', CEO in the last round, speaks last.</p><div class="seg">'+[["agree","We agree"],["partly","Partly"],["reject","We reject it"]].map(([k,l])=>'<button data-action="b-set" data-k="judgement" data-v="'+k+'" aria-pressed="'+(d.judgement===k)+'">'+l+'</button>').join("")+'</div>';
     s+=bInput(d,"change","One change to the charter","What you will change, after the red team",{area:true})+'<p class="muted small">Who owns the change?</p>'+chipsP("changeOwner");
@@ -1308,8 +1312,8 @@ function bridgeView(id,cs,doc){
     if(d.hyp&&d.hyp.hypothesis) s+='<div class="hyp"><p>'+esc(d.hyp.hypothesis)+'</p><div class="seg">'+[["yes","It fits"],["partly","Partly"],["no","It does not fit"]].map(([k,l])=>'<button data-action="b-set" data-k="fit" data-v="'+k+'" aria-pressed="'+(d.fit===k)+'">'+l+'</button>').join("")+'</div>'+(d.hyp.question?'<p><b>A question to take back.</b> '+esc(d.hyp.question)+'</p>':'')+'</div>';
     const own=!!(String(d.r1).trim()||String(d.r2).trim()||String(d.r3).trim());
     if(ui.genBusy.after) s+='<p class="muted">The game master is reading your record…</p>';
-    else if(aiReady()) s+='<div class="actions"><button class="'+(d.hyp?"ghost":"primary")+'" data-action="b-after"'+(own?"":" disabled")+'>'+(d.hyp?"Ask again":"Ask for one hypothesis")+'</button><span class="muted small" id="b-own">'+(own?"One hypothesis, not a verdict. You decide whether it fits.":"Write your own reflections first. The game master reads them.")+'</span></div>';
-    else s+='<p class="notice">The game master is not available on this page. Use “Take it to your own AI” at the top, and choose “Reflect afterwards”.</p>';
+    else if(aiReady()) s+='<div class="actions"><button class="ai" data-action="b-after"'+(own?"":" disabled")+'>'+(d.hyp?"Ask again":"Ask for one hypothesis")+'</button><span class="muted small" id="b-own">'+(own?"One hypothesis, not a verdict. You decide whether it fits.":"Write your own reflections first. The game master reads them.")+'</span></div>';
+    else s+='<div class="actions"><button class="ai" disabled>'+(d.hyp?"Ask again":"Ask for one hypothesis")+'</button></div><p class="notice">The game master is not available on this page. Use “Take it to your own AI” at the top, and choose “Reflect afterwards”.</p>';
   }
   s+='</fieldset>';
   const next=step<7?step+1:(step===7&&mode==="after"?8:"");

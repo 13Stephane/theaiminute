@@ -83,6 +83,9 @@ type Task = {
   check?: (o: any) => unknown;
 };
 
+// Shown by /api/health and on the console, to tell what is live. Raise it with BUILD in artifacts/six-moves.html on every deploy.
+export const BUILD = "v7.1";
+
 export const TASKS: Record<string, Task> = {
   feedback: {
     role: "team", maxTokens: 2000, json: true,
@@ -225,7 +228,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (path === "/api/health") {
     return reply({
-      ok: true, model: MODEL, key: deps.hasKey, database: !!deps.docs,
+      ok: true, build: BUILD, model: MODEL, key: deps.hasKey, database: !!deps.docs,
       codes: !!(deps.facilitatorCode && deps.pepper), originAllowed: okOrigin,
       aiLive: await room(deps.spend, deps.pepper, clock()).then((r) => r.live, () => false),
     });

@@ -3,7 +3,7 @@
 // live room's spend control in front of the game master.
 
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { handle, type ModelCall, resetRoomCache, TASKS } from "../supabase/functions/six-moves/handler.ts";
+import { BUILD, handle, type ModelCall, resetRoomCache, TASKS } from "../supabase/functions/six-moves/handler.ts";
 import { deriveCode } from "../supabase/functions/_shared/classcode.ts";
 import { costUsd, MODEL } from "../supabase/functions/ai/templates.ts";
 import { MemDb, MemDocs } from "./memstore.ts";
@@ -38,7 +38,7 @@ Deno.test("health, CORS and the prefix: the Worker's answers under /functions/v1
   const { send } = setup();
   const h = await send("GET", "/api/health", undefined, { code: "" });
   assertEquals(h.status, 200);
-  assertEquals(h.json, { ok: true, model: MODEL, key: true, database: true, codes: true, originAllowed: true, aiLive: true });
+  assertEquals(h.json, { ok: true, build: BUILD, model: MODEL, key: true, database: true, codes: true, originAllowed: true, aiLive: true });
   assertEquals(h.headers.get("access-control-allow-origin"), ORIGIN);
   assertEquals(h.headers.get("access-control-allow-headers"), "content-type, x-code");
   const pre = await send("OPTIONS", "/api/state", undefined, { origin: "https://www.theaiminute.blog" });
@@ -186,4 +186,16 @@ Deno.test("bridge v7: coach suggests or critiques one step, on the server's crit
   assert(a.asked[0].user.includes("Who argued against: No one.") && a.asked[0].user.includes("Where we filled a gap with confidence instead of a test: The price.") && a.asked[0].user.includes("What we changed because someone disagreed: (not written)"));
   assert(a.asked[0].system.includes("Never use a person's name"));
   assertEquals(a.db.rows[0].kind, "six-moves.afterwards");
+});
+
+Deno.test("the page and the server carry the same build, so the console and /api/health can be compared", () => {
+  const page = Deno.readTextFileSync(new URL("../artifacts/six-moves.html", import.meta.url));
+  assertEquals(page.match(/const BUILD = "([^"]+)"/)?.[1], BUILD);
+});
+
+Deno.test("every button that calls the game master is gold", () => {
+  const page = Deno.readTextFileSync(new URL("../artifacts/six-moves.html", import.meta.url));
+  const buttons = page.match(/<button [^>]*data-action="(gen-feedback|gen-debrief|gen-console|b-coach|b-redteam|b-after)"/g) ?? [];
+  assertEquals(buttons.length, 7);
+  for (const b of buttons) assert(b.startsWith('<button class="ai" '), b);
 });
