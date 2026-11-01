@@ -116,6 +116,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .status { font-size: 0.88rem; color: var(--muted); min-height: 1.3em; margin: 0; }
 .status.err { color: var(--miss); }
 .feedback { display: grid; gap: 10px; }
+.feedback .hint { color: var(--muted); margin: 0; }
 .tag-example { justify-self: start; font-family: var(--f-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-ink); border: 1px solid var(--accent); padding: 2px 6px; }
 .restate { font-family: var(--f-display); font-weight: 500; font-size: 1.02rem; line-height: 1.35; border-left: 4px solid var(--accent); padding: 4px 0 4px 12px; margin: 0; }
 .fb { border-top: 1px solid var(--rule); padding-top: 10px; display: grid; gap: 6px; }
@@ -237,7 +238,7 @@ details.paste button { margin-top: 8px; }
         <div class="actions">
           <span class="aibadge" id="aiBadge" hidden>Offline mode</span>
           <div class="live" id="liveBox" hidden>
-            <div class="code"><label for="classCode">Class code <span class="hint">· on the slide</span></label><input type="text" id="classCode" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+            <div class="code"><label for="classCode">Class code <span class="hint">· given in the room</span></label><input type="text" id="classCode" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
             <button type="button" class="primary" id="ask">Ask the sparring partner</button>
             <button type="button" id="stop" hidden>Stop</button>
           </div>
@@ -442,6 +443,10 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   }
 
   /* ---------- feedback ---------- */
+  function renderEmpty() {
+    $("result").innerHTML = '<div class="feedback"><h2>Feedback from the sparring partner</h2>' +
+      '<p class="hint">It appears here once you ask. To see what it looks like first, load the Power-to-X example.</p></div>';
+  }
   function renderFeedback(fb, isExample) {
     var r = $("result");
     if (!fb || !Array.isArray(fb.items)) { r.innerHTML = ""; return; }
@@ -570,7 +575,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
       }
       counted = true;
       renderFeedback(data.result, false);
-      store.feedback = data.result; store.answers = o; saveStore(store);
+      store.feedback = data.result; delete store.example; store.answers = o; saveStore(store);
       var left = callsLeft();
       setStatus("Done." + (typeof data.cost_usd === "number" ? " This call cost about $" + data.cost_usd.toFixed(3) + "." : "") +
         " " + left + " call" + (left === 1 ? "" : "s") + " left this hour. Revise your answers and ask again, or save the card.");
@@ -605,7 +610,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     var fb = readReply(text);
     if (!fb) { renderRaw(text); setStatus("The reply is shown as written; its JSON could not be read, so it is not on the card.", true); return; }
     renderFeedback(fb, false);
-    store.feedback = fb; store.answers = read(); saveStore(store);
+    store.feedback = fb; delete store.example; store.answers = read(); saveStore(store);
     $("pasteBack").value = ""; $("pasteWrap").open = false;
     setStatus("Added to your card.");
   });
@@ -640,13 +645,14 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
 
   /* ---------- example, clear, autosave ---------- */
   $("example").addEventListener("click", function () {
-    write(EXAMPLE_ANSWERS); renderChecks(); persist();
+    write(EXAMPLE_ANSWERS); delete store.feedback; store.example = true;
+    renderChecks(); renderFeedback(EXAMPLE_FEEDBACK, true); persist();
     setStatus("Example loaded: the fictional Power-to-X case. Replace it with your own opportunity.");
   });
   var undoState = null, undoTimer = null;
   $("clear").addEventListener("click", function () {
-    undoState = JSON.stringify({ answers: read(), feedback: store.feedback || null });
-    write({}); store = {}; saveStore(store); renderChecks(); renderFeedback(EXAMPLE_FEEDBACK, true);
+    undoState = JSON.stringify({ answers: read(), feedback: store.feedback || null, example: !!store.example });
+    write({}); store = {}; saveStore(store); renderChecks(); renderEmpty();
     if ($("pasteBack")) $("pasteBack").value = "";
     setStatus("");
     $("undo").hidden = false;
@@ -658,9 +664,9 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   $("undo").addEventListener("click", function () {
     if (!undoState) return;
     var u = JSON.parse(undoState); undoState = null; clearTimeout(undoTimer);
-    write(u.answers); store = { answers: u.answers }; if (u.feedback) store.feedback = u.feedback; saveStore(store);
+    write(u.answers); store = { answers: u.answers }; if (u.feedback) store.feedback = u.feedback; if (u.example) store.example = true; saveStore(store);
     renderChecks();
-    if (u.feedback && Array.isArray(u.feedback.items)) renderFeedback(u.feedback, false); else renderFeedback(EXAMPLE_FEEDBACK, true);
+    if (u.feedback && Array.isArray(u.feedback.items)) renderFeedback(u.feedback, false); else if (u.example) renderFeedback(EXAMPLE_FEEDBACK, true); else renderEmpty();
     $("undo").hidden = true; $("cardstatus").textContent = "Restored.";
   });
   var saveTimer = null;
@@ -673,7 +679,8 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   if (store.answers) write(store.answers);
   renderChecks();
   if (store.feedback && Array.isArray(store.feedback.items)) renderFeedback(store.feedback, false);
-  else renderFeedback(EXAMPLE_FEEDBACK, true);
+  else if (store.example) renderFeedback(EXAMPLE_FEEDBACK, true);
+  else renderEmpty();
   $("classCode").value = aiStore("aim_class_code") || "";
   showLive();
   aiStatus();
