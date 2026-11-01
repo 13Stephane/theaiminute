@@ -36,27 +36,27 @@ type Task = {
 
 export const TASKS: Record<string, Task> = {
   feedback: {
-    role: "team", maxTokens: 700, json: true,
+    role: "team", maxTokens: 2000, json: true,
     system: () => GM_RULES,
     user: (d) => "Round data (JSON):\n" + JSON.stringify(d) +
       "\n\nReply with only a JSON object: {\"story\": \"at most 70 words: what these two years looked like for this team, woven from the headlines and results\", \"lens\": \"one sentence linking this team's moves to what the case is about; you may adapt the hint\", \"question\": \"one coaching question for the team, not advice; you may adapt the hint\"}",
     check: (o) => o && o.lens && o.question,
   },
   debrief: {
-    role: "team", maxTokens: 1000, json: true,
+    role: "team", maxTokens: 3000, json: true,
     system: () => GM_RULES,
     user: (d) => "The whole game for one team (JSON):\n" + JSON.stringify(d) +
       "\n\nReply with only a JSON object: {\"moments\": [{\"round\": 1, \"text\": \"one or two sentences\"}, three items, the three moments that mattered most], \"hypothesis\": \"one or two sentences about this team's leadership pattern, ending with: Does that fit?\", \"line3\": \"at most two sentences comparing charter line 3 as written with what happened: could an outsider have checked it in 2030, did it say what would make the team stop or pivot, and did the team act on it\"}",
     check: (o) => o && Array.isArray(o.moments) && o.hypothesis,
   },
   console: {
-    role: "facilitator", maxTokens: 1500, json: false,
+    role: "facilitator", maxTokens: 3000, json: false,
     system: () => GM_RULES + " You are now writing for the two facilitators, not the teams.",
     user: (d) => "All tables (JSON):\n" + JSON.stringify(d) +
       "\n\nWrite debrief notes in plain text, no markdown headings: first, only if two or more teams played the same case, three sentences per such case on where their routes diverged and whether it was a choice or a draw (otherwise skip this part); then three moments across all tables worth raising in the plenary (a promise, a people moment, a commitment), each with the team name; then one question for the room. At most 300 words. No ranking of teams.",
   },
   redteam: {
-    role: "team", maxTokens: 1400, json: true,
+    role: "team", maxTokens: 3000, json: true,
     system: () => RT_RULES,
     user: (d) => {
       const fail = String((parseInt(String(d.stopYear), 10) || 2029) + 1);

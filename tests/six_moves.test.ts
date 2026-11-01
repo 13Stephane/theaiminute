@@ -97,7 +97,7 @@ Deno.test("AI: the server's prompt and model, the reply's JSON, the call logged 
   assertEquals(r.status, 200);
   assertEquals(r.json, { json: { story: "s", lens: "l", question: "q?" } });
   assertEquals(asked[0].model, "claude-sonnet-5-5");
-  assertEquals(asked[0].maxTokens, 700);
+  assertEquals(asked[0].maxTokens, 2000);
   assert(asked[0].system.startsWith("You are the game master of Six Moves"));
   assert(asked[0].user.startsWith('Round data (JSON):\n{"round":1}'));
   const row = db.rows[0];
