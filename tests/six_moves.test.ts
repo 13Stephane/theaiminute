@@ -162,3 +162,26 @@ Deno.test("the team code is the class code: typed loosely it works, rotated the 
   assertEquals((await send("GET", "/api/state", undefined, { code: fresh })).status, 500);
   assertEquals((await send("GET", "/api/health")).json.aiLive, false);
 });
+
+Deno.test("bridge v7: coach suggests or critiques one step, on the server's criteria; afterwards offers one hypothesis", async () => {
+  const s = setup({ reply: '{"fields":{"mechanism":"m"},"note":"n"}' });
+  const work = { step: "margin", charter: "Opportunity: heat for dairies", this_step: { escape: "scarce" }, not_known_yet: { what: "w", tell: "t", by: "2027" } };
+  const r = await s.send("POST", "/api/ai", { task: "coach", data: { mode: "suggest", step: "margin", data: work }, team: "north" }, { code: T });
+  assertEquals(r.status, 200);
+  assertEquals(r.json, { json: { fields: { mechanism: "m" }, note: "n" } });
+  assert(s.asked[0].system.startsWith("You are the game master of Six Moves, coaching") && !s.asked[0].system.includes("Tokens:"));
+  assert(s.asked[0].user.startsWith("This step: What the margin rests on. What a good answer has: One escape"));
+  assert(s.asked[0].user.includes('"not_known_yet"') && s.asked[0].user.includes("Field keys and what each needs: escape (one of: diff, fence, scarce)"));
+  assertEquals(s.db.rows[0].kind, "six-moves.coach");
+  const c = setup({ reply: '{"points":[{"field":"mechanism","issue":"i","question":"q?"}],"verdict":"v"}' });
+  const cr = await c.send("POST", "/api/ai", { task: "coach", data: { mode: "critique", step: "toString", data: {} }, team: "north" }, { code: T });
+  assertEquals(cr.status, 200);
+  assert(c.asked[0].user.startsWith("This step: The opportunity.") && c.asked[0].user.includes("Critique what the team wrote")); // an unknown step falls back to step 1
+  assertEquals((await setup({ reply: '{"verdict":"v"}' }).send("POST", "/api/ai", { task: "coach", data: { mode: "critique", step: "opp" }, team: "north" }, { code: T })).status, 502);
+  const a = setup({ reply: '{"hypothesis":"The team chose fast. Does that fit?","question":"q?"}' });
+  const ar = await a.send("POST", "/api/ai", { task: "afterwards", data: { record: [["Who chose", "Bram's opportunity."], ["Who argued against", "No one."]], reflections: { r2: "The price." } }, team: "north" }, { code: T });
+  assertEquals(ar.status, 200);
+  assertEquals(ar.json.json.question, "q?");
+  assert(a.asked[0].user.includes("Who argued against: No one.") && a.asked[0].user.includes("Where we filled a gap with confidence instead of a test: The price.") && a.asked[0].user.includes("What we changed because someone disagreed: (not written)"));
+  assertEquals(a.db.rows[0].kind, "six-moves.afterwards");
+});
