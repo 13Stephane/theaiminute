@@ -3,7 +3,7 @@
 // live room's spend control in front of the game master.
 
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { handle, type ModelCall, resetRoomCache } from "../supabase/functions/six-moves/handler.ts";
+import { handle, type ModelCall, resetRoomCache, TASKS } from "../supabase/functions/six-moves/handler.ts";
 import { deriveCode } from "../supabase/functions/_shared/classcode.ts";
 import { costUsd, MODEL } from "../supabase/functions/ai/templates.ts";
 import { MemDb, MemDocs } from "./memstore.ts";
@@ -99,6 +99,8 @@ Deno.test("AI: the server's prompt and model, the reply's JSON, the call logged 
   assertEquals(asked[0].model, "claude-sonnet-5-5");
   assertEquals(asked[0].maxTokens, 2000);
   assert(asked[0].system.startsWith("You are the game master of Six Moves"));
+  assert(asked[0].system.includes("Keep sentences short") && asked[0].system.includes("The pedestal:"));
+  assert(asked[0].system.includes("Tokens:") && !TASKS.redteam.system().includes("Tokens:")); // the red team reads a real opportunity
   assert(asked[0].user.startsWith('Round data (JSON):\n{"round":1}'));
   const row = db.rows[0];
   assertEquals([row.artifact, row.kind, row.bucket, row.device, row.status], ["six-moves", "six-moves.feedback", "six-moves", "north", 200]);
