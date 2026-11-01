@@ -135,7 +135,7 @@ export const TASKS: Record<string, Task> = {
   },
   // Bridge step 8, Thursday: {record: [[label, text]], reflections: {r1, r2, r3}}
   afterwards: {
-    role: "team", maxTokens: 1200, json: true,
+    role: "team", maxTokens: 2000, json: true,
     system: () => AFTER_RULES,
     user: (d) => {
       const rec = Array.isArray(d.record) ? d.record.slice(0, 20).map((x: unknown) => Array.isArray(x) ? clip(x[0], 80) + ": " + clip(x[1], 800) : "").filter(Boolean).join("\n") : "";
