@@ -16,7 +16,8 @@ const para = (max: number): V<string> => (v, p) => str(max, { multiline: true })
 const months: V<number | null> = (v, p = "inputs") => v === null ? null : int(0, 999)(v, p);
 
 // Caps match the page's maxlength attributes.
-const validateMargin = obj({
+const validateStrict = obj({
+  otype: oneOf("", "technology", "model", "whole", "context"),
   name: line(160, 1),
   pays: line(200),
   escape: oneOf("differentiation", "fence", "scarce", "none", "cost"),
@@ -36,7 +37,10 @@ const validateMargin = obj({
   rung: oneOf("", "say", "time", "sign", "pay", "commit"),
   evidence: para(600),
 });
-export type InMargin = ReturnType<typeof validateMargin>;
+// A page saved before the kind of opportunity was added sends no otype: read it as not given.
+const validateMargin = (v: unknown, p = "inputs") =>
+  validateStrict(v && typeof v === "object" && !Array.isArray(v) && !("otype" in v) ? { ...v, otype: "" } : v, p);
+export type InMargin = ReturnType<typeof validateStrict>;
 
 // SYSTEM_PROMPT, FORMAT and the labels in artifacts/elpis_margin_diagnostic.html, word for word.
 export const MARGIN_SYSTEM = "You are the margin sparring partner for ELPIS, an executive programme at DTU on leading industrial science. A participant describes one real opportunity and answers questions about what its margin will rest on. Your job is to test the claims, not to praise or rewrite the idea.\n\n" +
@@ -44,7 +48,8 @@ export const MARGIN_SYSTEM = "You are the margin sparring partner for ELPIS, an 
   "- A margin survives only where one of three conditions of competitive pricing is broken: fungibility (escape: differentiation), arbitrage (escape: a fence between buyers), free entry (escape: a scarce position). A cost advantage is not an escape: it earns a rent only while a costlier producer still sets the price.\n" +
   "- Teece: who profits depends on appropriability (tight or weak) and on who owns the complementary assets (generic or cospecialised). A partner who holds a cospecialised asset is a claimant on the margin.\n" +
   "- Christensen and Raynor: when a layer becomes good enough and modular, margins move to the adjacent layer that is still hard to copy. AI floods some layers; the complement collects.\n" +
-  "- Demand: what people say is a hypothesis; what they pay or commit is evidence. Rungs: say they like it, give time, sign something, pay something, commit volume and price.\n\n" +
+  "- Demand: what people say is a hypothesis; what they pay or commit is evidence. Rungs: say they like it, give time, sign something, pay something, commit volume and price.\n" +
+  "- Four kinds of opportunity, each with a usual weak point: a technology (the margin needs tight appropriability, and the complements are usually someone else's); a business model (who pays for which unit, and whether the partner who holds the complement claims the margin); a product made whole (the ring of the whole product the next buyers still lack, and who holds it); a change in the context (who must agree, who loses, and whether the participant can set the structure others work within). Use the participant's kind to choose your challenges; if the answers do not fit the kind, say so.\n\n" +
   'Assess five items, with these keys: "escape", "speed", "profit_moving", "complements", "demand". For each give:\n' +
   '- "verdict": "specific", "vague" or "missing". Specific means stated with a mechanism and units a sceptic could check.\n' +
   '- "challenge": the one question a competent rival or a sceptical board member would ask. One sentence.\n' +
@@ -60,6 +65,7 @@ export const MARGIN_FORMAT = "\n\nReply with only one JSON object and no other t
   '{"restatement": "...", "items": [{"key": "escape", "verdict": "specific|vague|missing", "challenge": "...", "test": "...", "proof": "..."}, ' +
   '{"key": "speed", ...}, {"key": "profit_moving", ...}, {"key": "complements", ...}, {"key": "demand", ...}], "weakest": "...", "next_step": "..."}';
 
+const OTYPES: Record<string, string> = { technology: "A technology (worked out in the lab)", model: "A business model (the same technology, with the right complement)", whole: "A product made whole (designed from what the mainstream buyer needs)", context: "A change in the context (a standard, an infrastructure, a rule, a new kind of buyer)" };
 const ESCAPES: Record<string, string> = { differentiation: "Differentiation", fence: "A fence", scarce: "A scarce position", none: "Nothing yet", cost: "A cost advantage" };
 const ROUTES: Record<string, string> = { copy: "copy it", invent: "invent around it", input: "build or buy the key input", trade: "trade around the fence", other: "another route" };
 const RUNGS: Record<string, string> = { say: "1 · they say they like it", time: "2 · they give time", sign: "3 · they sign something", pay: "4 · they pay something", commit: "5 · they commit volume and price" };
@@ -68,6 +74,7 @@ const RUNGS: Record<string, string> = { say: "1 · they say they like it", time:
 export function participantText(i: InMargin): string {
   const lines: string[] = [];
   lines.push("Opportunity: " + (i.name || "[not given]"));
+  lines.push("Kind of opportunity: " + (OTYPES[i.otype] || "[not given]"));
   lines.push("Who pays, for what: " + (i.pays || "[not given]"));
   lines.push("1. What the price rests on: " + (ESCAPES[i.escape] || "[not given]") + ". Mechanism: " + (i.mechanism || "[not given]"));
   lines.push("2. How long it holds: " + (i.months !== null ? i.months + " months" : "[not given]") + "; the rival's most likely route: " + (ROUTES[i.route] || "[not given]") + ". Why: " + (i.why || "[not given]"));

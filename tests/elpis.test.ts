@@ -46,10 +46,14 @@ Deno.test("ELPIS: the page and the server build the same prompt, on the example 
     { ...EXAMPLE, months: "18.5", c1name: "", c2type: "", c2owner: "", c2plan: "" },                   // months not whole; one complement half filled
     { ...EXAMPLE, escape: "cost", mechanism: "Lavere strømpris:\n4.000 timer om året", evidence: "Ét intentionsbrev, juni 2026", rung: "say" },
     { ...EXAMPLE, months: "999", c1name: "", c2name: "" },                                            // no complement named
+    { ...EXAMPLE, otype: "context" }, { ...EXAMPLE, otype: "" },                                      // another kind; none chosen
   ];
   for (const c of cases) assertEquals(P.marginPrompt(P.inputsFrom(c)), server(c), JSON.stringify(c).slice(0, 80));
   // spot checks on what the text says
   const p = server(EXAMPLE);
+  assert(p.includes("Opportunity: Vestkyst PtX") && p.includes("\nKind of opportunity: A business model (the same technology, with the right complement)\n"));
+  assert(server({ ...EXAMPLE, otype: "" }).includes("Kind of opportunity: [not given]"));
+  assert(p.includes("- Four kinds of opportunity, each with a usual weak point:"));
   assert(p.includes("2. How long it holds: 36 months; the rival's most likely route: build or buy the key input."));
   assert(p.includes("4. Complements. Appropriability: weak. Pipeline capacity (cospecialised; owned by The gas transmission operator; plan: partner); Anchor offtake contract"));
   assert(p.includes("5. Demand. Highest rung reached: 3 · they sign something."));
@@ -78,9 +82,14 @@ Deno.test("ELPIS: the inputs are refused when they should be", () => {
   const ok = P.inputsFrom(EXAMPLE);
   K.validate(ok);
   K.validate({ ...ok, months: null });
+  // a page saved before the kind of opportunity existed sends no otype: read as not given
+  const old = (({ otype: _o, ...rest }) => rest)(ok);
+  assertEquals((K.validate(old) as { otype: string }).otype, "");
+  assert(promptMargin(K.validate(old) as never).includes("Kind of opportunity: [not given]"));
   const bad: [string, unknown][] = [
     ["no escape chosen", { ...ok, escape: "" }],
     ["an unknown escape", { ...ok, escape: "magic" }],
+    ["an unknown kind of opportunity", { ...ok, otype: "platform" }],
     ["an unknown route", { ...ok, route: "fly" }],
     ["an unknown rung", { ...ok, rung: "pray" }],
     ["months as text", { ...ok, months: "36" }],

@@ -88,6 +88,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .choice b { font-family: var(--f-display); font-weight: 700; font-size: 0.98rem; }
 .choice small { color: var(--muted); font-size: 0.8rem; line-height: 1.3; }
 .choice input:checked + span { border-color: var(--ink); background: var(--surface); box-shadow: inset 4px 0 0 var(--accent); }
+.kindhint { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; padding: 10px 12px; background: var(--bg); border-left: 4px solid var(--accent); font-size: 0.88rem; }
+.kindhint b { font-family: var(--f-display); font-weight: 700; }
+.kindhint[hidden] { display: none; }
+.choices.kinds { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+@media (max-width: 520px) { .kindhint { grid-template-columns: 1fr; gap: 0 0; } .kindhint span { margin-bottom: 6px; } }
+.kindhint p { grid-column: 1 / -1; margin: 0; color: var(--muted); }
 .choice.not-escape input:checked + span { box-shadow: inset 4px 0 0 var(--miss); }
 .ladder { display: grid; gap: 6px; }
 .rung { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); align-items: stretch; }
@@ -160,7 +166,14 @@ details.paste button { margin-top: 8px; }
   <main class="grid">
     <form id="sheet" novalidate>
       <fieldset class="opp">
-        <legend><span class="q-head"><span class="q-num">0</span><span class="q-title">The opportunity</span><span class="q-units">One line a stranger would understand, then who pays for what.</span></span></legend>
+        <legend><span class="q-head"><span class="q-num">0</span><span class="q-title">The opportunity</span><span class="q-units">What kind it is, one line a stranger would understand, then who pays for what.</span></span></legend>
+        <div class="choices kinds" role="radiogroup" aria-label="What kind of opportunity it is">
+          <label class="choice"><input type="radio" name="otype" id="ot-tech" value="technology"><span><b>A technology</b><small>Worked out in the lab. Necessary, rarely sufficient</small></span></label>
+          <label class="choice"><input type="radio" name="otype" id="ot-model" value="model"><span><b>A business model</b><small>The same technology, with the right complement</small></span></label>
+          <label class="choice"><input type="radio" name="otype" id="ot-whole" value="whole"><span><b>A product made whole</b><small>Designed from what the mainstream buyer needs</small></span></label>
+          <label class="choice"><input type="radio" name="otype" id="ot-context" value="context"><span><b>A change in the context</b><small>A standard, an infrastructure, a rule, a new buyer</small></span></label>
+        </div>
+        <div class="kindhint" id="kindhint" aria-live="polite" hidden></div>
         <div><label for="name">The opportunity</label><input type="text" id="name" maxlength="160" placeholder="Green hydrogen from a 300 MW electrolyser, sold to fertiliser makers"></div>
         <div><label for="pays">Who pays, for what <span class="hint">· the unit you will charge for</span></label><input type="text" id="pays" maxlength="200" placeholder="An anchor offtaker pays per kg, under a ten-year contract"></div>
       </fieldset>
@@ -295,7 +308,8 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     "- A margin survives only where one of three conditions of competitive pricing is broken: fungibility (escape: differentiation), arbitrage (escape: a fence between buyers), free entry (escape: a scarce position). A cost advantage is not an escape: it earns a rent only while a costlier producer still sets the price.\n" +
     "- Teece: who profits depends on appropriability (tight or weak) and on who owns the complementary assets (generic or cospecialised). A partner who holds a cospecialised asset is a claimant on the margin.\n" +
     "- Christensen and Raynor: when a layer becomes good enough and modular, margins move to the adjacent layer that is still hard to copy. AI floods some layers; the complement collects.\n" +
-    "- Demand: what people say is a hypothesis; what they pay or commit is evidence. Rungs: say they like it, give time, sign something, pay something, commit volume and price.\n\n" +
+    "- Demand: what people say is a hypothesis; what they pay or commit is evidence. Rungs: say they like it, give time, sign something, pay something, commit volume and price.\n" +
+    "- Four kinds of opportunity, each with a usual weak point: a technology (the margin needs tight appropriability, and the complements are usually someone else's); a business model (who pays for which unit, and whether the partner who holds the complement claims the margin); a product made whole (the ring of the whole product the next buyers still lack, and who holds it); a change in the context (who must agree, who loses, and whether the participant can set the structure others work within). Use the participant's kind to choose your challenges; if the answers do not fit the kind, say so.\n\n" +
     "Assess five items, with these keys: \"escape\", \"speed\", \"profit_moving\", \"complements\", \"demand\". For each give:\n" +
     "- \"verdict\": \"specific\", \"vague\" or \"missing\". Specific means stated with a mechanism and units a sceptic could check.\n" +
     "- \"challenge\": the one question a competent rival or a sceptical board member would ask. One sentence.\n" +
@@ -311,6 +325,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     "{\"restatement\": \"...\", \"items\": [{\"key\": \"escape\", \"verdict\": \"specific|vague|missing\", \"challenge\": \"...\", \"test\": \"...\", \"proof\": \"...\"}, " +
     "{\"key\": \"speed\", ...}, {\"key\": \"profit_moving\", ...}, {\"key\": \"complements\", ...}, {\"key\": \"demand\", ...}], \"weakest\": \"...\", \"next_step\": \"...\"}";
 
+  var OTYPES = { technology: "A technology (worked out in the lab)", model: "A business model (the same technology, with the right complement)", whole: "A product made whole (designed from what the mainstream buyer needs)", context: "A change in the context (a standard, an infrastructure, a rule, a new kind of buyer)" };
   var ESCAPES = { differentiation: "Differentiation", fence: "A fence", scarce: "A scarce position", none: "Nothing yet", cost: "A cost advantage" };
   var ROUTES = { copy: "copy it", invent: "invent around it", input: "build or buy the key input", trade: "trade around the fence", other: "another route" };
   var RUNGS = { say: "1 · they say they like it", time: "2 · they give time", sign: "3 · they sign something", pay: "4 · they pay something", commit: "5 · they commit volume and price" };
@@ -318,7 +333,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   // The sheet's answers, as the server takes them: months a whole number or null, the complements as a pair.
   function inputsFrom(o) {
     return {
-      name: o.name, pays: o.pays, escape: o.escape, mechanism: o.mechanism,
+      otype: o.otype, name: o.name, pays: o.pays, escape: o.escape, mechanism: o.mechanism,
       months: /^\d{1,3}$/.test(o.months) ? parseInt(o.months, 10) : null,
       route: o.route, why: o.why, goodenough: o.goodenough, scarce: o.scarce, approp: o.approp,
       complements: [1, 2].map(function (n) {
@@ -330,6 +345,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   function participantText(i) {
     var lines = [];
     lines.push("Opportunity: " + (i.name || "[not given]"));
+    lines.push("Kind of opportunity: " + (OTYPES[i.otype] || "[not given]"));
     lines.push("Who pays, for what: " + (i.pays || "[not given]"));
     lines.push("1. What the price rests on: " + (ESCAPES[i.escape] || "[not given]") + ". Mechanism: " + (i.mechanism || "[not given]"));
     lines.push("2. How long it holds: " + (i.months !== null ? i.months + " months" : "[not given]") + "; the rival's most likely route: " + (ROUTES[i.route] || "[not given]") + ". Why: " + (i.why || "[not given]"));
@@ -345,6 +361,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   /* ---- end of the prompt ---- */
 
   var EXAMPLE_ANSWERS = {
+    otype: "model",
     name: "Vestkyst PtX: green hydrogen from a 300 MW electrolyser near Esbjerg (the fictional game case)",
     pays: "An anchor offtaker in fertiliser pays per kg of hydrogen, under a ten-year contract",
     escape: "scarce",
@@ -389,20 +406,38 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   function read() {
     var o = {};
     FIELDS.forEach(function (f) { o[f] = clean(f, $(f).value); });
-    o.escape = radio("escape"); o.rung = radio("rung");
+    o.otype = radio("otype"); o.escape = radio("escape"); o.rung = radio("rung");
     return o;
   }
   function write(o) {
     FIELDS.forEach(function (f) { $(f).value = o[f] || ""; });
-    setRadio("escape", o.escape || ""); setRadio("rung", o.rung || "");
+    setRadio("otype", o.otype || ""); setRadio("escape", o.escape || ""); setRadio("rung", o.rung || "");
+    renderKind();
   }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function hasDigit(s) { return /\d/.test(s || ""); }
+
+  /* ---------- the kind of opportunity: Day 3's grid, one column at a time ---------- */
+  var KIND_HINTS = {
+    technology: ["Patent or know-how, if appropriability is tight", "Working outside the lab, at scale and cost", "Plant, clearance or channel owned by others", "A design partner giving time and data"],
+    model: ["A fence: priced per use or per outcome", "Buyers paying this way; the partner sharing", "The partner who holds the complement", "A paid pilot on the new terms"],
+    whole: ["The ring that tips adoption, if you hold it", "The ring the next segment still lacks", "The payer, channel or integrator with that ring", "A reference buyer committing volume and price"],
+    context: ["Setting the structure others work within", "Moving the rule-maker or the first buyer", "Incumbents the old rule protects", "Coalition members who sign or co-fund"]
+  };
+  var KIND_ROWS = ["The margin usually rests on", "Test first", "Likely red node", "Demand to show"];
+  function renderKind() {
+    var k = radio("otype"), box = $("kindhint");
+    if (!KIND_HINTS[k]) { box.hidden = true; box.innerHTML = ""; return; }
+    box.innerHTML = KIND_ROWS.map(function (r, n) { return "<b>" + r + "</b><span>" + esc(KIND_HINTS[k][n]) + "</span>"; }).join("") +
+      "<p>The usual case, not a rule. Your answers below can disagree; say why.</p>";
+    box.hidden = false;
+  }
 
   /* ---------- the precision check, no AI ---------- */
   function check(o) {
     var out = [];
     function add(level, text) { out.push({ level: level, text: text }); }
+    if (!o.otype) add("warn", "Say what kind of opportunity it is: it decides where to look first.");
     if (!o.name) add("miss", "Name the opportunity in one line.");
     if (!o.pays) add("warn", "Say who pays, and for what unit.");
     if (!o.escape) add("miss", "Question 1: choose what the price will rest on.");
@@ -414,6 +449,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
     if (!o.route) add("warn", "Question 2: name the route a rival would most likely take.");
     if (!o.goodenough || !o.scarce) add("warn", "Question 3: name the layer becoming good enough and the one becoming scarce.");
     if (!o.approp) add("warn", "Question 4: is appropriability tight or weak?");
+    else if (o.otype === "technology" && o.approp === "weak") add("warn", "A technology whose appropriability is weak rarely keeps the margin on its own. Which complement will you hold, or is this a business model?");
     var named = 0;
     [["c1name", "c1type", "c1owner", "c1plan"], ["c2name", "c2type", "c2owner", "c2plan"]].forEach(function (c) {
       if (!o[c[0]]) return;
@@ -530,7 +566,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   var EXAMPLE_MIN_CHANGES = 3;
   function changesFromExample(o) {
     var n = 0;
-    FIELDS.concat(["escape", "rung"]).forEach(function (f) { if ((o[f] || "") !== (EXAMPLE_ANSWERS[f] || "")) n++; });
+    FIELDS.concat(["otype", "escape", "rung"]).forEach(function (f) { if ((o[f] || "") !== (EXAMPLE_ANSWERS[f] || "")) n++; });
     return n;
   }
 
@@ -672,7 +708,7 @@ const AI_URL = "https://kcobpakjfluuyfzswtoq.supabase.co/functions/v1/ai";  // t
   var saveTimer = null;
   function persist() { store.answers = read(); saveStore(store); }
   $("sheet").addEventListener("input", function () { renderChecks(); clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); });
-  $("sheet").addEventListener("change", function () { renderChecks(); persist(); });
+  $("sheet").addEventListener("change", function () { renderKind(); renderChecks(); persist(); });
   $("sheet").addEventListener("submit", function (e) { e.preventDefault(); });
 
   /* ---------- start ---------- */
