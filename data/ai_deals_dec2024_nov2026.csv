@@ -1,0 +1,52 @@
+layer,group,rationale,acquirer,target,announced,value_usd_bn,value_basis,deal_type,europe_flow,notes,buyer_type
+"Chips, optics & networking",runs_on,capacity,Marvell,Lumentum,2026-11,115,implied EV (all stock),acquisition,,pending; close H1 2028,Chipmakers
+"Chips, optics & networking",runs_on,capacity,Nvidia,Groq,2025-12,20,reported (Dealroom),licence + hire,,non-exclusive licence and team,Chipmakers
+"Chips, optics & networking",runs_on,capacity,Texas Instruments,Silicon Labs,2026-02,7.5,disclosed (cash),acquisition,,edge-AI connectivity; AI-adjacent,Chipmakers
+"Chips, optics & networking",runs_on,capacity,Onsemi,Synaptics,2026-06,7,EV (all stock),acquisition,,"""physical AI"" rationale",Chipmakers
+"Chips, optics & networking",runs_on,capacity,Qualcomm,Modular,2026-06,4,reported,acquisition,,AI inference software stack,Chipmakers
+"Chips, optics & networking",runs_on,capacity,Marvell,Celestial AI,2025-12,3.25,upfront; up to 5.5 with earnout,acquisition,,photonic interconnect,Chipmakers
+"Chips, optics & networking",runs_on,capacity,Qualcomm,Alphawave Semi,2025-06,2.4,disclosed,acquisition,sold_abroad,UK-listed chip designer,Chipmakers
+Data centres & power,runs_on,capacity,NextEra Energy,Dominion Energy,2026-05,67,equity value (all stock),merger,,data-centre load cited as driver,Utilities & infrastructure investors
+Data centres & power,runs_on,capacity,AIP / GIP / MGX consortium,Aligned Data Centers,2025-10,40,disclosed,acquisition,,largest data-centre deal on record; closed,Utilities & infrastructure investors
+Data centres & power,runs_on,capacity,GIP / EQT consortium,AES,2026-03,33.4,EV incl. debt,take-private,,data-centre power demand,Utilities & infrastructure investors
+Data centres & power,runs_on,capacity,Constellation Energy,Calpine,2025-01,26.6,EV incl. debt (equity 16.4),acquisition,,data-centre power demand; closed Jan 2026,Utilities & infrastructure investors
+Data centres & power,runs_on,capacity,Alphabet,Intersect Power,2025-12,4.75,disclosed (cash) plus debt,acquisition,,power for data centres,Tech groups
+Data & context layer,runs_on,capability,Schneider Electric,PTC,2026-10,22.6,equity value,acquisition,bought_abroad,pending; Q3 2027,Industrial & financial incumbents
+Data & context layer,runs_on,capability,IBM,Confluent,2025-12,11,EV,acquisition,,closed,Enterprise software
+Data & context layer,runs_on,capability,Salesforce,Informatica,2025-05,8,equity value,acquisition,,closed Nov 2025,Enterprise software
+Data & context layer,runs_on,capability,Siemens,Dotmatics,2025-04,5.1,EV,acquisition,bought_abroad,closed Jul 2025,Industrial & financial incumbents
+Data & context layer,runs_on,capability,Autodesk,MaintainX,2026-05,3.6,disclosed (cash),acquisition,,closed Aug 2026,Enterprise software
+Data & context layer,runs_on,capability,Schneider Electric,Cognite,2026-06,3.1,disclosed (cash),acquisition,sold_in_europe,pending,Industrial & financial incumbents
+Data & context layer,runs_on,capability,SAP,Dremio,2026-05,,undisclosed,acquisition,bought_abroad,,Enterprise software
+"Security, identity & observability",runs_on,capability,Google,Wiz,2025-03,32,disclosed (cash),acquisition,,closed Mar 2026; cloud and AI security,Tech groups
+"Security, identity & observability",runs_on,capability,Palo Alto Networks,CyberArk,2025-07,25,disclosed,acquisition,,closed Feb 2026; agent identity,Enterprise software
+"Security, identity & observability",runs_on,capability,ServiceNow,Armis,2025-12,7.75,disclosed,acquisition,,closed 2026,Enterprise software
+"Security, identity & observability",runs_on,capability,Palo Alto Networks,Chronosphere,2025-11,3.35,disclosed,acquisition,,closed Jan 2026,Enterprise software
+"Security, identity & observability",runs_on,capability,Dynatrace,Arize,2026,0.915,disclosed,acquisition,,AI observability,Enterprise software
+Models & developer platforms,does,capability,SpaceX,xAI,2026-02,250,equity value (all stock),intra-group merger,,shown separately in chart,Tech groups
+Models & developer platforms,does,capability,Meta,Scale AI (49%),2025-06,14.3,disclosed,minority stake + hire,,control-like stake,Tech groups
+Models & developer platforms,does,capability,Nvidia,Hugging Face,2026-09,12.93,disclosed,acquisition,sold_abroad,pending H1 2027; HQ caveat (French-founded; listed as New York HQ),Chipmakers
+Models & developer platforms,does,capability,AMD,World Labs,2026-09,8.2,disclosed (all stock),acquisition,,,Chipmakers
+Models & developer platforms,does,capability,Stripe,OpenRouter,2026-08,7.5,reported,acquisition,,,Enterprise software
+Models & developer platforms,does,capability,Palo Alto Networks,Applied Compute,2026-11,4.5,disclosed (stock),acquisition,,,Enterprise software
+Models & developer platforms,does,capability,Google,Windsurf,2025-07,2.4,reported,licence + hire,,non-exclusive licence,Tech groups
+Models & developer platforms,does,capability,CoreWeave,Weights & Biases,2025-03,1.7,reported,acquisition,,,AI-native firms
+Models & developer platforms,does,capability,Nebius,Eigen AI,2026-05,0.643,disclosed (cash and stock),acquisition,bought_abroad,,AI-native firms
+Models & developer platforms,does,capability,Cohere,Aleph Alpha,2026-04,,undisclosed (combined ~20bn; ~10% to Aleph holders),merger,sold_abroad,,AI-native firms
+"Applications, agents & robots",does,capability,SpaceX,Anysphere (Cursor),2026-04,60,implied equity (stock),acquisition,,closed Aug 2026,Tech groups
+"Applications, agents & robots",does,capability,OpenAI,io Products,2025-05,6.5,disclosed (all stock),acquisition,,AI device,AI-native firms
+"Applications, agents & robots",does,capability,SoftBank,ABB Robotics,2025-10,5.4,EV,carve-out,,"""physical AI""",Tech groups
+"Applications, agents & robots",does,capability,Capital One,Brex,2026-01,5.15,disclosed,acquisition,,closed Apr 2026,Industrial & financial incumbents
+"Applications, agents & robots",does,capability,Salesforce,Fin (formerly Intercom),2026-06,3.6,disclosed,acquisition,,,Enterprise software
+"Applications, agents & robots",does,capability,ServiceNow,Moveworks,2025-03,2.85,disclosed,acquisition,,,Enterprise software
+"Applications, agents & robots",does,capability,Guidewire,hyperexponential,2026-10,2.1,1.7 base + 0.4 earnout,acquisition,sold_abroad,agentic underwriting,Enterprise software
+"Applications, agents & robots",does,capability,Meta,Manus,2025-12,2,reported (>2),acquisition,,,Tech groups
+"Applications, agents & robots",does,capability,Salesforce,Listen Labs,2026-09,2,reported,acquisition,,,Enterprise software
+"Applications, agents & robots",does,capability,Workday,Sana,2025-09,1.1,disclosed,acquisition,sold_abroad,,Enterprise software
+"Applications, agents & robots",does,capability,Roche,PathAI,2026-05,1.05,0.75 upfront + 0.3 milestones,acquisition,,,Industrial & financial incumbents
+"Applications, agents & robots",does,capability,NiCE,Cognigy,2025-07,0.955,disclosed,acquisition,sold_abroad,,Enterprise software
+Services & operations,does,repositioning,Omnicom,Interpublic,2024-12,13.25,announced value (closed ~9),merger,,AI and data pressure on agencies,IT & business services
+Services & operations,does,capability,Capgemini,WNS,2025-07,3.3,disclosed,acquisition,bought_abroad,agentic AI intelligent operations,IT & business services
+Services & operations,does,capability,Accenture,Faculty,2026-01,1,reported floor (>1bn),acquisition,sold_in_europe,Accenture domiciled in Ireland,IT & business services
+Services & operations,does,capability,Cognizant,Astreya,2026,0.6,reported,acquisition,,,IT & business services
+Excluded: terminated,,capacity,CoreWeave,Core Scientific,2025-07,9,all stock,terminated,,shareholders rejected Oct 2025,AI-native firms
